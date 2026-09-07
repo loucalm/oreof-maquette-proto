@@ -1,0 +1,80 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ isNew ? 'Nouveau type' : nodeType.label }}{% endblock %}
+
+{% block body %}
+<div class="max-w-2xl">
+    <div class="text-xs" style="color:var(--c-muted)">
+        <a href="{{ path('node_type_index') }}" class="hover:underline">Types de nœuds</a> › {{ isNew ? 'nouveau' : nodeType.label }}
+    </div>
+    <h1 class="text-xl font-bold mt-1 mb-5">{{ isNew ? 'Nouveau type de nœud' : 'Modifier « ' ~ nodeType.label ~ ' »' }}</h1>
+
+    <form method="post" class="rounded-xl border bg-white p-5 space-y-4" style="border-color:var(--c-border)">
+        <div class="grid grid-cols-3 gap-3">
+            <label class="block col-span-2">
+                <span class="text-xs font-medium">Libellé</span>
+                <input name="label" required value="{{ nodeType.label ?? '' }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+            </label>
+            <label class="block">
+                <span class="text-xs font-medium">Icône</span>
+                <input name="icon" value="{{ nodeType.icon ?? '' }}" placeholder="🧩" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+            </label>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+            <label class="block">
+                <span class="text-xs font-medium">Clé</span>
+                <input name="key" value="{{ nodeType.key ?? '' }}" placeholder="auto depuis le libellé" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+            </label>
+            <label class="block">
+                <span class="text-xs font-medium">Famille</span>
+                <select name="family" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                    {% for fam in families %}<option value="{{ fam.value }}" {{ (nodeType.family ?? null) == fam ? 'selected' }}>{{ fam.label }}</option>{% endfor %}
+                </select>
+            </label>
+            <div class="grid grid-cols-2 gap-2">
+                <label class="block">
+                    <span class="text-xs font-medium">Position</span>
+                    <input type="number" name="position" value="{{ nodeType.position ?? 0 }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                </label>
+                <label class="block">
+                    <span class="text-xs font-medium">ECTS cible</span>
+                    <input type="number" name="ectsTarget" value="{{ nodeType.ectsTarget ?? '' }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                </label>
+            </div>
+        </div>
+
+        <fieldset>
+            <legend class="text-xs font-medium mb-1">Enfants autorisés</legend>
+            <p class="text-xs mb-2" style="color:var(--c-muted)">Rien de coché = feuille.</p>
+            <div class="grid grid-cols-3 gap-1.5">
+                {% for t in allTypes %}
+                    {% if isNew or t.id != nodeType.id %}
+                    <label class="flex items-center gap-2 text-sm">
+                        <input type="checkbox" name="allowedChildKeys[]" value="{{ t.key }}"
+                               {{ (not isNew and t.key in nodeType.allowedChildKeys) ? 'checked' }}>
+                        {{ t.icon }} {{ t.label }}
+                    </label>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend class="text-xs font-medium mb-1">Capacités (attributs portés)</legend>
+            <div class="grid grid-cols-2 gap-1.5">
+                {% for key, label in capabilities %}
+                    <label class="flex items-center gap-2 text-sm">
+                        <input type="checkbox" name="capabilities[]" value="{{ key }}"
+                               {{ (not isNew and nodeType.hasCapability(key)) ? 'checked' }}>
+                        {{ label }}
+                    </label>
+                {% endfor %}
+            </div>
+        </fieldset>
+
+        <div class="flex gap-2 pt-1">
+            <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">Enregistrer</button>
+            <a href="{{ path('node_type_index') }}" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

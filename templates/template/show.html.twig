@@ -1,0 +1,28 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ template.label }}{% endblock %}
+
+{% macro branch(nodes) %}
+    {% import _self as m %}
+    <ul class="ml-4 border-l border-dashed pl-3" style="border-color:var(--c-border)">
+        {% for n in nodes %}
+            <li class="py-0.5">
+                <span class="type-badge">{{ n.type }}</span>
+                <span class="text-sm">{{ n.label ?? '' }}</span>
+                {% if n.children is defined and n.children is not empty %}{{ m.branch(n.children) }}{% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% endmacro %}
+
+{% block body %}
+{% import _self as m %}
+<div class="text-xs" style="color:var(--c-muted)">
+    <a href="{{ path('template_index') }}" class="hover:underline">Templates</a> › {{ template.label }}
+</div>
+<h1 class="text-xl font-bold mt-1">{{ template.label }}</h1>
+<p class="text-sm mb-4" style="color:var(--c-muted)">{{ template.description }}</p>
+
+<div class="rounded-xl border bg-white p-4" style="border-color:var(--c-border)">
+    {{ m.branch(template.tree) }}
+</div>
+{% endblock %}

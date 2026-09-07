@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+/* ─── Prototype maquette : petit système visuel (clair uniquement) ─── */
+:root {
+    --c-bg: #f6f7f9;
+    --c-surface: #ffffff;
+    --c-border: #e3e6ea;
+    --c-text: #1b1f24;
+    --c-muted: #6b7280;
+    --c-primary: #4f46e5;
+    --c-primary-soft: #eef2ff;
+
+    --st-empty: #dc2626;      /* rien saisi */
+    --st-incomplete: #d97706; /* partiel */
+    --st-ok: #16a34a;         /* ok */
+}
+
+body {
+    background: var(--c-bg);
+    color: var(--c-text);
+    font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* Pastille de statut */
+.status-dot {
+    width: 9px; height: 9px; border-radius: 9999px; flex: 0 0 auto;
+    background: var(--c-muted);
+}
+.status-dot[data-status="empty"]      { background: var(--st-empty); }
+.status-dot[data-status="incomplete"] { background: var(--st-incomplete); }
+.status-dot[data-status="ok"]         { background: var(--st-ok); }
+
+/* Arbre */
+.tree-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px; border-radius: 8px; cursor: pointer;
+    border: 1px solid transparent;
+}
+.tree-row:hover { background: #f0f1f3; }
+.tree-row.is-active { background: var(--c-primary-soft); border-color: #c7d2fe; }
+.tree-children { margin-left: 14px; border-left: 1px dashed var(--c-border); padding-left: 6px; }
+
+.drag-handle { cursor: grab; color: #b8bec7; touch-action: none; }
+.sortable-ghost { opacity: .4; }
+.sortable-drag  { background: var(--c-surface); }
+.drop-allowed { outline: 2px dashed #a5b4fc; outline-offset: 2px; border-radius: 8px; }
+
+.type-badge {
+    font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 6px;
+    background: #eef1f4; color: #4b5563; white-space: nowrap;
+}
+
+.pill {
+    font-size: 11px; padding: 2px 8px; border-radius: 9999px;
+    background: #eef1f4; color: #4b5563;
+}
+
+.tab-btn.tab-active { border-color: var(--c-primary); font-weight: 600; color: var(--c-primary); }

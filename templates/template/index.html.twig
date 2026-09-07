@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+{% block title %}Templates de structure{% endblock %}
+
+{% block body %}
+<h1 class="text-xl font-bold">Templates de structure</h1>
+<p class="text-sm mb-5" style="color:var(--c-muted)">
+    Une base réutilisable, instanciée dans une formation puis librement modifiable.
+</p>
+
+<div class="grid gap-4 md:grid-cols-2">
+    {% for tpl in templates %}
+        <a href="{{ path('template_show', {id: tpl.id}) }}"
+           class="block rounded-xl border bg-white p-4 hover:shadow-sm" style="border-color:var(--c-border)">
+            <div class="font-semibold">{{ tpl.label }}</div>
+            <div class="text-xs mb-2" style="color:var(--c-muted)">
+                <code>{{ tpl.key }}</code> · {{ tpl.multiParcours ? 'multi-parcours' : 'mono-parcours' }}
+            </div>
+            <p class="text-sm" style="color:var(--c-muted)">{{ tpl.description }}</p>
+        </a>
+    {% endfor %}
+</div>
+{% endblock %}

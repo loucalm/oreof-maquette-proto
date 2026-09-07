@@ -1,0 +1,19 @@
+# Prototype "maquette par nœuds" — un seul conteneur.
+# On réutilise l'image ORéOF (PHP 8.5 + Composer + Symfony CLI + Node) déjà
+# présente localement ; SQLite => pas de service base de données.
+services:
+  app:
+    image: proto-maquette:latest
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: proto-maquette
+    working_dir: /app
+    entrypoint: ["symfony"]
+    command: ["serve", "--port=80", "--no-tls", "--allow-all-ip", "--allow-http"]
+    volumes:
+      - ./:/app
+    ports:
+      - "8830:80"
+    environment:
+      APP_ENV: dev

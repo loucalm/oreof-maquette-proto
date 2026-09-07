@@ -1,0 +1,78 @@
+{% extends 'base.html.twig' %}
+{% block title %}Formations · Prototype maquette{% endblock %}
+
+{% block body %}
+<div class="flex items-start justify-between gap-6 mb-6">
+    <div>
+        <h1 class="text-xl font-bold">Formations</h1>
+        <p class="text-sm" style="color:var(--c-muted)">
+            Chaque formation est un arbre de nœuds typés, sans structure figée.
+        </p>
+    </div>
+</div>
+
+<div class="grid gap-6 lg:grid-cols-[1fr_320px] items-start">
+    <div class="rounded-xl border bg-white overflow-hidden" style="border-color:var(--c-border)">
+        <table class="w-full text-sm">
+            <thead class="text-xs uppercase tracking-wide" style="color:var(--c-muted)">
+                <tr class="border-b" style="border-color:var(--c-border)">
+                    <th class="text-left font-semibold px-4 py-3">Formation</th>
+                    <th class="text-left font-semibold px-4 py-3">Composante</th>
+                    <th class="text-left font-semibold px-4 py-3 w-40">Remplissage</th>
+                    <th class="px-4 py-3"></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for row in rows %}
+                {% set f = row.formation %}
+                <tr class="border-b last:border-0" style="border-color:var(--c-border)">
+                    <td class="px-4 py-3">
+                        <a href="{{ path('formation_editor', {id: f.id}) }}" class="font-medium hover:underline">{{ f.name }}</a>
+                        <div class="text-xs" style="color:var(--c-muted)">
+                            {{ f.diplome ?: '—' }} · {{ f.multiParcours ? 'multi-parcours' : 'mono-parcours' }}
+                        </div>
+                    </td>
+                    <td class="px-4 py-3" style="color:var(--c-muted)">{{ f.composante ?: '—' }}</td>
+                    <td class="px-4 py-3">
+                        <div class="h-2 rounded-full bg-gray-100 overflow-hidden">
+                            <div class="h-full rounded-full" style="width:{{ row.progress }}%;background:var(--c-primary)"></div>
+                        </div>
+                        <div class="text-xs mt-1" style="color:var(--c-muted)">{{ row.progress }}%</div>
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                        <a href="{{ path('formation_editor', {id: f.id}) }}"
+                           class="inline-flex items-center rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-gray-50"
+                           style="border-color:var(--c-border)">Ouvrir l'éditeur</a>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="4" class="px-4 py-8 text-center text-sm" style="color:var(--c-muted)">Aucune formation. Créez-en une →</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <form method="post" action="{{ path('formation_create') }}"
+          class="rounded-xl border bg-white p-4 space-y-3" style="border-color:var(--c-border)">
+        <h2 class="font-semibold">Nouvelle formation</h2>
+        <label class="block">
+            <span class="text-xs font-medium">Nom</span>
+            <input name="name" required class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)" placeholder="Licence Informatique">
+        </label>
+        <div class="grid grid-cols-2 gap-2">
+            <label class="block">
+                <span class="text-xs font-medium">Diplôme</span>
+                <input name="diplome" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)" placeholder="Licence">
+            </label>
+            <label class="block">
+                <span class="text-xs font-medium">Composante</span>
+                <input name="composante" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+            </label>
+        </div>
+        <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" name="multiParcours" value="1"> Contient des parcours (multi-parcours)
+        </label>
+        <button class="w-full rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">Créer</button>
+    </form>
+</div>
+{% endblock %}

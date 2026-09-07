@@ -1,0 +1,28 @@
+{# Arbre récursif. Params : views (list<NodeView>), formation, parentId (int|null) #}
+<ul class="tree-list space-y-0.5 {{ parentId is not null ? 'tree-children' : '' }}"
+    data-tree-target="list"
+    data-parent-id="{{ parentId ?? '' }}">
+    {% for view in views %}
+        {% set node = view.node %}
+        <li data-node-id="{{ node.id }}"
+            data-node-type="{{ node.type.key }}"
+            data-node-leaf="{{ node.type.leaf ? '1' : '0' }}">
+            <div class="tree-row" data-tree-target="row" data-node-id="{{ node.id }}">
+                <span class="drag-handle select-none" data-tree-target="handle">⠿</span>
+                <span class="status-dot" data-status="{{ view.status }}"
+                      title="{{ view.status == 'ok' ? 'Complet' : (view.status == 'incomplete' ? 'Incomplet' : 'Vide') }}"></span>
+                <span class="type-badge">{{ node.type.icon }} {{ node.type.label }}</span>
+                <a href="{{ path('node_panel', {id: node.id}) }}" data-turbo-frame="node-panel"
+                   class="truncate hover:underline" data-tree-target="link">
+                    {{ node.displayLabel }}
+                </a>
+                {% if view.ectsTarget %}
+                    <span class="ml-auto text-[11px] {{ view.ectsReached ? 'text-green-600' : '' }}" style="color:{{ view.ectsReached ? '' : 'var(--c-muted)' }}">
+                        {{ view.totalEcts|round }}/{{ view.ectsTarget }} ECTS
+                    </span>
+                {% endif %}
+            </div>
+            {{ include('formation/_tree.html.twig', {views: view.children, formation: formation, parentId: node.id}) }}
+        </li>
+    {% endfor %}
+</ul>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{% block title %}Prototype maquette{% endblock %}</title>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.1em%22 font-size=%22104%22>🧩</text></svg>">
+        {% block stylesheets %}{% endblock %}
+        {% block javascripts %}
+            {% block importmap %}{{ importmap('app') }}{% endblock %}
+        {% endblock %}
+    </head>
+    <body class="min-h-screen">
+        <header class="border-b bg-white" style="border-color:var(--c-border)">
+            <div class="mx-auto max-w-7xl px-5 h-14 flex items-center gap-6">
+                <a href="{{ path('formation_index') }}" class="font-semibold flex items-center gap-2">
+                    <span>🧩</span> Prototype maquette
+                </a>
+                <nav class="flex items-center gap-4 text-sm" style="color:var(--c-muted)">
+                    <a href="{{ path('formation_index') }}" class="hover:underline">Formations</a>
+                    <a href="{{ path('node_type_index') }}" class="hover:underline">Types de nœuds</a>
+                    <a href="{{ path('template_index') }}" class="hover:underline">Templates</a>
+                </nav>
+                <span class="ml-auto pill">souple · piloté par les données</span>
+            </div>
+        </header>
+
+        <main class="mx-auto max-w-7xl px-5 py-6">
+            {% for label, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="mb-4 rounded-lg border px-4 py-2 text-sm
+                        {{ label == 'success' ? 'bg-green-50 border-green-200 text-green-800' : '' }}
+                        {{ label == 'danger' ? 'bg-red-50 border-red-200 text-red-800' : '' }}
+                        {{ label == 'info' ? 'bg-indigo-50 border-indigo-200 text-indigo-800' : '' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endfor %}
+
+            {% block body %}{% endblock %}
+        </main>
+    </body>
+</html>

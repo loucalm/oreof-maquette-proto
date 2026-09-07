@@ -1,0 +1,57 @@
+{% extends 'base.html.twig' %}
+{% block title %}Types de nœuds{% endblock %}
+
+{% block body %}
+<div class="flex items-start justify-between mb-5">
+    <div>
+        <h1 class="text-xl font-bold">Types de nœuds</h1>
+        <p class="text-sm" style="color:var(--c-muted)">
+            Le métamodèle. Créez / modifiez les types, leurs capacités et les imbrications autorisées —
+            c'est ce qui rend l'outil non figé.
+        </p>
+    </div>
+    <a href="{{ path('node_type_new') }}" class="rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">＋ Nouveau type</a>
+</div>
+
+<div class="rounded-xl border bg-white overflow-hidden" style="border-color:var(--c-border)">
+    <table class="w-full text-sm">
+        <thead class="text-xs uppercase tracking-wide" style="color:var(--c-muted)">
+            <tr class="border-b" style="border-color:var(--c-border)">
+                <th class="text-left px-4 py-3">Type</th>
+                <th class="text-left px-4 py-3">Famille</th>
+                <th class="text-left px-4 py-3">Enfants autorisés</th>
+                <th class="text-left px-4 py-3">Capacités</th>
+                <th class="text-left px-4 py-3">ECTS cible</th>
+                <th class="px-4 py-3"></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for t in types %}
+            <tr class="border-b last:border-0 align-top" style="border-color:var(--c-border)">
+                <td class="px-4 py-3">
+                    <div class="font-medium">{{ t.icon }} {{ t.label }}</div>
+                    <code class="text-xs" style="color:var(--c-muted)">{{ t.key }}</code>
+                </td>
+                <td class="px-4 py-3" style="color:var(--c-muted)">{{ t.family.label }}</td>
+                <td class="px-4 py-3">
+                    {% if t.allowedChildKeys is empty %}<span class="pill">feuille</span>
+                    {% elseif '*' in t.allowedChildKeys %}<span class="pill">tous</span>
+                    {% else %}{% for k in t.allowedChildKeys %}<span class="type-badge mr-1">{{ k }}</span>{% endfor %}{% endif %}
+                </td>
+                <td class="px-4 py-3">
+                    {% for c, on in t.capabilities %}{% if on %}<span class="type-badge mr-1">{{ capabilities[c] ?? c }}</span>{% endif %}{% endfor %}
+                </td>
+                <td class="px-4 py-3">{{ t.ectsTarget ?? '—' }}</td>
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                    <a href="{{ path('node_type_edit', {id: t.id}) }}" class="text-xs hover:underline">Modifier</a>
+                    <form method="post" action="{{ path('node_type_delete', {id: t.id}) }}" class="inline"
+                          data-controller="confirm" data-confirm-message-value="Supprimer le type « {{ t.label }} » ?">
+                        <button class="text-xs text-red-600 hover:underline ml-2">Suppr.</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
