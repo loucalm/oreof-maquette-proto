@@ -36,15 +36,9 @@
                 {% endfor %}
                 <line x1="{{ g.pad }}" y1="{{ g.headerH - 4 }}" x2="{{ g.width - g.pad }}" y2="{{ g.headerH - 4 }}" stroke="#e5e7eb"/>
 
-                {# liens parent → enfant #}
+                {# liens parent → enfant (tracé pré-calculé côté PHP) #}
                 {% for e in g.edges %}
-                    {% set p = g.boxes[e.from] %}{% set c = g.boxes[e.to] %}
-                    {% if p and c %}
-                        {% set x1 = p.x + p.w %}{% set y1 = p.cy %}{% set x2 = c.x %}{% set y2 = c.cy %}
-                        {% set mx = (x1 + x2) / 2 %}
-                        <path d="M {{ x1 }} {{ y1 }} C {{ mx }} {{ y1 }}, {{ mx }} {{ y2 }}, {{ x2 - 2 }} {{ y2 }}"
-                              fill="none" stroke="#6366f1" stroke-width="2.5" marker-end="url(#pg-arrow)"/>
-                    {% endif %}
+                    <path d="{{ e.path }}" fill="none" stroke="#818cf8" stroke-width="2" marker-end="url(#pg-arrow)"/>
                 {% endfor %}
 
                 {# boîtes parcours #}

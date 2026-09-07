@@ -20,11 +20,11 @@ final class ParcoursGraph
     }
 
     private const COL_W = 240;
-    private const ROW_H = 92;
-    private const BOX_H = 54;
-    private const HEADER_H = 44;
+    private const ROW_H = 108;
+    private const BOX_H = 56;
+    private const HEADER_H = 56;
     private const PAD = 16;
-    private const GAP = 14;
+    private const GAP = 26;
 
     /**
      * @return array{
@@ -86,26 +86,60 @@ final class ParcoursGraph
             }
         }
 
-        $edges = [];
-        foreach ($parcours as $p) {
-            $parent = $p->getParcoursParent();
-            if ($parent !== null && isset($ids[$parent->getId()])) {
-                $edges[] = ['from' => $parent->getId(), 'to' => $p->getId()];
-            }
-        }
-
         $maxAnnee = 1;
         foreach ($rows as $r) {
             $maxAnnee = max($maxAnnee, $r['colEnd']);
         }
 
-        // géométrie (clé = id du nœud ; PHP conserve les clés entières)
+        // géométrie des boîtes (clé = id du nœud)
+        $rowByNode = [];
         $boxes = [];
         foreach ($rows as $r) {
+            $rowByNode[$r['node']->getId()] = $r;
             $x = self::PAD + ($r['colStart'] - 1) * self::COL_W + self::GAP / 2;
             $w = ($r['colEnd'] - $r['colStart'] + 1) * self::COL_W - self::GAP;
             $y = self::HEADER_H + $r['row'] * self::ROW_H + (self::ROW_H - self::BOX_H) / 2;
-            $boxes[$r['node']->getId()] = ['x' => $x, 'y' => $y, 'w' => $w, 'cy' => $y + self::BOX_H / 2];
+            $boxes[$r['node']->getId()] = [
+                'x' => $x, 'y' => $y, 'w' => $w,
+                'cx' => $x + $w / 2, 'cy' => $y + self::BOX_H / 2,
+                'right' => $x + $w, 'bottom' => $y + self::BOX_H,
+            ];
+        }
+
+        // liens parent → enfant, avec tracé pré-calculé
+        $edges = [];
+        foreach ($parcours as $p) {
+            $parent = $p->getParcoursParent();
+            if ($parent === null || !isset($ids[$parent->getId()]) || !isset($boxes[$parent->getId()])) {
+                continue;
+            }
+            $a = $boxes[$parent->getId()];
+            $b = $boxes[$p->getId()];
+            $childRightOfParent = $rowByNode[$p->getId()]['colStart'] > $rowByNode[$parent->getId()]['colEnd'];
+
+            if ($childRightOfParent) {
+                // flux horizontal : coude en L, bord droit du parent → bord gauche de l'enfant
+                $x1 = $a['right'];
+                $y1 = $a['cy'];
+                $x2 = $b['x'] - 2;
+                $y2 = $b['cy'];
+                $midX = $x1 + max(14.0, min(40.0, ($x2 - $x1) / 2));
+                $r = min(10.0, abs($y2 - $y1) / 2, abs($x2 - $midX));
+                $dir = $y2 >= $y1 ? 1 : -1;
+                $path = sprintf(
+                    'M %.1f %.1f H %.1f Q %.1f %.1f %.1f %.1f V %.1f Q %.1f %.1f %.1f %.1f H %.1f',
+                    $x1, $y1, $midX - $r,
+                    $midX, $y1, $midX, $y1 + $r * $dir,
+                    $y2 - $r * $dir,
+                    $midX, $y2, $midX + $r, $y2,
+                    $x2,
+                );
+            } else {
+                // approfondissement dans la même colonne : bas du parent → haut de l'enfant
+                $path = sprintf('M %.1f %.1f V %.1f', $a['cx'], $a['bottom'], $b['y'] - 2);
+            }
+
+            $edges[] = ['from' => $parent->getId(), 'to' => $p->getId(), 'path' => $path];
         }
 
         return [
