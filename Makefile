@@ -40,9 +40,4 @@ db-reset:
 fixtures:
 	$(EXEC) php bin/console doctrine:fixtures:load --no-interaction
 
-## Compile le CSS Tailwind
-tw-build:
-	$(EXEC) php bin/console tailwind:build --minify
-
-tw-watch:
-	$(EXEC) php bin/console tailwind:build --watch
+# Tailwind est chargé au runtime via CDN (@tailwindcss/browser) — aucun build CSS.

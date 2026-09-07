@@ -5,6 +5,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{% block title %}Prototype maquette{% endblock %}</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.1em%22 font-size=%22104%22>🧩</text></svg>">
+        {# Tailwind au runtime (prototype). Le build standalone ne scannait pas les templates dans ce conteneur. #}
+        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
         {% block stylesheets %}{% endblock %}
         {% block javascripts %}
             {% block importmap %}{{ importmap('app') }}{% endblock %}

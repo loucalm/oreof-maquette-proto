@@ -1,4 +1,8 @@
-@import "tailwindcss";
+/*
+ * Prototype : Tailwind est chargé au runtime via @tailwindcss/browser (CDN),
+ * cf. base.html.twig. Ce fichier ne contient que le petit système visuel maison.
+ * (Le binaire standalone du bundle ne scannait pas les templates dans ce conteneur.)
+ */
 
 /* ─── Prototype maquette — aux couleurs ORéOF (clair uniquement) ─── */
 :root {

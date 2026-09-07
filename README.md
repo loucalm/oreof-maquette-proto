@@ -37,5 +37,8 @@ Autres : `make sh`, `make console ARGS="…"`, `make cc`, `make tw-watch`, `make
 
 ## Stack
 
-Symfony 8.1 / PHP 8.5 · Doctrine + SQLite · Twig + Stimulus + Turbo · AssetMapper + Tailwind v4.
+Symfony 8.1 / PHP 8.5 · Doctrine + SQLite · Twig + Stimulus + Turbo · AssetMapper.
+**Tailwind v4 est chargé au runtime via CDN** (`@tailwindcss/browser`, dans `base.html.twig`) —
+le binaire standalone du bundle ne scannait pas les templates dans ce conteneur ; pour un
+prototype le runtime suffit et supprime tout build CSS. Styles maison dans `assets/styles/app.css`.
 Conteneur : image `dannebicque/oreof-symfony-app` + `php8.5-sqlite3` (`docker/Dockerfile`).
