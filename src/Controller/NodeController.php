@@ -90,7 +90,11 @@ final class NodeController extends AbstractController
         $this->em->flush();
         $this->addFlash('success', sprintf('%s ajouté.', $type->getLabel()));
 
-        return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'focus' => $node->getId()]);
+        // ajout d'un nœud racine depuis « Configuration de la structure » → on y reste ;
+        // ajout d'un enfant depuis le panneau d'un nœud → on ouvre le nouveau nœud.
+        return $parent === null
+            ? $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure'])
+            : $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'focus' => $node->getId()]);
     }
 
     #[Route('/nodes/{id}/move', name: 'node_move', methods: ['POST'])]

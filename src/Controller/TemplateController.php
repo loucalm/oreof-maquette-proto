@@ -49,7 +49,7 @@ final class TemplateController extends AbstractController
         $em->flush();
         $this->addFlash('success', sprintf('Template « %s » créé à partir de cette structure.', $label));
 
-        return $this->redirectToRoute('formation_editor', ['id' => $formation->getId()]);
+        return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);
     }
 
     /**

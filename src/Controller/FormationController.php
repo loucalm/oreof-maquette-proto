@@ -119,9 +119,8 @@ final class FormationController extends AbstractController
             ->setEctsTotal($request->request->get('ectsTotal') !== null && $request->request->get('ectsTotal') !== ''
                 ? $request->request->getInt('ectsTotal') : null);
         $em->flush();
-        $this->addFlash('success', 'Paramètres enregistrés.');
 
-        return $this->redirectToRoute('formation_editor', ['id' => $formation->getId()]);
+        return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);
     }
 
     #[Route('/formations/{id}/apply-template', name: 'formation_apply_template', methods: ['POST'])]
@@ -143,37 +142,87 @@ final class FormationController extends AbstractController
         $em->flush();
         $this->addFlash('success', sprintf('Structure « %s » chargée. Elle reste entièrement modifiable.', $template->getLabel()));
 
-        return $this->redirectToRoute('formation_editor', ['id' => $formation->getId()]);
-    }
-
-    /**
-     * Sections « Paramètre de la formation » de la maquette Figma (organisation,
-     * présentation, config structure, BCC). Hors périmètre du prototype :
-     * rendu fictif pour rester fidèle à l'UI.
-     */
-    #[Route('/formations/{id}/parametre/{key}', name: 'formation_param', methods: ['GET'])]
-    public function param(Formation $formation, string $key): Response
-    {
-        $sections = self::PARAM_SECTIONS;
-
-        return $this->render('formation/_param_placeholder.html.twig', [
-            'formation' => $formation,
-            'key' => $key,
-            'label' => $sections[$key]['label'] ?? $key,
-            'blurb' => $sections[$key]['blurb'] ?? '',
-        ]);
+        return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);
     }
 
     public const PARAM_SECTIONS = [
-        'organisation' => ['label' => 'Organisation et localisation', 'status' => 'incomplete',
-            'blurb' => 'Mention/spécialité, niveaux d’entrée et de sortie, RNCP, code Apogée, responsables, localisation.'],
-        'presentation' => ['label' => 'Présentation', 'status' => 'empty',
-            'blurb' => 'Objectifs, résultats attendus, contenu, rythme, poursuites d’études, débouchés, codes ROME.'],
-        'structure' => ['label' => 'Configuration de la structure', 'status' => 'ok',
-            'blurb' => 'Mono ou multi-parcours, chargement d’un template de structure.'],
-        'bcc' => ['label' => 'BCC', 'status' => 'incomplete',
-            'blurb' => 'Référentiel de compétences : blocs (BC) et compétences, compétences transversales RNCP.'],
+        'organisation' => ['label' => 'Organisation et localisation', 'requiredKeys' => ['niveauEntree', 'niveauSortie', 'respMention']],
+        'presentation' => ['label' => 'Présentation', 'requiredKeys' => ['objectif', 'resultats', 'contenu']],
+        'structure' => ['label' => 'Configuration de la structure', 'requiredKeys' => []],
     ];
+
+    /**
+     * Statut d'une section « Paramètre de la formation » (pastille de l'arbre).
+     */
+    public static function paramStatus(Formation $formation, string $key): string
+    {
+        if ($key === 'structure') {
+            return $formation->getRootNodes() === [] ? 'empty' : 'ok';
+        }
+        $required = self::PARAM_SECTIONS[$key]['requiredKeys'] ?? [];
+        if ($key === 'organisation') {
+            // le nom + composante viennent de l'entité
+            $baseOk = trim((string) $formation->getComposante()) !== '' && trim((string) ($formation->getDomaine() ?? '')) !== '';
+        } else {
+            $baseOk = true;
+        }
+        $data = $formation->getParametre($key);
+        $filled = array_filter($required, static fn ($k) => trim((string) ($data[$k] ?? '')) !== '');
+
+        if ($data === [] && !$baseOk) {
+            return 'empty';
+        }
+
+        return (\count($filled) === \count($required) && $baseOk) ? 'ok' : 'incomplete';
+    }
+
+    #[Route('/formations/{id}/parametre/{key}', name: 'formation_param', methods: ['GET'])]
+    public function param(
+        Formation $formation,
+        string $key,
+        MaquetteBuilder $builder,
+        NodeTypeRepository $types,
+        StructureTemplateRepository $templates,
+    ): Response {
+        if (!isset(self::PARAM_SECTIONS[$key])) {
+            throw $this->createNotFoundException();
+        }
+
+        return $this->render("formation/param/$key.html.twig", [
+            'formation' => $formation,
+            'key' => $key,
+            'label' => self::PARAM_SECTIONS[$key]['label'],
+            'data' => $formation->getParametre($key),
+            // seulement pour "structure"
+            'roots' => $key === 'structure' ? $builder->build($formation) : [],
+            'types' => $types->findAllOrdered(),
+            'templates' => $templates->findAllOrdered(),
+        ]);
+    }
+
+    #[Route('/formations/{id}/parametre/{key}', name: 'formation_param_save', methods: ['POST'])]
+    public function paramSave(Formation $formation, string $key, Request $request, EntityManagerInterface $em): Response
+    {
+        if (!isset(self::PARAM_SECTIONS[$key])) {
+            throw $this->createNotFoundException();
+        }
+
+        // le bloc « Informations globale » de "organisation" édite l'entité elle-même
+        if ($key === 'organisation') {
+            $formation
+                ->setName(trim((string) $request->request->get('name')) ?: $formation->getName())
+                ->setDiplome(trim((string) $request->request->get('diplome')) ?: null)
+                ->setDomaine(trim((string) $request->request->get('domaine')) ?: null)
+                ->setComposante(trim((string) $request->request->get('composante')) ?: null);
+        }
+
+        $data = $request->request->all('p');
+        $formation->setParametre($key, array_filter($data, static fn ($v) => $v !== '' && $v !== null));
+        $em->flush();
+        $this->addFlash('success', sprintf('« %s » enregistré.', self::PARAM_SECTIONS[$key]['label']));
+
+        return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => $key]);
+    }
 
     #[Route('/formations/{id}/reset', name: 'formation_reset', methods: ['POST'])]
     public function reset(Formation $formation, EntityManagerInterface $em): Response
@@ -184,6 +233,6 @@ final class FormationController extends AbstractController
         $em->flush();
         $this->addFlash('info', 'Structure vidée.');
 
-        return $this->redirectToRoute('formation_editor', ['id' => $formation->getId()]);
+        return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);
     }
 }

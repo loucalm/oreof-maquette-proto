@@ -39,6 +39,15 @@ class Formation
     #[ORM\Column(nullable: true)]
     private ?int $ectsTotal = null;
 
+    /**
+     * Sections « Paramètre de la formation » (organisation, présentation…).
+     * Champs libres du prototype, une clé par section.
+     *
+     * @var array<string, array<string, mixed>>
+     */
+    #[ORM\Column(type: Types::JSON)]
+    private array $parametres = [];
+
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
@@ -133,6 +142,20 @@ class Formation
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    /** @return array<string, mixed> */
+    public function getParametre(string $section): array
+    {
+        return $this->parametres[$section] ?? [];
+    }
+
+    /** @param array<string, mixed> $data */
+    public function setParametre(string $section, array $data): self
+    {
+        $this->parametres[$section] = $data;
+
+        return $this;
     }
 
     /** @return Collection<int, Node> */

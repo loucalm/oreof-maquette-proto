@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Twig;
 
 use App\Controller\FormationController;
+use App\Entity\Formation;
 use App\Entity\Node;
 use App\Entity\NodeType;
 use App\Maquette\AttributeCatalog;
@@ -29,6 +30,7 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('node_path', $this->nodePath(...)),
             new TwigFunction('capability_labels', $this->capabilityLabels(...)),
             new TwigFunction('param_sections', static fn () => FormationController::PARAM_SECTIONS),
+            new TwigFunction('param_status', static fn (Formation $f, string $k) => FormationController::paramStatus($f, $k)),
         ];
     }
 

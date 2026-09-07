@@ -1,0 +1,130 @@
+{% import 'formation/param/_fields.html.twig' as fld %}
+<turbo-frame id="node-panel">
+<div class="p-6" data-controller="modal">
+    <div class="mb-3">
+        <h2 class="text-xl font-bold">Gestion de la formation</h2>
+        <div class="text-sm text-gray-400">{{ label }}</div>
+    </div>
+    <div class="text-sm text-gray-400 mb-4">{{ formation.name }} › {{ label }}</div>
+
+    <div class="rounded-xl border p-6 space-y-6" style="border-color:var(--c-border)">
+
+        {# ── Nombre de parcours ── #}
+        {{ fld.divider('Nombre de parcours') }}
+        <form method="post" action="{{ path('formation_settings', {id: formation.id}) }}" data-turbo-frame="_top">
+            <input type="hidden" name="name" value="{{ formation.name }}">
+            <input type="hidden" name="diplome" value="{{ formation.diplome }}">
+            <input type="hidden" name="domaine" value="{{ formation.domaine }}">
+            <input type="hidden" name="composante" value="{{ formation.composante }}">
+            {{ fld.label('La formation contient-elle des parcours ?', true, 'Indiquez si la formation comporte des parcours') }}
+            <div class="flex flex-wrap gap-8 mt-2 text-sm">
+                <label class="flex items-center gap-2">
+                    <input type="radio" name="multiParcours" value="1" {{ formation.multiParcours ? 'checked' }} onchange="this.form.requestSubmit()"> Oui (options)
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="radio" name="multiParcours" value="0" {{ not formation.multiParcours ? 'checked' }} onchange="this.form.requestSubmit()"> Non (mono-parcours)
+                </label>
+            </div>
+        </form>
+
+        {# ── Structure : nœuds racine ── #}
+        {{ fld.divider('Structure') }}
+        <div class="overflow-hidden rounded-lg border" style="border-color:var(--c-border)">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    <tr><th class="text-left px-4 py-2.5">Ordre</th><th class="text-left px-4 py-2.5">Type de nœud</th><th class="text-right px-4 py-2.5">Actions</th></tr>
+                </thead>
+                <tbody>
+                {% for view in roots %}
+                    {% set n = view.node %}
+                    <tr class="border-t" style="border-color:var(--c-border)">
+                        <td class="px-4 py-2.5 text-gray-400">{{ loop.index0 }}</td>
+                        <td class="px-4 py-2.5">
+                            <span class="type-badge">{{ n.type.icon }} [{{ n.type.label }}]</span>
+                            <span class="ml-1">{{ n.label ?: '—' }}</span>
+                        </td>
+                        <td class="px-4 py-2.5 text-right whitespace-nowrap">
+                            <a href="{{ path('formation_editor', {id: formation.id, focus: n.id}) }}" class="text-xs hover:underline">Éditer</a>
+                            <form method="post" action="{{ path('node_delete', {id: n.id}) }}" data-turbo-frame="_top" class="inline"
+                                  data-controller="confirm" data-confirm-message-value="Supprimer « {{ n.label ?: n.type.label }} » et sa descendance ?">
+                                <button class="ml-2 text-xs text-red-600 hover:underline">Suppr.</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="3" class="px-4 py-6 text-center text-gray-400">Aucun nœud racine.</td></tr>
+                {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="border-t" style="border-color:var(--c-border)">
+                        <td colspan="3" class="px-4 py-3" style="background:#f0fdf4">
+                            <div class="flex flex-wrap items-center gap-3 justify-center">
+                                {% if formation.multiParcours %}
+                                    <form method="post" action="{{ path('node_add', {id: formation.id}) }}" data-turbo-frame="_top">
+                                        <input type="hidden" name="typeKey" value="parcours">
+                                        <button class="text-sm font-medium text-green-700 hover:underline">＋ Ajouter un parcours</button>
+                                    </form>
+                                    <span class="text-gray-300">·</span>
+                                {% endif %}
+                                <button type="button" data-action="modal#open" class="text-sm font-medium text-green-700 hover:underline">＋ Ajouter un nœud</button>
+                            </div>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <p class="text-xs text-gray-400">
+            Les types de nœuds sont gérés par les administrateurs —
+            <a href="{{ path('node_type_index') }}" target="_blank" class="underline">voir / éditer les types</a>.
+        </p>
+
+        {# ── Charger un template ── #}
+        {{ fld.divider('Charger un template') }}
+        <form method="post" action="{{ path('formation_apply_template', {id: formation.id}) }}" data-turbo-frame="_top"
+              data-controller="confirm" data-confirm-message-value="⚠️ Charger ce template ÉCRASE la structure actuelle. Continuer ?"
+              class="flex flex-wrap items-end gap-3">
+            <div class="flex-1 min-w-[220px]">
+                <select name="template" class="fld">
+                    {% for tpl in templates %}<option value="{{ tpl.key }}">{{ tpl.label }}</option>{% endfor %}
+                </select>
+            </div>
+            <button class="rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">Charger</button>
+        </form>
+        <p class="text-xs text-gray-400">
+            Templates définis par les administrateurs —
+            <a href="{{ path('template_index') }}" target="_blank" class="underline">liste des templates</a>.
+        </p>
+
+        {# ── enregistrer / vider ── #}
+        <div class="flex flex-wrap items-center gap-3 pt-2 border-t" style="border-color:var(--c-border)">
+            <form method="post" action="{{ path('template_from_formation', {id: formation.id}) }}" data-turbo-frame="_top" class="flex items-end gap-2">
+                <input name="label" placeholder="Nom du template" required class="fld w-52">
+                <button class="rounded-lg border px-3 py-2.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">💾 Enregistrer comme template</button>
+            </form>
+            <form method="post" action="{{ path('formation_reset', {id: formation.id}) }}" data-turbo-frame="_top" class="ml-auto"
+                  data-controller="confirm" data-confirm-message-value="Vider toute la structure ?">
+                <button class="rounded-lg border px-3 py-2.5 text-sm text-red-600 hover:bg-red-50" style="border-color:var(--c-border)">🗑 Vider la structure</button>
+            </form>
+        </div>
+    </div>
+
+    {# ── modale « Ajouter un nœud » ── #}
+    <dialog data-modal-target="dialog" class="w-[min(420px,92vw)] rounded-2xl border p-0 backdrop:bg-black/40" style="border-color:var(--c-border)">
+        <form method="post" action="{{ path('node_add', {id: formation.id}) }}" data-turbo-frame="_top" class="p-6 space-y-4">
+            <h3 class="text-lg font-bold">Ajouter un nœud</h3>
+            <div>
+                {{ fld.label('Nœud', true, 'Peut être changé plus tard') }}
+                <select name="typeKey" required class="fld mt-1">
+                    <option value="">-Choisir-</option>
+                    {% for t in types %}<option value="{{ t.key }}">{{ t.icon }} {{ t.label }}</option>{% endfor %}
+                </select>
+            </div>
+            <input name="label" placeholder="Libellé (optionnel)" class="fld">
+            <div class="flex items-center justify-end gap-2 pt-1">
+                <button type="button" data-action="modal#close" class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">Annuler</button>
+                <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--st-ok)">＋ Ajouter</button>
+            </div>
+        </form>
+    </dialog>
+</div>
+</turbo-frame>

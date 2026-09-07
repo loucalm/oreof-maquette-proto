@@ -1,0 +1,102 @@
+{% import 'formation/param/_fields.html.twig' as fld %}
+<turbo-frame id="node-panel">
+<div class="p-6">
+    <div class="mb-3">
+        <h2 class="text-xl font-bold">Gestion de la formation</h2>
+        <div class="text-sm text-gray-400">{{ label }}</div>
+    </div>
+    <div class="text-sm text-gray-400 mb-4">{{ formation.name }} › {{ label }}</div>
+
+    <form method="post" action="{{ path('formation_param_save', {id: formation.id, key: key}) }}" data-turbo-frame="_top"
+          class="rounded-xl border p-6 space-y-5" style="border-color:var(--c-border)">
+
+        {{ fld.divider('Informations globale') }}
+
+        <div>
+            {{ fld.label('Nom de la formation', true, 'Nommer votre formation') }}
+            <input name="name" value="{{ formation.name }}" class="fld mt-1">
+        </div>
+        <div class="grid gap-5 md:grid-cols-2">
+            <div>
+                {{ fld.label('Type de diplôme', true, 'Licence, Master, BUT, DU, Ingénieur, etc.') }}
+                <select name="diplome" class="fld mt-1">
+                    {% for d in ['Licence', 'Licence professionnelle', 'BUT', 'Master', 'DU', 'Ingénieur', 'DAEU'] %}
+                        <option value="{{ d }}" {{ formation.diplome == d ? 'selected' }}>{{ d }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                {{ fld.label('Domaine de formation', true, 'Domaine auquel appartient votre formation') }}
+                <select name="domaine" class="fld mt-1">
+                    <option value="">-Choisir-</option>
+                    {% for d in ['Sciences, technologies, santé', 'Droit, économie, gestion', 'Sciences humaines et sociales', 'Arts, lettres, langues'] %}
+                        <option value="{{ d }}" {{ formation.domaine == d ? 'selected' }}>{{ d }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div>
+            {{ fld.label('Composante porteuse de la formation', true, 'Indiquer la composante porteuse du projet, qui aura en charge le dépôt de la demande de création de la formation') }}
+            <input name="composante" value="{{ formation.composante }}" class="fld mt-1">
+        </div>
+        <div>
+            {{ fld.label('Contacts de la formation', false) }}
+            {{ fld.textarea('contacts', data.contacts ?? '') }}
+        </div>
+
+        {{ fld.divider('Informations spécifiques') }}
+
+        <div>
+            {{ fld.label('Mention / spécialité', false) }}
+            {{ fld.select('mention', data.mention ?? '', ['Informatique', 'Mathématiques', 'Physique', 'MIAGE']) }}
+            <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">＋ Ajouter une autre mention/spécialité</span></div>
+        </div>
+        <div class="grid gap-5 md:grid-cols-2">
+            <div>
+                {{ fld.label("Niveau d'entrée en formation", true) }}
+                {{ fld.select('niveauEntree', data.niveauEntree ?? '', ['Baccalauréat', 'Bac+1', 'Bac+2', 'Bac+3', 'Bac+4']) }}
+            </div>
+            <div>
+                {{ fld.label('Niveau de sortie de la formation', true) }}
+                {{ fld.select('niveauSortie', data.niveauSortie ?? '', ['Bac+2', 'Bac+3', 'Bac+5']) }}
+            </div>
+        </div>
+        <div class="grid gap-5 md:grid-cols-2">
+            <div>
+                {{ fld.label('La formation est-elle inscrite au RNCP ?', true) }}
+                <div class="flex gap-6 mt-2 text-sm">
+                    <label class="flex items-center gap-2"><input type="radio" name="p[rncp]" value="oui" {{ (data.rncp ?? '') == 'oui' ? 'checked' }}> Oui</label>
+                    <label class="flex items-center gap-2"><input type="radio" name="p[rncp]" value="non" {{ (data.rncp ?? '') == 'non' ? 'checked' }}> Non</label>
+                </div>
+            </div>
+            <div>
+                {{ fld.label('Code RNCP', false, 'Indiquez le code RNCP (cf. www.francecompetences.fr).') }}
+                {{ fld.text('codeRncp', data.codeRncp ?? '', 'Code RNCP') }}
+            </div>
+        </div>
+        <div>
+            {{ fld.label('Code Apogée de la mention', false, 'Code de la mention dans Apogée') }}
+            {{ fld.text('codeApogee', data.codeApogee ?? '', 'Code Apogée') }}
+        </div>
+
+        {{ fld.divider('Responsable(s)') }}
+
+        <div class="grid gap-5 md:grid-cols-2">
+            <div>
+                {{ fld.label('Responsable de la mention', true, 'Responsable principale de la mention') }}
+                {{ fld.select('respMention', data.respMention ?? '', ['A. Martin', 'B. Dupont', 'C. Bernard'], 'Choisir dans la liste ou "+ nouveau"') }}
+                <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">＋ Créer nouveau</span></div>
+            </div>
+            <div>
+                {{ fld.label('Co-responsable de la mention', false, 'Co-responsable de la mention') }}
+                {{ fld.select('coRespMention', data.coRespMention ?? '', ['A. Martin', 'B. Dupont', 'C. Bernard'], 'Choisir dans la liste ou "+ nouveau"') }}
+                <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">＋ Créer nouveau</span></div>
+            </div>
+        </div>
+
+        <div class="pt-2 border-t" style="border-color:var(--c-border)">
+            <button class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">Enregistrer</button>
+        </div>
+    </form>
+</div>
+</turbo-frame>

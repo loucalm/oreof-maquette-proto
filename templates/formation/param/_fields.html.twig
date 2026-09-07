@@ -1,0 +1,48 @@
+{# Macros de champ « façon ORéOF » pour les sections Paramètre de la formation. #}
+
+{% macro divider(title) %}
+    <div class="flex items-center gap-3 text-gray-400 my-6 first:mt-0">
+        <div class="h-px flex-1 bg-gray-200"></div>
+        <span class="text-sm">{{ title }}</span>
+        <div class="h-px flex-1 bg-gray-200"></div>
+    </div>
+{% endmacro %}
+
+{% macro label(text, required, help) %}
+    <div class="flex items-start justify-between gap-3">
+        <span class="fld-label">{{ text }}</span>
+        {% if required %}<span class="text-[11px] font-semibold text-red-500 uppercase tracking-wide shrink-0">Champs requis</span>{% endif %}
+    </div>
+    {% if help %}<div class="fld-help">ℹ {{ help }}</div>{% endif %}
+{% endmacro %}
+
+{% macro text(name, value, placeholder, prefix) %}
+    <input name="{{ prefix|default('p') }}[{{ name }}]" value="{{ value }}" placeholder="{{ placeholder|default('') }}" class="fld mt-1">
+{% endmacro %}
+
+{# options : liste simple de libellés (valeur = libellé). #}
+{% macro select(name, value, options, placeholder, prefix) %}
+    <select name="{{ prefix|default('p') }}[{{ name }}]" class="fld mt-1">
+        <option value="">{{ placeholder|default('-Choisir-') }}</option>
+        {% for opt in options %}
+            <option value="{{ opt }}" {{ value == opt ? 'selected' }}>{{ opt }}</option>
+        {% endfor %}
+    </select>
+{% endmacro %}
+
+{% macro textarea(name, value, help, prefix) %}
+    <div class="mt-1 rounded-lg border overflow-hidden" style="border-color:var(--c-border)">
+        <div class="flex items-center gap-1 border-b bg-gray-50 px-2 py-1.5" style="border-color:var(--c-border)">
+            {% for b in ['tx', '🔗', '<>', '≣', '🖼'] %}
+                <span class="grid h-7 min-w-7 place-items-center rounded border bg-white px-1.5 text-xs text-gray-500 cursor-default" style="border-color:var(--c-border)">{{ b }}</span>
+            {% endfor %}
+            <span class="ml-auto flex gap-1">
+                <span class="grid h-7 w-7 place-items-center rounded border bg-white text-gray-500 cursor-default" style="border-color:var(--c-border)">↶</span>
+                <span class="grid h-7 w-7 place-items-center rounded border bg-white text-gray-500 cursor-default" style="border-color:var(--c-border)">↷</span>
+            </span>
+        </div>
+        <textarea name="{{ prefix|default('p') }}[{{ name }}]" rows="4"
+                  class="w-full resize-y px-3 py-2 text-sm outline-none" placeholder="…">{{ value }}</textarea>
+    </div>
+    {% if help %}<div class="fld-help">ℹ {{ help }}</div>{% endif %}
+{% endmacro %}

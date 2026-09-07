@@ -2,6 +2,8 @@
 {% block title %}{{ formation.name }} · éditeur{% endblock %}
 
 {% set focus = app.request.query.get('focus') %}
+{% set param = app.request.query.get('param') %}
+{% set frameSrc = param ? path('formation_param', {id: formation.id, key: param}) : (focus ? path('node_panel', {id: focus}) : null) %}
 
 {% block body %}
 
@@ -71,13 +73,14 @@
     <h2 class="text-2xl font-extrabold tracking-tight">ÉDITEUR DE FORMATION</h2>
     <p class="text-sm text-gray-500 mb-5">Construisez la structure de la formation nœud par nœud.</p>
 
-    <div class="grid gap-5 lg:grid-cols-[380px_1fr] items-start">
+    {# hauteur fixe : chaque colonne défile en interne, pas de croissance infinie #}
+    <div class="grid gap-5 lg:grid-cols-[380px_1fr] lg:h-[calc(100vh-9rem)] min-h-[560px]">
 
         {# ─── panneau structure ─── #}
-        <div class="rounded-xl border" style="border-color:var(--c-border)"
+        <div class="flex flex-col rounded-xl border overflow-hidden" style="border-color:var(--c-border)"
              data-controller="tree" data-tree-move-url-value="{{ path('node_move', {id: '__ID__'}) }}">
 
-            <div class="px-4 pt-4 pb-3 border-b" style="border-color:var(--c-border)">
+            <div class="px-4 pt-4 pb-3 border-b shrink-0" style="border-color:var(--c-border)">
                 <div class="flex items-center gap-2">
                     <span class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">Structure de la formation</span>
                     <span class="pill" style="background:#fef3c7;color:#b45309">{{ progress == 100 ? 'Complet' : 'Incomplet' }}</span>
@@ -92,71 +95,39 @@
                 </div>
             </div>
 
-            {# paramètre de la formation (fictif) #}
-            <div class="px-4 py-3 border-b" style="border-color:var(--c-border)">
-                <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Paramètre de la formation</div>
-                {% for k, s in param_sections() %}
-                    <a href="{{ path('formation_param', {id: formation.id, key: k}) }}" data-turbo-frame="node-panel"
-                       class="flex items-center gap-2 py-1 text-sm hover:underline">
-                        <span class="status-dot" data-status="{{ s.status }}"></span>{{ s.label }}
-                    </a>
-                {% endfor %}
-            </div>
-
-            {# arbre draggable #}
-            <div class="p-2">
-                {% if roots is empty %}
-                    <p class="text-sm px-2 py-8 text-center text-gray-400">Aucun nœud. Ajoutez-en un ou chargez un template ci-dessous.</p>
-                {% else %}
-                    {{ include('formation/_tree.html.twig', {views: roots, parentId: null, focus: focus}) }}
-                {% endif %}
-            </div>
-
-            {# barre d'ajout / templates #}
-            <div class="px-3 pb-3 pt-1 border-t space-y-2" style="border-color:var(--c-border)">
-                <details class="group">
-                    <summary class="list-none cursor-pointer rounded-lg border px-3 py-2 text-sm font-medium hover:bg-gray-50 flex items-center justify-between" style="border-color:var(--c-border)">
-                        <span>＋ Ajouter un nœud racine</span><span class="text-gray-400 group-open:rotate-180 transition">⌄</span>
-                    </summary>
-                    <form method="post" action="{{ path('node_add', {id: formation.id}) }}" class="mt-2 flex gap-2">
-                        <select name="typeKey" class="flex-1 rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
-                            {% for t in types %}<option value="{{ t.key }}">{{ t.icon }} {{ t.label }}</option>{% endfor %}
-                        </select>
-                        <input name="label" placeholder="Libellé" class="w-28 rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
-                        <button class="rounded-md px-3 py-1.5 text-sm font-medium text-white" style="background:var(--c-primary)">OK</button>
-                    </form>
-                </details>
-                <div class="flex gap-2">
-                    <details class="group flex-1">
-                        <summary class="list-none cursor-pointer rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 text-center" style="border-color:var(--c-border)">⬇ Template</summary>
-                        <form method="post" action="{{ path('formation_apply_template', {id: formation.id}) }}"
-                              data-controller="confirm" data-confirm-message-value="⚠️ Charger ce template ÉCRASE la structure actuelle. Continuer ?"
-                              class="mt-2 space-y-2">
-                            <select name="template" class="w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
-                                {% for tpl in templates %}<option value="{{ tpl.key }}">{{ tpl.label }}</option>{% endfor %}
-                            </select>
-                            <button class="w-full rounded-md px-3 py-1.5 text-sm font-medium text-white" style="background:var(--c-primary)">Charger (écrase)</button>
-                        </form>
-                    </details>
-                    <details class="group flex-1">
-                        <summary class="list-none cursor-pointer rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 text-center" style="border-color:var(--c-border)">💾 Sauver</summary>
-                        <form method="post" action="{{ path('template_from_formation', {id: formation.id}) }}" class="mt-2 space-y-2">
-                            <input name="label" placeholder="Nom du template" required class="w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
-                            <button class="w-full rounded-md px-3 py-1.5 text-sm font-medium text-white" style="background:var(--c-primary)">Créer le template</button>
-                        </form>
-                    </details>
-                    <form method="post" action="{{ path('formation_reset', {id: formation.id}) }}"
-                          data-controller="confirm" data-confirm-message-value="Vider toute la structure ?">
-                        <button class="rounded-lg border px-3 py-2 text-sm text-red-600 hover:bg-red-50" style="border-color:var(--c-border)" title="Vider">🗑</button>
-                    </form>
+            {# zone défilante : paramètres + arbre #}
+            <div class="flex-1 overflow-y-auto">
+                <div class="px-4 py-3 border-b" style="border-color:var(--c-border)">
+                    <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Paramètre de la formation</div>
+                    {% for k, s in param_sections() %}
+                        <a href="{{ path('formation_param', {id: formation.id, key: k}) }}" data-turbo-frame="node-panel"
+                           class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ param == k ? 'is-active' }}"
+                           style="{{ param == k ? 'background:#eef1f4' }}">
+                            <span class="status-dot" data-status="{{ param_status(formation, k) }}"></span>{{ s.label }}
+                        </a>
+                    {% endfor %}
                 </div>
+
+                <div class="p-2">
+                    {% if roots is empty %}
+                        <p class="text-sm px-2 py-8 text-center text-gray-400">
+                            Rendez-vous dans <em>Configuration de la structure</em> pour paramétrer des nœuds.
+                        </p>
+                    {% else %}
+                        {{ include('formation/_tree.html.twig', {views: roots, parentId: null, focus: focus}) }}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="px-4 py-3 border-t text-xs text-gray-400 shrink-0" style="border-color:var(--c-border)">
+                {{ roots is empty ? 'Aucun enfant de [Formation]' : (roots|length ~ ' nœud(s) racine') }}
             </div>
         </div>
 
-        {# ─── panneau d'édition ─── #}
-        <turbo-frame id="node-panel" class="block rounded-xl border bg-white min-h-[420px]" style="border-color:var(--c-border)"
-                     {% if focus %}src="{{ path('node_panel', {id: focus}) }}"{% endif %}>
-            {% if not focus %}
+        {# ─── panneau d'édition (défile en interne) ─── #}
+        <turbo-frame id="node-panel" class="block rounded-xl border bg-white overflow-y-auto" style="border-color:var(--c-border)"
+                     {% if frameSrc %}src="{{ frameSrc }}"{% endif %}>
+            {% if not frameSrc %}
                 <div class="grid h-full place-items-center p-16 text-sm text-gray-400">
                     Sélectionnez une section ou un nœud pour le modifier
                 </div>

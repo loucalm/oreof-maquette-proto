@@ -1,0 +1,44 @@
+{% import 'formation/param/_fields.html.twig' as fld %}
+<turbo-frame id="node-panel">
+<div class="p-6">
+    <div class="mb-3">
+        <h2 class="text-xl font-bold">Gestion de la formation</h2>
+        <div class="text-sm text-gray-400">{{ label }}</div>
+    </div>
+    <div class="text-sm text-gray-400 mb-4">{{ formation.name }} › {{ label }}</div>
+
+    <form method="post" action="{{ path('formation_param_save', {id: formation.id, key: key}) }}" data-turbo-frame="_top"
+          class="rounded-xl border p-6 space-y-5" style="border-color:var(--c-border)">
+
+        {{ fld.divider('Informations de la formation') }}
+
+        <div>
+            {{ fld.label('Objectif de la formation', true) }}
+            {{ fld.textarea('objectif', data.objectif ?? '', 'Expliquez brièvement les objectifs de la formation') }}
+        </div>
+        <div>
+            {{ fld.label('Résultats attendus de la formation', true) }}
+            {{ fld.textarea('resultats', data.resultats ?? '', 'Expliquez brièvement les résultats attendus de la formation') }}
+        </div>
+        <div>
+            {{ fld.label('Contenu de la formation', true) }}
+            {{ fld.textarea('contenu', data.contenu ?? '', 'Expliquez brièvement le contenu de la formation') }}
+        </div>
+
+        {{ fld.divider('Rythme de formation') }}
+
+        <div>
+            {{ fld.label('Rythme de la formation', false, 'Choisissez un rythme de formation ou complétez le champ ci-dessous') }}
+            {{ fld.select('rythme', data.rythme ?? '', ['Temps plein', 'Alternance', 'Temps partiel', 'À distance']) }}
+        </div>
+        <div>
+            {{ fld.label('Si besoin, précisez le rythme de formation', false) }}
+            {{ fld.textarea('rythmePrecision', data.rythmePrecision ?? '') }}
+        </div>
+
+        <div class="pt-2 border-t" style="border-color:var(--c-border)">
+            <button class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">Enregistrer</button>
+        </div>
+    </form>
+</div>
+</turbo-frame>
