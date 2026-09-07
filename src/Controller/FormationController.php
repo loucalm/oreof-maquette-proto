@@ -42,13 +42,51 @@ final class FormationController extends AbstractController
 
         $formation = (new Formation($name))
             ->setDiplome(trim((string) $request->request->get('diplome')) ?: null)
+            ->setDomaine(trim((string) $request->request->get('domaine')) ?: null)
             ->setComposante(trim((string) $request->request->get('composante')) ?: null)
             ->setMultiParcours($request->request->getBoolean('multiParcours'));
 
         $em->persist($formation);
         $em->flush();
+        $this->addFlash('success', sprintf('Formation « %s » créée. Complétez sa structure.', $name));
 
         return $this->redirectToRoute('formation_editor', ['id' => $formation->getId()]);
+    }
+
+    #[Route('/formations/{id}/voir', name: 'formation_view', methods: ['GET'])]
+    public function view(Formation $formation, MaquetteBuilder $builder): Response
+    {
+        $roots = $builder->build($formation);
+
+        return $this->render('formation/view.html.twig', [
+            'formation' => $formation,
+            'roots' => $roots,
+            'progress' => $builder->progress($roots),
+            'catalog' => \App\Maquette\AttributeCatalog::all(),
+        ]);
+    }
+
+    #[Route('/formations/{id}/verifier', name: 'formation_check', methods: ['GET'])]
+    public function check(Formation $formation, MaquetteBuilder $builder): Response
+    {
+        $roots = $builder->build($formation);
+
+        return $this->render('formation/check.html.twig', [
+            'formation' => $formation,
+            'issues' => $builder->collectIssues($roots),
+            'progress' => $builder->progress($roots),
+        ]);
+    }
+
+    #[Route('/formations/{id}/supprimer', name: 'formation_delete', methods: ['POST'])]
+    public function delete(Formation $formation, EntityManagerInterface $em): Response
+    {
+        $name = $formation->getName();
+        $em->remove($formation);
+        $em->flush();
+        $this->addFlash('info', sprintf('Formation « %s » supprimée.', $name));
+
+        return $this->redirectToRoute('formation_index');
     }
 
     #[Route('/formations/{id}', name: 'formation_editor', methods: ['GET'])]
@@ -75,6 +113,7 @@ final class FormationController extends AbstractController
         $formation
             ->setName(trim((string) $request->request->get('name')) ?: $formation->getName())
             ->setDiplome(trim((string) $request->request->get('diplome')) ?: null)
+            ->setDomaine(trim((string) $request->request->get('domaine')) ?: null)
             ->setComposante(trim((string) $request->request->get('composante')) ?: null)
             ->setMultiParcours($request->request->getBoolean('multiParcours'))
             ->setEctsTotal($request->request->get('ectsTotal') !== null && $request->request->get('ectsTotal') !== ''

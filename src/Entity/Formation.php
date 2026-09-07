@@ -26,6 +26,9 @@ class Formation
     private ?string $diplome = null;
 
     #[ORM\Column(length: 160, nullable: true)]
+    private ?string $domaine = null;
+
+    #[ORM\Column(length: 160, nullable: true)]
     private ?string $composante = null;
 
     /** « La formation contient-elle des parcours ? » */
@@ -75,6 +78,18 @@ class Formation
     public function setDiplome(?string $diplome): self
     {
         $this->diplome = $diplome;
+
+        return $this;
+    }
+
+    public function getDomaine(): ?string
+    {
+        return $this->domaine;
+    }
+
+    public function setDomaine(?string $domaine): self
+    {
+        $this->domaine = $domaine;
 
         return $this;
     }

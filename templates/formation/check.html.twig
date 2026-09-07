@@ -1,0 +1,47 @@
+{% extends 'base.html.twig' %}
+{% block title %}Vérifier la saisie · {{ formation.name }}{% endblock %}
+
+{% block body %}
+<div class="rounded-2xl border bg-white px-7 py-6 mb-4" style="border-color:var(--c-border)">
+    <div class="flex items-start justify-between">
+        <div>
+            <div class="text-xs text-gray-400">
+                <a href="{{ path('formation_index') }}" class="hover:underline">Liste des formation</a> › {{ formation.name }} › Vérifier la saisie
+            </div>
+            <h1 class="text-2xl font-extrabold tracking-tight mt-1">Vérifier la saisie</h1>
+            <p class="text-sm text-gray-500">{{ formation.name }} — {{ progress }}% complété</p>
+        </div>
+        <a href="{{ path('formation_editor', {id: formation.id}) }}" class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">✎ Modifier la structure</a>
+    </div>
+</div>
+
+<div class="rounded-2xl border bg-white px-7 py-6" style="border-color:var(--c-border)">
+    {% if issues is empty %}
+        <div class="rounded-xl border p-6 text-sm" style="border-color:#bbf7d0;background:#f0fdf4">
+            <span class="font-semibold text-green-800">✔ Aucune anomalie</span>
+            <p class="text-green-700 mt-1">Tous les champs requis sont renseignés et chaque conteneur a au moins un enfant.</p>
+        </div>
+    {% else %}
+        <p class="text-sm text-gray-500 mb-4">{{ issues|length }} nœud(s) à compléter :</p>
+        <ul class="space-y-2">
+            {% for issue in issues %}
+                {% set n = issue.node %}
+                <li class="flex items-start justify-between gap-4 rounded-lg border p-3" style="border-color:var(--c-border)">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="status-dot" data-status="empty"></span>
+                            <span class="type-badge">{{ n.type.icon }} [{{ n.type.label }}]</span>
+                            <span class="text-sm font-medium">{{ n.label ?: '(sans libellé)' }}</span>
+                        </div>
+                        <div class="ml-6 mt-1 text-xs text-red-600">
+                            Manquant : {{ issue.missing|join(', ') }}
+                        </div>
+                    </div>
+                    <a href="{{ path('formation_editor', {id: formation.id, focus: n.id}) }}"
+                       class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">Corriger →</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</div>
+{% endblock %}

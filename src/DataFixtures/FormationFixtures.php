@@ -32,6 +32,7 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
 
         $formation = (new Formation('Licence Informatique (démo)'))
             ->setDiplome('Licence')
+            ->setDomaine('Sciences, technologies, santé')
             ->setComposante('UFR Sciences Exactes et Naturelles')
             ->setMultiParcours(false)
             ->setEctsTotal(180);

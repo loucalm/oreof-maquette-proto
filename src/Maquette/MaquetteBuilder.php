@@ -136,6 +136,57 @@ final class MaquetteBuilder
     }
 
     /**
+     * Liste à plat des anomalies de saisie (pour « Vérifier la saisie »).
+     *
+     * @param list<NodeView> $roots
+     *
+     * @return list<array{node: Node, missing: list<string>}>
+     */
+    public function collectIssues(array $roots): array
+    {
+        $issues = [];
+        $walk = function (array $views) use (&$walk, &$issues): void {
+            foreach ($views as $view) {
+                $missing = $this->missingFields($view->node);
+                if ($view->node->getType()->isLeaf() === false && $view->children === []) {
+                    $missing[] = 'aucun enfant';
+                }
+                if ($missing !== []) {
+                    $issues[] = ['node' => $view->node, 'missing' => $missing];
+                }
+                $walk($view->children);
+            }
+        };
+        $walk($roots);
+
+        return $issues;
+    }
+
+    /** @return list<string> intitulés des champs requis manquants */
+    private function missingFields(Node $node): array
+    {
+        $missing = [];
+        if (trim($node->getLabel()) === '') {
+            $missing[] = 'libellé';
+        }
+        $caps = $node->effectiveCapabilities();
+        foreach (AttributeCatalog::all() as $key => $def) {
+            if (!($caps[$key] ?? false) || !($def['required'] ?? false)) {
+                continue;
+            }
+            $value = $node->getAttribute($key);
+            $empty = $key === 'hours'
+                ? AttributeCatalog::sumHours($value) <= 0
+                : ($value === null || $value === '' || $value === []);
+            if ($empty) {
+                $missing[] = mb_strtolower($def['label']);
+            }
+        }
+
+        return $missing;
+    }
+
+    /**
      * Progression globale d'une formation : % de nœuds au statut OK.
      *
      * @param list<NodeView> $roots
