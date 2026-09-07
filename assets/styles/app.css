@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
-/* ─── Prototype maquette : petit système visuel (clair uniquement) ─── */
+/* ─── Prototype maquette — aux couleurs ORéOF (clair uniquement) ─── */
 :root {
-    --c-bg: #f6f7f9;
+    --c-bg: #f4f5f7;
     --c-surface: #ffffff;
     --c-border: #e3e6ea;
     --c-text: #1b1f24;
@@ -10,9 +10,9 @@
     --c-primary: #4f46e5;
     --c-primary-soft: #eef2ff;
 
-    --st-empty: #dc2626;      /* rien saisi */
-    --st-incomplete: #d97706; /* partiel */
-    --st-ok: #16a34a;         /* ok */
+    --st-empty: #dc2626;
+    --st-incomplete: #f59e0b;
+    --st-ok: #16a34a;
 }
 
 body {
@@ -21,38 +21,74 @@ body {
     font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-/* Pastille de statut */
-.status-dot {
-    width: 9px; height: 9px; border-radius: 9999px; flex: 0 0 auto;
-    background: var(--c-muted);
+/* éléments de chrome fictifs (non fonctionnels) */
+.fake-link { color: var(--c-muted); }
+.fake-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1px solid var(--c-border); border-radius: 8px;
+    padding: 8px 12px; font-size: 13px; color: #4b5563; background: #fff;
+    cursor: default; white-space: nowrap;
 }
+
+/* ─── champs de formulaire (style maquette) ─── */
+.fld {
+    width: 100%; border: 1px solid var(--c-border); border-radius: 10px;
+    padding: 10px 12px; font-size: 14px; background: #fff;
+}
+.fld:focus { outline: 2px solid #c7d2fe; outline-offset: 0; border-color: #a5b4fc; }
+.fld-label { font-size: 12px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: #374151; }
+.fld-help { font-size: 12px; color: var(--c-muted); margin-top: 2px; }
+
+/* ─── onglets pills ─── */
+.tab-pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    border: 1px solid var(--c-border); border-radius: 9999px;
+    padding: 5px 14px; font-size: 13px; background: #fff; cursor: pointer;
+}
+.tab-pill.tab-active { border-color: var(--c-primary); color: var(--c-primary); font-weight: 600; background: var(--c-primary-soft); }
+
+/* ─── pastille de statut ─── */
+.status-dot { width: 9px; height: 9px; border-radius: 9999px; flex: 0 0 auto; background: var(--c-muted); }
 .status-dot[data-status="empty"]      { background: var(--st-empty); }
 .status-dot[data-status="incomplete"] { background: var(--st-incomplete); }
 .status-dot[data-status="ok"]         { background: var(--st-ok); }
 
-/* Arbre */
+.pill { font-size: 11px; padding: 2px 8px; border-radius: 9999px; background: #eef1f4; color: #4b5563; }
+
+/* ─── arbre ─── */
+.tree-list { list-style: none; margin: 0; padding: 0; }
+.tree-children { margin-left: 18px; border-left: 1px solid #eceef1; padding-left: 4px; }
+.tree-list li.collapsed > .tree-children { display: none; }
+
 .tree-row {
-    display: flex; align-items: center; gap: 8px;
-    padding: 6px 8px; border-radius: 8px; cursor: pointer;
-    border: 1px solid transparent;
+    display: flex; align-items: center; gap: 7px;
+    padding: 7px 8px; border-radius: 8px;
+    border-left: 3px solid transparent;
 }
 .tree-row:hover { background: #f0f1f3; }
-.tree-row.is-active { background: var(--c-primary-soft); border-color: #c7d2fe; }
-.tree-children { margin-left: 14px; border-left: 1px dashed var(--c-border); padding-left: 6px; }
+.tree-row.is-active { background: #eef1f4; border-left-color: var(--c-primary); }
 
-.drag-handle { cursor: grab; color: #b8bec7; touch-action: none; }
-.sortable-ghost { opacity: .4; }
-.sortable-drag  { background: var(--c-surface); }
-.drop-allowed { outline: 2px dashed #a5b4fc; outline-offset: 2px; border-radius: 8px; }
+.drag-handle { cursor: grab; color: #c2c7d0; font-size: 12px; letter-spacing: -2px; touch-action: none; user-select: none; }
+.sortable-ghost { opacity: .35; }
+.sortable-drag  { background: var(--c-surface); box-shadow: 0 8px 24px rgba(0,0,0,.12); }
 
 .type-badge {
-    font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 6px;
+    font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px;
     background: #eef1f4; color: #4b5563; white-space: nowrap;
 }
-
-.pill {
-    font-size: 11px; padding: 2px 8px; border-radius: 9999px;
-    background: #eef1f4; color: #4b5563;
+.tree-label {
+    font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    max-width: 150px;
 }
-
-.tab-btn.tab-active { border-color: var(--c-primary); font-weight: 600; color: var(--c-primary); }
+.tree-label:hover { text-decoration: underline; }
+.tree-ects { font-size: 11px; margin-left: auto; }
+.tree-chevron {
+    margin-left: auto; width: 18px; height: 18px; display: grid; place-items: center;
+    color: #9aa1ac; font-size: 13px; border-radius: 6px; background: none; border: 0; cursor: pointer;
+    transition: transform .15s;
+}
+.tree-chevron:hover { background: #e6e8eb; }
+li:not(.collapsed) > .tree-row > .tree-chevron { transform: rotate(90deg); }
+.tree-ects + .tree-chevron { margin-left: 6px; }
+.tree-chevron-spacer { width: 18px; margin-left: auto; flex: 0 0 auto; }
+.tree-ects + .tree-chevron-spacer { margin-left: 6px; }

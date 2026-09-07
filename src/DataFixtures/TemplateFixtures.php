@@ -70,20 +70,6 @@ final class TemplateFixtures extends Fixture implements DependentFixtureInterfac
             $annee('BUT 1', 'Semestre 1', 'Semestre 2'),
             $annee('BUT 2', 'Semestre 3', 'Semestre 4'),
             $annee('BUT 3', 'Semestre 5', 'Semestre 6'),
-            [
-                'type' => 'bcc', 'label' => 'Référentiel de compétences',
-                'children' => [
-                    ['type' => 'bloc_competences', 'label' => 'Compétence 1', 'children' => [
-                        ['type' => 'competence', 'label' => 'Niveau 1'],
-                        ['type' => 'competence', 'label' => 'Niveau 2'],
-                        ['type' => 'competence', 'label' => 'Niveau 3'],
-                    ]],
-                    ['type' => 'bloc_competences', 'label' => 'Compétence 2', 'children' => [
-                        ['type' => 'competence', 'label' => 'Niveau 1'],
-                        ['type' => 'competence', 'label' => 'Niveau 2'],
-                    ]],
-                ],
-            ],
         ];
     }
 

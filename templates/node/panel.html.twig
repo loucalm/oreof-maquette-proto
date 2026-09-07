@@ -1,191 +1,206 @@
-{# Panneau d'édition d'un nœud — rendu dans <turbo-frame id="node-panel">. #}
+{# Panneau d'édition d'un nœud — façon maquette Figma. Rendu dans <turbo-frame id="node-panel">. #}
 {% import _self as ui %}
 {% set caps = node.effectiveCapabilities() %}
 {% set formation = node.formation %}
 {% set childTypes = types_allowed_for(node) %}
+{% set T = node.type.label %}
+
+{% set hasHours = caps.hours ?? false %}
+{% set hasMccc = caps.mccc ?? false %}
 
 <turbo-frame id="node-panel">
-<div class="space-y-4">
+<div class="p-6 space-y-5" data-controller="tabs">
+
+    <div>
+        <h2 class="text-xl font-bold">Gestion de la structure</h2>
+        <div class="text-sm text-gray-400">{{ T }}</div>
+    </div>
 
     {# breadcrumb #}
-    <div class="text-xs" style="color:var(--c-muted)">
-        {% set path = node_path(node) %}
-        {% for p in path %}{{ p.displayLabel }}{% if not loop.last %} › {% endif %}{% endfor %}
+    <div class="text-sm text-gray-400">
+        {{ formation.name }}
+        {%- for p in node_path(node) %} › {{ p.label ?: p.type.label }}{% endfor -%}
     </div>
 
-    <div class="flex items-start justify-between gap-3">
-        <div>
-            <h2 class="text-lg font-bold">{{ node.type.icon }} {{ node.displayLabel }}</h2>
-            <span class="type-badge">{{ node.type.label }}</span>
-            {% if node.mutualized %}<span class="pill" style="background:#dcfce7;color:#166534">mutualisé</span>{% endif %}
-            {% if node.mutualizedFrom %}<span class="pill">raccroché</span>{% endif %}
+    {# onglets (pills) #}
+    <div class="flex flex-wrap gap-2">
+        <button type="button" data-tabs-target="tab" data-tab="props" class="tab-pill">
+            <span class="status-dot" data-status="{{ view.missingCount > 0 ? 'incomplete' : 'ok' }}"></span> Propriétés
+        </button>
+        {% if hasHours %}
+        <button type="button" data-tabs-target="tab" data-tab="volume_horaire" class="tab-pill">
+            <span class="status-dot" data-status="{{ view.totalHours > 0 ? 'ok' : 'empty' }}"></span> Volume horaire
+        </button>
+        {% endif %}
+        {% if hasMccc %}
+        <button type="button" data-tabs-target="tab" data-tab="mccc" class="tab-pill">
+            <span class="status-dot" data-status="{{ node.getAttribute('mccc') ? 'ok' : 'empty' }}"></span> MCCC
+        </button>
+        {% endif %}
+    </div>
+
+    {# tuiles + actions #}
+    <div class="flex flex-wrap items-stretch gap-2">
+        <div class="rounded-xl border px-4 py-2.5 text-sm" style="border-color:#fcd34d;background:#fffbeb">
+            <span class="text-gray-500">Total heures :</span> <span class="font-semibold">{{ view.totalHours|round }}</span>
         </div>
-        <div class="flex items-center gap-1.5">
-            <form method="post" action="{{ path('node_duplicate', {id: node.id}) }}" data-turbo-frame="_top">
-                <button class="rounded-md border px-2.5 py-1.5 text-xs hover:bg-gray-50" style="border-color:var(--c-border)" title="Dupliquer">Dupliquer</button>
+        <div class="rounded-xl border px-4 py-2.5 text-sm" style="border-color:#fcd34d;background:#fffbeb">
+            <span class="font-semibold">{{ view.totalEcts|round }}</span>
+            <span class="text-gray-500">{% if view.ectsTarget %}/ {{ view.ectsTarget }} {% endif %}ECTS</span>
+        </div>
+        <div class="ml-auto flex flex-wrap gap-2">
+            {% if caps.mutualisable ?? false %}
+            <form method="post" action="{{ path('node_mutualize', {id: node.id}) }}" data-turbo-frame="_top">
+                <button class="rounded-lg border px-3 py-2 text-sm" style="border-color:#fcd34d;color:#b45309">
+                    ⬆ {{ node.mutualized ? 'Ne plus mutualiser' : 'Mutualiser' }} [{{ T }}]
+                </button>
             </form>
-            <form method="post" action="{{ path('node_delete', {id: node.id}) }}" data-turbo-frame="_top"
-                  data-controller="confirm" data-confirm-message-value="Supprimer « {{ node.displayLabel }} » et ses enfants ?">
-                <button class="rounded-md border px-2.5 py-1.5 text-xs text-red-600 hover:bg-red-50" style="border-color:var(--c-border)">Supprimer</button>
-            </form>
+            {% endif %}
+            {% if childTypes is not empty %}
+            <a href="{{ path('node_attach_index', {id: node.id}) }}" data-turbo-frame="node-panel"
+               class="rounded-lg border px-3 py-2 text-sm text-green-700" style="border-color:#bbf7d0">↳ Raccrocher</a>
+            {% endif %}
+            <button type="button" data-action="tabs#toParams" class="rounded-lg border px-3 py-2 text-sm text-gray-600" style="border-color:var(--c-border)">⚙ Paramètre du nœud [{{ T }}]</button>
         </div>
     </div>
 
-    {# stat tiles #}
-    <div class="grid grid-cols-2 gap-2">
-        <div class="rounded-lg border px-3 py-2" style="border-color:var(--c-border)">
-            <div class="text-xs" style="color:var(--c-muted)">Total heures</div>
-            <div class="font-semibold">{{ view.totalHours|round }} h</div>
-        </div>
-        <div class="rounded-lg border px-3 py-2" style="border-color:var(--c-border)">
-            <div class="text-xs" style="color:var(--c-muted)">ECTS</div>
-            <div class="font-semibold">
-                {{ view.totalEcts|round }}{% if view.ectsTarget %} / {{ view.ectsTarget }}{% endif %}
-            </div>
-        </div>
+    {# séparateur type #}
+    <div class="flex items-center gap-3 text-gray-300 text-xs uppercase tracking-widest">
+        <div class="h-px flex-1 bg-gray-200"></div>{{ T }}<div class="h-px flex-1 bg-gray-200"></div>
     </div>
 
-    {# ── formulaire principal ── #}
-    <form method="post" action="{{ path('node_save', {id: node.id}) }}" data-turbo-frame="_top"
-          data-controller="tabs" class="space-y-4">
+    {# ── formulaire ── #}
+    <form method="post" action="{{ path('node_save', {id: node.id}) }}" data-turbo-frame="_top" class="space-y-5">
 
-        <div class="grid grid-cols-[1fr_140px] gap-2">
-            <label class="block">
-                <span class="text-xs font-medium">Libellé</span>
-                <input name="label" value="{{ node.label }}" maxlength="200"
-                       class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
-            </label>
-            <label class="block">
-                <span class="text-xs font-medium">Code</span>
-                <input name="code" value="{{ node.code }}"
-                       class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
-            </label>
-        </div>
-
-        {# domaines actifs = ceux qui ont ≥1 capacité active sur ce nœud #}
-        {% set activeDomains = {} %}
-        {% for key, def in catalog %}
-            {% if caps[key] ?? false %}{% set activeDomains = activeDomains|merge({(def.domain): true}) %}{% endif %}
-        {% endfor %}
-
-        {% if activeDomains|length > 0 %}
-        <div>
-            <div class="flex gap-1 border-b mb-3" style="border-color:var(--c-border)">
-                {% for dom, domLabel in domains %}
-                    {% if activeDomains[dom] is defined %}
-                        <button type="button" data-tabs-target="tab" data-tab="{{ dom }}"
-                                class="tab-btn px-3 py-1.5 text-sm border-b-2 border-transparent -mb-px">
-                            {{ domLabel }}
-                        </button>
-                    {% endif %}
+        {# --- onglet Propriétés --- #}
+        <div data-tabs-target="panel" data-tab="props" class="space-y-5">
+            {{ ui.label("Nœud parent", true, "Nœud auquel cet élément est enfant") }}
+            <select name="parentId" class="fld">
+                <option value="">— Racine de la formation —</option>
+                {% for cand in valid_parents(node) %}
+                    <option value="{{ cand.id }}" {{ node.parent and node.parent.id == cand.id ? 'selected' }}>
+                        [{{ cand.type.label }}] {{ cand.label ?: '—' }}
+                    </option>
                 {% endfor %}
-            </div>
+            </select>
 
-            {% for dom, domLabel in domains %}
-                {% if activeDomains[dom] is defined %}
-                <div data-tabs-target="panel" data-tab="{{ dom }}" class="space-y-3">
-                    {% for key, def in catalog %}
-                        {% if (caps[key] ?? false) and def.domain == dom %}
-                            {{ ui.field(key, def, node) }}
-                        {% endif %}
-                    {% endfor %}
-                </div>
+            {{ ui.label("Libellé", true, "Max 200 caractères") }}
+            <input name="label" value="{{ node.label }}" maxlength="200" class="fld">
+
+            {{ ui.label("Code", false, "Code du nœud (ex. code de l'EC)") }}
+            <input name="code" value="{{ node.code }}" class="fld">
+
+            {% for key, def in catalog %}
+                {% if (caps[key] ?? false) and def.domain == 'props' %}
+                    {{ ui.field(key, def, node) }}
                 {% endif %}
             {% endfor %}
         </div>
+
+        {# --- onglet Volume horaire --- #}
+        {% if hasHours %}
+        <div data-tabs-target="panel" data-tab="volume_horaire" class="space-y-3" hidden>
+            {{ ui.field('hours', catalog.hours, node) }}
+        </div>
         {% endif %}
 
-        <div class="flex items-center gap-2 pt-1">
-            <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">Enregistrer</button>
-            {% if caps.mutualisable ?? false %}
-            <button formaction="{{ path('node_params', {id: node.id}) }}" name="mutualized" value="{{ node.mutualized ? '' : '1' }}"
-                    class="rounded-md border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">
-                {{ node.mutualized ? 'Retirer de la mutualisation' : 'Mutualiser (mettre à disposition)' }}
-            </button>
-            {% endif %}
+        {# --- onglet MCCC --- #}
+        {% if hasMccc %}
+        <div data-tabs-target="panel" data-tab="mccc" class="space-y-3" hidden>
+            {{ ui.field('mccc', catalog.mccc, node) }}
+        </div>
+        {% endif %}
+
+        <div class="flex items-center gap-2 pt-2 border-t" style="border-color:var(--c-border)">
+            <button class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">Enregistrer</button>
+            <form method="post" action="{{ path('node_duplicate', {id: node.id}) }}" data-turbo-frame="_top" class="inline">
+                <button class="rounded-lg border px-3 py-2.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">Dupliquer</button>
+            </form>
+            <form method="post" action="{{ path('node_delete', {id: node.id}) }}" data-turbo-frame="_top" class="inline"
+                  data-controller="confirm" data-confirm-message-value="Supprimer « {{ node.label ?: node.type.label }} » et ses enfants ?">
+                <button class="rounded-lg border px-3 py-2.5 text-sm text-red-600 hover:bg-red-50" style="border-color:var(--c-border)">Supprimer</button>
+            </form>
         </div>
     </form>
 
     {# ── ajouter un enfant ── #}
     {% if childTypes is not empty %}
     <form method="post" action="{{ path('node_add', {id: formation.id}) }}" data-turbo-frame="_top"
-          class="rounded-lg border p-3 flex items-end gap-2" style="border-color:var(--c-border)">
+          class="rounded-xl border p-3 flex flex-wrap items-end gap-2" style="border-color:var(--c-border)">
         <input type="hidden" name="parentId" value="{{ node.id }}">
-        <label class="block flex-1">
-            <span class="text-xs font-medium">Ajouter un enfant</span>
-            <select name="typeKey" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
+        <div class="flex-1 min-w-[180px]">
+            <div class="fld-label">Ajouter un enfant</div>
+            <select name="typeKey" class="fld mt-1">
                 {% for t in childTypes %}<option value="{{ t.key }}">{{ t.icon }} {{ t.label }}</option>{% endfor %}
             </select>
-        </label>
-        <input name="label" placeholder="Libellé" class="rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
-        <button class="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">＋</button>
+        </div>
+        <input name="label" placeholder="Libellé" class="fld w-40">
+        <button class="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">＋ Ajouter</button>
     </form>
     {% endif %}
 
-    {# ── paramètre du nœud : quelles capacités sont actives sur CE nœud ── #}
-    <details class="rounded-lg border p-3" style="border-color:var(--c-border)">
-        <summary class="cursor-pointer text-sm font-medium">⚙️ Paramètre du nœud (capacités)</summary>
-        <form method="post" action="{{ path('node_params', {id: node.id}) }}" data-turbo-frame="_top" class="mt-3 space-y-2">
-            <p class="text-xs" style="color:var(--c-muted)">
-                Coché = le nœud porte cet attribut. Par défaut hérité du type « {{ node.type.label }} ».
-            </p>
+    {# ── Paramètre du nœud (capacités par nœud) ── #}
+    <div data-tabs-target="panel" data-tab="__params" hidden class="rounded-xl border p-4 space-y-2" style="border-color:var(--c-border)">
+        <div class="font-semibold text-sm">⚙ Paramètre du nœud — capacités portées</div>
+        <p class="text-xs text-gray-400">Coché = le nœud porte cet attribut. Par défaut hérité du type « {{ T }} ».</p>
+        <form method="post" action="{{ path('node_params', {id: node.id}) }}" data-turbo-frame="_top" class="space-y-2 pt-1">
             {% for key, label in capability_labels() %}
                 <label class="flex items-center gap-2 text-sm">
                     <input type="checkbox" name="capabilities[]" value="{{ key }}" {{ (caps[key] ?? false) ? 'checked' }}>
                     {{ label }}
+                    {% if node.type.hasCapability(key) %}<span class="pill">type</span>{% endif %}
                 </label>
             {% endfor %}
             <input type="hidden" name="mutualized" value="{{ node.mutualized ? '1' : '' }}">
-            <button class="mt-2 rounded-md px-3 py-1.5 text-sm font-medium text-white" style="background:var(--c-primary)">Appliquer</button>
+            <button class="mt-1 rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">Appliquer</button>
         </form>
-    </details>
+    </div>
 </div>
 </turbo-frame>
 
-{# ── macro champ ── #}
-{% macro field(key, def, node) %}
-    {% set val = node.getAttribute(key) %}
+{# ─────────────── macros ─────────────── #}
+{% macro label(text, required, help) %}
     <div>
-        <label class="block text-xs font-medium mb-1">
-            {{ def.label }}{% if def.required ?? false %} <span class="text-red-500">*</span>{% endif %}
-        </label>
-        {% if def.field == 'number' %}
-            <input type="number" step="0.5" name="attr_{{ key }}" value="{{ val }}"
-                   class="w-40 rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
-        {% elseif def.field == 'choice' %}
-            <select name="attr_{{ key }}" class="w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
-                <option value="">— Choisir —</option>
-                {% for ov, ol in def.options %}<option value="{{ ov }}" {{ val == ov ? 'selected' }}>{{ ol }}</option>{% endfor %}
-            </select>
-        {% elseif def.field == 'competencies' %}
-            <input name="attr_competencies" value="{{ val ? val|join(', ') : '' }}" placeholder="Comp. 1, Comp. 2…"
-                   class="w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
-        {% elseif def.field == 'hours' %}
-            <table class="text-sm">
-                <thead><tr><th></th>{% for p, pl in constant('App\\Maquette\\AttributeCatalog::HOUR_PLACES') %}<th class="px-2 text-xs font-medium">{{ pl }}</th>{% endfor %}</tr></thead>
-                <tbody>
-                {% for m, ml in constant('App\\Maquette\\AttributeCatalog::HOUR_MODALITIES') %}
-                    <tr>
-                        <td class="pr-2 text-xs font-medium">{{ ml }}</td>
-                        {% for p, pl in constant('App\\Maquette\\AttributeCatalog::HOUR_PLACES') %}
-                            <td class="py-0.5"><input type="number" min="0" step="0.5" name="attr_hours_{{ m }}_{{ p }}"
-                                value="{{ val[m][p] ?? '' }}" class="w-16 rounded-md border px-2 py-1" style="border-color:var(--c-border)"></td>
-                        {% endfor %}
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        {% elseif def.field == 'mccc' %}
-            <div class="space-y-1">
-                <input name="attr_mccc[type]" value="{{ val.type ?? '' }}" placeholder="Type (CC, examen…)"
-                       class="w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
-                <input name="attr_mccc[note]" value="{{ val.note ?? '' }}" placeholder="Précision"
-                       class="w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
-            </div>
-        {% else %}
-            <input name="attr_{{ key }}" value="{{ val }}"
-                   class="w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
-        {% endif %}
-        {% if def.help ?? false %}<p class="text-xs mt-1" style="color:var(--c-muted)">{{ def.help }}</p>{% endif %}
+        <div class="flex items-center justify-between">
+            <span class="fld-label">{{ text }}</span>
+            {% if required %}<span class="text-[11px] font-semibold text-red-500 uppercase tracking-wide">Champs requis</span>{% endif %}
+        </div>
+        {% if help %}<div class="fld-help">ℹ {{ help }}</div>{% endif %}
     </div>
+{% endmacro %}
+
+{% macro field(key, def, node) %}
+    {% import _self as ui %}
+    {% set val = node.getAttribute(key) %}
+    {{ ui.label(def.label, def.required ?? false, def.help ?? null) }}
+    {% if def.field == 'number' %}
+        <input type="number" step="0.5" name="attr_{{ key }}" value="{{ val }}" class="fld w-44">
+    {% elseif def.field == 'choice' %}
+        <select name="attr_{{ key }}" class="fld">
+            <option value="">— Choisir —</option>
+            {% for ov, ol in def.options %}<option value="{{ ov }}" {{ val == ov ? 'selected' }}>{{ ol }}</option>{% endfor %}
+        </select>
+    {% elseif def.field == 'competencies' %}
+        <input name="attr_competencies" value="{{ val ? val|join(', ') : '' }}" placeholder="Compétence 1, Compétence 2…" class="fld">
+    {% elseif def.field == 'hours' %}
+        <table class="text-sm">
+            <thead><tr><th></th>{% for p, pl in constant('App\\Maquette\\AttributeCatalog::HOUR_PLACES') %}<th class="px-2 text-xs font-medium text-gray-500">{{ pl }}</th>{% endfor %}</tr></thead>
+            <tbody>
+            {% for m, ml in constant('App\\Maquette\\AttributeCatalog::HOUR_MODALITIES') %}
+                <tr><td class="pr-3 text-xs font-semibold text-gray-500">{{ ml }}</td>
+                    {% for p, pl in constant('App\\Maquette\\AttributeCatalog::HOUR_PLACES') %}
+                        <td class="py-0.5"><input type="number" min="0" step="0.5" name="attr_hours_{{ m }}_{{ p }}" value="{{ val[m][p] ?? '' }}" class="w-16 rounded-md border px-2 py-1" style="border-color:var(--c-border)"></td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% elseif def.field == 'mccc' %}
+        <div class="space-y-2">
+            <input name="attr_mccc[type]" value="{{ val.type ?? '' }}" placeholder="Type d'épreuve (CC, examen terminal…)" class="fld">
+            <input name="attr_mccc[note]" value="{{ val.note ?? '' }}" placeholder="Précision (pondération, session…)" class="fld">
+        </div>
+    {% else %}
+        <input name="attr_{{ key }}" value="{{ val }}" class="fld">
+    {% endif %}
 {% endmacro %}

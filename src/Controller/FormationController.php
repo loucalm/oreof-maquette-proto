@@ -107,6 +107,35 @@ final class FormationController extends AbstractController
         return $this->redirectToRoute('formation_editor', ['id' => $formation->getId()]);
     }
 
+    /**
+     * Sections « Paramètre de la formation » de la maquette Figma (organisation,
+     * présentation, config structure, BCC). Hors périmètre du prototype :
+     * rendu fictif pour rester fidèle à l'UI.
+     */
+    #[Route('/formations/{id}/parametre/{key}', name: 'formation_param', methods: ['GET'])]
+    public function param(Formation $formation, string $key): Response
+    {
+        $sections = self::PARAM_SECTIONS;
+
+        return $this->render('formation/_param_placeholder.html.twig', [
+            'formation' => $formation,
+            'key' => $key,
+            'label' => $sections[$key]['label'] ?? $key,
+            'blurb' => $sections[$key]['blurb'] ?? '',
+        ]);
+    }
+
+    public const PARAM_SECTIONS = [
+        'organisation' => ['label' => 'Organisation et localisation', 'status' => 'incomplete',
+            'blurb' => 'Mention/spécialité, niveaux d’entrée et de sortie, RNCP, code Apogée, responsables, localisation.'],
+        'presentation' => ['label' => 'Présentation', 'status' => 'empty',
+            'blurb' => 'Objectifs, résultats attendus, contenu, rythme, poursuites d’études, débouchés, codes ROME.'],
+        'structure' => ['label' => 'Configuration de la structure', 'status' => 'ok',
+            'blurb' => 'Mono ou multi-parcours, chargement d’un template de structure.'],
+        'bcc' => ['label' => 'BCC', 'status' => 'incomplete',
+            'blurb' => 'Référentiel de compétences : blocs (BC) et compétences, compétences transversales RNCP.'],
+    ];
+
     #[Route('/formations/{id}/reset', name: 'formation_reset', methods: ['POST'])]
     public function reset(Formation $formation, EntityManagerInterface $em): Response
     {

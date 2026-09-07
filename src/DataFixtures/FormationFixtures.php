@@ -26,7 +26,7 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
     {
         /** @var array<string, NodeType> $t */
         $t = [];
-        foreach (['annee', 'semestre', 'ue', 'ec', 'presentation'] as $k) {
+        foreach (['annee', 'semestre', 'ue', 'ec'] as $k) {
             $t[$k] = $this->getReference(NodeTypeFixtures::REF_PREFIX.$k, NodeType::class);
         }
 
@@ -52,8 +52,6 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
 
             return $n;
         };
-
-        $mk($t['presentation'], 'Présentation', null);
 
         $a1 = $mk($t['annee'], 'Année 1', null);
         $s1 = $mk($t['semestre'], 'Semestre 1', $a1);

@@ -10,34 +10,56 @@
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
     </head>
-    <body class="min-h-screen">
-        <header class="border-b bg-white" style="border-color:var(--c-border)">
-            <div class="mx-auto max-w-7xl px-5 h-14 flex items-center gap-6">
-                <a href="{{ path('formation_index') }}" class="font-semibold flex items-center gap-2">
-                    <span>🧩</span> Prototype maquette
+    <body class="min-h-screen flex flex-col">
+
+        {# ─────────── header ORéOF (fictif, non fonctionnel) ─────────── #}
+        <header class="bg-white border-b" style="border-color:var(--c-border)">
+            <div class="mx-auto max-w-[1600px] px-6 h-16 flex items-center gap-7">
+                <a href="{{ path('formation_index') }}" class="font-extrabold tracking-tight">
+                    <span style="color:var(--c-primary)">ORéOF</span><span class="text-gray-400">/ Adm.</span>
                 </a>
-                <nav class="flex items-center gap-4 text-sm" style="color:var(--c-muted)">
-                    <a href="{{ path('formation_index') }}" class="hover:underline">Formations</a>
-                    <a href="{{ path('node_type_index') }}" class="hover:underline">Types de nœuds</a>
-                    <a href="{{ path('template_index') }}" class="hover:underline">Templates</a>
+                <nav class="hidden lg:flex items-center gap-6 text-sm text-gray-600">
+                    {% for item in ['Tableau de bord', 'Offre de formation', 'Pilotage', 'Conseils', 'Utilisateurs et droits', 'Administration'] %}
+                        <span class="fake-link cursor-default">{{ item }}{% if not loop.first %} <span class="text-gray-300">⌄</span>{% endif %}</span>
+                    {% endfor %}
                 </nav>
-                <span class="ml-auto pill">souple · piloté par les données</span>
+                <div class="ml-auto flex items-center gap-3 text-gray-400">
+                    <span>🔍</span><span>💬</span><span>🌐</span><span>🔔</span>
+                    <span class="rounded-lg px-3 py-1 text-xs font-medium" style="background:var(--c-primary-soft);color:var(--c-primary)">2026-2027 ⌄</span>
+                    <span class="grid h-8 w-8 place-items-center rounded-full text-xs font-bold text-white" style="background:var(--c-primary)">DA</span>
+                </div>
             </div>
         </header>
 
-        <main class="mx-auto max-w-7xl px-5 py-6">
+        <main class="flex-1 mx-auto w-full max-w-[1600px] px-6 py-6">
             {% for label, messages in app.flashes %}
                 {% for message in messages %}
                     <div class="mb-4 rounded-lg border px-4 py-2 text-sm
-                        {{ label == 'success' ? 'bg-green-50 border-green-200 text-green-800' : '' }}
-                        {{ label == 'danger' ? 'bg-red-50 border-red-200 text-red-800' : '' }}
-                        {{ label == 'info' ? 'bg-indigo-50 border-indigo-200 text-indigo-800' : '' }}">
-                        {{ message }}
-                    </div>
+                        {{ label == 'success' ? 'bg-green-50 border-green-200 text-green-800' }}
+                        {{ label == 'danger' ? 'bg-red-50 border-red-200 text-red-800' }}
+                        {{ label == 'info' ? 'bg-indigo-50 border-indigo-200 text-indigo-800' }}">{{ message }}</div>
                 {% endfor %}
             {% endfor %}
 
             {% block body %}{% endblock %}
         </main>
+
+        {# ─────────── footer ORéOF (fictif) ─────────── #}
+        <footer class="border-t bg-white text-xs text-gray-500" style="border-color:var(--c-border)">
+            <div class="mx-auto max-w-[1600px] px-6 py-5 flex flex-wrap items-center gap-x-6 gap-y-2">
+                <div>
+                    <span class="font-semibold text-gray-700">ORéOF</span> ·
+                    prototype maquette par nœuds · <a href="{{ path('node_type_index') }}" class="hover:underline">types</a>
+                    · <a href="{{ path('template_index') }}" class="hover:underline">templates</a>
+                </div>
+                <div class="ml-auto flex items-center gap-3 text-gray-400">
+                    {% for item in ['Documents', 'Aide', 'FAQ', 'Contact', 'GitHub'] %}<span class="fake-link cursor-default">{{ item }}</span>{% endfor %}
+                </div>
+            </div>
+        </footer>
+
+        {# bouton d'aide flottant (fictif) #}
+        <div class="fixed bottom-5 right-5 grid h-11 w-11 place-items-center rounded-full text-white text-lg shadow-lg cursor-default"
+             style="background:var(--c-primary)" title="Aide (fictif)">?</div>
     </body>
 </html>

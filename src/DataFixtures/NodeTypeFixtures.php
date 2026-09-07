@@ -10,39 +10,35 @@ use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 
 /**
- * Types de nœuds « socle » livrés par défaut. Tout est éditable ensuite via
- * l'admin des types — le but du proto est justement de montrer que rien n'est figé.
+ * Types de nœuds « socle » de la structure pédagogique. Tout est éditable
+ * ensuite via /node-types — rien n'est figé.
+ *
+ * Les sections « Organisation / Présentation / Configuration / BCC » de la
+ * maquette Figma ne sont PAS des types de nœud : ce sont des paramètres de
+ * formation, hors périmètre du prototype (rendus fictivement).
  */
 final class NodeTypeFixtures extends Fixture
 {
     public const REF_PREFIX = 'nodetype-';
 
-    /** Tous les conteneurs structurels acceptent tous les types structurels. */
-    private const STRUCTURAL_CHILDREN = ['parcours', 'annee', 'semestre', 'ue', 'ec', 'bloc_choix'];
+    private const STRUCTURAL = ['parcours', 'annee', 'semestre', 'ue', 'ec', 'bloc_choix'];
 
     public function load(ObjectManager $manager): void
     {
         $defs = [
-            // clé            label                 icon  famille                    position  enfants autorisés                            capabilities                                                          ectsTarget
-            ['parcours',      'Parcours',           '🧭', NodeFamily::Structural,     10,      self::STRUCTURAL_CHILDREN,                    ['ects' => true, 'mutualisable' => true],                              null],
-            ['annee',         'Année',              '📅', NodeFamily::Structural,     20,      self::STRUCTURAL_CHILDREN,                    ['mutualisable' => true],                                             60],
-            ['semestre',      'Semestre',           '🗓️', NodeFamily::Structural,     30,      self::STRUCTURAL_CHILDREN,                    ['mutualisable' => true],                                             30],
-            ['ue',            'UE',                 '🧩', NodeFamily::Structural,     40,      ['ec', 'bloc_choix', 'ue'],                   ['ects' => true, 'ueType' => true, 'nature' => true, 'competencies' => true, 'mutualisable' => true], null],
-            ['ec',            'EC',                 '📄', NodeFamily::Structural,     50,      [],                                          ['ects' => true, 'nature' => true, 'competencies' => true, 'ficheMatiere' => true, 'hours' => true, 'mccc' => true, 'mutualisable' => true], null],
-            ['bloc_choix',    'Bloc de choix',      '🔀', NodeFamily::Structural,     60,      ['ue', 'ec'],                                ['mutualisable' => true],                                             null],
-
-            ['bcc',           'BCC',                '🎯', NodeFamily::Competence,     70,      ['bloc_competences'],                        [],                                                                   null],
-            ['bloc_competences', 'Bloc de compétences', '🟪', NodeFamily::Competence, 80,      ['competence'],                              [],                                                                   null],
-            ['competence',    'Compétence',         '✅', NodeFamily::Competence,     90,      [],                                          [],                                                                   null],
-
-            ['presentation',  'Présentation',       '📝', NodeFamily::Parameter,     100,     [],                                          [],                                                                   null],
-            ['organisation',  'Organisation & localisation', '📍', NodeFamily::Parameter, 110, [],                                          [],                                                                   null],
+            // clé          label        icon  position  enfants autorisés                    capabilities                                                                              ectsTarget
+            ['parcours',    'Parcours',  '🧭', 10,       self::STRUCTURAL,                    ['ects' => true, 'mutualisable' => true],                                                  null],
+            ['annee',       'Année',     '📅', 20,       ['semestre', 'ue', 'bloc_choix'],    ['mutualisable' => true],                                                                  60],
+            ['semestre',    'Semestre',  '🗓️', 30,       ['ue', 'bloc_choix'],               ['mutualisable' => true],                                                                  30],
+            ['ue',          'UE',        '🧩', 40,       ['ec', 'bloc_choix'],               ['ects' => true, 'ueType' => true, 'nature' => true, 'competencies' => true, 'mutualisable' => true], null],
+            ['ec',          'EC',        '📄', 50,       [],                                 ['ects' => true, 'nature' => true, 'competencies' => true, 'ficheMatiere' => true, 'hours' => true, 'mccc' => true, 'mutualisable' => true], null],
+            ['bloc_choix',  'Bloc de choix', '🔀', 60,   ['ue', 'ec'],                       ['nature' => true, 'mutualisable' => true],                                                null],
         ];
 
-        foreach ($defs as [$key, $label, $icon, $family, $position, $children, $caps, $ectsTarget]) {
+        foreach ($defs as [$key, $label, $icon, $position, $children, $caps, $ectsTarget]) {
             $type = (new NodeType($key, $label))
                 ->setIcon($icon)
-                ->setFamily($family)
+                ->setFamily(NodeFamily::Structural)
                 ->setPosition($position)
                 ->setAllowedChildKeys($children)
                 ->setCapabilities($caps)

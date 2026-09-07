@@ -23,6 +23,8 @@ final class NodeController extends AbstractController
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly MaquetteBuilder $builder,
+        private readonly NodeRepository $nodes,
+        private readonly NodeFactory $factory,
     ) {
     }
 
@@ -43,9 +45,18 @@ final class NodeController extends AbstractController
         $node->setLabel(trim((string) $request->request->get('label')));
         $node->setCode(trim((string) $request->request->get('code')) ?: null);
 
+        // reparentage éventuel (dropdown « Nœud parent »)
+        if ($request->request->has('parentId')) {
+            $target = $request->request->get('parentId')
+                ? $this->nodes->find($request->request->getInt('parentId'))
+                : null;
+            if ($target !== $node->getParent() && !$this->isDescendant($target, $node)) {
+                $this->factory->move($node, $target, PHP_INT_MAX);
+            }
+        }
+
         $attrs = $node->getAttributes();
         $caps = $node->effectiveCapabilities();
-
         foreach (AttributeCatalog::all() as $key => $def) {
             if (!($caps[$key] ?? false)) {
                 unset($attrs[$key]);
@@ -54,7 +65,7 @@ final class NodeController extends AbstractController
             $attrs[$key] = match ($def['field']) {
                 'number' => $this->numOrNull($request->request->get("attr_$key")),
                 'hours' => $this->readHours($request),
-                'mccc' => $this->cleanArray($request->request->all("attr_mccc")),
+                'mccc' => $this->cleanArray($request->request->all('attr_mccc')),
                 'competencies' => array_values(array_filter(array_map('trim', explode(',', (string) $request->request->get('attr_competencies'))))),
                 default => trim((string) $request->request->get("attr_$key")) ?: null,
             };
@@ -63,55 +74,45 @@ final class NodeController extends AbstractController
 
         $this->em->flush();
 
-        return $this->turboOrRedirect($node, 'Nœud enregistré.');
+        return $this->backToEditor($node, 'Nœud enregistré.');
     }
 
     #[Route('/formations/{id}/nodes', name: 'node_add', methods: ['POST'])]
-    public function add(Formation $formation, Request $request, NodeTypeRepository $types, NodeFactory $factory, NodeRepository $nodes): Response
+    public function add(Formation $formation, Request $request, NodeTypeRepository $types): Response
     {
         $type = $types->findOneByKey((string) $request->request->get('typeKey'));
         if ($type === null) {
             throw $this->createNotFoundException('Type inconnu');
         }
-        $parent = null;
-        if ($request->request->get('parentId')) {
-            $parent = $nodes->find($request->request->getInt('parentId'));
-        }
+        $parent = $request->request->get('parentId') ? $this->nodes->find($request->request->getInt('parentId')) : null;
 
-        $node = $factory->create($formation, $type, $parent, trim((string) $request->request->get('label')));
+        $node = $this->factory->create($formation, $type, $parent, trim((string) $request->request->get('label')));
         $this->em->flush();
-
         $this->addFlash('success', sprintf('%s ajouté.', $type->getLabel()));
 
         return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'focus' => $node->getId()]);
     }
 
     #[Route('/nodes/{id}/move', name: 'node_move', methods: ['POST'])]
-    public function move(Node $node, Request $request, NodeFactory $factory, NodeRepository $nodes): JsonResponse
+    public function move(Node $node, Request $request): JsonResponse
     {
         $payload = json_decode($request->getContent() ?: '{}', true) ?: [];
-        $newParent = !empty($payload['parentId']) ? $nodes->find((int) $payload['parentId']) : null;
-        $index = (int) ($payload['index'] ?? 0);
+        $newParent = !empty($payload['parentId']) ? $this->nodes->find((int) $payload['parentId']) : null;
 
-        // garde-fou : pas de boucle (déposer un nœud dans sa propre descendance)
-        $cursor = $newParent;
-        while ($cursor !== null) {
-            if ($cursor === $node) {
-                return new JsonResponse(['ok' => false, 'error' => 'cycle'], 422);
-            }
-            $cursor = $cursor->getParent();
+        if ($this->isDescendant($newParent, $node)) {
+            return new JsonResponse(['ok' => false, 'error' => 'cycle'], 422);
         }
 
-        $factory->move($node, $newParent, $index);
+        $this->factory->move($node, $newParent, (int) ($payload['index'] ?? 0));
         $this->em->flush();
 
         return new JsonResponse(['ok' => true]);
     }
 
     #[Route('/nodes/{id}/duplicate', name: 'node_duplicate', methods: ['POST'])]
-    public function duplicate(Node $node, NodeFactory $factory): Response
+    public function duplicate(Node $node): Response
     {
-        $copy = $factory->duplicate($node);
+        $copy = $this->factory->duplicate($node);
         $this->em->flush();
 
         return $this->redirectToRoute('formation_editor', ['id' => $node->getFormation()->getId(), 'focus' => $copy->getId()]);
@@ -128,30 +129,81 @@ final class NodeController extends AbstractController
         return $this->redirectToRoute('formation_editor', ['id' => $formationId]);
     }
 
+    /** Toggle « Mutualiser » : met le nœud à disposition des autres formations. */
+    #[Route('/nodes/{id}/mutualize', name: 'node_mutualize', methods: ['POST'])]
+    public function mutualize(Node $node, Request $request): Response
+    {
+        $node->setMutualized(!$node->isMutualized());
+        $this->em->flush();
+
+        return $this->backToEditor($node, $node->isMutualized() ? 'Nœud mutualisé.' : 'Nœud retiré de la mutualisation.');
+    }
+
+    /** « Paramètre du nœud » : capacités portées par CE nœud (surcharge du type). */
     #[Route('/nodes/{id}/params', name: 'node_params', methods: ['POST'])]
     public function params(Node $node, Request $request): Response
     {
+        $checked = $request->request->all('capabilities');
         $overrides = [];
         foreach (AttributeCatalog::knownCapabilities() as $cap) {
-            $overrides[$cap] = $request->request->getBoolean("cap_$cap");
+            $overrides[$cap] = \in_array($cap, $checked, true);
         }
         $node->setCapabilityOverrides($overrides);
-        $node->setMutualized($request->request->getBoolean('mutualized'));
         $this->em->flush();
 
-        return $this->turboOrRedirect($node, 'Paramètres du nœud enregistrés.');
+        return $this->backToEditor($node, 'Capacités du nœud enregistrées.');
     }
 
-    // ─── helpers ───────────────────────────────────────────────
-
-    private function turboOrRedirect(Node $node, string $message): Response
+    /** « Raccrocher » : liste des nœuds mutualisés d'autres formations, du bon type. */
+    #[Route('/nodes/{id}/raccrocher', name: 'node_attach_index', methods: ['GET'])]
+    public function attachIndex(Node $node): Response
     {
-        $this->addFlash('success', $message);
+        $allowed = $node->getType()->getAllowedChildKeys();
+        $candidates = array_filter(
+            $this->nodes->findMutualized($node->getFormation()),
+            static fn (Node $m) => \in_array('*', $allowed, true) || \in_array($m->getType()->getKey(), $allowed, true),
+        );
+
+        return $this->render('node/attach.html.twig', ['node' => $node, 'candidates' => $candidates]);
+    }
+
+    #[Route('/nodes/{id}/raccrocher/{source}', name: 'node_attach', methods: ['POST'])]
+    public function attach(Node $node, Node $source): Response
+    {
+        $copy = $this->factory->duplicate($source, $node);
+        $copy->setLabel($source->getLabel());
+        $copy->setMutualizedFrom($source);
+        $this->em->flush();
+        $this->addFlash('success', sprintf('« %s » raccroché depuis « %s ».', $source->getDisplayLabel(), $source->getFormation()->getName()));
+
+        return $this->backToEditor($copy, '');
+    }
+
+    // ─── helpers ──────────────────────────────────────────────
+
+    private function backToEditor(Node $node, string $message): Response
+    {
+        if ($message !== '') {
+            $this->addFlash('success', $message);
+        }
 
         return $this->redirectToRoute('formation_editor', [
             'id' => $node->getFormation()->getId(),
             'focus' => $node->getId(),
         ]);
+    }
+
+    private function isDescendant(?Node $candidate, Node $of): bool
+    {
+        $cursor = $candidate;
+        while ($cursor !== null) {
+            if ($cursor === $of) {
+                return true;
+            }
+            $cursor = $cursor->getParent();
+        }
+
+        return false;
     }
 
     private function numOrNull(mixed $v): ?float
@@ -178,6 +230,9 @@ final class NodeController extends AbstractController
     /** @param array<mixed> $arr */
     private function cleanArray(array $arr): array
     {
-        return array_filter(array_map(static fn ($v) => \is_string($v) ? trim($v) : $v, $arr), static fn ($v) => $v !== '' && $v !== null);
+        return array_filter(
+            array_map(static fn ($v) => \is_string($v) ? trim($v) : $v, $arr),
+            static fn ($v) => $v !== '' && $v !== null,
+        );
     }
 }

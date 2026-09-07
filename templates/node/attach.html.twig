@@ -1,0 +1,36 @@
+<turbo-frame id="node-panel">
+<div class="p-6 space-y-4">
+    <div class="text-sm text-gray-400">{{ node.formation.name }} › {{ node.label ?: node.type.label }}</div>
+    <h2 class="text-xl font-bold">Raccrocher un nœud mutualisé</h2>
+    <p class="text-sm text-gray-500">
+        Récupère une copie d'un nœud mis à disposition par une autre formation.
+        La copie est indépendante (le lien vers la source est conservé pour info).
+    </p>
+
+    {% if candidates is empty %}
+        <div class="rounded-lg border border-dashed p-6 text-sm text-gray-500" style="border-color:var(--c-border)">
+            Aucun nœud mutualisé compatible pour l'instant. Mutualisez un nœud depuis une autre formation
+            (bouton « Mutualiser » sur son panneau) pour le voir apparaître ici.
+        </div>
+    {% else %}
+        <ul class="space-y-2">
+            {% for c in candidates %}
+                <li class="flex items-center justify-between gap-3 rounded-lg border p-3" style="border-color:var(--c-border)">
+                    <div>
+                        <div class="font-medium">{{ c.type.icon }} [{{ c.type.label }}] {{ c.label ?: '—' }}</div>
+                        <div class="text-xs text-gray-400">
+                            depuis « {{ c.formation.name }} »
+                            {% if c.children|length %} · {{ c.children|length }} enfant(s){% endif %}
+                        </div>
+                    </div>
+                    <form method="post" action="{{ path('node_attach', {id: node.id, source: c.id}) }}" data-turbo-frame="_top">
+                        <button class="rounded-lg border px-3 py-1.5 text-sm text-green-700 hover:bg-green-50" style="border-color:#bbf7d0">Raccrocher</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <a href="{{ path('node_panel', {id: node.id}) }}" data-turbo-frame="node-panel" class="text-sm text-gray-500 hover:underline">← Retour au nœud</a>
+</div>
+</turbo-frame>
