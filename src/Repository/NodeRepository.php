@@ -39,7 +39,7 @@ class NodeRepository extends ServiceEntityRepository
     public function nextPosition(Formation $formation, ?Node $parent): int
     {
         $qb = $this->createQueryBuilder('n')
-            ->select('COALESCE(MAX(n.position), -1) + 1')
+            ->select('MAX(n.position)')
             ->where('n.formation = :f')
             ->setParameter('f', $formation);
 
@@ -49,7 +49,9 @@ class NodeRepository extends ServiceEntityRepository
             $qb->andWhere('n.parent = :p')->setParameter('p', $parent);
         }
 
-        return (int) $qb->getQuery()->getSingleScalarResult();
+        $max = $qb->getQuery()->getSingleScalarResult();
+
+        return $max === null ? 0 : ((int) $max) + 1;
     }
 
     /** @return list<Node> Nœuds mutualisés d'autres formations. */
