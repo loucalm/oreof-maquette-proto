@@ -30,7 +30,7 @@
         <h2 class="text-2xl font-extrabold tracking-tight">DÉTAILS DES MENTIONS/SPÉCIALITÉS</h2>
         <p class="text-sm text-gray-500 mb-5">Consultez et administrez rapidement les mentions et spécialités de l'offre de formation.</p>
 
-        <div class="overflow-x-auto rounded-xl border" style="border-color:var(--c-border)">
+        <div class="rounded-xl border" style="border-color:var(--c-border)">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -68,19 +68,23 @@
                         <td class="px-4 py-4 align-top">
                             <div class="flex items-center justify-end gap-2">
                                 <a href="{{ path('formation_view', {id: f.id}) }}"
-                                   class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">ⓘ Voir</a>
+                                   class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">ⓘ Voir</a>
 
-                                <details class="relative">
-                                    <summary class="list-none cursor-pointer rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">••• Actions</summary>
-                                    <div class="absolute right-0 z-20 mt-1 w-52 rounded-lg border bg-white py-1 shadow-lg text-sm" style="border-color:var(--c-border)">
-                                        <a href="{{ path('formation_check', {id: f.id}) }}" class="block px-3 py-2 hover:bg-gray-50">✔ Vérifier la saisie</a>
-                                        <a href="{{ path('formation_editor', {id: f.id}) }}" class="block px-3 py-2 hover:bg-gray-50">✎ Modifier</a>
+                                <div class="relative" data-controller="menu">
+                                    <button type="button" data-action="menu#toggle"
+                                            class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">••• Actions</button>
+                                    <div data-menu-target="menu" hidden
+                                         class="absolute right-0 top-full z-30 mt-1.5 w-56 overflow-hidden rounded-xl border bg-white py-1.5 shadow-xl" style="border-color:var(--c-border)">
+                                        <a href="{{ path('formation_check', {id: f.id}) }}"
+                                           class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-700 hover:bg-green-50">✔ Vérifier la saisie</a>
+                                        <a href="{{ path('formation_editor', {id: f.id}) }}"
+                                           class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-amber-700 hover:bg-amber-50">✎ Modifier</a>
                                         <form method="post" action="{{ path('formation_delete', {id: f.id}) }}"
                                               data-controller="confirm" data-confirm-message-value="Supprimer définitivement la formation « {{ f.name }} » ? Cette action est irréversible.">
-                                            <button class="block w-full text-left px-3 py-2 text-red-600 hover:bg-red-50">🗑 Supprimer</button>
+                                            <button class="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">🗑 Supprimer</button>
                                         </form>
                                     </div>
-                                </details>
+                                </div>
                             </div>
                         </td>
                     </tr>
