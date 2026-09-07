@@ -1,0 +1,73 @@
+{# Arborescence des parcours (ramification). Rendu dans <turbo-frame id="node-panel">. #}
+{% set g = graph %}
+
+<turbo-frame id="node-panel">
+<div class="p-6">
+    <div class="mb-1 flex items-center justify-between">
+        <div>
+            <h2 class="text-xl font-bold">Arborescence des parcours</h2>
+            <div class="text-sm text-gray-400">{{ formation.name }} · {{ g.parcours|length }} parcours</div>
+        </div>
+        <a href="{{ path('formation_editor', {id: formation.id, param: 'structure'}) }}" data-turbo-frame="node-panel"
+           class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">← Configuration de la structure</a>
+    </div>
+    <p class="text-xs text-gray-400 mb-4">
+        Le parent d'un parcours et ses années de début / fin se définissent dans le panneau du parcours.
+    </p>
+
+    {% if g.parcours is empty %}
+        <div class="rounded-xl border border-dashed p-8 text-center text-sm text-gray-500" style="border-color:var(--c-border)">
+            Aucun parcours. Ajoutez-en depuis « Configuration de la structure ».
+        </div>
+    {% else %}
+        <div class="overflow-auto rounded-xl border bg-white" style="border-color:var(--c-border)">
+            <svg viewBox="0 0 {{ g.width }} {{ g.height }}" width="{{ g.width }}" height="{{ g.height }}" class="block" style="min-width:100%">
+                <defs>
+                    <marker id="pg-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                        <path d="M0 0 L10 5 L0 10 z" fill="#6366f1"/>
+                    </marker>
+                </defs>
+
+                {# colonnes d'années #}
+                {% for a in 1..g.maxAnnee %}
+                    {% set cx = g.pad + (a - 1) * g.colW %}
+                    {% if a > 1 %}<line x1="{{ cx }}" y1="{{ g.headerH - 6 }}" x2="{{ cx }}" y2="{{ g.height - 8 }}" stroke="#e5e7eb" stroke-dasharray="3 4"/>{% endif %}
+                    <text x="{{ cx + 12 }}" y="{{ g.headerH - 16 }}" font-size="13" font-weight="600" fill="#374151">{{ a == 1 ? '1ère' : a ~ 'ème' }} année</text>
+                {% endfor %}
+                <line x1="{{ g.pad }}" y1="{{ g.headerH - 4 }}" x2="{{ g.width - g.pad }}" y2="{{ g.headerH - 4 }}" stroke="#e5e7eb"/>
+
+                {# liens parent → enfant #}
+                {% for e in g.edges %}
+                    {% set p = g.boxes[e.from] %}{% set c = g.boxes[e.to] %}
+                    {% if p and c %}
+                        {% set x1 = p.x + p.w %}{% set y1 = p.cy %}{% set x2 = c.x %}{% set y2 = c.cy %}
+                        {% set mx = (x1 + x2) / 2 %}
+                        <path d="M {{ x1 }} {{ y1 }} C {{ mx }} {{ y1 }}, {{ mx }} {{ y2 }}, {{ x2 - 2 }} {{ y2 }}"
+                              fill="none" stroke="#6366f1" stroke-width="2.5" marker-end="url(#pg-arrow)"/>
+                    {% endif %}
+                {% endfor %}
+
+                {# boîtes parcours #}
+                {% for r in g.rows %}
+                    {% set b = g.boxes[r.node.id] %}
+                    <a href="{{ path('formation_editor', {id: formation.id, focus: r.node.id}) }}" data-turbo-frame="node-panel">
+                        <rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ g.boxH }}" rx="10" fill="#eef2ff" stroke="#c7d2fe" stroke-width="1.5"/>
+                        <text x="{{ b.x + b.w / 2 }}" y="{{ b.cy + 4 }}" text-anchor="middle" font-size="13" font-weight="600" fill="#3730a3">{{ r.node.label ?: 'Parcours' }}</text>
+                    </a>
+                {% endfor %}
+            </svg>
+        </div>
+
+        <ul class="mt-4 space-y-1 text-sm">
+            {% for r in g.rows %}
+                <li class="flex flex-wrap items-center gap-2">
+                    <span class="type-badge">🧭 Parcours</span>
+                    <a href="{{ path('formation_editor', {id: formation.id, focus: r.node.id}) }}" data-turbo-frame="node-panel" class="font-medium hover:underline">{{ r.node.label ?: '—' }}</a>
+                    <span class="text-xs text-gray-400">années {{ r.colStart }}–{{ r.colEnd }}</span>
+                    {% if r.node.parcoursParent %}<span class="text-xs text-gray-400">· enfant de « {{ r.node.parcoursParent.label ?: '—' }} »</span>{% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</div>
+</turbo-frame>

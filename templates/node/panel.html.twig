@@ -95,6 +95,31 @@
                     {{ ui.field(key, def, node) }}
                 {% endif %}
             {% endfor %}
+
+            {% if node.isParcours %}
+                <div class="rounded-lg border p-3 space-y-3" style="border-color:var(--c-border);background:#f8f9fb">
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Arborescence des parcours</div>
+                    {{ ui.label("Parcours parent", false, "Ce parcours est-il une spécialisation d'un autre parcours ?") }}
+                    <select name="parcoursParentId" class="fld">
+                        <option value="">— Aucun (parcours racine) —</option>
+                        {% for cand in parcours_candidates(node) %}
+                            <option value="{{ cand.id }}" {{ node.parcoursParent and node.parcoursParent.id == cand.id ? 'selected' }}>{{ cand.label ?: '—' }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            {{ ui.label("Année de début", false) }}
+                            <input type="number" min="1" name="attr_anneeDebut" value="{{ node.getAttribute('anneeDebut') }}" placeholder="{{ node.anneeDebut }}" class="fld">
+                        </div>
+                        <div>
+                            {{ ui.label("Année de fin", false) }}
+                            <input type="number" min="1" name="attr_anneeFin" value="{{ node.getAttribute('anneeFin') }}" placeholder="{{ node.anneeFin }}" class="fld">
+                        </div>
+                    </div>
+                    <a href="{{ path('formation_parcours_graph', {id: formation.id}) }}" data-turbo-frame="node-panel"
+                       class="inline-block text-xs font-medium hover:underline" style="color:var(--c-primary)">🗺 Voir l'arborescence des parcours</a>
+                </div>
+            {% endif %}
         </div>
 
         {# --- onglet Volume horaire --- #}

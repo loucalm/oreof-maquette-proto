@@ -27,6 +27,7 @@ final class MaquetteExtension extends AbstractExtension
         return [
             new TwigFunction('types_allowed_for', $this->typesAllowedFor(...)),
             new TwigFunction('valid_parents', $this->validParents(...)),
+            new TwigFunction('parcours_candidates', $this->parcoursCandidates(...)),
             new TwigFunction('node_path', $this->nodePath(...)),
             new TwigFunction('capability_labels', $this->capabilityLabels(...)),
             new TwigFunction('param_sections', static fn () => FormationController::PARAM_SECTIONS),
@@ -77,6 +78,32 @@ final class MaquetteExtension extends AbstractExtension
             static fn (Node $cand) => !isset($descendants[$cand->getId()])
                 && $cand->getType()->allowsChild($key),
         ));
+    }
+
+    /**
+     * Parcours pouvant servir de parent (ramification) : autres parcours de la
+     * formation, hors lui-même et hors sa propre descendance parcours (anti-cycle).
+     *
+     * @return list<Node>
+     */
+    public function parcoursCandidates(Node $node): array
+    {
+        $forbidden = [$node->getId() => true];
+        // descendance parcours de $node
+        $all = array_filter($this->nodes->findForFormation($node->getFormation()), static fn (Node $n) => $n->isParcours());
+        $changed = true;
+        while ($changed) {
+            $changed = false;
+            foreach ($all as $p) {
+                $pp = $p->getParcoursParent()?->getId();
+                if ($pp !== null && isset($forbidden[$pp]) && !isset($forbidden[$p->getId()])) {
+                    $forbidden[$p->getId()] = true;
+                    $changed = true;
+                }
+            }
+        }
+
+        return array_values(array_filter($all, static fn (Node $p) => !isset($forbidden[$p->getId()])));
     }
 
     /** @return list<Node> du racine jusqu'au nœud. */

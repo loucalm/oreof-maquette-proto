@@ -106,6 +106,11 @@
                             <span class="status-dot" data-status="{{ param_status(formation, k) }}"></span>{{ s.label }}
                         </a>
                     {% endfor %}
+                    {% if formation.multiParcours %}
+                        <a href="{{ path('formation_parcours_graph', {id: formation.id}) }}" data-turbo-frame="node-panel"
+                           class="mt-1 flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50"
+                           style="color:var(--c-primary)">🗺 Arborescence des parcours</a>
+                    {% endif %}
                 </div>
 
                 <div class="p-2">

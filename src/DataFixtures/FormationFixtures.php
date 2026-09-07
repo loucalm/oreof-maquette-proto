@@ -82,6 +82,36 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
         $mk($t['annee'], 'Année 2', null);
         $mk($t['annee'], 'Année 3', null);
 
+        // ─── 2e démo : formation multi-parcours avec ramification ───
+        $tp = $this->getReference(NodeTypeFixtures::REF_PREFIX.'parcours', NodeType::class);
+        $master = (new Formation('Master Informatique (démo multi-parcours)'))
+            ->setDiplome('Master')
+            ->setDomaine('Sciences, technologies, santé')
+            ->setComposante('UFR Sciences Exactes et Naturelles')
+            ->setMultiParcours(true)
+            ->setEctsTotal(120);
+        $manager->persist($master);
+
+        $p = [];
+        $specs = [
+            ['Tronc commun', 1, 1, null],
+            ['Parcours Données', 2, 2, 'Tronc commun'],
+            ['Parcours Logiciel', 2, 2, 'Tronc commun'],
+            ['Parcours Recherche', 2, 2, 'Parcours Données'],
+        ];
+        foreach ($specs as $i => [$label, $debut, $fin, $parentLabel]) {
+            $node = new Node($tp, $label);
+            $node->setFormation($master);
+            $node->setPosition($i);
+            $node->setAttributes(['anneeDebut' => $debut, 'anneeFin' => $fin]);
+            if ($parentLabel !== null && isset($p[$parentLabel])) {
+                $node->setParcoursParent($p[$parentLabel]);
+            }
+            $master->addNode($node);
+            $manager->persist($node);
+            $p[$label] = $node;
+        }
+
         $manager->flush();
     }
 }

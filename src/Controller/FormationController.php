@@ -66,6 +66,16 @@ final class FormationController extends AbstractController
         ]);
     }
 
+    /** Vue arborescence des parcours (ramification) — formations multi-parcours. */
+    #[Route('/formations/{id}/parcours', name: 'formation_parcours_graph', methods: ['GET'])]
+    public function parcoursGraph(Formation $formation, \App\Maquette\ParcoursGraph $graph): Response
+    {
+        return $this->render('formation/parcours_graph.html.twig', [
+            'formation' => $formation,
+            'graph' => $graph->build($formation),
+        ]);
+    }
+
     #[Route('/formations/{id}/verifier', name: 'formation_check', methods: ['GET'])]
     public function check(Formation $formation, MaquetteBuilder $builder): Response
     {

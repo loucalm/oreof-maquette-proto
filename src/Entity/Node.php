@@ -78,6 +78,14 @@ class Node
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?self $mutualizedFrom = null;
 
+    /**
+     * Parent d'un parcours dans l'arborescence inter-parcours (ramification).
+     * N'a de sens que pour les nœuds de type « parcours ».
+     */
+    #[ORM\ManyToOne(targetEntity: self::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?self $parcoursParent = null;
+
     public function __construct(NodeType $type, string $label = '')
     {
         $this->type = $type;
@@ -275,6 +283,46 @@ class Node
         $this->mutualizedFrom = $mutualizedFrom;
 
         return $this;
+    }
+
+    public function getParcoursParent(): ?self
+    {
+        return $this->parcoursParent;
+    }
+
+    public function setParcoursParent(?self $parcoursParent): self
+    {
+        $this->parcoursParent = $parcoursParent;
+
+        return $this;
+    }
+
+    public function isParcours(): bool
+    {
+        return $this->type->getKey() === 'parcours';
+    }
+
+    /** Année de début du parcours pour la vue arborescence (défaut 1). */
+    public function getAnneeDebut(): int
+    {
+        return max(1, (int) ($this->attributes['anneeDebut'] ?? 1));
+    }
+
+    /** Année de fin ; par défaut, début + (nb d'années enfants - 1), min = début. */
+    public function getAnneeFin(): int
+    {
+        $stored = (int) ($this->attributes['anneeFin'] ?? 0);
+        if ($stored > 0) {
+            return max($stored, $this->getAnneeDebut());
+        }
+        $nbAnnees = 0;
+        foreach ($this->children as $c) {
+            if ($c->getType()->getKey() === 'annee') {
+                ++$nbAnnees;
+            }
+        }
+
+        return $this->getAnneeDebut() + max(0, $nbAnnees - 1);
     }
 
     public function getDepth(): int

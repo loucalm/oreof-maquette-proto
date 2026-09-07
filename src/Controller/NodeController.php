@@ -70,6 +70,26 @@ final class NodeController extends AbstractController
                 default => trim((string) $request->request->get("attr_$key")) ?: null,
             };
         }
+        // parcours : parent (ramification) + années début/fin
+        if ($node->isParcours()) {
+            if ($request->request->has('parcoursParentId')) {
+                $pp = $request->request->get('parcoursParentId')
+                    ? $this->nodes->find($request->request->getInt('parcoursParentId'))
+                    : null;
+                $valid = $pp !== null && $pp !== $node && $pp->isParcours()
+                    && !$this->isParcoursDescendant($pp, $node);
+                $node->setParcoursParent($valid ? $pp : null);
+            }
+            foreach (['anneeDebut', 'anneeFin'] as $k) {
+                $v = $request->request->get("attr_$k");
+                if ($v === null || $v === '') {
+                    unset($attrs[$k]);
+                } else {
+                    $attrs[$k] = max(1, (int) $v);
+                }
+            }
+        }
+
         $node->setAttributes(array_filter($attrs, static fn ($v) => $v !== null && $v !== '' && $v !== []));
 
         $this->em->flush();
@@ -205,6 +225,22 @@ final class NodeController extends AbstractController
                 return true;
             }
             $cursor = $cursor->getParent();
+        }
+
+        return false;
+    }
+
+    /** $candidate est-il dans la descendance parcours de $of (anti-cycle) ? */
+    private function isParcoursDescendant(Node $candidate, Node $of): bool
+    {
+        $cursor = $candidate;
+        $seen = [];
+        while ($cursor !== null && !isset($seen[$cursor->getId()])) {
+            if ($cursor === $of) {
+                return true;
+            }
+            $seen[$cursor->getId()] = true;
+            $cursor = $cursor->getParcoursParent();
         }
 
         return false;
