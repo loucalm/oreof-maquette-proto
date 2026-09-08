@@ -82,32 +82,36 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
         $mk($t['annee'], 'Année 2', null);
         $mk($t['annee'], 'Année 3', null);
 
-        // ─── 2e démo : formation multi-parcours avec ramification ───
+        // ─── 2e démo : multi-parcours avec ramification cohérente sur 3 ans ───
+        // Un parcours enfant est une spécialisation qui se sépare du parent : il
+        // démarre APRÈS lui. Deux parcours sur la même période sont parallèles.
         $tp = $this->getReference(NodeTypeFixtures::REF_PREFIX.'parcours', NodeType::class);
-        $master = (new Formation('Master Informatique (démo multi-parcours)'))
-            ->setDiplome('Master')
+        $multi = (new Formation('Licence Sciences & Technologies (démo multi-parcours)'))
+            ->setDiplome('Licence')
             ->setDomaine('Sciences, technologies, santé')
             ->setComposante('UFR Sciences Exactes et Naturelles')
             ->setMultiParcours(true)
-            ->setEctsTotal(120);
-        $manager->persist($master);
+            ->setEctsTotal(180);
+        $manager->persist($multi);
 
         $p = [];
         $specs = [
-            ['Tronc commun', 1, 1, null],
-            ['Parcours Données', 2, 2, 'Tronc commun'],
-            ['Parcours Logiciel', 2, 2, 'Tronc commun'],
-            ['Parcours Recherche', 2, 2, 'Parcours Données'],
+            // libellé, année de début, année de fin, parcours parent
+            ['Portail commun (L1)', 1, 1, null],
+            ['Parcours Informatique', 2, 3, 'Portail commun (L1)'],
+            ['Parcours Mathématiques', 2, 3, 'Portail commun (L1)'],
+            ['Informatique — Données & IA', 3, 3, 'Parcours Informatique'],
+            ['Informatique — Génie logiciel', 3, 3, 'Parcours Informatique'],
         ];
         foreach ($specs as $i => [$label, $debut, $fin, $parentLabel]) {
             $node = new Node($tp, $label);
-            $node->setFormation($master);
+            $node->setFormation($multi);
             $node->setPosition($i);
             $node->setAttributes(['anneeDebut' => $debut, 'anneeFin' => $fin]);
             if ($parentLabel !== null && isset($p[$parentLabel])) {
                 $node->setParcoursParent($p[$parentLabel]);
             }
-            $master->addNode($node);
+            $multi->addNode($node);
             $manager->persist($node);
             $p[$label] = $node;
         }

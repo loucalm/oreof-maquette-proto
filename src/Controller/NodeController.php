@@ -70,16 +70,8 @@ final class NodeController extends AbstractController
                 default => trim((string) $request->request->get("attr_$key")) ?: null,
             };
         }
-        // parcours : parent (ramification) + années début/fin
+        // parcours : années de début / fin
         if ($node->isParcours()) {
-            if ($request->request->has('parcoursParentId')) {
-                $pp = $request->request->get('parcoursParentId')
-                    ? $this->nodes->find($request->request->getInt('parcoursParentId'))
-                    : null;
-                $valid = $pp !== null && $pp !== $node && $pp->isParcours()
-                    && !$this->isParcoursDescendant($pp, $node);
-                $node->setParcoursParent($valid ? $pp : null);
-            }
             foreach (['anneeDebut', 'anneeFin'] as $k) {
                 $v = $request->request->get("attr_$k");
                 if ($v === null || $v === '') {
@@ -91,6 +83,11 @@ final class NodeController extends AbstractController
         }
 
         $node->setAttributes(array_filter($attrs, static fn ($v) => $v !== null && $v !== '' && $v !== []));
+
+        // parcours : parent de ramification — validé une fois les années posées
+        if ($node->isParcours() && $request->request->has('parcoursParentId')) {
+            $this->applyParcoursParent($node, $request->request->getInt('parcoursParentId'));
+        }
 
         $this->em->flush();
 
@@ -215,6 +212,36 @@ final class NodeController extends AbstractController
             'id' => $node->getFormation()->getId(),
             'focus' => $node->getId(),
         ]);
+    }
+
+    /** Ramification : rattache $node à un parcours parent si la relation est cohérente (sinon détache + prévient). */
+    private function applyParcoursParent(Node $node, int $parentId): void
+    {
+        if ($parentId <= 0) {
+            $node->setParcoursParent(null); // « — Aucun — » choisi explicitement
+
+            return;
+        }
+
+        $pp = $this->nodes->find($parentId);
+        if ($pp === null || $pp === $node || !$pp->isParcours() || $this->isParcoursDescendant($pp, $node)) {
+            return; // cible invalide : on ne touche pas au parent déjà en place
+        }
+
+        if (!Node::parcoursYearsAllowChild($pp->getAnneeDebut(), $pp->getAnneeFin(), $node->getAnneeDebut(), $node->getAnneeFin())) {
+            $this->addFlash('warning', sprintf(
+                'Ramification ignorée : « %s » couvre les années %d–%d. Un parcours enfant doit commencer après l’année %d et se prolonger au moins jusqu’à l’année %d.',
+                $pp->getDisplayLabel(),
+                $pp->getAnneeDebut(),
+                $pp->getAnneeFin(),
+                $pp->getAnneeDebut(),
+                $pp->getAnneeFin(),
+            ));
+
+            return;
+        }
+
+        $node->setParcoursParent($pp);
     }
 
     private function isDescendant(?Node $candidate, Node $of): bool

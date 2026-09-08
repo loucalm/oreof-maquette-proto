@@ -97,15 +97,9 @@
             {% endfor %}
 
             {% if node.isParcours %}
+                {% set pcands = parcours_candidates(node) %}
                 <div class="rounded-lg border p-3 space-y-3" style="border-color:var(--c-border);background:#f8f9fb">
                     <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Arborescence des parcours</div>
-                    {{ ui.label("Parcours parent", false, "Ce parcours est-il une spécialisation d'un autre parcours ?") }}
-                    <select name="parcoursParentId" class="fld">
-                        <option value="">— Aucun (parcours racine) —</option>
-                        {% for cand in parcours_candidates(node) %}
-                            <option value="{{ cand.id }}" {{ node.parcoursParent and node.parcoursParent.id == cand.id ? 'selected' }}>{{ cand.label ?: '—' }}</option>
-                        {% endfor %}
-                    </select>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             {{ ui.label("Année de début", false) }}
@@ -116,6 +110,16 @@
                             <input type="number" min="1" name="attr_anneeFin" value="{{ node.getAttribute('anneeFin') }}" placeholder="{{ node.anneeFin }}" class="fld">
                         </div>
                     </div>
+                    {{ ui.label("Parcours parent", false, "Une spécialisation qui se sépare d’un autre parcours : elle commence après lui et se prolonge au moins jusqu’à sa fin.") }}
+                    <select name="parcoursParentId" class="fld">
+                        <option value="">— Aucun (parcours racine) —</option>
+                        {% for cand in pcands %}
+                            <option value="{{ cand.id }}" {{ node.parcoursParent and node.parcoursParent.id == cand.id ? 'selected' }}>{{ cand.label ?: '—' }} · années {{ cand.anneeDebut }}–{{ cand.anneeFin }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if pcands is empty %}
+                        <p class="fld-help">Aucun parcours antérieur compatible. Renseignez les années ci-dessus puis enregistrez : les parcours qui se terminent avant deviendront sélectionnables.</p>
+                    {% endif %}
                     <a href="{{ path('formation_parcours_graph', {id: formation.id}) }}" data-turbo-frame="node-panel"
                        class="inline-block text-xs font-medium hover:underline" style="color:var(--c-primary)">🗺 Voir l'arborescence des parcours</a>
                 </div>

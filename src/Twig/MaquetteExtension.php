@@ -103,7 +103,11 @@ final class MaquetteExtension extends AbstractExtension
             }
         }
 
-        return array_values(array_filter($all, static fn (Node $p) => !isset($forbidden[$p->getId()])));
+        return array_values(array_filter(
+            $all,
+            fn (Node $p) => !isset($forbidden[$p->getId()])
+                && Node::parcoursYearsAllowChild($p->getAnneeDebut(), $p->getAnneeFin(), $node->getAnneeDebut(), $node->getAnneeFin()),
+        ));
     }
 
     /** @return list<Node> du racine jusqu'au nœud. */

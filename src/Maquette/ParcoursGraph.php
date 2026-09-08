@@ -135,8 +135,29 @@ final class ParcoursGraph
                     $x2,
                 );
             } else {
-                // approfondissement dans la même colonne : bas du parent → haut de l'enfant
-                $path = sprintf('M %.1f %.1f V %.1f', $a['cx'], $a['bottom'], $b['y'] - 2);
+                // approfondissement : le parent chevauche la colonne de l'enfant.
+                // tronc vertical depuis le bas du parent, palier juste au-dessus
+                // de l'enfant, puis descente ; les enfants partagent le tronc.
+                $x1 = $a['cx'];
+                $y1 = $a['bottom'];
+                $x2 = $b['cx'];
+                $y2 = $b['y'] - 2;
+                if (abs($x2 - $x1) < 3.0) {
+                    $path = sprintf('M %.1f %.1f V %.1f', $x1, $y1, $y2);
+                } else {
+                    $turnY = $y2 - 14;
+                    $r = min(9.0, abs($x2 - $x1) / 2, max(1.0, abs($turnY - $y1)) / 2);
+                    $dir = $x2 >= $x1 ? 1.0 : -1.0;
+                    $path = sprintf(
+                        'M %.1f %.1f V %.1f Q %.1f %.1f %.1f %.1f H %.1f Q %.1f %.1f %.1f %.1f V %.1f',
+                        $x1, $y1,
+                        $turnY - $r,
+                        $x1, $turnY, $x1 + $r * $dir, $turnY,
+                        $x2 - $r * $dir,
+                        $x2, $turnY, $x2, $turnY + $r,
+                        $y2,
+                    );
+                }
             }
 
             $edges[] = ['from' => $parent->getId(), 'to' => $p->getId(), 'path' => $path];

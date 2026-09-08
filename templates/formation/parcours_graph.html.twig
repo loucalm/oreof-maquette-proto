@@ -28,17 +28,22 @@
                     </marker>
                 </defs>
 
-                {# colonnes d'années #}
+                {# colonnes d'années (grille de fond, discrète) #}
                 {% for a in 1..g.maxAnnee %}
                     {% set cx = g.pad + (a - 1) * g.colW %}
-                    {% if a > 1 %}<line x1="{{ cx }}" y1="{{ g.headerH - 6 }}" x2="{{ cx }}" y2="{{ g.height - 8 }}" stroke="#e5e7eb" stroke-dasharray="3 4"/>{% endif %}
+                    {% if a > 1 %}<line x1="{{ cx }}" y1="{{ g.headerH - 6 }}" x2="{{ cx }}" y2="{{ g.height - 8 }}" stroke="#eef1f4" stroke-dasharray="2 5"/>{% endif %}
                     <text x="{{ cx + 12 }}" y="{{ g.headerH - 16 }}" font-size="13" font-weight="600" fill="#374151">{{ a == 1 ? '1ère' : a ~ 'ème' }} année</text>
                 {% endfor %}
                 <line x1="{{ g.pad }}" y1="{{ g.headerH - 4 }}" x2="{{ g.width - g.pad }}" y2="{{ g.headerH - 4 }}" stroke="#e5e7eb"/>
 
-                {# liens parent → enfant (tracé pré-calculé côté PHP) #}
+                {# liens parent → enfant (tracé pré-calculé côté PHP) :
+                   halo blanc d'abord (toutes les arêtes), puis le trait coloré,
+                   pour que les connecteurs restent lisibles sur la grille et entre eux #}
                 {% for e in g.edges %}
-                    <path d="{{ e.path }}" fill="none" stroke="#818cf8" stroke-width="2" marker-end="url(#pg-arrow)"/>
+                    <path d="{{ e.path }}" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                {% endfor %}
+                {% for e in g.edges %}
+                    <path d="{{ e.path }}" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#pg-arrow)"/>
                 {% endfor %}
 
                 {# boîtes parcours #}

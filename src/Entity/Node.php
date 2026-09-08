@@ -325,6 +325,20 @@ class Node
         return $this->getAnneeDebut() + max(0, $nbAnnees - 1);
     }
 
+    /**
+     * Règle de ramification entre parcours : un parcours « enfant » est une
+     * spécialisation qui se sépare du parent. Il doit donc commencer au moins
+     * un an après le début du parent, s'enchaîner sans coupure après sa fin, et
+     * se prolonger au moins jusqu'à la fin du parent. Deux parcours sur la même
+     * période sont parallèles, pas parent / enfant.
+     */
+    public static function parcoursYearsAllowChild(int $parentDebut, int $parentFin, int $childDebut, int $childFin): bool
+    {
+        return $childDebut > $parentDebut
+            && $childDebut <= $parentFin + 1
+            && $childFin >= $parentFin;
+    }
+
     public function getDepth(): int
     {
         $depth = 0;
