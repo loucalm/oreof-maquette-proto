@@ -101,14 +101,13 @@
                     <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Paramètre de la formation</div>
                     {% for k, s in param_sections() %}
                         <a href="{{ path('formation_param', {id: formation.id, key: k}) }}" data-turbo-frame="node-panel"
-                           class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ param == k ? 'is-active' }}"
-                           style="{{ param == k ? 'background:#eef1f4' }}">
+                           class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ param == k ? 'is-active' }}">
                             <span class="status-dot" data-status="{{ param_status(formation, k) }}"></span>{{ s.label }}
                         </a>
                     {% endfor %}
                     {% if formation.multiParcours %}
                         <a href="{{ path('formation_parcours_graph', {id: formation.id}) }}" data-turbo-frame="node-panel"
-                           class="mt-1 flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50"
+                           class="nav-section mt-1 flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50"
                            style="color:var(--c-primary)">🗺 Arborescence des parcours</a>
                     {% endif %}
                 </div>

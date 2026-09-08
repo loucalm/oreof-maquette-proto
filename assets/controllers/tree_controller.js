@@ -2,8 +2,15 @@ import { Controller } from '@hotwired/stimulus';
 import Sortable from 'sortablejs';
 
 /**
- * Arbre de nœuds : glisser-déposer imbriqué (SortableJS) + pliage des branches.
- * Au drop → POST vers l'URL de déplacement puis rechargement.
+ * Panneau « Structure de la formation » :
+ *  - glisser-déposer imbriqué des nœuds (SortableJS) ;
+ *  - pliage persistant des branches ;
+ *  - surbrillance du nœud / de la section actifs, synchronisée avec le
+ *    contenu réellement chargé dans le <turbo-frame id="node-panel">.
+ *
+ * Les liens de l'arbre et des sections ne rechargent que le frame de droite :
+ * la colonne de gauche n'est pas re-rendue par le serveur, c'est donc ici
+ * qu'on déplace la classe .is-active et qu'on tient l'URL à jour.
  */
 export default class extends Controller {
     static values = { moveUrl: String };
@@ -25,12 +32,99 @@ export default class extends Controller {
                 onEnd: (evt) => this.onDrop(evt),
             }));
         });
+
+        // ─── nœud actif ↔ panneau d'édition ───
+        this.panel = document.getElementById('node-panel');
+        this.onNavClick = this.onNavClick.bind(this);
+        this.onFrameLoad = this.onFrameLoad.bind(this);
+        this.element.addEventListener('click', this.onNavClick);
+        if (this.panel) this.panel.addEventListener('turbo:frame-load', this.onFrameLoad);
+        // si le frame est déjà peuplé (retour arrière, cache Turbo), on se cale ;
+        // sinon on garde la surbrillance rendue par le serveur jusqu'au 1er load.
+        if (this.markerToken()) this.syncActive();
     }
 
     disconnect() {
         (this.sortables || []).forEach((s) => s.destroy());
         this.sortables = [];
+        this.element.removeEventListener('click', this.onNavClick);
+        if (this.panel) this.panel.removeEventListener('turbo:frame-load', this.onFrameLoad);
     }
+
+    // ─── surbrillance ───
+
+    markerToken() {
+        const marker = this.panel && this.panel.querySelector('[data-panel-active]');
+        return marker ? marker.dataset.panelActive : '';
+    }
+
+    /** Surbrillance immédiate au clic, avant la réponse du frame. */
+    onNavClick(event) {
+        const link = event.target.closest('a[data-turbo-frame="node-panel"]');
+        if (!link || !this.element.contains(link)) return;
+        const row = link.closest('.tree-row');
+        if (row) this.activate(row);
+        else if (link.classList.contains('nav-section')) this.activate(link);
+    }
+
+    onFrameLoad() {
+        this.syncActive();
+    }
+
+    /** Source de vérité : le marqueur data-panel-active du contenu chargé. */
+    syncActive() {
+        const token = this.markerToken();
+        let target = null;
+        let url = {};
+
+        if (token.startsWith('node:')) {
+            const id = token.slice(5);
+            target = this.element.querySelector(`li[data-node-id="${id}"] > .tree-row`);
+            url = { focus: id };
+        } else if (token.startsWith('param:')) {
+            const key = token.slice(6);
+            target = this.element.querySelector(`a.nav-section[href*="/parametre/${key}"]`);
+            url = { param: key };
+        } else if (token === 'parcours') {
+            target = this.element.querySelector('a.nav-section[href*="/parcours"]');
+        }
+
+        this.activate(target);
+        this.updateUrl(url);
+    }
+
+    activate(target) {
+        this.element.querySelectorAll('.is-active').forEach((el) => el.classList.remove('is-active'));
+        if (!target) return;
+        target.classList.add('is-active');
+
+        if (target.classList.contains('tree-row')) {
+            // déplier les branches parentes pour que la ligne active soit visible
+            let li = target.closest('li');
+            let changed = false;
+            while (li) {
+                if (li.classList.contains('collapsed')) {
+                    li.classList.remove('collapsed');
+                    changed = true;
+                }
+                li = li.parentElement ? li.parentElement.closest('li') : null;
+            }
+            if (changed) this.persistCollapsed();
+            target.scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    updateUrl(params) {
+        try {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('focus');
+            url.searchParams.delete('param');
+            Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+            window.history.replaceState(window.history.state, '', url);
+        } catch { /* ignore */ }
+    }
+
+    // ─── pliage ───
 
     toggle(event) {
         event.preventDefault();
@@ -40,7 +134,6 @@ export default class extends Controller {
         this.persistCollapsed();
     }
 
-    // ─── pliage persistant ───
     get collapsedSet() {
         try {
             return new Set(JSON.parse(localStorage.getItem(this.storeKey) || '[]'));
@@ -64,6 +157,7 @@ export default class extends Controller {
     }
 
     // ─── déplacement ───
+
     async onDrop(evt) {
         const li = evt.item;
         const nodeId = li.dataset.nodeId;

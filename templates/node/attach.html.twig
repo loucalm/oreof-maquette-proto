@@ -1,5 +1,5 @@
 <turbo-frame id="node-panel">
-<div class="p-6 space-y-4">
+<div class="p-6 space-y-4" data-panel-active="node:{{ node.id }}">
     <div class="text-sm text-gray-400">{{ node.formation.name }} › {{ node.label ?: node.type.label }}</div>
     <h2 class="text-xl font-bold">Raccrocher un nœud mutualisé</h2>
     <p class="text-sm text-gray-500">

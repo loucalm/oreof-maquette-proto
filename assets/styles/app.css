@@ -72,6 +72,9 @@ body {
 .tree-row:hover { background: #f0f1f3; }
 .tree-row.is-active { background: #eef1f4; border-left-color: var(--c-primary); }
 
+/* liens « Paramètre de la formation » : même logique d'actif que l'arbre */
+.nav-section.is-active { background: #eef1f4; box-shadow: inset 3px 0 0 var(--c-primary); font-weight: 600; }
+
 .drag-handle { cursor: grab; color: #c2c7d0; font-size: 12px; letter-spacing: -2px; touch-action: none; user-select: none; }
 .sortable-ghost { opacity: .35; }
 .sortable-drag  { background: var(--c-surface); box-shadow: 0 8px 24px rgba(0,0,0,.12); }

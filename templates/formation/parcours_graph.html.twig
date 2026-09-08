@@ -2,7 +2,7 @@
 {% set g = graph %}
 
 <turbo-frame id="node-panel">
-<div class="p-6">
+<div class="p-6" data-panel-active="parcours">
     <div class="mb-1 flex items-center justify-between">
         <div>
             <h2 class="text-xl font-bold">Arborescence des parcours</h2>
@@ -46,10 +46,12 @@
                     <path d="{{ e.path }}" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#pg-arrow)"/>
                 {% endfor %}
 
-                {# boîtes parcours #}
+                {# boîtes parcours — lien SVG en xlink:href (Turbo ne sait pas lire
+                   le href des <a> SVG) : navigation pleine page vers le nœud, ok
+                   ici puisqu'on quitte le graphe pour éditer ce parcours #}
                 {% for r in g.rows %}
                     {% set b = g.boxes[r.node.id] %}
-                    <a href="{{ path('formation_editor', {id: formation.id, focus: r.node.id}) }}" data-turbo-frame="node-panel">
+                    <a xlink:href="{{ path('formation_editor', {id: formation.id, focus: r.node.id}) }}" style="cursor:pointer">
                         <rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ g.boxH }}" rx="10" fill="#eef2ff" stroke="#c7d2fe" stroke-width="1.5"/>
                         <text x="{{ b.x + b.w / 2 }}" y="{{ b.cy + 4 }}" text-anchor="middle" font-size="13" font-weight="600" fill="#3730a3">{{ r.node.label ?: 'Parcours' }}</text>
                     </a>
