@@ -173,19 +173,43 @@ final class NodeController extends AbstractController
         return $this->backToEditor($node, $node->isMutualized() ? 'Nœud mutualisé.' : 'Nœud retiré de la mutualisation.');
     }
 
-    /** « Paramètre du nœud » : capacités portées par CE nœud (surcharge du type). */
+    /**
+     * « Paramètre du nœud » : le responsable choisit, parmi les capacités que le
+     * type expose, celles qui apparaissent sur CE nœud. Les capacités
+     * « réservées admin » (NodeType::lockedCapabilities) sont ignorées ici.
+     */
     #[Route('/nodes/{id}/params', name: 'node_params', methods: ['POST'])]
-    public function params(Node $node, Request $request): Response
+    public function params(Node $node, Request $request, NodeTypeRepository $types): Response
     {
+        // changement de type éventuel (select « Type de nœud »)
+        $typeKey = trim((string) $request->request->get('typeKey'));
+        if ($typeKey !== '' && $typeKey !== $node->getType()->getKey()) {
+            $newType = $types->findOneByKey($typeKey);
+            if ($newType !== null) {
+                $node->setType($newType);
+                $node->setCapabilityOverrides(null); // les overrides ne s'appliquent plus
+            }
+        }
+
         $checked = $request->request->all('capabilities');
-        $overrides = [];
-        foreach (AttributeCatalog::knownCapabilities() as $cap) {
+        $overrides = $node->getCapabilityOverrides() ?? [];
+        foreach (array_keys($node->getType()->getCapabilities()) as $cap) {
+            if ($node->getType()->isCapabilityLocked($cap)) {
+                unset($overrides[$cap]); // pas d'override sur une capacité verrouillée
+                continue;
+            }
             $overrides[$cap] = \in_array($cap, $checked, true);
         }
-        $node->setCapabilityOverrides($overrides);
+        // on ne garde que les overrides qui diffèrent du défaut du type
+        foreach ($overrides as $cap => $val) {
+            if ($val === $node->getType()->capabilityDefault($cap)) {
+                unset($overrides[$cap]);
+            }
+        }
+        $node->setCapabilityOverrides($overrides === [] ? null : $overrides);
         $this->em->flush();
 
-        return $this->backToEditor($node, 'Capacités du nœud enregistrées.');
+        return $this->backToEditor($node, 'Paramètre du nœud enregistré.');
     }
 
     /** « Raccrocher » : liste des nœuds mutualisés d'autres formations, du bon type. */

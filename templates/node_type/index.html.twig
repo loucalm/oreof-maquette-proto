@@ -39,7 +39,7 @@
                     {% else %}{% for k in t.allowedChildKeys %}<span class="type-badge mr-1">{{ k }}</span>{% endfor %}{% endif %}
                 </td>
                 <td class="px-4 py-3">
-                    {% for c, on in t.capabilities %}{% if on %}<span class="type-badge mr-1">{{ capabilities[c] ?? c }}</span>{% endif %}{% endfor %}
+                    {% for c, on in t.capabilities %}<span class="type-badge mr-1" {{ t.isCapabilityLocked(c) ? 'title="Réservée admin"' }}>{{ capabilities[c] ?? c }}{{ t.isCapabilityLocked(c) ? ' 🔒' }}</span>{% endfor %}
                 </td>
                 <td class="px-4 py-3">{{ t.ectsTarget ?? '—' }}</td>
                 <td class="px-4 py-3 text-right whitespace-nowrap">

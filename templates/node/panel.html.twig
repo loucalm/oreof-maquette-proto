@@ -168,20 +168,75 @@
     </form>
     {% endif %}
 
-    {# ── Paramètre du nœud (capacités par nœud) ── #}
-    <div data-tabs-target="panel" data-tab="__params" hidden class="rounded-xl border p-4 space-y-2" style="border-color:var(--c-border)">
-        <div class="font-semibold text-sm">⚙ Paramètre du nœud — capacités portées</div>
-        <p class="text-xs text-gray-400">Coché = le nœud porte cet attribut. Par défaut hérité du type « {{ T }} ».</p>
-        <form method="post" action="{{ path('node_params', {id: node.id}) }}" data-turbo-frame="_top" class="space-y-2 pt-1">
-            {% for key, label in capability_labels() %}
-                <label class="flex items-center gap-2 text-sm">
-                    <input type="checkbox" name="capabilities[]" value="{{ key }}" {{ (caps[key] ?? false) ? 'checked' }}>
-                    {{ label }}
-                    {% if node.type.hasCapability(key) %}<span class="pill">type</span>{% endif %}
+    {# ── Paramètre du nœud : quels champs apparaissent sur ce nœud ── #}
+    {% set labels = capability_labels() %}
+    {% set typeCaps = node.type.capabilities %}
+    <div data-tabs-target="panel" data-tab="__params" hidden class="rounded-xl border p-4 space-y-4" style="border-color:var(--c-border)">
+        <div>
+            <div class="font-semibold text-sm">⚙ Paramètre du nœud</div>
+            <p class="text-xs text-gray-400">
+                Cochez les champs à afficher sur ce nœud. Les champs <span class="inline-flex items-center gap-1"><span class="pill">🔒 admin</span></span>
+                sont imposés par l'administrateur du type et ne sont pas modifiables ici.
+            </p>
+        </div>
+
+        <form method="post" action="{{ path('node_params', {id: node.id}) }}" data-turbo-frame="_top" class="space-y-4">
+
+            {# type de nœud (modifiable) #}
+            <div>
+                <div class="fld-label">Type de nœud</div>
+                <select name="typeKey" class="fld mt-1">
+                    {% for t in all_node_types() %}
+                        <option value="{{ t.key }}" {{ t.key == node.type.key ? 'selected' }}>{{ t.icon }} {{ t.label }}</option>
+                    {% endfor %}
+                </select>
+                <div class="fld-help">Changer le type réinitialise les champs de ce nœud sur les valeurs du nouveau type.</div>
+            </div>
+
+            <div class="flex items-center gap-3 text-gray-300 text-[11px] uppercase tracking-widest">
+                <div class="h-px flex-1 bg-gray-200"></div>Configuration du nœud<div class="h-px flex-1 bg-gray-200"></div>
+            </div>
+
+            {# flag mutualisable (si le type le porte) #}
+            {% if typeCaps.mutualisable is defined %}
+                {% set mutLocked = node.type.isCapabilityLocked('mutualisable') %}
+                <label class="flex items-center gap-3 text-sm">
+                    <input type="checkbox" name="capabilities[]" value="mutualisable"
+                           {{ (caps.mutualisable ?? false) ? 'checked' }} {{ mutLocked ? 'disabled' }}>
+                    <span class="font-medium uppercase text-xs tracking-wide text-gray-500">Nœud mutualisable / accrochable</span>
+                    {% if mutLocked %}<span class="pill">🔒 admin</span>{% endif %}
                 </label>
-            {% endfor %}
-            <input type="hidden" name="mutualized" value="{{ node.mutualized ? '1' : '' }}">
-            <button class="mt-1 rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">Appliquer</button>
+            {% endif %}
+
+            {# champs toujours présents (cœur du nœud) — indicatif #}
+            <div class="space-y-1.5 opacity-70">
+                {% for coreLabel in ['Nœud parent', 'Libellé', 'Code'] %}
+                    <label class="flex items-center gap-2 text-sm">
+                        <input type="checkbox" checked disabled>
+                        <span class="uppercase text-xs tracking-wide text-gray-500">{{ coreLabel }}</span>
+                        <span class="pill">🔒 cœur</span>
+                    </label>
+                {% endfor %}
+            </div>
+
+            {# capacités « champ » que le type expose #}
+            <div class="space-y-1.5">
+                {% for key, defaultOn in typeCaps|filter((v, k) => k != 'mutualisable') %}
+                    {% set locked = node.type.isCapabilityLocked(key) %}
+                    <label class="flex items-center gap-2 text-sm">
+                        <input type="checkbox" name="capabilities[]" value="{{ key }}"
+                               {{ (caps[key] ?? false) ? 'checked' }} {{ locked ? 'disabled' }}>
+                        <span class="uppercase text-xs tracking-wide text-gray-500">{{ labels[key] ?? key }}</span>
+                        {% if locked %}<span class="pill">🔒 admin</span>{% endif %}
+                    </label>
+                {% endfor %}
+            </div>
+
+            <div class="flex items-center gap-2 pt-2 border-t" style="border-color:var(--c-border)">
+                <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">Enregistrer</button>
+                <a href="{{ path('node_type_edit', {id: node.type.id}) }}" target="_blank"
+                   class="text-xs hover:underline" style="color:var(--c-muted)">Gérer le type « {{ T }} » (admin) ↗</a>
+            </div>
         </form>
     </div>
 </div>

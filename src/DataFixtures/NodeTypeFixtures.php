@@ -26,22 +26,23 @@ final class NodeTypeFixtures extends Fixture
     public function load(ObjectManager $manager): void
     {
         $defs = [
-            // clé          label        icon  position  enfants autorisés                    capabilities                                                                              ectsTarget
-            ['parcours',    'Parcours',  '🧭', 10,       self::STRUCTURAL,                    ['ects' => true, 'mutualisable' => true],                                                  null],
-            ['annee',       'Année',     '📅', 20,       ['semestre', 'ue', 'bloc_choix'],    ['mutualisable' => true],                                                                  60],
-            ['semestre',    'Semestre',  '🗓️', 30,       ['ue', 'bloc_choix'],               ['mutualisable' => true],                                                                  30],
-            ['ue',          'UE',        '🧩', 40,       ['ec', 'bloc_choix'],               ['ects' => true, 'ueType' => true, 'nature' => true, 'competencies' => true, 'mutualisable' => true], null],
-            ['ec',          'EC',        '📄', 50,       [],                                 ['ects' => true, 'nature' => true, 'competencies' => true, 'ficheMatiere' => true, 'hours' => true, 'mccc' => true, 'mutualisable' => true], null],
-            ['bloc_choix',  'Bloc de choix', '🔀', 60,   ['ue', 'ec'],                       ['nature' => true, 'mutualisable' => true],                                                null],
+            // clé          label        icon  position  enfants autorisés                    capabilities                                                                              ectsTarget  capacités réservées admin
+            ['parcours',    'Parcours',  '🧭', 10,       self::STRUCTURAL,                    ['ects' => true, 'mutualisable' => true],                                                  null,       []],
+            ['annee',       'Année',     '📅', 20,       ['semestre', 'ue', 'bloc_choix'],    ['mutualisable' => true],                                                                  60,         []],
+            ['semestre',    'Semestre',  '🗓️', 30,       ['ue', 'bloc_choix'],               ['mutualisable' => true],                                                                  30,         []],
+            ['ue',          'UE',        '🧩', 40,       ['ec', 'bloc_choix'],               ['ects' => true, 'ueType' => true, 'nature' => true, 'competencies' => true, 'mutualisable' => true], null, ['nature']],
+            ['ec',          'EC',        '📄', 50,       [],                                 ['ects' => true, 'nature' => true, 'competencies' => true, 'ficheMatiere' => true, 'hours' => true, 'mccc' => true, 'mutualisable' => true], null, ['nature', 'mccc']],
+            ['bloc_choix',  'Bloc de choix', '🔀', 60,   ['ue', 'ec'],                       ['nature' => true, 'mutualisable' => true],                                                null,       ['nature']],
         ];
 
-        foreach ($defs as [$key, $label, $icon, $position, $children, $caps, $ectsTarget]) {
+        foreach ($defs as [$key, $label, $icon, $position, $children, $caps, $ectsTarget, $locked]) {
             $type = (new NodeType($key, $label))
                 ->setIcon($icon)
                 ->setFamily(NodeFamily::Structural)
                 ->setPosition($position)
                 ->setAllowedChildKeys($children)
                 ->setCapabilities($caps)
+                ->setLockedCapabilities($locked)
                 ->setEctsTarget($ectsTarget)
                 ->setSystem(true);
 

@@ -59,16 +59,35 @@
         </fieldset>
 
         <fieldset>
-            <legend class="text-xs font-medium mb-1">Capacités (attributs portés)</legend>
-            <div class="grid grid-cols-2 gap-1.5">
+            <legend class="text-xs font-medium mb-1">Capacités &amp; champs du type</legend>
+            <p class="text-xs mb-2" style="color:var(--c-muted)">
+                <strong>Incluse</strong> : le champ existe pour ce type de nœud.
+                <strong>Réservée admin</strong> : imposé — le responsable de formation ne peut pas l'activer / désactiver par nœud.
+            </p>
+            <table class="w-full text-sm">
+                <thead class="text-[11px] uppercase tracking-wide" style="color:var(--c-muted)">
+                    <tr class="border-b" style="border-color:var(--c-border)">
+                        <th class="text-left py-1.5">Capacité</th>
+                        <th class="w-20 text-center">Incluse</th>
+                        <th class="w-28 text-center">Réservée admin</th>
+                    </tr>
+                </thead>
+                <tbody>
                 {% for key, label in capabilities %}
-                    <label class="flex items-center gap-2 text-sm">
-                        <input type="checkbox" name="capabilities[]" value="{{ key }}"
-                               {{ (not isNew and nodeType.hasCapability(key)) ? 'checked' }}>
-                        {{ label }}
-                    </label>
+                    <tr class="border-b last:border-0" style="border-color:var(--c-border)">
+                        <td class="py-1.5">{{ label }} <code class="text-xs" style="color:var(--c-muted)">{{ key }}</code></td>
+                        <td class="text-center">
+                            <input type="checkbox" name="capabilities[]" value="{{ key }}"
+                                   {{ (not isNew and nodeType.hasCapability(key)) ? 'checked' }}>
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" name="lockedCapabilities[]" value="{{ key }}"
+                                   {{ (not isNew and nodeType.isCapabilityLocked(key)) ? 'checked' }}>
+                        </td>
+                    </tr>
                 {% endfor %}
-            </div>
+                </tbody>
+            </table>
         </fieldset>
 
         <div class="flex gap-2 pt-1">

@@ -250,7 +250,10 @@ class Node
             $caps[$name] = (bool) $value;
         }
         foreach ($this->capabilityOverrides ?? [] as $name => $value) {
-            $caps[$name] = (bool) $value;
+            // une capacité « réservée admin » ne peut pas être surchargée par le nœud
+            if (!$this->type->isCapabilityLocked($name)) {
+                $caps[$name] = (bool) $value;
+            }
         }
 
         return $caps;

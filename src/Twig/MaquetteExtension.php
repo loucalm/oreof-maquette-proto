@@ -33,6 +33,7 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('structure_addable', $this->structureAddable(...)),
             new TwigFunction('root_type', $this->rootType(...)),
             new TwigFunction('type_meta', $this->typeMeta(...)),
+            new TwigFunction('all_node_types', fn () => $this->types->findAllOrdered()),
             new TwigFunction('node_path', $this->nodePath(...)),
             new TwigFunction('capability_labels', $this->capabilityLabels(...)),
             new TwigFunction('param_sections', static fn () => FormationController::PARAM_SECTIONS),

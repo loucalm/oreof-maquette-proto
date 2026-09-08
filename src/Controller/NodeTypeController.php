@@ -54,7 +54,8 @@ final class NodeTypeController extends AbstractController
                 ->setPosition($request->request->getInt('position'))
                 ->setEctsTarget($request->request->get('ectsTarget') !== '' ? $request->request->getInt('ectsTarget') : null)
                 ->setAllowedChildKeys($request->request->all('allowedChildKeys'))
-                ->setCapabilities(array_fill_keys($request->request->all('capabilities'), true));
+                ->setCapabilities(array_fill_keys($request->request->all('capabilities'), true))
+                ->setLockedCapabilities($request->request->all('lockedCapabilities'));
 
             $em->flush();
             $this->addFlash('success', 'Type enregistré.');

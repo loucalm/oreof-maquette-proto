@@ -62,6 +62,16 @@ class NodeType
     #[ORM\Column(type: Types::JSON)]
     private array $capabilities = [];
 
+    /**
+     * Capacités « réservées admin » : présentes sur le type mais que le
+     * responsable de formation ne peut pas activer/désactiver par nœud
+     * (l'override du nœud est ignoré pour ces clés).
+     *
+     * @var list<string>
+     */
+    #[ORM\Column(type: Types::JSON)]
+    private array $lockedCapabilities = [];
+
     /** Cible d'ECTS pour l'agrégation (30 semestre, 60 année…), ou null. */
     #[ORM\Column(nullable: true)]
     private ?int $ectsTarget = null;
@@ -182,7 +192,36 @@ class NodeType
 
     public function hasCapability(string $name): bool
     {
+        return \array_key_exists($name, $this->capabilities);
+    }
+
+    /** Valeur par défaut (activé/désactivé) de la capacité pour ce type. */
+    public function capabilityDefault(string $name): bool
+    {
         return (bool) ($this->capabilities[$name] ?? false);
+    }
+
+    /** @return list<string> */
+    public function getLockedCapabilities(): array
+    {
+        return $this->lockedCapabilities;
+    }
+
+    /** @param list<string> $keys */
+    public function setLockedCapabilities(array $keys): self
+    {
+        // on ne verrouille que des capacités effectivement portées par le type
+        $this->lockedCapabilities = array_values(array_filter(
+            array_unique(array_map('strval', $keys)),
+            fn (string $k) => \array_key_exists($k, $this->capabilities),
+        ));
+
+        return $this;
+    }
+
+    public function isCapabilityLocked(string $name): bool
+    {
+        return \in_array($name, $this->lockedCapabilities, true);
     }
 
     public function getEctsTarget(): ?int
