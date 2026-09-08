@@ -25,5 +25,13 @@ export default class extends Controller {
     toParams() {
         this.tabTargets.forEach((t) => t.classList.remove('tab-active'));
         this.panelTargets.forEach((p) => { p.hidden = p.dataset.tab !== '__params'; });
+        const params = this.panelTargets.find((p) => p.dataset.tab === '__params');
+        params?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    toProps() {
+        const first = this.tabTargets[0];
+        this.activate(first ? first.dataset.tab : 'props');
+        this.element.scrollIntoView({ block: 'start' });
     }
 }
