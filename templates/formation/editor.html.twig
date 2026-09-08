@@ -127,9 +127,7 @@
                               class="mt-1 px-1" data-tree-target="addForm">
                             <input type="hidden" name="parentId" value="" data-tree-target="addParent">
                             <input type="hidden" name="typeKey" value="{{ rootType.key }}" data-tree-target="addType">
-                            <button data-tree-target="addButton"
-                                    class="w-full rounded-md border border-dashed px-2 py-2 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-                                    style="border-color:var(--c-border)">＋ Ajouter {{ rootType.icon }} {{ rootType.label }}</button>
+                            <button data-tree-target="addButton" class="tree-add-btn">＋ Ajouter {{ rootType.icon }} {{ rootType.label }}</button>
                         </form>
                     {% elseif roots is empty %}
                         <p class="text-sm px-2 py-8 text-center text-gray-400">
