@@ -13,7 +13,8 @@ import Sortable from 'sortablejs';
  * qu'on déplace la classe .is-active et qu'on tient l'URL à jour.
  */
 export default class extends Controller {
-    static values = { moveUrl: String };
+    static values = { moveUrl: String, chain: Array, typeMeta: Object, rootKey: String };
+    static targets = ['addForm', 'addParent', 'addType', 'addButton'];
 
     connect() {
         this.storeKey = 'tree-collapsed';
@@ -42,6 +43,7 @@ export default class extends Controller {
         // si le frame est déjà peuplé (retour arrière, cache Turbo), on se cale ;
         // sinon on garde la surbrillance rendue par le serveur jusqu'au 1er load.
         if (this.markerToken()) this.syncActive();
+        this.updateAddButton();
     }
 
     disconnect() {
@@ -60,11 +62,26 @@ export default class extends Controller {
 
     /** Surbrillance immédiate au clic, avant la réponse du frame. */
     onNavClick(event) {
+        // la poignée de glissement et les boutons (chevron, ajout) se gèrent seuls
+        if (event.target.closest('.drag-handle, button')) return;
+
         const link = event.target.closest('a[data-turbo-frame="node-panel"]');
-        if (!link || !this.element.contains(link)) return;
-        const row = link.closest('.tree-row');
-        if (row) this.activate(row);
-        else if (link.classList.contains('nav-section')) this.activate(link);
+        if (link && this.element.contains(link)) {
+            const row = link.closest('.tree-row');
+            if (row) this.activate(row);
+            else if (link.classList.contains('nav-section')) this.activate(link);
+            return;
+        }
+
+        // clic n'importe où sur la ligne d'un nœud → on le sélectionne
+        const row = event.target.closest('.tree-row');
+        if (row && this.element.contains(row)) {
+            const label = row.querySelector('a.tree-label[data-turbo-frame]');
+            if (label) {
+                this.activate(row);
+                label.click(); // Turbo navigue le frame
+            }
+        }
     }
 
     onFrameLoad() {
@@ -112,6 +129,52 @@ export default class extends Controller {
             if (changed) this.persistCollapsed();
             target.scrollIntoView({ block: 'nearest' });
         }
+
+        this.updateAddButton();
+    }
+
+    /**
+     * Le bouton « ＋ Ajouter » de l'arbre suit la sélection : enfant du nœud
+     * actif (type déduit du squelette), ou nœud racine si rien n'est
+     * sélectionné. Le type réel est tranché côté serveur (valeur « auto »),
+     * ici on ne fait que l'étiquette et le parent.
+     */
+    updateAddButton() {
+        if (!this.hasAddButtonTarget) return;
+
+        const meta = this.hasTypeMetaValue ? this.typeMetaValue : {};
+        const chain = this.hasChainValue ? this.chainValue : [];
+        const activeLi = this.element.querySelector('.tree-row.is-active')?.closest('li[data-node-id]');
+
+        if (!activeLi) {
+            const rootKey = this.hasRootKeyValue ? this.rootKeyValue : '';
+            this.addParentTarget.value = '';
+            this.addTypeTarget.value = rootKey || 'auto';
+            this.addButtonTarget.disabled = false;
+            this.addButtonTarget.textContent = meta[rootKey]
+                ? `＋ Ajouter ${meta[rootKey].icon} ${meta[rootKey].label}`
+                : '＋ Ajouter un nœud';
+            return;
+        }
+
+        const nodeType = activeLi.dataset.nodeType;
+        const name = activeLi.querySelector('.tree-label')?.textContent.trim() || 'ce nœud';
+        const idx = chain.indexOf(nodeType);
+        const childKey = idx >= 0 ? chain[idx + 1] : null;
+
+        this.addParentTarget.value = activeLi.dataset.nodeId;
+        this.addTypeTarget.value = childKey || 'auto';
+
+        if (idx >= 0 && !childKey) {
+            this.addButtonTarget.disabled = true;
+            this.addButtonTarget.textContent = `＋ « ${name} » ne peut pas contenir d'enfant`;
+            return;
+        }
+
+        this.addButtonTarget.disabled = false;
+        this.addButtonTarget.textContent = childKey && meta[childKey]
+            ? `＋ Ajouter ${meta[childKey].icon} ${meta[childKey].label} sous « ${name} »`
+            : `＋ Ajouter un nœud sous « ${name} »`;
     }
 
     updateUrl(params) {

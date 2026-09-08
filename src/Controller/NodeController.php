@@ -97,11 +97,27 @@ final class NodeController extends AbstractController
     #[Route('/formations/{id}/nodes', name: 'node_add', methods: ['POST'])]
     public function add(Formation $formation, Request $request, NodeTypeRepository $types): Response
     {
-        $type = $types->findOneByKey((string) $request->request->get('typeKey'));
-        if ($type === null) {
-            throw $this->createNotFoundException('Type inconnu');
-        }
         $parent = $request->request->get('parentId') ? $this->nodes->find($request->request->getInt('parentId')) : null;
+
+        // « auto » (bouton contextuel de l'arbre) : le type se déduit du squelette
+        $typeKey = trim((string) $request->request->get('typeKey'));
+        if ('' === $typeKey || 'auto' === $typeKey) {
+            $typeKey = null !== $parent
+                ? ($formation->getChildTypeKey($parent->getType()->getKey())
+                    ?? ($parent->getType()->getAllowedChildKeys()[0] ?? null))
+                : $formation->getRootTypeKey();
+        }
+
+        $type = null !== $typeKey ? $types->findOneByKey($typeKey) : null;
+        if ($type === null) {
+            $this->addFlash('warning', null !== $parent
+                ? sprintf('« %s » ne peut pas contenir d’enfant.', $parent->getDisplayLabel())
+                : 'Définissez d’abord le squelette dans « Configuration de la structure ».');
+
+            return $this->redirectToRoute('formation_editor', null !== $parent
+                ? ['id' => $formation->getId(), 'focus' => $parent->getId()]
+                : ['id' => $formation->getId(), 'param' => 'structure']);
+        }
 
         $node = $this->factory->create($formation, $type, $parent, trim((string) $request->request->get('label')));
         $this->em->flush();

@@ -78,7 +78,11 @@
 
         {# ─── panneau structure ─── #}
         <div class="flex flex-col rounded-xl border overflow-hidden" style="border-color:var(--c-border)"
-             data-controller="tree" data-tree-move-url-value="{{ path('node_move', {id: '__ID__'}) }}">
+             data-controller="tree"
+             data-tree-move-url-value="{{ path('node_move', {id: '__ID__'}) }}"
+             data-tree-chain-value="{{ formation.effectiveStructure|json_encode|e('html_attr') }}"
+             data-tree-type-meta-value="{{ type_meta()|json_encode|e('html_attr') }}"
+             data-tree-root-key-value="{{ formation.rootTypeKey }}">
 
             <div class="px-4 pt-4 pb-3 border-b shrink-0" style="border-color:var(--c-border)">
                 <div class="flex items-center gap-2">
@@ -119,9 +123,12 @@
                     {% endif %}
 
                     {% if rootType %}
-                        <form method="post" action="{{ path('node_add', {id: formation.id}) }}" data-turbo-frame="_top" class="mt-1 px-1">
-                            <input type="hidden" name="typeKey" value="{{ rootType.key }}">
-                            <button class="w-full rounded-md border border-dashed px-2 py-2 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                        <form method="post" action="{{ path('node_add', {id: formation.id}) }}" data-turbo-frame="_top"
+                              class="mt-1 px-1" data-tree-target="addForm">
+                            <input type="hidden" name="parentId" value="" data-tree-target="addParent">
+                            <input type="hidden" name="typeKey" value="{{ rootType.key }}" data-tree-target="addType">
+                            <button data-tree-target="addButton"
+                                    class="w-full rounded-md border border-dashed px-2 py-2 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                                     style="border-color:var(--c-border)">＋ Ajouter {{ rootType.icon }} {{ rootType.label }}</button>
                         </form>
                     {% elseif roots is empty %}

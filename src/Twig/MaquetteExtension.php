@@ -32,6 +32,7 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('structure_rows', $this->structureRows(...)),
             new TwigFunction('structure_addable', $this->structureAddable(...)),
             new TwigFunction('root_type', $this->rootType(...)),
+            new TwigFunction('type_meta', $this->typeMeta(...)),
             new TwigFunction('node_path', $this->nodePath(...)),
             new TwigFunction('capability_labels', $this->capabilityLabels(...)),
             new TwigFunction('param_sections', static fn () => FormationController::PARAM_SECTIONS),
@@ -129,6 +130,20 @@ final class MaquetteExtension extends AbstractExtension
         $key = $formation->getRootTypeKey();
 
         return null !== $key ? ($this->types->findAllIndexed()[$key] ?? null) : null;
+    }
+
+    /**
+     * Libellé + icône de chaque type, indexés par clé — pour l'étiquetage
+     * côté JS (bouton « Ajouter » de l'arbre).
+     *
+     * @return array<string, array{label: string, icon: string}>
+     */
+    public function typeMeta(): array
+    {
+        return array_map(
+            static fn (NodeType $t) => ['label' => $t->getLabel(), 'icon' => $t->getIcon() ?? ''],
+            $this->types->findAllIndexed(),
+        );
     }
 
     /**

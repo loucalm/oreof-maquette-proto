@@ -68,6 +68,7 @@ body {
     display: flex; align-items: center; gap: 7px;
     padding: 7px 8px; border-radius: 8px;
     border-left: 3px solid transparent;
+    cursor: pointer;
 }
 .tree-row:hover { background: #f0f1f3; }
 .tree-row.is-active { background: #eef1f4; border-left-color: var(--c-primary); }
