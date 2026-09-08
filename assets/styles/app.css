@@ -76,6 +76,9 @@ body {
 /* liens « Paramètre de la formation » : même logique d'actif que l'arbre */
 .nav-section.is-active { background: #eef1f4; box-shadow: inset 3px 0 0 var(--c-primary); font-weight: 600; }
 
+/* bouton « ＋ Ajouter » quand il est glissé sous le nœud sélectionné */
+.tree-add-nested { margin-left: 22px; margin-top: 4px; }
+
 .drag-handle { cursor: grab; color: #c2c7d0; font-size: 12px; letter-spacing: -2px; touch-action: none; user-select: none; }
 .sortable-ghost { opacity: .35; }
 .sortable-drag  { background: var(--c-surface); box-shadow: 0 8px 24px rgba(0,0,0,.12); }

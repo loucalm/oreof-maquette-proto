@@ -116,7 +116,7 @@
                     {% endif %}
                 </div>
 
-                <div class="p-2">
+                <div class="p-2" data-tree-target="treeBox">
                     {% set rootType = root_type(formation) %}
                     {% if roots is not empty %}
                         {{ include('formation/_tree.html.twig', {views: roots, parentId: null, focus: focus}) }}

@@ -14,7 +14,7 @@ import Sortable from 'sortablejs';
  */
 export default class extends Controller {
     static values = { moveUrl: String, chain: Array, typeMeta: Object, rootKey: String };
-    static targets = ['addForm', 'addParent', 'addType', 'addButton'];
+    static targets = ['treeBox', 'addForm', 'addParent', 'addType', 'addButton'];
 
     connect() {
         this.storeKey = 'tree-collapsed';
@@ -65,23 +65,43 @@ export default class extends Controller {
         // la poignée de glissement et les boutons (chevron, ajout) se gèrent seuls
         if (event.target.closest('.drag-handle, button')) return;
 
-        const link = event.target.closest('a[data-turbo-frame="node-panel"]');
-        if (link && this.element.contains(link)) {
-            const row = link.closest('.tree-row');
-            if (row) this.activate(row);
-            else if (link.classList.contains('nav-section')) this.activate(link);
+        // liens de sections (Paramètre / graphe des parcours)
+        const navLink = event.target.closest('a.nav-section[data-turbo-frame="node-panel"]');
+        if (navLink && this.element.contains(navLink)) {
+            this.activate(navLink);
             return;
         }
 
-        // clic n'importe où sur la ligne d'un nœud → on le sélectionne
         const row = event.target.closest('.tree-row');
-        if (row && this.element.contains(row)) {
-            const label = row.querySelector('a.tree-label[data-turbo-frame]');
-            if (label) {
-                this.activate(row);
-                label.click(); // Turbo navigue le frame
+        if (!row || !this.element.contains(row)) return;
+
+        // reclic RÉEL sur le nœud déjà sélectionné → on désélectionne.
+        // (isTrusted écarte le clic synthétique de re-entrée déclenché plus bas.)
+        if (row.classList.contains('is-active')) {
+            if (event.isTrusted) {
+                event.preventDefault();
+                this.deselect();
             }
+            return;
         }
+
+        // sélection : surbrillance immédiate puis navigation du frame
+        this.activate(row);
+        if (!event.target.closest('a.tree-label[data-turbo-frame]')) {
+            row.querySelector('a.tree-label[data-turbo-frame]')?.click();
+        }
+    }
+
+    /** Reclic sur le nœud actif : on vide la sélection et le panneau. */
+    deselect() {
+        this.activate(null);
+        if (this.panel) {
+            this.panel.removeAttribute('src');
+            this.panel.innerHTML =
+                '<div class="grid h-full place-items-center p-16 text-sm text-gray-400">'
+                + 'Sélectionnez une section ou un nœud pour le modifier</div>';
+        }
+        this.updateUrl({});
     }
 
     onFrameLoad() {
@@ -112,39 +132,51 @@ export default class extends Controller {
 
     activate(target) {
         this.element.querySelectorAll('.is-active').forEach((el) => el.classList.remove('is-active'));
-        if (!target) return;
-        target.classList.add('is-active');
 
-        if (target.classList.contains('tree-row')) {
-            // déplier les branches parentes pour que la ligne active soit visible
-            let li = target.closest('li');
-            let changed = false;
-            while (li) {
-                if (li.classList.contains('collapsed')) {
-                    li.classList.remove('collapsed');
-                    changed = true;
+        if (target) {
+            target.classList.add('is-active');
+
+            if (target.classList.contains('tree-row')) {
+                // déplier la branche (nœud + ancêtres) pour que la ligne soit visible
+                let li = target.closest('li');
+                let changed = false;
+                while (li) {
+                    if (li.classList.contains('collapsed')) {
+                        li.classList.remove('collapsed');
+                        changed = true;
+                    }
+                    li = li.parentElement ? li.parentElement.closest('li') : null;
                 }
-                li = li.parentElement ? li.parentElement.closest('li') : null;
+                if (changed) this.persistCollapsed();
+                target.scrollIntoView({ block: 'nearest' });
             }
-            if (changed) this.persistCollapsed();
-            target.scrollIntoView({ block: 'nearest' });
         }
 
         this.updateAddButton();
     }
 
     /**
-     * Le bouton « ＋ Ajouter » de l'arbre suit la sélection : enfant du nœud
-     * actif (type déduit du squelette), ou nœud racine si rien n'est
-     * sélectionné. Le type réel est tranché côté serveur (valeur « auto »),
-     * ici on ne fait que l'étiquette et le parent.
+     * Le bouton « ＋ Ajouter » de l'arbre suit la sélection : il se place SOUS
+     * le nœud actif et ajoute un enfant (type déduit du squelette) ; sans
+     * sélection il revient en bas de l'arbre et ajoute un nœud racine. Le type
+     * réel est tranché côté serveur (valeur « auto »).
      */
     updateAddButton() {
         if (!this.hasAddButtonTarget) return;
 
         const meta = this.hasTypeMetaValue ? this.typeMetaValue : {};
         const chain = this.hasChainValue ? this.chainValue : [];
+        const form = this.addFormTarget;
         const activeLi = this.element.querySelector('.tree-row.is-active')?.closest('li[data-node-id]');
+
+        // ── position du formulaire ──
+        if (activeLi) {
+            if (activeLi.lastElementChild !== form) activeLi.appendChild(form);
+            form.classList.add('tree-add-nested');
+        } else if (this.hasTreeBoxTarget) {
+            if (this.treeBoxTarget.lastElementChild !== form) this.treeBoxTarget.appendChild(form);
+            form.classList.remove('tree-add-nested');
+        }
 
         if (!activeLi) {
             const rootKey = this.hasRootKeyValue ? this.rootKeyValue : '';
