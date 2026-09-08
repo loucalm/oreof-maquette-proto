@@ -48,6 +48,17 @@ class Formation
     #[ORM\Column(type: Types::JSON)]
     private array $parametres = [];
 
+    /**
+     * Squelette de la formation : chaîne ordonnée de clés de type, du plus haut
+     * niveau du « corps » vers la feuille — ex. ['annee','semestre','ue','ec'].
+     * Le niveau « parcours » n'y figure jamais : il est implicite quand la
+     * formation est multi-parcours (cf. getEffectiveStructure()).
+     *
+     * @var list<string>
+     */
+    #[ORM\Column(type: Types::JSON)]
+    private array $structure = [];
+
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
@@ -156,6 +167,59 @@ class Formation
         $this->parametres[$section] = $data;
 
         return $this;
+    }
+
+    /** @return list<string> */
+    public function getStructure(): array
+    {
+        return $this->structure;
+    }
+
+    /** @param list<string> $structure */
+    public function setStructure(array $structure): self
+    {
+        $seen = [];
+        $this->structure = array_values(array_filter(
+            array_map('strval', $structure),
+            static function (string $k) use (&$seen): bool {
+                if ($k === '' || $k === 'parcours' || isset($seen[$k])) {
+                    return false;
+                }
+                $seen[$k] = true;
+
+                return true;
+            },
+        ));
+
+        return $this;
+    }
+
+    /**
+     * Chaîne effective, niveau « parcours » inclus si la formation est
+     * multi-parcours.
+     *
+     * @return list<string>
+     */
+    public function getEffectiveStructure(): array
+    {
+        return $this->multiParcours
+            ? array_merge(['parcours'], $this->structure)
+            : $this->structure;
+    }
+
+    /** Clé de type des nœuds racine, d'après le squelette. */
+    public function getRootTypeKey(): ?string
+    {
+        return $this->getEffectiveStructure()[0] ?? null;
+    }
+
+    /** Clé de type des enfants d'un nœud de type $typeKey, d'après le squelette. */
+    public function getChildTypeKey(string $typeKey): ?string
+    {
+        $chain = $this->getEffectiveStructure();
+        $i = array_search($typeKey, $chain, true);
+
+        return $i === false ? null : ($chain[$i + 1] ?? null);
     }
 
     /** @return Collection<int, Node> */

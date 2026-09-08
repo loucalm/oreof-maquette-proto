@@ -33,11 +33,41 @@ final class TemplateApplier
         $this->em->flush();
 
         $formation->setMultiParcours($template->isMultiParcours());
+        $formation->setStructure($this->chainFromTree($template->getTree()));
 
         $typeMap = $this->types->findAllIndexed();
         foreach ($template->getTree() as $i => $spec) {
             $this->instantiate($formation, null, $spec, $i, $typeMap);
         }
+    }
+
+    /**
+     * Déduit le squelette « corps » (hors parcours) d'un arbre de template :
+     * le premier type rencontré à chaque profondeur.
+     *
+     * @param list<array<string, mixed>> $tree
+     *
+     * @return list<string>
+     */
+    public function chainFromTree(array $tree): array
+    {
+        $byDepth = [];
+        $walk = static function (array $nodes, int $depth) use (&$walk, &$byDepth): void {
+            foreach ($nodes as $spec) {
+                $type = (string) (\is_array($spec) ? ($spec['type'] ?? '') : '');
+                if ($type !== '') {
+                    $byDepth[$depth] ??= $type;
+                }
+                $children = (array) (\is_array($spec) ? ($spec['children'] ?? []) : []);
+                if ($children !== []) {
+                    $walk($children, $depth + 1);
+                }
+            }
+        };
+        $walk($tree, 0);
+        ksort($byDepth);
+
+        return array_values(array_filter($byDepth, static fn (string $k) => $k !== 'parcours'));
     }
 
     /**

@@ -35,6 +35,7 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
             ->setDomaine('Sciences, technologies, santé')
             ->setComposante('UFR Sciences Exactes et Naturelles')
             ->setMultiParcours(false)
+            ->setStructure(['annee', 'semestre', 'ue', 'ec'])
             ->setEctsTotal(180);
         $manager->persist($formation);
 
@@ -91,6 +92,7 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
             ->setDomaine('Sciences, technologies, santé')
             ->setComposante('UFR Sciences Exactes et Naturelles')
             ->setMultiParcours(true)
+            ->setStructure(['annee', 'semestre', 'ue', 'ec'])
             ->setEctsTotal(180);
         $manager->persist($multi);
 

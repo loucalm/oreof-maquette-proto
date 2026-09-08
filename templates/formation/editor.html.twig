@@ -113,12 +113,22 @@
                 </div>
 
                 <div class="p-2">
-                    {% if roots is empty %}
-                        <p class="text-sm px-2 py-8 text-center text-gray-400">
-                            Rendez-vous dans <em>Configuration de la structure</em> pour paramétrer des nœuds.
-                        </p>
-                    {% else %}
+                    {% set rootType = root_type(formation) %}
+                    {% if roots is not empty %}
                         {{ include('formation/_tree.html.twig', {views: roots, parentId: null, focus: focus}) }}
+                    {% endif %}
+
+                    {% if rootType %}
+                        <form method="post" action="{{ path('node_add', {id: formation.id}) }}" data-turbo-frame="_top" class="mt-1 px-1">
+                            <input type="hidden" name="typeKey" value="{{ rootType.key }}">
+                            <button class="w-full rounded-md border border-dashed px-2 py-2 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                                    style="border-color:var(--c-border)">＋ Ajouter {{ rootType.icon }} {{ rootType.label }}</button>
+                        </form>
+                    {% elseif roots is empty %}
+                        <p class="text-sm px-2 py-8 text-center text-gray-400">
+                            Définissez d'abord le squelette dans
+                            <a href="{{ path('formation_param', {id: formation.id, key: 'structure'}) }}" data-turbo-frame="node-panel" class="underline">Configuration de la structure</a>.
+                        </p>
                     {% endif %}
                 </div>
             </div>

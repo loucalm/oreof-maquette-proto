@@ -44,7 +44,9 @@ final class FormationController extends AbstractController
             ->setDiplome(trim((string) $request->request->get('diplome')) ?: null)
             ->setDomaine(trim((string) $request->request->get('domaine')) ?: null)
             ->setComposante(trim((string) $request->request->get('composante')) ?: null)
-            ->setMultiParcours($request->request->getBoolean('multiParcours'));
+            ->setMultiParcours($request->request->getBoolean('multiParcours'))
+            // squelette par défaut, entièrement modifiable ensuite
+            ->setStructure(['annee', 'semestre', 'ue', 'ec']);
 
         $em->persist($formation);
         $em->flush();
@@ -155,6 +157,24 @@ final class FormationController extends AbstractController
         return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);
     }
 
+    /**
+     * Enregistre le squelette (chaîne de types) de la formation. Le tableau
+     * `chain[]` est la nouvelle liste ordonnée de clés de type ; l'ajout, le
+     * retrait et le glisser-déposer postent tous la liste complète.
+     */
+    #[Route('/formations/{id}/structure', name: 'formation_structure_save', methods: ['POST'])]
+    public function structureSave(Formation $formation, Request $request, EntityManagerInterface $em): Response
+    {
+        $formation->setStructure(array_map('strval', (array) $request->request->all('chain')));
+        $em->flush();
+
+        if ($request->isXmlHttpRequest()) {
+            return new Response(null, Response::HTTP_NO_CONTENT);
+        }
+
+        return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);
+    }
+
     public const PARAM_SECTIONS = [
         'organisation' => ['label' => 'Organisation et localisation', 'requiredKeys' => ['niveauEntree', 'niveauSortie', 'respMention']],
         'presentation' => ['label' => 'Présentation', 'requiredKeys' => ['objectif', 'resultats', 'contenu']],
@@ -167,7 +187,7 @@ final class FormationController extends AbstractController
     public static function paramStatus(Formation $formation, string $key): string
     {
         if ($key === 'structure') {
-            return $formation->getRootNodes() === [] ? 'empty' : 'ok';
+            return $formation->getStructure() === [] ? 'empty' : 'ok';
         }
         $required = self::PARAM_SECTIONS[$key]['requiredKeys'] ?? [];
         if ($key === 'organisation') {
@@ -190,8 +210,6 @@ final class FormationController extends AbstractController
     public function param(
         Formation $formation,
         string $key,
-        MaquetteBuilder $builder,
-        NodeTypeRepository $types,
         StructureTemplateRepository $templates,
     ): Response {
         if (!isset(self::PARAM_SECTIONS[$key])) {
@@ -204,8 +222,7 @@ final class FormationController extends AbstractController
             'label' => self::PARAM_SECTIONS[$key]['label'],
             'data' => $formation->getParametre($key),
             // seulement pour "structure"
-            'roots' => $key === 'structure' ? $builder->build($formation) : [],
-            'types' => $types->findAllOrdered(),
+            'nodeCount' => $key === 'structure' ? $formation->getNodes()->count() : 0,
             'templates' => $templates->findAllOrdered(),
         ]);
     }
