@@ -222,6 +222,33 @@ class Formation
         return $i === false ? null : ($chain[$i + 1] ?? null);
     }
 
+    /** Clé de type qui, dans le squelette, a $typeKey pour enfant (null si racine / hors squelette). */
+    public function getParentTypeKey(string $typeKey): ?string
+    {
+        $chain = $this->getEffectiveStructure();
+        $i = array_search($typeKey, $chain, true);
+
+        return ($i === false || $i === 0) ? null : $chain[$i - 1];
+    }
+
+    /** $childTypeKey peut-il être enfant de $parentTypeKey selon le squelette ? */
+    public function canParentTypes(string $parentTypeKey, string $childTypeKey): bool
+    {
+        return $this->getChildTypeKey($parentTypeKey) === $childTypeKey;
+    }
+
+    /** Un nœud de ce type est-il une feuille (aucun enfant prévu par le squelette) ? */
+    public function isLeafType(string $typeKey): bool
+    {
+        return $this->getChildTypeKey($typeKey) === null;
+    }
+
+    /** Un nœud de ce type peut-il être à la racine de la formation ? */
+    public function canBeRootType(string $typeKey): bool
+    {
+        return $this->getRootTypeKey() === $typeKey;
+    }
+
     /** @return Collection<int, Node> */
     public function getNodes(): Collection
     {

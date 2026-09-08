@@ -50,7 +50,9 @@ final class NodeController extends AbstractController
             $target = $request->request->get('parentId')
                 ? $this->nodes->find($request->request->getInt('parentId'))
                 : null;
-            if ($target !== $node->getParent() && !$this->isDescendant($target, $node)) {
+            if ($target !== $node->getParent()
+                && !$this->isDescendant($target, $node)
+                && $this->reparentAllowed($node, $target)) {
                 $this->factory->move($node, $target, PHP_INT_MAX);
             }
         }
@@ -103,8 +105,7 @@ final class NodeController extends AbstractController
         $typeKey = trim((string) $request->request->get('typeKey'));
         if ('' === $typeKey || 'auto' === $typeKey) {
             $typeKey = null !== $parent
-                ? ($formation->getChildTypeKey($parent->getType()->getKey())
-                    ?? ($parent->getType()->getAllowedChildKeys()[0] ?? null))
+                ? $formation->getChildTypeKey($parent->getType()->getKey())
                 : $formation->getRootTypeKey();
         }
 
@@ -136,11 +137,25 @@ final class NodeController extends AbstractController
         if ($this->isDescendant($newParent, $node)) {
             return new JsonResponse(['ok' => false, 'error' => 'cycle'], 422);
         }
+        if (!$this->reparentAllowed($node, $newParent)) {
+            return new JsonResponse(['ok' => false, 'error' => 'hierarchy'], 422);
+        }
 
         $this->factory->move($node, $newParent, (int) ($payload['index'] ?? 0));
         $this->em->flush();
 
         return new JsonResponse(['ok' => true]);
+    }
+
+    /** Le squelette de la formation autorise-t-il ce nœud sous ce parent (ou à la racine) ? */
+    private function reparentAllowed(Node $node, ?Node $newParent): bool
+    {
+        $formation = $node->getFormation();
+        $typeKey = $node->getType()->getKey();
+
+        return $newParent === null
+            ? $formation->canBeRootType($typeKey)
+            : $formation->canParentTypes($newParent->getType()->getKey(), $typeKey);
     }
 
     #[Route('/nodes/{id}/duplicate', name: 'node_duplicate', methods: ['POST'])]
@@ -216,10 +231,11 @@ final class NodeController extends AbstractController
     #[Route('/nodes/{id}/raccrocher', name: 'node_attach_index', methods: ['GET'])]
     public function attachIndex(Node $node): Response
     {
-        $allowed = $node->getType()->getAllowedChildKeys();
-        $candidates = array_filter(
+        // on ne peut raccrocher que des nœuds du type prévu comme enfant par le squelette
+        $childKey = $node->getFormation()->getChildTypeKey($node->getType()->getKey());
+        $candidates = $childKey === null ? [] : array_filter(
             $this->nodes->findMutualized($node->getFormation()),
-            static fn (Node $m) => \in_array('*', $allowed, true) || \in_array($m->getType()->getKey(), $allowed, true),
+            static fn (Node $m) => $m->getType()->getKey() === $childKey,
         );
 
         return $this->render('node/attach.html.twig', ['node' => $node, 'candidates' => $candidates]);

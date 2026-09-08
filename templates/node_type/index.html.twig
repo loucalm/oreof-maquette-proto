@@ -6,8 +6,8 @@
     <div>
         <h1 class="text-xl font-bold">Types de nœuds</h1>
         <p class="text-sm" style="color:var(--c-muted)">
-            Le métamodèle. Créez / modifiez les types, leurs capacités et les imbrications autorisées —
-            c'est ce qui rend l'outil non figé.
+            Le métamodèle. Créez / modifiez les types et leurs capacités. La hiérarchie (qui contient qui)
+            est propre à chaque formation, dans « Configuration de la structure ».
         </p>
     </div>
     <a href="{{ path('node_type_new') }}" class="rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">＋ Nouveau type</a>
@@ -19,7 +19,6 @@
             <tr class="border-b" style="border-color:var(--c-border)">
                 <th class="text-left px-4 py-3">Type</th>
                 <th class="text-left px-4 py-3">Famille</th>
-                <th class="text-left px-4 py-3">Enfants autorisés</th>
                 <th class="text-left px-4 py-3">Capacités</th>
                 <th class="text-left px-4 py-3">ECTS cible</th>
                 <th class="px-4 py-3"></th>
@@ -33,11 +32,6 @@
                     <code class="text-xs" style="color:var(--c-muted)">{{ t.key }}</code>
                 </td>
                 <td class="px-4 py-3" style="color:var(--c-muted)">{{ t.family.label }}</td>
-                <td class="px-4 py-3">
-                    {% if t.allowedChildKeys is empty %}<span class="pill">feuille</span>
-                    {% elseif '*' in t.allowedChildKeys %}<span class="pill">tous</span>
-                    {% else %}{% for k in t.allowedChildKeys %}<span class="type-badge mr-1">{{ k }}</span>{% endfor %}{% endif %}
-                </td>
                 <td class="px-4 py-3">
                     {% for c, on in t.capabilities %}<span class="type-badge mr-1" {{ t.isCapabilityLocked(c) ? 'title="Réservée admin"' }}>{{ capabilities[c] ?? c }}{{ t.isCapabilityLocked(c) ? ' 🔒' }}</span>{% endfor %}
                 </td>

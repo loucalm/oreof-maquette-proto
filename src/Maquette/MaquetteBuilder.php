@@ -118,8 +118,8 @@ final class MaquetteBuilder
         $ownMissing = $view->missingCount;
         $hasAnyOwnData = $node->getAttributes() !== [] || trim($node->getLabel()) !== '';
 
-        // Un type qui doit avoir des enfants mais n'en a pas => incomplet
-        $needsChildren = !$node->getType()->isLeaf();
+        // Un nœud qui, selon le squelette, doit avoir des enfants mais n'en a pas => incomplet
+        $needsChildren = !$node->getFormation()->isLeafType($node->getType()->getKey());
         if ($needsChildren && $view->children === []) {
             return $hasAnyOwnData ? NodeView::STATUS_INCOMPLETE : NodeView::STATUS_EMPTY;
         }
@@ -148,7 +148,8 @@ final class MaquetteBuilder
         $walk = function (array $views) use (&$walk, &$issues): void {
             foreach ($views as $view) {
                 $missing = $this->missingFields($view->node);
-                if ($view->node->getType()->isLeaf() === false && $view->children === []) {
+                $node = $view->node;
+                if (!$node->getFormation()->isLeafType($node->getType()->getKey()) && $view->children === []) {
                     $missing[] = 'aucun enfant';
                 }
                 if ($missing !== []) {

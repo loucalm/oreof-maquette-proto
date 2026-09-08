@@ -17,7 +17,8 @@ use Symfony\Component\String\Slugger\AsciiSlugger;
 
 /**
  * Admin des types de nœuds — c'est ici que « rien n'est figé » : le responsable
- * crée les types, leurs capacités et les imbrications autorisées.
+ * crée les types et leurs capacités. La hiérarchie est propre à chaque
+ * formation (Formation::structure), pas au type.
  */
 final class NodeTypeController extends AbstractController
 {
@@ -32,7 +33,7 @@ final class NodeTypeController extends AbstractController
 
     #[Route('/node-types/new', name: 'node_type_new', methods: ['GET', 'POST'])]
     #[Route('/node-types/{id}/edit', name: 'node_type_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, EntityManagerInterface $em, NodeTypeRepository $repo, ?NodeType $nodeType = null): Response
+    public function edit(Request $request, EntityManagerInterface $em, ?NodeType $nodeType = null): Response
     {
         $isNew = $nodeType === null;
 
@@ -53,7 +54,6 @@ final class NodeTypeController extends AbstractController
                 ->setFamily(NodeFamily::from((string) $request->request->get('family', 'structural')))
                 ->setPosition($request->request->getInt('position'))
                 ->setEctsTarget($request->request->get('ectsTarget') !== '' ? $request->request->getInt('ectsTarget') : null)
-                ->setAllowedChildKeys($request->request->all('allowedChildKeys'))
                 ->setCapabilities(array_fill_keys($request->request->all('capabilities'), true))
                 ->setLockedCapabilities($request->request->all('lockedCapabilities'));
 
@@ -66,7 +66,6 @@ final class NodeTypeController extends AbstractController
         return $this->render('node_type/edit.html.twig', [
             'nodeType' => $nodeType,
             'isNew' => $isNew,
-            'allTypes' => $repo->findAllOrdered(),
             'families' => NodeFamily::cases(),
             'capabilities' => $this->capabilityLabels(),
         ]);

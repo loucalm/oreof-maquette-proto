@@ -59,9 +59,7 @@
                         <td class="px-3 py-2.5">
                             <span class="type-badge">{{ row.type ? row.type.icon : '❓' }} [{{ row.type ? row.type.label : row.key }}]</span>
                             {% if row.fixed %}<span class="pill ml-1">racine · figé</span>{% endif %}
-                            {% if not row.ok %}
-                                <span class="ml-1 text-xs text-amber-600" title="Le type du dessus n'accepte normalement pas ce type comme enfant">⚠ hiérarchie inhabituelle</span>
-                            {% endif %}
+                            {% if loop.index0 > 0 %}<span class="text-[11px] text-gray-400 ml-1">enfant de {{ rows[loop.index0 - 1].type ? rows[loop.index0 - 1].type.label : rows[loop.index0 - 1].key }}</span>{% endif %}
                         </td>
                         <td class="px-4 py-2.5 text-right whitespace-nowrap">
                             {% if row.type %}

@@ -12,9 +12,10 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Type de nœud — le métamodèle, entièrement piloté par les données.
  *
- * Le socle ne connaît AUCUNE hiérarchie en dur : c'est ici que le responsable
- * déclare quels types existent, ce qu'ils portent (`capabilities`) et qui peut
- * être enfant de qui (`allowedChildKeys`).
+ * Le socle ne connaît AUCUNE hiérarchie en dur : le type déclare seulement ce
+ * qu'il porte (`capabilities`) et lesquelles sont réservées à l'admin. Qui peut
+ * être enfant de qui est décidé par le squelette de CHAQUE formation
+ * (Formation::structure), pas par le type.
  */
 #[ORM\Entity(repositoryClass: NodeTypeRepository::class)]
 #[ORM\Table(name: 'node_type')]
@@ -42,15 +43,6 @@ class NodeType
     /** Ordre d'affichage dans les sélecteurs. */
     #[ORM\Column]
     private int $position = 0;
-
-    /**
-     * Clés des types autorisés comme enfants.
-     * `[]` = feuille. `["*"]` = n'importe quel type.
-     *
-     * @var list<string>
-     */
-    #[ORM\Column(type: Types::JSON)]
-    private array $allowedChildKeys = [];
 
     /**
      * Capacités par défaut : quels attributs ce type expose.
@@ -149,31 +141,6 @@ class NodeType
         $this->position = $position;
 
         return $this;
-    }
-
-    /** @return list<string> */
-    public function getAllowedChildKeys(): array
-    {
-        return $this->allowedChildKeys;
-    }
-
-    /** @param list<string> $keys */
-    public function setAllowedChildKeys(array $keys): self
-    {
-        $this->allowedChildKeys = array_values($keys);
-
-        return $this;
-    }
-
-    public function allowsChild(string $childKey): bool
-    {
-        return \in_array('*', $this->allowedChildKeys, true)
-            || \in_array($childKey, $this->allowedChildKeys, true);
-    }
-
-    public function isLeaf(): bool
-    {
-        return $this->allowedChildKeys === [];
     }
 
     /** @return array<string, bool|int|null> */

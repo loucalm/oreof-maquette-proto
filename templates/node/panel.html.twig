@@ -149,15 +149,19 @@
 
         {# --- onglet Propriétés --- #}
         <div data-tabs-target="panel" data-tab="props" class="space-y-5">
-            {{ ui.label("Nœud parent", true, "Nœud auquel cet élément est enfant") }}
+            {% set parents = valid_parents(node) %}
+            {{ ui.label("Nœud parent", true, "Emplacement autorisé par le squelette de la formation") }}
             <select name="parentId" class="fld">
-                <option value="">— Racine de la formation —</option>
-                {% for cand in valid_parents(node) %}
+                {% if can_be_root(node) %}<option value="">— Racine de la formation —</option>{% endif %}
+                {% for cand in parents %}
                     <option value="{{ cand.id }}" {{ node.parent and node.parent.id == cand.id ? 'selected' }}>
                         [{{ cand.type.label }}] {{ cand.label ?: '—' }}
                     </option>
                 {% endfor %}
             </select>
+            {% if parents is empty and not can_be_root(node) %}
+                <div class="fld-help text-amber-600">Aucun emplacement : le squelette ne prévoit pas ce type sous un autre nœud.</div>
+            {% endif %}
 
             {{ ui.label("Libellé", true, "Max 200 caractères") }}
             <input name="label" value="{{ node.label }}" maxlength="200" class="fld">

@@ -30,6 +30,7 @@ export default class extends Controller {
                 invertSwap: true,
                 ghostClass: 'sortable-ghost',
                 dragClass: 'sortable-drag',
+                onMove: (evt) => this.canDropHere(evt),
                 onEnd: (evt) => this.onDrop(evt),
             }));
         });
@@ -253,8 +254,30 @@ export default class extends Controller {
 
     // ─── déplacement ───
 
+    /**
+     * Autorise le dépôt uniquement là où le squelette prévoit ce type d'enfant :
+     * sous un nœud dont le type précède celui du nœud déplacé dans la chaîne,
+     * ou à la racine si c'est le type racine.
+     */
+    canDropHere(evt) {
+        if (!this.hasChainValue) return true;
+        const chain = this.chainValue;
+        const draggedType = evt.dragged?.dataset.nodeType;
+        if (!draggedType) return true;
+
+        const parentLi = evt.to.closest('li[data-node-id]');
+        if (!parentLi) {
+            return draggedType === (this.hasRootKeyValue ? this.rootKeyValue : draggedType);
+        }
+        const i = chain.indexOf(parentLi.dataset.nodeType);
+        return i >= 0 && chain[i + 1] === draggedType;
+    }
+
     async onDrop(evt) {
         const li = evt.item;
+        // rien n'a bougé (drop refusé, ou repositionné au même endroit) → pas d'appel serveur
+        if (evt.from === evt.to && evt.oldIndex === evt.newIndex) return;
+
         const nodeId = li.dataset.nodeId;
         const targetList = evt.to;
         const parentId = targetList.dataset.parentId || null;

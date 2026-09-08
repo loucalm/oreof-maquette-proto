@@ -8,7 +8,6 @@ use App\Controller\FormationController;
 use App\Entity\Formation;
 use App\Entity\Node;
 use App\Entity\NodeType;
-use App\Enum\NodeFamily;
 use App\Maquette\AttributeCatalog;
 use App\Repository\NodeRepository;
 use App\Repository\NodeTypeRepository;
@@ -28,6 +27,7 @@ final class MaquetteExtension extends AbstractExtension
         return [
             new TwigFunction('types_allowed_for', $this->typesAllowedFor(...)),
             new TwigFunction('valid_parents', $this->validParents(...)),
+            new TwigFunction('can_be_root', $this->canBeRoot(...)),
             new TwigFunction('parcours_candidates', $this->parcoursCandidates(...)),
             new TwigFunction('structure_rows', $this->structureRows(...)),
             new TwigFunction('structure_addable', $this->structureAddable(...)),
@@ -42,87 +42,58 @@ final class MaquetteExtension extends AbstractExtension
     }
 
     /**
-     * Types ajoutables sous ce nœud. Si le squelette de la formation impose un
-     * enfant à ce niveau, c'est lui (plus un « bloc de choix » si le type
-     * l'accepte). Sinon (nœud hors squelette), on retombe sur allowedChildKeys.
+     * Type ajoutable sous ce nœud : uniquement l'enfant prévu par le squelette
+     * de la formation (0 ou 1 type). La hiérarchie ne vient plus du type.
      *
      * @return list<NodeType>
      */
     public function typesAllowedFor(Node $node): array
     {
-        $byKey = $this->types->findAllIndexed();
-        $chainNext = $node->getFormation()?->getChildTypeKey($node->getType()->getKey());
-
-        if ($chainNext !== null) {
-            $keys = [$chainNext];
-            if ($chainNext !== 'bloc_choix' && $node->getType()->allowsChild('bloc_choix') && isset($byKey['bloc_choix'])) {
-                $keys[] = 'bloc_choix';
-            }
-
-            return array_values(array_filter(array_map(static fn (string $k) => $byKey[$k] ?? null, $keys)));
-        }
-
-        $allowed = $node->getType()->getAllowedChildKeys();
-        if ($allowed === []) {
+        $childKey = $node->getFormation()?->getChildTypeKey($node->getType()->getKey());
+        if ($childKey === null) {
             return [];
         }
-        $any = \in_array('*', $allowed, true);
+        $type = $this->types->findAllIndexed()[$childKey] ?? null;
 
-        return array_values(array_filter(
-            $this->types->findAllOrdered(),
-            static fn (NodeType $t) => $any || \in_array($t->getKey(), $allowed, true),
-        ));
+        return $type !== null ? [$type] : [];
     }
 
     /**
      * Lignes du tableau « Configuration de la structure » : le squelette de la
      * formation, niveau parcours inclus (fixe) quand elle est multi-parcours.
      *
-     * @return list<array{key: string, type: ?NodeType, fixed: bool, ok: bool}>
+     * @return list<array{key: string, type: ?NodeType, fixed: bool}>
      */
     public function structureRows(Formation $formation): array
     {
         $byKey = $this->types->findAllIndexed();
         $rows = [];
-        $prev = null;
 
         foreach ($formation->getEffectiveStructure() as $i => $key) {
-            $type = $byKey[$key] ?? null;
             $rows[] = [
                 'key' => $key,
-                'type' => $type,
+                'type' => $byKey[$key] ?? null,
                 'fixed' => 0 === $i && $formation->isMultiParcours() && 'parcours' === $key,
-                'ok' => null === $prev || $prev->allowsChild($key),
             ];
-            $prev = $type;
         }
 
         return $rows;
     }
 
     /**
-     * Types que l'on peut ajouter au bout du squelette : enfants autorisés du
-     * dernier maillon, non déjà présents, hors « parcours ».
+     * Types que l'on peut ajouter au bout du squelette : n'importe quel type
+     * pas déjà dans la chaîne et hors « parcours » (implicite en multi-parcours).
      *
      * @return list<NodeType>
      */
     public function structureAddable(Formation $formation): array
     {
-        $chain = $formation->getEffectiveStructure();
-        $inChain = array_flip($chain);
-        $byKey = $this->types->findAllIndexed();
-        $lastKey = [] !== $chain ? $chain[array_key_last($chain)] : null;
-        $lastType = null !== $lastKey ? ($byKey[$lastKey] ?? null) : null;
+        $inChain = array_flip($formation->getEffectiveStructure());
 
-        return array_values(array_filter($this->types->findAllOrdered(), static function (NodeType $t) use ($inChain, $lastType) {
-            if ('parcours' === $t->getKey() || isset($inChain[$t->getKey()])) {
-                return false;
-            }
-
-            return null === $lastType
-                ? NodeFamily::Structural === $t->getFamily()
-                : $lastType->allowsChild($t->getKey());
-        }));
+        return array_values(array_filter(
+            $this->types->findAllOrdered(),
+            static fn (NodeType $t) => 'parcours' !== $t->getKey() && !isset($inChain[$t->getKey()]),
+        ));
     }
 
     /** Type des nœuds racine d'après le squelette, ou null si non défini. */
@@ -148,13 +119,19 @@ final class MaquetteExtension extends AbstractExtension
     }
 
     /**
-     * Parents valides pour ce nœud : autres nœuds de la formation dont le type
-     * accepte celui du nœud, hors lui-même et sa descendance.
+     * Parents valides pour ce nœud : les nœuds de la formation dont le type est,
+     * dans le squelette, le parent du type de ce nœud — hors lui-même et sa
+     * descendance. Vide si ce type est la racine (→ seul « racine » possible).
      *
      * @return list<Node>
      */
     public function validParents(Node $node): array
     {
+        $parentKey = $node->getFormation()?->getParentTypeKey($node->getType()->getKey());
+        if ($parentKey === null) {
+            return [];
+        }
+
         $descendants = [];
         $collect = static function (Node $n) use (&$collect, &$descendants): void {
             $descendants[$n->getId()] = true;
@@ -164,13 +141,17 @@ final class MaquetteExtension extends AbstractExtension
         };
         $collect($node);
 
-        $key = $node->getType()->getKey();
-
         return array_values(array_filter(
             $this->nodes->findForFormation($node->getFormation()),
             static fn (Node $cand) => !isset($descendants[$cand->getId()])
-                && $cand->getType()->allowsChild($key),
+                && $cand->getType()->getKey() === $parentKey,
         ));
+    }
+
+    /** Ce nœud peut-il être rattaché à la racine de la formation ? */
+    public function canBeRoot(Node $node): bool
+    {
+        return (bool) $node->getFormation()?->canBeRootType($node->getType()->getKey());
     }
 
     /**

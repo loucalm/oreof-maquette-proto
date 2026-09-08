@@ -42,21 +42,10 @@
             </div>
         </div>
 
-        <fieldset>
-            <legend class="text-xs font-medium mb-1">Enfants autorisés</legend>
-            <p class="text-xs mb-2" style="color:var(--c-muted)">Rien de coché = feuille.</p>
-            <div class="grid grid-cols-3 gap-1.5">
-                {% for t in allTypes %}
-                    {% if isNew or t.id != nodeType.id %}
-                    <label class="flex items-center gap-2 text-sm">
-                        <input type="checkbox" name="allowedChildKeys[]" value="{{ t.key }}"
-                               {{ (not isNew and t.key in nodeType.allowedChildKeys) ? 'checked' }}>
-                        {{ t.icon }} {{ t.label }}
-                    </label>
-                    {% endif %}
-                {% endfor %}
-            </div>
-        </fieldset>
+        <p class="text-xs rounded-md px-3 py-2" style="background:var(--c-primary-soft);color:var(--c-primary)">
+            La hiérarchie (quel type peut être enfant de quel type) n'est PAS définie ici : elle est propre à
+            chaque formation, dans « Configuration de la structure ».
+        </p>
 
         <fieldset>
             <legend class="text-xs font-medium mb-1">Capacités &amp; champs du type</legend>
