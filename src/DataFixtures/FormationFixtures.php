@@ -86,19 +86,21 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
         // UE complète
         $ue1 = $mk($t['ue'], 'UE 1.1 — Programmation', $s1, ['ects' => 6, 'nature' => 'obligatoire', 'ueType' => 'disciplinaire']);
         $mk($t['ec'], 'Algorithmique', $ue1, [
-            'ects' => 3, 'nature' => 'obligatoire',
+            'ects' => 3, 'nature' => 'obligatoire', 'ecType' => 'cm', 'competencies' => ['1A', '1B'],
+            'ficheMatiere' => 'Fiche — Algorithmique',
             'hours' => ['pres' => ['cm' => 12, 'td' => 18], 'te' => 20],
             'mccc' => ['type' => 'CCI'],
-        ]);
+        ])->setCode('INF-ALGO');
         $mk($t['ec'], 'Langage C', $ue1, [
-            'ects' => 3, 'nature' => 'obligatoire',
+            'ects' => 3, 'nature' => 'obligatoire', 'ecType' => 'tp',
+            'ficheMatiere' => 'Fiche — Programmation',
             'hours' => ['pres' => ['tp' => 24], 'dist' => ['tp' => 6]],
             'mccc' => ['type' => 'CC_CT'],
-        ]);
+        ])->setCode('INF-LANGC');
 
-        // UE incomplète (ECTS manquant sur un EC, pas de MCCC)
+        // UE incomplète (ECTS + code manquants sur un EC, pas de MCCC)
         $ue2 = $mk($t['ue'], 'UE 1.2 — Mathématiques', $s1, ['ects' => 6, 'nature' => 'obligatoire']);
-        $mk($t['ec'], 'Analyse', $ue2, ['ects' => 3, 'nature' => 'obligatoire', 'hours' => ['pres' => ['cm' => 20]]]);
+        $mk($t['ec'], 'Analyse', $ue2, ['ects' => 3, 'nature' => 'obligatoire', 'hours' => ['pres' => ['cm' => 20]]])->setCode('MAT-ANA');
         $mk($t['ec'], 'Algèbre', $ue2, ['nature' => 'obligatoire']); // volontairement vide
 
         // Semestre 2 vide

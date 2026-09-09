@@ -117,6 +117,10 @@ final class MaquetteBuilder
         if (trim($node->getLabel()) === '') {
             ++$missing;
         }
+        // code requis sur les EC
+        if (($caps['code'] ?? false) && 'ec' === $node->getType()->getKey() && trim((string) $node->getCode()) === '') {
+            ++$missing;
+        }
 
         return $missing;
     }
@@ -183,6 +187,9 @@ final class MaquetteBuilder
             $missing[] = 'libellé';
         }
         $caps = $node->effectiveCapabilities();
+        if (($caps['code'] ?? false) && 'ec' === $node->getType()->getKey() && trim((string) $node->getCode()) === '') {
+            $missing[] = "code de l'ec";
+        }
         foreach ($this->catalog->all() as $key => $def) {
             if (!($caps[$key] ?? false) || !($def['required'] ?? false)) {
                 continue;

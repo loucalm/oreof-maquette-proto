@@ -79,7 +79,9 @@ final class NodeController extends AbstractController
                 'number' => $this->numOrNull($request->request->get("attr_$key")),
                 'hours' => $this->readHours($request),
                 'mccc' => $this->cleanArray($request->request->all('attr_mccc')),
-                'competencies' => array_values(array_filter(array_map('trim', explode(',', (string) $request->request->get('attr_competencies'))))),
+                'competencies' => array_values(array_filter(
+                    array_map(static fn ($v) => trim((string) $v), $request->request->all('attr_competencies')),
+                )),
                 default => trim((string) $request->request->get("attr_$key")) ?: null,
             };
         }

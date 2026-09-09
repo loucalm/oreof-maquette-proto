@@ -38,6 +38,7 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('node_path', $this->nodePath(...)),
             new TwigFunction('capability_labels', $this->capabilityLabels(...)),
             new TwigFunction('node_tab_status', $this->nodeTabStatus(...)),
+            new TwigFunction('bcc_competences', $this->bccCompetences(...)),
             new TwigFunction('param_nav', $this->paramNav(...)),
             new TwigFunction('period_unit', $this->periodUnit(...)),
             new TwigFunction('param_sections', static fn () => FormationController::PARAM_SECTIONS),
@@ -259,6 +260,9 @@ final class MaquetteExtension extends AbstractExtension
 
         if ($tab === 'props') {
             $missing = trim($node->getLabel()) === '';
+            if (($caps['code'] ?? false) && 'ec' === $node->getType()->getKey() && trim((string) $node->getCode()) === '') {
+                $missing = true;
+            }
             foreach ($this->catalog->all() as $key => $def) {
                 if (($def['domain'] ?? null) !== 'props' || !($caps[$key] ?? false) || !($def['required'] ?? false)) {
                     continue;
@@ -295,6 +299,41 @@ final class MaquetteExtension extends AbstractExtension
         }
 
         return ($required > 0 && $filled < $required) ? 'incomplete' : 'ok';
+    }
+
+    /**
+     * Compétences du référentiel (BCC) proposables sur ce nœud : celles du BCC
+     * du parcours si le nœud vit sous un parcours, sinon celles de la formation.
+     *
+     * @return list<array{label: string, code: ?string, bloc: string}>
+     */
+    public function bccCompetences(Node $node): array
+    {
+        $parcours = null;
+        for ($c = $node; $c !== null; $c = $c->getParent()) {
+            if ($c->isParcours()) {
+                $parcours = $c;
+                break;
+            }
+        }
+        $blocs = $parcours !== null
+            ? $parcours->getBccBlocs()
+            : $node->getFormation()->getCompetenceBlocs();
+
+        $out = [];
+        foreach ($blocs as $bloc) {
+            foreach ($bloc->getChildren() as $comp) {
+                if ($comp->getType()->getKey() === 'competence') {
+                    $out[] = [
+                        'label' => $comp->getLabel(),
+                        'code' => $comp->getCode(),
+                        'bloc' => $bloc->getLabel(),
+                    ];
+                }
+            }
+        }
+
+        return $out;
     }
 
     /** @return array<string, string> */

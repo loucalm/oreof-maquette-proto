@@ -93,8 +93,11 @@
                 {{ ui.label("Libellé", true, "Max 200 caractères") }}
                 <input name="label" value="{{ node.label }}" maxlength="200" class="fld">
 
-                {{ ui.label("Code", false, "Code du nœud (ex. code de l'EC)") }}
-                <input name="code" value="{{ node.code }}" class="fld">
+                {% if caps.code ?? false %}
+                    {% set isEc = node.type.key == 'ec' %}
+                    {{ ui.label(isEc ? "Précisez le code de l'EC" : 'Code', isEc, isEc ? "Code de l'EC" : "Code du nœud (ex. code de l'EC)") }}
+                    <input name="code" value="{{ node.code }}" class="fld">
+                {% endif %}
             {% endif %}
 
             {# champs du catalogue pour cet onglet, groupés par catégorie #}
@@ -192,19 +195,54 @@
     {% import _self as ui %}
     {% set val = node.getAttribute(key) %}
     {% if def.field not in ['hours', 'mccc'] %}
-        {{ ui.label(def.label, def.required ?? false, def.help ?? null) }}
+        {% set ectsTyped = key == 'ects' and node.type.key in ['ue', 'ec'] %}
+        {% set flabel = ectsTyped ? "ECTS de l'" ~ node.type.label : def.label %}
+        {% set fhelp = ectsTyped ? "ECTS associés à l'" ~ node.type.label ~ '.' : (def.help ?? null) %}
+        {{ ui.label(flabel, def.required ?? false, fhelp) }}
     {% endif %}
     {% if def.field == 'number' %}
         <input type="number" step="0.5" name="attr_{{ key }}" value="{{ val }}" class="fld w-44">
     {% elseif def.field == 'textarea' %}
         <textarea name="attr_{{ key }}" rows="3" class="fld">{{ val }}</textarea>
     {% elseif def.field == 'choice' %}
+        {% set ph = key == 'ueType' ? "Choisir un type d'UE" : (key == 'ecType' ? "Choisir un type d'EC" : '— Choisir —') %}
         <select name="attr_{{ key }}" class="fld">
-            <option value="">— Choisir —</option>
+            <option value="">{{ ph }}</option>
             {% for ov, ol in def.options %}<option value="{{ ov }}" {{ val == ov ? 'selected' }}>{{ ol }}</option>{% endfor %}
         </select>
+    {% elseif def.field == 'radio' %}
+        <div class="mt-1 flex flex-wrap gap-x-6 gap-y-2">
+            {% for ov, ol in def.options %}
+                <label class="flex items-center gap-2 text-sm cursor-pointer">
+                    <input type="radio" name="attr_{{ key }}" value="{{ ov }}" {{ val == ov ? 'checked' }}>{{ ol }}
+                </label>
+            {% endfor %}
+        </div>
     {% elseif def.field == 'competencies' %}
-        <input name="attr_competencies" value="{{ val ? val|join(', ') : '' }}" placeholder="Compétence 1, Compétence 2…" class="fld">
+        {% set comps = bcc_competences(node) %}
+        {% set cur = val ?? [] %}
+        {% if comps is empty %}
+            <p class="fld-help">Aucune compétence dans le référentiel (BCC). Ajoutez-en dans « Référentiel de compétences (BCC) ».</p>
+        {% else %}
+            <div class="mt-1 space-y-1.5">
+                {% for c in comps %}
+                    <label class="flex items-start gap-2 text-sm cursor-pointer">
+                        <input type="checkbox" name="attr_competencies[]" value="{{ c.label }}" {{ c.label in cur ? 'checked' }} class="mt-0.5">
+                        <span><span class="font-medium">{{ c.label }}</span>{% if c.code %} <span class="text-xs text-gray-400">{{ c.code }}</span>{% endif %}
+                            <span class="block text-xs text-gray-400">{{ c.bloc }}</span></span>
+                    </label>
+                {% endfor %}
+            </div>
+        {% endif %}
+        <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">＋ Ajouter une compétence</span></div>
+    {% elseif key == 'ficheMatiere' %}
+        {% set fiches = ['Fiche — Algorithmique', 'Fiche — Programmation', 'Fiche — Bases de données', 'Fiche — Mathématiques'] %}
+        <select name="attr_ficheMatiere" class="fld">
+            <option value="">Choisir dans la liste ou « ＋ Créer une nouvelle »…</option>
+            {% for f in fiches %}<option value="{{ f }}" {{ val == f ? 'selected' }}>{{ f }}</option>{% endfor %}
+            {% if val and val not in fiches %}<option value="{{ val }}" selected>{{ val }}</option>{% endif %}
+        </select>
+        <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">＋ Créer une nouvelle fiche</span></div>
     {% elseif def.field == 'hours' %}
         {% set mods = {'cm': 'CM', 'td': 'TD', 'tp': 'TP'} %}
         <div data-controller="hours" class="space-y-4">

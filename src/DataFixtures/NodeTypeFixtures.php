@@ -33,7 +33,7 @@ final class NodeTypeFixtures extends Fixture
             ['mois',        'Mois',      '📆', NodeFamily::Structural,     36,       ['mutualisable' => true],                                                                  null,       []],
             ['semaine',     'Semaine',   '🗒️', NodeFamily::Structural,     38,       ['mutualisable' => true],                                                                  null,       []],
             ['ue',          'UE',        '🧩', NodeFamily::Structural,     40,       ['ects' => true, 'ueType' => true, 'nature' => true, 'competencies' => true, 'mutualisable' => true], null, ['nature']],
-            ['ec',          'EC',        '📄', NodeFamily::Structural,     50,       ['ects' => true, 'nature' => true, 'competencies' => true, 'ficheMatiere' => true, 'hours' => true, 'mccc' => true, 'mutualisable' => true], null, ['nature', 'mccc']],
+            ['ec',          'EC',        '📄', NodeFamily::Structural,     50,       ['code' => true, 'ecType' => true, 'ects' => true, 'nature' => true, 'competencies' => true, 'ficheMatiere' => true, 'hours' => true, 'mccc' => true, 'mutualisable' => true], null, ['code', 'nature', 'mccc', 'ficheMatiere']],
             ['bloc_choix',  'Bloc de choix', '🔀', NodeFamily::Structural, 60,       ['nature' => true, 'mutualisable' => true],                                                null,       ['nature']],
             // ─── référentiel de compétences (BCC) : arbre parallèle à la structure pédagogique ───
             ['bloc_competences', 'Bloc de compétences', '🎓', NodeFamily::Competence, 70, ['mutualisable' => true],                                          null,       []],

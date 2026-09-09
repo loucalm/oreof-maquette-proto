@@ -39,9 +39,10 @@ final class AttributeCatalog
         'CC' => ['short' => 'CC', 'label' => 'Contrôle continu'],
     ];
 
-    /** Capacités qui ne sont pas des champs de saisie mais des drapeaux. */
+    /** Capacités qui ne sont pas des champs du catalogue mais des drapeaux. */
     public const FLAGS = [
         'mutualisable' => 'Nœud mutualisable / raccrochable',
+        'code' => 'Code du nœud',
     ];
 
     /** Libellés par défaut des onglets connus. */
@@ -142,17 +143,21 @@ final class AttributeCatalog
 
     /** Défauts pour amorcer les fixtures / restaurer le socle. */
     public const SEED = [
-        ['ects', 'ECTS', 'props', 'Crédits', 'number', [], true, 'Crédits ECTS portés par ce nœud.'],
-        ['ueType', "Type d'UE", 'props', 'Nature', 'choice', [
+        ['ects', 'ECTS', 'props', null, 'number', [], true, 'ECTS associés à ce nœud.'],
+        ['ueType', "Type d'UE", 'props', null, 'choice', [
             'disciplinaire' => 'Disciplinaire', 'transversale' => 'Transversale',
             'langue' => 'Langue', 'projet' => 'Projet / stage', 'libre' => 'Ouverture / libre',
         ], false, null],
-        ['nature', "Nature de l'élément", 'props', 'Nature', 'choice', [
+        ['ecType', "Type d'EC", 'props', null, 'choice', [
+            'cm' => 'Cours magistral', 'td' => 'Travaux dirigés', 'tp' => 'Travaux pratiques',
+            'projet' => 'Projet', 'stage' => 'Stage', 'autre' => 'Autre',
+        ], false, null],
+        ['nature', "Nature de l'élément", 'props', null, 'radio', [
             'obligatoire' => 'Obligatoire', 'choix_libre' => 'À choix libre',
             'choix_restreint' => 'À choix restreint', 'specifique_sante' => 'Spécifique santé facultative',
         ], true, null],
-        ['competencies', 'Compétences associées', 'props', 'Compétences', 'competencies', [], false, 'Sélection de compétences du référentiel (BCC).'],
-        ['ficheMatiere', 'Fiche matière', 'props', 'Compétences', 'text', [], false, 'Intitulé de la fiche matière obligatoire rattachée.'],
+        ['competencies', 'Compétence(s) associée(s)', 'props', null, 'competencies', [], false, 'Sélection de compétences du référentiel (BCC).'],
+        ['ficheMatiere', 'Fiche matière obligatoire', 'props', null, 'text', [], true, 'Fiche matière rattachée à l’EC.'],
         ['hours', 'Volume horaire', 'volume_horaire', null, 'hours', [], true, null],
         ['mccc', 'MCCC', 'mccc', null, 'mccc', [], true, null],
     ];

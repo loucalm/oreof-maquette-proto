@@ -26,6 +26,7 @@ class FieldDef
         'textarea' => 'Texte long',
         'number' => 'Nombre',
         'choice' => 'Liste de choix',
+        'radio' => 'Choix unique (boutons radio)',
         'competencies' => 'Compétences (référentiel)',
         'hours' => 'Volume horaire (présentiel / distanciel / TE)',
         'mccc' => 'MCCC (type de contrôle)',
