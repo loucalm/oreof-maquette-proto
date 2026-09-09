@@ -172,6 +172,62 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
             $p[$label] = $node;
         }
 
+        // arbre pédagogique + BCC du parcours « Parcours Informatique »
+        $pInfo = $p['Parcours Informatique'];
+        $tsemP = $this->getReference(NodeTypeFixtures::REF_PREFIX.'semestre', NodeType::class);
+        $tannP = $this->getReference(NodeTypeFixtures::REF_PREFIX.'annee', NodeType::class);
+        $tueP = $this->getReference(NodeTypeFixtures::REF_PREFIX.'ue', NodeType::class);
+        foreach (['Année 2', 'Année 3'] as $ai => $al) {
+            $an = new Node($tannP, $al);
+            $an->setFormation($multi);
+            $an->setParent($pInfo);
+            $an->setPosition($ai);
+            $pInfo->addChild($an);
+            $multi->addNode($an);
+            $manager->persist($an);
+            $sm = new Node($tsemP, 'Semestre '.(($ai * 2) + 3));
+            $sm->setFormation($multi);
+            $sm->setParent($an);
+            $sm->setPosition(0);
+            $an->addChild($sm);
+            $multi->addNode($sm);
+            $manager->persist($sm);
+            $ueN = new Node($tueP, 'UE Programmation avancée');
+            $ueN->setFormation($multi);
+            $ueN->setParent($sm);
+            $ueN->setPosition(0);
+            $ueN->setAttributes(['ects' => 6]);
+            $sm->addChild($ueN);
+            $multi->addNode($ueN);
+            $manager->persist($ueN);
+        }
+
+        $bloc = new Node($tbloc, 'BC 1 — Concevoir un système logiciel');
+        $bloc->setFormation($multi);
+        $bloc->setParent($pInfo);
+        $bloc->setPosition(0);
+        $pInfo->addChild($bloc);
+        $multi->addNode($bloc);
+        $manager->persist($bloc);
+        foreach ([
+            ['C1', 'Analyser un besoin et spécifier une solution.'],
+            ['C2', 'Concevoir une architecture logicielle.'],
+            ['C3', ''],
+        ] as $ci => [$cl, $cd]) {
+            $c = new Node($tcomp, $cl);
+            $c->setFormation($multi);
+            $c->setParent($bloc);
+            $c->setPosition($ci);
+            $c->setAttributes($cd !== '' ? ['description' => $cd] : []);
+            $bloc->addChild($c);
+            $multi->addNode($c);
+            $manager->persist($c);
+        }
+        $pInfo->setParametre('presentation', [
+            'objectif' => "Former des concepteurs et développeurs de systèmes logiciels complexes.",
+            'debouches' => "Ingénieur d'études, chef de projet junior, poursuite en master informatique.",
+        ]);
+
         // ─── 3e démo : format court (dimension temporelle = semaines) ───
         $tsem = $this->getReference(NodeTypeFixtures::REF_PREFIX.'semaine', NodeType::class);
         $tue = $this->getReference(NodeTypeFixtures::REF_PREFIX.'ue', NodeType::class);

@@ -201,45 +201,66 @@
     {% endfor %}
 {% endmacro %}
 
+{# liste lecture seule de blocs de compétences #}
+{% macro bloclist(blocs) %}
+    {% if blocs is empty %}
+        <p class="text-sm text-gray-400 italic">Aucun bloc de compétences.</p>
+    {% else %}
+        <div class="space-y-3">
+            {% for bloc in blocs %}
+                <div class="bcc-bloc {{ bloc.transversalBloc ? 'bcc-bloc--transversal' }}">
+                    <div class="bcc-bloc-head">
+                        <div class="min-w-0 flex-1">
+                            <div class="font-semibold">{% if bloc.transversalBloc %}🎓 {% endif %}{{ bloc.label }}{% if bloc.code %} <span class="text-xs font-normal opacity-70">{{ bloc.code }}</span>{% endif %}</div>
+                            {% if bloc.description %}<div class="text-xs opacity-80">{{ bloc.description }}</div>{% endif %}
+                        </div>
+                    </div>
+                    <ul class="bcc-comp-list">
+                        {% for c in bloc.children|filter(c => c.type.key == 'competence') %}
+                            <li class="bcc-comp"><div class="bcc-comp-row">
+                                <div class="min-w-0 flex-1">
+                                    <div class="font-medium">{{ c.label }}{% if c.code %} <span class="text-xs font-normal text-gray-400">{{ c.code }}</span>{% endif %}</div>
+                                    {% if c.description %}<div class="text-xs text-gray-500">{{ c.description }}</div>{% endif %}
+                                </div>
+                            </div></li>
+                        {% else %}
+                            <li class="px-4 py-2 text-xs text-gray-400 italic">Aucune compétence.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endmacro %}
+
 {# panneau lecture seule du référentiel de compétences (BCC) #}
 {% macro bccdetail(formation) %}
+    {% import _self as m %}
     <div data-rotree-target="detail" data-node="bcc" hidden class="space-y-4">
         <div class="text-sm text-gray-400">{{ formation.name }} › Référentiel de compétences</div>
         <div class="flex flex-wrap items-center gap-2">
-            <span class="status-dot" data-status="{{ bcc_status(formation) }}"></span>
             <h3 class="text-lg font-bold">Référentiel de compétences (BCC)</h3>
         </div>
-        {% set blocs = formation.competenceBlocs %}
-        {% if blocs is empty %}
-            <p class="text-sm text-gray-400 italic">Aucun bloc de compétences défini.</p>
-        {% else %}
-            <div class="space-y-3">
-                {% for bloc in blocs %}
-                    <div class="bcc-bloc {{ bloc.transversalBloc ? 'bcc-bloc--transversal' }}">
-                        <div class="bcc-bloc-head">
-                            <div class="min-w-0 flex-1">
-                                <div class="font-semibold">{% if bloc.transversalBloc %}🎓 {% endif %}{{ bloc.label }}{% if bloc.code %} <span class="text-xs font-normal opacity-70">{{ bloc.code }}</span>{% endif %}</div>
-                                {% if bloc.description %}<div class="text-xs opacity-80">{{ bloc.description }}</div>{% endif %}
-                            </div>
-                        </div>
-                        <ul class="bcc-comp-list">
-                            {% for c in bloc.children|filter(c => c.type.key == 'competence') %}
-                                <li class="bcc-comp"><div class="bcc-comp-row">
-                                    <div class="min-w-0 flex-1">
-                                        <div class="font-medium">{{ c.label }}{% if c.code %} <span class="text-xs font-normal text-gray-400">{{ c.code }}</span>{% endif %}</div>
-                                        {% if c.description %}<div class="text-xs text-gray-500">{{ c.description }}</div>{% endif %}
-                                    </div>
-                                </div></li>
-                            {% else %}
-                                <li class="px-4 py-2 text-xs text-gray-400 italic">Aucune compétence.</li>
-                            {% endfor %}
-                        </ul>
+        {% if formation.multiParcours %}
+            <p class="text-sm text-gray-500">En multi-parcours, le référentiel est défini par parcours.</p>
+            {% for p in formation.parcoursNodes %}
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2 text-sm font-semibold">
+                        <span class="status-dot" data-status="{{ bcc_status(p) }}"></span>{{ p.displayLabel }}
+                        <a href="{{ path('parcours_editor', {id: p.id}) }}?bcc=1" class="text-xs font-normal hover:underline" style="color:var(--c-primary)">✎ modifier</a>
                     </div>
-                {% endfor %}
+                    {{ m.bloclist(p.bccBlocs) }}
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="flex items-center gap-2">
+                <span class="status-dot" data-status="{{ bcc_status(formation) }}"></span>
+                <span class="text-sm text-gray-500">{{ formation.competenceBlocs|length }} bloc(s)</span>
             </div>
+            {{ m.bloclist(formation.competenceBlocs) }}
+            <a href="{{ path('formation_editor', {id: formation.id}) }}?bcc=1"
+               class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">✎ Modifier le référentiel</a>
         {% endif %}
-        <a href="{{ path('formation_editor', {id: formation.id}) }}?bcc=1"
-           class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">✎ Modifier le référentiel</a>
     </div>
 {% endmacro %}
 

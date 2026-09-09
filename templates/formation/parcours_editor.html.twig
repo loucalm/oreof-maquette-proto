@@ -1,0 +1,151 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ parcours.displayLabel }} · éditeur de parcours{% endblock %}
+
+{% set focus = app.request.query.get('focus') %}
+{% set param = app.request.query.get('param') %}
+{% set bcc = app.request.query.get('bcc') %}
+{% set frameSrc = bcc ? path('bcc_parcours_editor', {id: parcours.id})
+    : (param ? path('parcours_param', {id: parcours.id, key: param})
+    : (focus ? path('node_panel', {id: focus}) : null)) %}
+{% set bodyRoot = type_meta()[formation.getChildTypeKey('parcours')] ?? null %}
+
+{% block body %}
+
+{# ─── bandeau titre ─── #}
+<div class="rounded-2xl border bg-white px-7 py-6 mb-4" style="border-color:var(--c-border)">
+    <div class="flex items-start justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-extrabold tracking-tight">{{ parcours.displayLabel }}</h1>
+            <p class="text-sm text-gray-500">Page de modification du parcours</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="{{ path('formation_view', {id: formation.id}) }}" class="fake-btn">👁 Voir la fiche descriptive</a>
+            <a href="{{ path('formation_index') }}" class="rounded-lg border px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-50" style="border-color:#bbf7d0">← Retour à la liste des formation</a>
+        </div>
+    </div>
+    <div class="mt-3 text-sm text-gray-400">
+        🏠 <span class="fake-link">Accueil</span> ›
+        <a href="{{ path('formation_index') }}" class="hover:underline">Liste des formation</a> ›
+        <a href="{{ path('formation_editor', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
+        <span class="rounded bg-gray-100 px-2 py-0.5 text-gray-600">{{ parcours.displayLabel }}</span>
+    </div>
+</div>
+
+{# ─── méta (fictif) ─── #}
+<div class="rounded-2xl border bg-white px-7 py-5 grid grid-cols-2 md:grid-cols-5 gap-4 mb-4" style="border-color:var(--c-border)">
+    {% for k, v in {
+        'Formation': formation.name,
+        'Type diplôme': formation.diplome ?: 'Licence',
+        'Composante': formation.composante ?: 'Composante exemple',
+        'Périodes': period_unit(formation)|lower ~ 's ' ~ parcours.periodeDebut ~ '–' ~ parcours.periodeFin,
+        'Parcours parent': parcours.parcoursParent ? parcours.parcoursParent.displayLabel : '—'
+    } %}
+        <div>
+            <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{{ k }}</div>
+            <div class="text-sm mt-1">{{ v }}</div>
+        </div>
+    {% endfor %}
+</div>
+
+{# ═══ éditeur ═══ #}
+<div class="rounded-2xl border bg-white p-7" style="border-color:var(--c-border)">
+    <h2 class="text-2xl font-extrabold tracking-tight">ÉDITEUR DE PARCOURS</h2>
+    <p class="text-sm text-gray-500 mb-5">Construisez la structure de ce parcours nœud par nœud.</p>
+
+    <div class="grid gap-5 lg:grid-cols-[380px_1fr] lg:h-[calc(100vh-9rem)] min-h-[560px]">
+
+        {# ─── panneau structure ─── #}
+        <div class="flex flex-col rounded-xl border overflow-hidden" style="border-color:var(--c-border)"
+             data-controller="tree"
+             data-tree-move-url-value="{{ path('node_move', {id: '__ID__'}) }}"
+             data-tree-dup-url-value="{{ path('node_duplicate', {id: '__ID__'}) }}"
+             data-tree-del-url-value="{{ path('node_delete', {id: '__ID__'}) }}"
+             data-tree-chain-value="{{ formation.effectiveStructure|json_encode|e('html_attr') }}"
+             data-tree-type-meta-value="{{ type_meta()|json_encode|e('html_attr') }}"
+             data-tree-root-key-value="{{ formation.getChildTypeKey('parcours') }}"
+             data-tree-base-parent-value="{{ parcours.id }}">
+
+            <div class="px-4 pt-4 pb-3 border-b shrink-0" style="border-color:var(--c-border)">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">Structure du parcours</span>
+                    <span class="pill" style="background:#fef3c7;color:#b45309">{{ progress == 100 ? 'Complet' : 'Incomplet' }}</span>
+                </div>
+                <div class="mt-2 font-bold">{{ parcours.displayLabel }}</div>
+                <div class="text-xs text-gray-400">{{ formation.name }}</div>
+                <div class="mt-2">
+                    <div class="flex justify-between text-[11px] text-gray-400"><span>Progression global</span><span>{{ progress }}%</span></div>
+                    <div class="mt-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                        <div class="h-full rounded-full" style="width:{{ progress }}%;background:{{ progress < 30 ? 'var(--st-empty)' : (progress < 70 ? 'var(--st-incomplete)' : 'var(--st-ok)') }}"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto">
+                <div class="px-4 py-3 border-b" style="border-color:var(--c-border)">
+                    <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Paramètre du parcours</div>
+                    {% for k, label in parcours_param_sections() %}
+                        <a href="{{ path('parcours_param', {id: parcours.id, key: k}) }}" data-turbo-frame="node-panel"
+                           class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ param == k ? 'is-active' }}">
+                            <span class="status-dot" data-status="{{ parcours_param_status(parcours, k) }}"></span>{{ label }}
+                        </a>
+                    {% endfor %}
+                    <a href="{{ path('node_panel', {id: parcours.id}) }}" data-turbo-frame="node-panel"
+                       class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ focus == parcours.id ~ '' ? 'is-active' }}">
+                        <span class="status-dot" data-status="ok"></span>Positionnement &amp; ramification
+                    </a>
+                    <a href="{{ path('bcc_parcours_editor', {id: parcours.id}) }}" data-turbo-frame="node-panel"
+                       class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ bcc ? 'is-active' }}">
+                        <span class="status-dot" data-status="{{ bcc_status(parcours) }}"></span>Référentiel de compétences (BCC)
+                    </a>
+                </div>
+
+                <a href="{{ path('formation_editor', {id: formation.id}) }}"
+                   class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white" style="background:var(--c-primary)">
+                    ← Revenir à la formation
+                </a>
+
+                <div class="p-2">
+                    {% if roots is not empty %}
+                        {{ include('formation/_tree.html.twig', {views: roots, parentId: parcours.id, focus: focus}) }}
+                    {% else %}
+                        <p class="text-sm px-2 py-8 text-center text-gray-400">
+                            Ce parcours n'a pas encore de {{ bodyRoot ? bodyRoot.label|lower : 'niveau' }}.
+                            Ajoutez-en une ci-dessous.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# ─── barre d'actions ─── #}
+            <div class="px-3 py-3 border-t shrink-0 flex items-center gap-2" style="border-color:var(--c-border)">
+                <form method="post" action="{{ path('node_add', {id: formation.id}) }}" data-turbo-frame="_top"
+                      class="flex-1" data-tree-target="addForm">
+                    <input type="hidden" name="parentId" value="{{ parcours.id }}" data-tree-target="addParent">
+                    <input type="hidden" name="typeKey" value="{{ formation.getChildTypeKey('parcours') }}" data-tree-target="addType">
+                    <button data-tree-target="addButton" class="tree-add-btn">＋ Ajouter {{ bodyRoot ? bodyRoot.icon }} {{ bodyRoot ? bodyRoot.label }}</button>
+                </form>
+
+                <form method="post" data-turbo-frame="_top" data-tree-target="dupForm">
+                    <button type="submit" data-tree-target="dupButton" disabled title="Dupliquer le nœud sélectionné"
+                            class="tree-act-btn">⧉</button>
+                </form>
+                <form method="post" data-turbo-frame="_top" data-tree-target="delForm"
+                      data-controller="confirm" data-confirm-message-value="Supprimer ce nœud et tout ce qu'il contient ?">
+                    <button type="submit" data-tree-target="delButton" disabled title="Supprimer le nœud sélectionné"
+                            class="tree-act-btn tree-act-btn-danger">🗑</button>
+                </form>
+            </div>
+        </div>
+
+        {# ─── panneau d'édition ─── #}
+        <turbo-frame id="node-panel" class="block rounded-xl border bg-white overflow-y-auto" style="border-color:var(--c-border)"
+                     {% if frameSrc %}src="{{ frameSrc }}"{% endif %}>
+            {% if not frameSrc %}
+                <div class="grid h-full place-items-center p-16 text-sm text-gray-400">
+                    Sélectionnez une section ou un nœud pour le modifier
+                </div>
+            {% endif %}
+        </turbo-frame>
+    </div>
+</div>
+{% endblock %}

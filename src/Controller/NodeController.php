@@ -127,9 +127,9 @@ final class NodeController extends AbstractController
                 ? sprintf('« %s » ne peut pas contenir d’enfant.', $parent->getDisplayLabel())
                 : 'Définissez d’abord le squelette dans « Configuration de la structure ».');
 
-            return $this->redirectToRoute('formation_editor', null !== $parent
-                ? ['id' => $formation->getId(), 'focus' => $parent->getId()]
-                : ['id' => $formation->getId(), 'param' => 'structure']);
+            return null !== $parent
+                ? $this->editorRedirect($parent)
+                : $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);
         }
 
         $node = $this->factory->create($formation, $type, $parent, trim((string) $request->request->get('label')));
@@ -137,7 +137,23 @@ final class NodeController extends AbstractController
         $this->addFlash('success', sprintf('%s ajouté.', $type->getLabel()));
 
         // on ouvre le nouveau nœud dans le panneau, qu'il soit racine ou enfant
-        return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'focus' => $node->getId()]);
+        return $this->editorRedirect($node);
+    }
+
+    /**
+     * Redirige vers l'éditeur qui « possède » ce nœud : celui du parcours si le
+     * nœud vit sous un parcours (formations multi-parcours), sinon celui de la
+     * formation. `focus` ouvre le nœud dans le panneau de droite.
+     */
+    private function editorRedirect(Node $node): Response
+    {
+        for ($c = $node; $c !== null; $c = $c->getParent()) {
+            if ($c->isParcours()) {
+                return $this->redirectToRoute('parcours_editor', ['id' => $c->getId(), 'focus' => $node->getId()]);
+            }
+        }
+
+        return $this->redirectToRoute('formation_editor', ['id' => $node->getFormation()->getId(), 'focus' => $node->getId()]);
     }
 
     #[Route('/nodes/{id}/move', name: 'node_move', methods: ['POST'])]
@@ -176,18 +192,27 @@ final class NodeController extends AbstractController
         $copy = $this->factory->duplicate($node);
         $this->em->flush();
 
-        return $this->redirectToRoute('formation_editor', ['id' => $node->getFormation()->getId(), 'focus' => $copy->getId()]);
+        return $this->editorRedirect($copy);
     }
 
     #[Route('/nodes/{id}/delete', name: 'node_delete', methods: ['POST'])]
     public function delete(Node $node): Response
     {
-        $formationId = $node->getFormation()->getId();
+        $formation = $node->getFormation();
+        $parcours = null;
+        for ($c = $node->getParent(); $c !== null; $c = $c->getParent()) {
+            if ($c->isParcours()) {
+                $parcours = $c;
+                break;
+            }
+        }
         $this->em->remove($node);
         $this->em->flush();
         $this->addFlash('info', 'Nœud supprimé.');
 
-        return $this->redirectToRoute('formation_editor', ['id' => $formationId]);
+        return $parcours
+            ? $this->redirectToRoute('parcours_editor', ['id' => $parcours->getId()])
+            : $this->redirectToRoute('formation_editor', ['id' => $formation->getId()]);
     }
 
     /** Toggle « Mutualiser » : met le nœud à disposition des autres formations. */
@@ -263,10 +288,7 @@ final class NodeController extends AbstractController
             $this->addFlash('success', $message);
         }
 
-        return $this->redirectToRoute('formation_editor', [
-            'id' => $node->getFormation()->getId(),
-            'focus' => $node->getId(),
-        ]);
+        return $this->editorRedirect($node);
     }
 
     /** Ramification : rattache $node à un parcours parent si la relation est cohérente (sinon détache + prévient). */

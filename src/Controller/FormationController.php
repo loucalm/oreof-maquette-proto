@@ -24,7 +24,19 @@ final class FormationController extends AbstractController
         $rows = [];
         foreach ($formations->findAllRecent() as $formation) {
             $roots = $builder->build($formation);
-            $rows[] = ['formation' => $formation, 'progress' => $builder->progress($roots)];
+
+            // en multi-parcours : une ligne dépliable par parcours (remplissage direct)
+            $parcours = [];
+            foreach ($formation->getParcoursNodes() as $p) {
+                $sub = $builder->buildSubtree($p)->children;
+                $parcours[] = ['node' => $p, 'progress' => $builder->progress($sub)];
+            }
+
+            $rows[] = [
+                'formation' => $formation,
+                'progress' => $builder->progress($roots),
+                'parcours' => $parcours,
+            ];
         }
 
         return $this->render('formation/index.html.twig', ['rows' => $rows]);
@@ -80,6 +92,91 @@ final class FormationController extends AbstractController
             // Ouvert directement (lien de la consultation, URL) → page complète.
             'standalone' => 'node-panel' !== $request->headers->get('Turbo-Frame'),
         ]);
+    }
+
+    // ─── éditeur d'un parcours (2e échelle, formations multi-parcours) ───
+
+    /** Sections « Paramètre du parcours » (portées par le nœud parcours). */
+    public const PARCOURS_PARAM_SECTIONS = [
+        'organisation' => 'Organisation et localisation',
+        'presentation' => 'Présentation',
+    ];
+
+    /** @var array<string, list<array{key: string, label: string, long?: bool}>> */
+    public const PARCOURS_PARAM_FIELDS = [
+        'organisation' => [
+            ['key' => 'lieu', 'label' => 'Lieu(x) d’enseignement'],
+            ['key' => 'respParcours', 'label' => 'Responsable du parcours'],
+            ['key' => 'coRespParcours', 'label' => 'Co-responsable du parcours'],
+            ['key' => 'capacite', 'label' => 'Capacité d’accueil'],
+            ['key' => 'contacts', 'label' => 'Contacts du parcours', 'long' => true],
+            ['key' => 'modalites', 'label' => 'Modalités particulières (alternance, distanciel…)', 'long' => true],
+        ],
+        'presentation' => [
+            ['key' => 'objectif', 'label' => 'Objectif du parcours', 'long' => true],
+            ['key' => 'competencesVisees', 'label' => 'Compétences visées', 'long' => true],
+            ['key' => 'debouches', 'label' => 'Débouchés / poursuites d’études', 'long' => true],
+            ['key' => 'publicVise', 'label' => 'Public visé et prérequis', 'long' => true],
+        ],
+    ];
+
+    public static function parcoursParamStatus(\App\Entity\Node $parcours, string $key): string
+    {
+        $data = $parcours->getParametre($key);
+        if ($data === []) {
+            return 'empty';
+        }
+        $fields = self::PARCOURS_PARAM_FIELDS[$key] ?? [];
+        $filled = array_filter($fields, static fn ($f) => trim((string) ($data[$f['key']] ?? '')) !== '');
+
+        return \count($filled) === \count($fields) ? 'ok' : 'incomplete';
+    }
+
+    #[Route('/parcours/{id}', name: 'parcours_editor', methods: ['GET'])]
+    public function parcoursEditor(\App\Entity\Node $node, MaquetteBuilder $builder): Response
+    {
+        if (!$node->isParcours()) {
+            throw $this->createNotFoundException();
+        }
+        $view = $builder->buildSubtree($node);
+
+        return $this->render('formation/parcours_editor.html.twig', [
+            'formation' => $node->getFormation(),
+            'parcours' => $node,
+            'roots' => $view->children,
+            'progress' => $builder->progress($view->children),
+        ]);
+    }
+
+    #[Route('/parcours/{id}/parametre/{key}', name: 'parcours_param', methods: ['GET'])]
+    public function parcoursParam(\App\Entity\Node $node, string $key): Response
+    {
+        if (!$node->isParcours() || !isset(self::PARCOURS_PARAM_SECTIONS[$key])) {
+            throw $this->createNotFoundException();
+        }
+
+        return $this->render('formation/param/_generic.html.twig', [
+            'title' => self::PARCOURS_PARAM_SECTIONS[$key],
+            'contextName' => $node->getDisplayLabel(),
+            'fields' => self::PARCOURS_PARAM_FIELDS[$key] ?? [],
+            'data' => $node->getParametre($key),
+            'saveUrl' => $this->generateUrl('parcours_param_save', ['id' => $node->getId(), 'key' => $key]),
+            'panelToken' => 'param:'.$key,
+        ]);
+    }
+
+    #[Route('/parcours/{id}/parametre/{key}', name: 'parcours_param_save', methods: ['POST'])]
+    public function parcoursParamSave(\App\Entity\Node $node, string $key, Request $request, EntityManagerInterface $em): Response
+    {
+        if (!$node->isParcours() || !isset(self::PARCOURS_PARAM_SECTIONS[$key])) {
+            throw $this->createNotFoundException();
+        }
+        $data = $request->request->all('p');
+        $node->setParametre($key, array_filter($data, static fn ($v) => $v !== '' && $v !== null));
+        $em->flush();
+        $this->addFlash('success', sprintf('« %s » enregistré.', self::PARCOURS_PARAM_SECTIONS[$key]));
+
+        return $this->redirectToRoute('parcours_editor', ['id' => $node->getId(), 'param' => $key]);
     }
 
     #[Route('/formations/{id}/verifier', name: 'formation_check', methods: ['GET'])]

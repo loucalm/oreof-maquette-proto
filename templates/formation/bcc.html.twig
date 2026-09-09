@@ -42,25 +42,28 @@
             🏠 <span class="fake-link">Accueil</span> ›
             <a href="{{ path('formation_index') }}" class="hover:underline">Liste des formations</a> ›
             <a href="{{ path('formation_view', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
-            Référentiel de compétences
+            {% if parcours %}{{ parcours.displayLabel }} › {% endif %}Référentiel de compétences
         </div>
     {% endif %}
 
     <div class="mb-1">
         <h2 class="text-xl font-bold">Référentiel de compétences (BCC)</h2>
-        <div class="text-sm text-gray-400">{{ formation.name }} · {{ blocs|length }} bloc(s)</div>
+        <div class="text-sm text-gray-400">
+            {% if parcours %}{{ parcours.displayLabel }}{% else %}{{ formation.name }}{% endif %} · {{ blocs|length }} bloc(s)
+        </div>
     </div>
     <p class="text-xs text-gray-400 mb-4">
         Blocs de connaissances et de compétences. Chaque bloc regroupe des compétences ;
-        le bloc « transversales (RNCP) » porte les compétences communes à la mention.
+        le bloc « transversales (RNCP) » porte les compétences communes
+        {% if parcours %}à ce parcours{% else %}à la mention{% endif %}.
     </p>
 
     <div class="flex items-center gap-3 text-gray-300 text-xs uppercase tracking-widest mb-4">
         <div class="h-px flex-1 bg-gray-200"></div>Structure BCC<div class="h-px flex-1 bg-gray-200"></div>
     </div>
 
-    {% if not formation.hasTransversalBloc %}
-        <form method="post" action="{{ path('bcc_bloc_add', {id: formation.id}) }}" data-turbo-frame="_top" class="mb-4">
+    {% if not hasTransversal %}
+        <form method="post" action="{{ addBlocUrl }}" data-turbo-frame="_top" class="mb-4">
             <input type="hidden" name="transversal" value="1">
             <button class="w-full rounded-xl border border-dashed px-4 py-2.5 text-sm font-medium text-green-700 hover:bg-green-50"
                     style="border-color:#86efac;background:#f0fdf4">＋ Ajouter des compétences transversales (RNCP)</button>
@@ -117,7 +120,7 @@
         {% endfor %}
     </div>
 
-    <form method="post" action="{{ path('bcc_bloc_add', {id: formation.id}) }}" data-turbo-frame="_top" class="mt-4 flex justify-center">
+    <form method="post" action="{{ addBlocUrl }}" data-turbo-frame="_top" class="mt-4 flex justify-center">
         <button class="rounded-lg border px-4 py-2 text-sm font-semibold" style="border-color:#c7d2fe;background:#eef2ff;color:var(--c-primary)">＋ Ajouter un bloc</button>
     </form>
 </div>

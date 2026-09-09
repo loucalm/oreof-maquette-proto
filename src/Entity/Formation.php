@@ -367,14 +367,28 @@ class Formation
         return array_values($blocs);
     }
 
+    /** true si un bloc transversal existe au niveau formation (mono-parcours). */
     public function hasTransversalBloc(): bool
     {
-        foreach ($this->nodes as $n) {
-            if ($n->isTransversalBloc()) {
+        foreach ($this->getCompetenceBlocs() as $bloc) {
+            if ($bloc->isTransversalBloc()) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * Nœuds « parcours » de la formation (multi-parcours), triés par position.
+     *
+     * @return list<Node>
+     */
+    public function getParcoursNodes(): array
+    {
+        $parcours = array_filter($this->nodes->toArray(), static fn (Node $n) => $n->isParcours());
+        usort($parcours, static fn (Node $a, Node $b) => $a->getPosition() <=> $b->getPosition());
+
+        return array_values($parcours);
     }
 }

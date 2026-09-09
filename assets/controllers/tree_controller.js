@@ -13,7 +13,7 @@ import Sortable from 'sortablejs';
  * qu'on déplace la classe .is-active et qu'on tient l'URL à jour.
  */
 export default class extends Controller {
-    static values = { moveUrl: String, dupUrl: String, delUrl: String, chain: Array, typeMeta: Object, rootKey: String };
+    static values = { moveUrl: String, dupUrl: String, delUrl: String, chain: Array, typeMeta: Object, rootKey: String, baseParent: String };
     static targets = ['addForm', 'addParent', 'addType', 'addButton', 'dupForm', 'dupButton', 'delForm', 'delButton'];
 
     connect() {
@@ -117,7 +117,8 @@ export default class extends Controller {
 
         if (token.startsWith('node:')) {
             const id = token.slice(5);
-            target = this.element.querySelector(`li[data-node-id="${id}"] > .tree-row`);
+            target = this.element.querySelector(`li[data-node-id="${id}"] > .tree-row`)
+                || this.element.querySelector(`a.nav-section[href$="/nodes/${id}"]`);
             url = { focus: id };
         } else if (token.startsWith('param:')) {
             const key = token.slice(6);
@@ -193,7 +194,8 @@ export default class extends Controller {
 
         if (!activeLi) {
             const rootKey = this.hasRootKeyValue ? this.rootKeyValue : '';
-            this.addParentTarget.value = '';
+            // dans l'éditeur de parcours : « racine » = enfant direct du parcours
+            this.addParentTarget.value = this.hasBaseParentValue ? this.baseParentValue : '';
             this.addTypeTarget.value = rootKey || 'auto';
             this.addButtonTarget.disabled = false;
             this.addButtonTarget.textContent = meta[rootKey]

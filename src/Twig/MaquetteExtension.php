@@ -43,6 +43,8 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('param_status', static fn (Formation $f, string $k) => FormationController::paramStatus($f, $k)),
             new TwigFunction('param_fields', static fn (string $k) => FormationController::PARAM_FIELDS[$k] ?? []),
             new TwigFunction('bcc_status', $this->bccStatus(...)),
+            new TwigFunction('parcours_param_sections', static fn () => FormationController::PARCOURS_PARAM_SECTIONS),
+            new TwigFunction('parcours_param_status', static fn (Node $p, string $k) => FormationController::parcoursParamStatus($p, $k)),
         ];
     }
 
@@ -206,10 +208,13 @@ final class MaquetteExtension extends AbstractExtension
         return $type?->getLabel() ?? 'Période';
     }
 
-    /** Statut du référentiel BCC (pastille de la barre latérale). */
-    public function bccStatus(Formation $formation): string
+    /**
+     * Statut du référentiel BCC (pastille de la barre latérale).
+     * Contexte = la formation (mono) ou un nœud parcours (multi).
+     */
+    public function bccStatus(Formation|Node $context): string
     {
-        $blocs = $formation->getCompetenceBlocs();
+        $blocs = $context instanceof Node ? $context->getBccBlocs() : $context->getCompetenceBlocs();
         if ($blocs === []) {
             return 'empty';
         }

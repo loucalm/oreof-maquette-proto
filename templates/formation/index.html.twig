@@ -41,13 +41,22 @@
                         <th class="text-right px-4 py-3">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
                 {% for row in rows %}
-                    {% set f = row.formation %}
+                {% set f = row.formation %}
+                <tbody {{ row.parcours ? 'data-controller=disclosure' }}>
                     <tr class="border-t" style="border-color:var(--c-border)">
                         <td class="px-4 py-4 align-top">
                             <div class="font-medium">{{ f.name }}</div>
-                            <div class="text-xs text-gray-400">{{ f.diplome ?: '—' }} · {{ f.multiParcours ? 'multi-parcours' : 'mono-parcours' }}</div>
+                            <div class="text-xs text-gray-400">
+                                {{ f.diplome ?: '—' }} · {{ f.multiParcours ? row.parcours|length ~ ' parcours' : 'mono-parcours' }}
+                            </div>
+                            {% if row.parcours %}
+                                <button type="button" data-action="disclosure#toggle"
+                                        class="mt-1.5 inline-flex items-center gap-1 whitespace-nowrap rounded-md border px-2 py-1 text-[11px] font-medium hover:bg-gray-50"
+                                        style="border-color:var(--c-border);color:var(--c-primary)">
+                                    › <span data-disclosure-target="label">Voir</span>&nbsp;les parcours
+                                </button>
+                            {% endif %}
                         </td>
                         <td class="px-4 py-4 align-top text-gray-600">{{ f.composante ?: '—' }}</td>
                         <td class="px-4 py-4 align-top">
@@ -88,12 +97,65 @@
                             </div>
                         </td>
                     </tr>
+                    {% if row.parcours %}
+                        <tr data-disclosure-target="panel" hidden>
+                            <td colspan="5" class="px-4 pb-5 pt-0" style="background:#fafafb">
+                                <div class="rounded-xl border bg-white overflow-hidden" style="border-color:var(--c-border)">
+                                    <div class="flex items-center justify-between px-4 py-2.5 border-b" style="border-color:var(--c-border)">
+                                        <span class="text-sm font-semibold">Parcours de <span style="color:var(--c-primary)">{{ f.name }}</span></span>
+                                        <span class="text-xs text-gray-400">{{ row.parcours|length }} parcours</span>
+                                    </div>
+                                    <table class="w-full text-sm">
+                                        <thead class="text-[11px] uppercase tracking-wide text-gray-400">
+                                            <tr class="border-b" style="border-color:var(--c-border)">
+                                                <th class="text-left px-4 py-2">Parcours</th>
+                                                <th class="text-left px-4 py-2">Périodes</th>
+                                                <th class="text-left px-4 py-2">BCC</th>
+                                                <th class="text-left px-4 py-2 w-48">Remplissage</th>
+                                                <th class="text-right px-4 py-2">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        {% for p in row.parcours %}
+                                            {% set pn = p.node %}
+                                            <tr class="border-b last:border-0" style="border-color:var(--c-border)">
+                                                <td class="px-4 py-2.5">
+                                                    <div class="font-medium">{{ pn.displayLabel }}</div>
+                                                    {% if pn.parcoursParent %}<div class="text-[11px] text-gray-400">spécialisation de « {{ pn.parcoursParent.displayLabel }} »</div>{% endif %}
+                                                </td>
+                                                <td class="px-4 py-2.5 text-gray-500">{{ period_unit(f)|lower }}s {{ pn.periodeDebut }}–{{ pn.periodeFin }}</td>
+                                                <td class="px-4 py-2.5">
+                                                    {% set bs = bcc_status(pn) %}
+                                                    <span class="pill" style="background:{{ bs == 'ok' ? '#dcfce7' : (bs == 'incomplete' ? '#fef3c7' : '#fee2e2') }};color:{{ bs == 'ok' ? '#15803d' : (bs == 'incomplete' ? '#b45309' : '#b91c1c') }}">
+                                                        {{ bs == 'ok' ? 'Complet' : (bs == 'incomplete' ? 'Incomplet' : 'Vide') }}
+                                                    </span>
+                                                </td>
+                                                <td class="px-4 py-2.5">
+                                                    <div class="flex justify-between text-[11px] text-gray-400"><span></span><span>{{ p.progress }}%</span></div>
+                                                    <div class="mt-0.5 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                                                        <div class="h-full rounded-full" style="width:{{ p.progress }}%;background:{{ p.progress < 30 ? 'var(--st-empty)' : (p.progress < 70 ? 'var(--st-incomplete)' : 'var(--st-ok)') }}"></div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-4 py-2.5 text-right whitespace-nowrap">
+                                                    <a href="{{ path('formation_view', {id: f.id}) }}" class="text-xs hover:underline">ⓘ Voir</a>
+                                                    <a href="{{ path('parcours_editor', {id: pn.id}) }}" class="ml-2 text-xs font-medium text-amber-700 hover:underline">✎ Modifier</a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
                 {% else %}
+                <tbody>
                     <tr><td colspan="5" class="px-4 py-10 text-center text-gray-400">
                         Aucune formation. Cliquez sur « Ajouter une formation ».
                     </td></tr>
-                {% endfor %}
                 </tbody>
+                {% endfor %}
             </table>
         </div>
     </div>

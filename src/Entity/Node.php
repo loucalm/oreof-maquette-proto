@@ -312,18 +312,73 @@ class Node
         return $this->type->getFamily() === NodeFamily::Competence;
     }
 
-    /** Bloc « compétences transversales (RNCP) » — au plus un par formation. */
+    /** Bloc de compétences (racine du BCC, en mono ; enfant d'un parcours en multi). */
+    public function isBloc(): bool
+    {
+        return $this->type->getKey() === 'bloc_competences';
+    }
+
+    /** Bloc « compétences transversales (RNCP) » — au plus un par contexte BCC. */
     public function isTransversalBloc(): bool
     {
-        return $this->isCompetenceNode()
-            && $this->parent === null
-            && (bool) ($this->attributes['transversal'] ?? false);
+        return $this->isBloc() && (bool) ($this->attributes['transversal'] ?? false);
+    }
+
+    /**
+     * Blocs de compétences portés par ce nœud (utile pour un parcours en
+     * multi-parcours). Bloc transversal en tête.
+     *
+     * @return list<Node>
+     */
+    public function getBccBlocs(): array
+    {
+        $blocs = array_values(array_filter($this->children->toArray(), static fn (Node $n) => $n->isBloc()));
+        usort($blocs, static fn (Node $a, Node $b): int => [!$a->isTransversalBloc(), $a->getPosition()] <=> [!$b->isTransversalBloc(), $b->getPosition()]);
+
+        return $blocs;
+    }
+
+    public function hasTransversalBloc(): bool
+    {
+        foreach ($this->children as $c) {
+            if ($c->isTransversalBloc()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** Description courte (sous-titre) — pour les blocs et compétences du BCC. */
     public function getDescription(): string
     {
         return trim((string) ($this->attributes['description'] ?? ''));
+    }
+
+    /**
+     * Sections « Paramètre du parcours » (organisation, présentation) portées
+     * par le nœud, à la manière de Formation::parametres.
+     *
+     * @return array<string, mixed>
+     */
+    public function getParametre(string $section): array
+    {
+        $all = $this->attributes['parametres'] ?? [];
+
+        return \is_array($all) ? ($all[$section] ?? []) : [];
+    }
+
+    /** @param array<string, mixed> $data */
+    public function setParametre(string $section, array $data): self
+    {
+        $all = $this->attributes['parametres'] ?? [];
+        if (!\is_array($all)) {
+            $all = [];
+        }
+        $all[$section] = $data;
+        $this->attributes['parametres'] = $all;
+
+        return $this;
     }
 
     /** Période de début du parcours sur l'axe temporel (défaut 1). */

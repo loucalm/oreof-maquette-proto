@@ -65,7 +65,12 @@ final class MaquetteBuilder
      */
     private function view(Node $node, array $childrenByParent): NodeView
     {
-        $childNodes = $childrenByParent[$node->getId()] ?? [];
+        // le BCC (famille compétence) est un arbre parallèle : jamais dans la
+        // structure pédagogique, même quand il est porté par un parcours.
+        $childNodes = array_values(array_filter(
+            $childrenByParent[$node->getId()] ?? [],
+            static fn (Node $c) => !$c->isCompetenceNode(),
+        ));
         $children = array_map(fn (Node $c) => $this->view($c, $childrenByParent), $childNodes);
 
         $view = new NodeView($node, $children);
