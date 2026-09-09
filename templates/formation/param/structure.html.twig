@@ -1,6 +1,12 @@
 {% import 'formation/param/_fields.html.twig' as fld %}
+{% set regimeChoices = {
+    'FI': 'Formation initiale',
+    'FI_APP': 'Formation initiale en apprentissage',
+    'FC': 'Formation continue',
+    'FC_PRO': 'Formation continue en contrat de professionnalisation'
+} %}
 <turbo-frame id="node-panel">
-<div class="p-6" data-panel-active="param:{{ key }}">
+<div class="p-6" data-panel-active="param:{{ key }}" data-controller="modal">
     <div class="mb-3">
         <h2 class="text-xl font-bold">Gestion de la formation</h2>
         <div class="text-sm text-gray-400">{{ label }}</div>
@@ -16,7 +22,7 @@
             <input type="hidden" name="diplome" value="{{ formation.diplome }}">
             <input type="hidden" name="domaine" value="{{ formation.domaine }}">
             <input type="hidden" name="composante" value="{{ formation.composante }}">
-            {{ fld.label('La formation contient-elle des parcours ?', true, 'Le niveau « Parcours » devient alors la racine de la structure') }}
+            {{ fld.label('La formation contient-elle des parcours ?', true, 'Oui → chaque parcours est un nœud racine. Non → le niveau parcours reste invisible, la formation le porte elle-même.') }}
             <div class="flex flex-wrap gap-8 mt-2 text-sm">
                 <label class="flex items-center gap-2">
                     <input type="radio" name="multiParcours" value="1" {{ formation.multiParcours ? 'checked' }} onchange="this.form.requestSubmit()"> Oui (options)
@@ -26,6 +32,43 @@
                 </label>
             </div>
         </form>
+
+        {# ── Propriétés du parcours invisible (mono-parcours) ── #}
+        {% if formation.isMono %}
+            {{ fld.divider('Propriétés formation mono-parcours') }}
+            <p class="text-xs text-gray-500 -mt-2">
+                Ces propriétés seraient portées par un nœud <span class="type-badge">🧭 Parcours</span> ; en mono-parcours ce nœud
+                est <strong>invisible et verrouillé</strong> : la formation les porte directement.
+            </p>
+            <form method="post" action="{{ path('formation_settings', {id: formation.id}) }}" data-turbo-frame="_top" class="space-y-4">
+                <input type="hidden" name="name" value="{{ formation.name }}">
+                <input type="hidden" name="diplome" value="{{ formation.diplome }}">
+                <input type="hidden" name="domaine" value="{{ formation.domaine }}">
+                <input type="hidden" name="multiParcours" value="0">
+                <div class="grid gap-4 md:grid-cols-2">
+                    <div>
+                        {{ fld.label("Volume d'ECTS total", true, "Sert à vérifier le total d'ECTS de la formation") }}
+                        <input type="number" name="ectsTotal" value="{{ formation.ectsTotal }}" class="fld mt-1">
+                    </div>
+                    <div>
+                        {{ fld.label("Composante d'inscription", true, "Composante à laquelle les étudiants s'inscrivent") }}
+                        <input name="composante" value="{{ formation.composante }}" class="fld mt-1">
+                    </div>
+                </div>
+                <div>
+                    {{ fld.label("Régime(s) d'inscription", true, "Choix multiples") }}
+                    <div class="grid gap-2 sm:grid-cols-2 mt-2 text-sm">
+                        {% set curRegimes = data.regimes ?? [] %}
+                        {% for rv, rl in regimeChoices %}
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" name="regimes[]" value="{{ rv }}" {{ rv in curRegimes ? 'checked' }}> {{ rl }}
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">Enregistrer</button>
+            </form>
+        {% endif %}
 
         {# ── Structure : la hiérarchie des TYPES de nœud ── #}
         {{ fld.divider('Structure') }}
@@ -58,11 +101,16 @@
                         <td class="px-3 py-2.5 text-gray-400">{{ loop.index0 }}</td>
                         <td class="px-3 py-2.5">
                             <span class="type-badge">{{ row.type ? row.type.icon : '❓' }} [{{ row.type ? row.type.label : row.key }}]</span>
-                            {% if row.fixed %}<span class="pill ml-1">racine · figé</span>{% endif %}
-                            {% if loop.index0 > 0 %}<span class="text-[11px] text-gray-400 ml-1">enfant de {{ rows[loop.index0 - 1].type ? rows[loop.index0 - 1].type.label : rows[loop.index0 - 1].key }}</span>{% endif %}
+                            {% if row.mono %}<span class="pill ml-1">invisible · porté par la formation</span>
+                            {% elseif row.fixed %}<span class="pill ml-1">racine · figé</span>{% endif %}
+                            {% if loop.index0 > 0 %}
+                                <span class="text-[11px] text-gray-400 ml-1">
+                                    {{- rows[loop.index0 - 1].mono ? 'racine visible de l\'arbre' : 'enfant de ' ~ (rows[loop.index0 - 1].type ? rows[loop.index0 - 1].type.label : rows[loop.index0 - 1].key) -}}
+                                </span>
+                            {% endif %}
                         </td>
                         <td class="px-4 py-2.5 text-right whitespace-nowrap">
-                            {% if row.type %}
+                            {% if row.type and not row.mono %}
                                 <a href="{{ path('node_type_edit', {id: row.type.id}) }}" target="_blank" class="text-xs hover:underline">Modifier</a>
                             {% endif %}
                             {% if not row.fixed %}
@@ -78,29 +126,36 @@
                 </tbody>
                 <tfoot>
                     <tr class="border-t" style="border-color:var(--c-border)">
-                        <td colspan="4" class="px-4 py-3" style="background:#f0fdf4">
-                            {% if addable is empty %}
-                                <p class="text-center text-xs text-gray-400">
-                                    Aucun type ajoutable ici. Gérez les types et leurs enfants autorisés dans
-                                    <a href="{{ path('node_type_index') }}" target="_blank" class="underline">les types de nœud</a>.
-                                </p>
-                            {% else %}
-                                <form method="post" action="{{ path('formation_structure_save', {id: formation.id}) }}" data-turbo-frame="_top"
-                                      class="flex flex-wrap items-center justify-center gap-2">
-                                    {% for k in body_keys %}<input type="hidden" name="chain[]" value="{{ k }}">{% endfor %}
-                                    <span class="text-sm font-medium text-green-700">＋ Ajouter un nœud</span>
-                                    <select name="chain[]" required class="fld w-56">
-                                        <option value="">— Type à ajouter —</option>
-                                        {% for t in addable %}<option value="{{ t.key }}">{{ t.icon }} {{ t.label }}</option>{% endfor %}
-                                    </select>
-                                    <button class="rounded-lg border px-3 py-1.5 text-sm font-medium hover:bg-white" style="border-color:#bbf7d0;color:#15803d">Ajouter</button>
-                                </form>
-                            {% endif %}
+                        <td colspan="4" class="px-4 py-3 text-center" style="background:#f0fdf4">
+                            <button type="button" data-action="modal#open" class="text-sm font-medium text-green-700 hover:underline">＋ Ajouter un nœud</button>
                         </td>
                     </tr>
                 </tfoot>
             </table>
         </div>
+
+        {# ── modale « Ajouter un nœud » ── #}
+        <dialog data-modal-target="dialog" data-action="click->modal#clickOutside"
+                class="rounded-2xl border-0 p-0 w-[min(440px,92vw)] backdrop:bg-black/40">
+            <form method="post" action="{{ path('formation_structure_save', {id: formation.id}) }}" data-turbo-frame="_top" class="p-6 space-y-4">
+                {% for k in body_keys %}<input type="hidden" name="chain[]" value="{{ k }}">{% endfor %}
+                <h3 class="text-lg font-bold">Ajouter un nœud</h3>
+                <div>
+                    {{ fld.label('Nœud', true, 'Peut être changé plus tard') }}
+                    <select name="chain[]" required class="fld mt-1">
+                        <option value="">— Choisir —</option>
+                        {% for t in addable %}<option value="{{ t.key }}">{{ t.icon }} {{ t.label }}</option>{% endfor %}
+                    </select>
+                    {% if addable is empty %}
+                        <p class="fld-help">Tous les types disponibles sont déjà dans le squelette. Créez-en de nouveaux dans <a href="{{ path('node_type_index') }}" target="_blank" class="underline">les types de nœud</a>.</p>
+                    {% endif %}
+                </div>
+                <div class="flex items-center justify-end gap-2 pt-1">
+                    <button type="button" data-action="modal#close" class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">Annuler</button>
+                    <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--st-ok)">＋ Ajouter</button>
+                </div>
+            </form>
+        </dialog>
         <p class="text-xs text-gray-400">
             {{ nodeCount }} nœud(s) déjà construit(s) dans l'arbre ·
             les types sont gérés par les administrateurs —

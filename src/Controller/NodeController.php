@@ -117,7 +117,7 @@ final class NodeController extends AbstractController
         if ('' === $typeKey || 'auto' === $typeKey) {
             $typeKey = null !== $parent
                 ? $formation->getChildTypeKey($parent->getType()->getKey())
-                : $formation->getRootTypeKey();
+                : $formation->getVisibleRootTypeKey();
         }
 
         $type = null !== $typeKey ? $types->findOneByKey($typeKey) : null;

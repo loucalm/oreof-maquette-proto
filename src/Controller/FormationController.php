@@ -122,6 +122,14 @@ final class FormationController extends AbstractController
     #[Route('/formations/{id}/settings', name: 'formation_settings', methods: ['POST'])]
     public function settings(Formation $formation, Request $request, EntityManagerInterface $em): Response
     {
+        $wasMulti = $formation->isMultiParcours();
+        $willMulti = $request->request->getBoolean('multiParcours');
+        if ($wasMulti !== $willMulti && $formation->getNodes()->count() > 0) {
+            $this->addFlash('warning', $willMulti
+                ? 'Passage en multi-parcours : ajoutez un nœud « Parcours » et rangez-y les nœuds existants.'
+                : 'Passage en mono-parcours : le niveau parcours devient invisible ; réorganisez les nœuds racine si besoin.');
+        }
+
         $formation
             ->setName(trim((string) $request->request->get('name')) ?: $formation->getName())
             ->setDiplome(trim((string) $request->request->get('diplome')) ?: null)
@@ -130,6 +138,14 @@ final class FormationController extends AbstractController
             ->setMultiParcours($request->request->getBoolean('multiParcours'))
             ->setEctsTotal($request->request->get('ectsTotal') !== null && $request->request->get('ectsTotal') !== ''
                 ? $request->request->getInt('ectsTotal') : null);
+
+        // propriétés « formation mono-parcours » (portées par le parcours invisible)
+        if ($request->request->has('regimes')) {
+            $data = $formation->getParametre('structure');
+            $data['regimes'] = array_values(array_filter($request->request->all('regimes')));
+            $formation->setParametre('structure', $data);
+        }
+
         $em->flush();
 
         return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);

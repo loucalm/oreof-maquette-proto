@@ -64,7 +64,7 @@ final class MaquetteExtension extends AbstractExtension
      * Lignes du tableau « Configuration de la structure » : le squelette de la
      * formation, niveau parcours inclus (fixe) quand elle est multi-parcours.
      *
-     * @return list<array{key: string, type: ?NodeType, fixed: bool}>
+     * @return list<array{key: string, type: ?NodeType, fixed: bool, mono: bool}>
      */
     public function structureRows(Formation $formation): array
     {
@@ -72,10 +72,12 @@ final class MaquetteExtension extends AbstractExtension
         $rows = [];
 
         foreach ($formation->getEffectiveStructure() as $i => $key) {
+            $isRootParcours = 0 === $i && 'parcours' === $key;
             $rows[] = [
                 'key' => $key,
                 'type' => $byKey[$key] ?? null,
-                'fixed' => 0 === $i && $formation->isMultiParcours() && 'parcours' === $key,
+                'fixed' => $isRootParcours,
+                'mono' => $isRootParcours && $formation->isMono(),
             ];
         }
 
@@ -98,10 +100,10 @@ final class MaquetteExtension extends AbstractExtension
         ));
     }
 
-    /** Type des nœuds racine d'après le squelette, ou null si non défini. */
+    /** Type de la racine VISIBLE de l'arbre, ou null si le squelette est vide. */
     public function rootType(Formation $formation): ?NodeType
     {
-        $key = $formation->getRootTypeKey();
+        $key = $formation->getVisibleRootTypeKey();
 
         return null !== $key ? ($this->types->findAllIndexed()[$key] ?? null) : null;
     }

@@ -84,7 +84,7 @@
              data-tree-del-url-value="{{ path('node_delete', {id: '__ID__'}) }}"
              data-tree-chain-value="{{ formation.effectiveStructure|json_encode|e('html_attr') }}"
              data-tree-type-meta-value="{{ type_meta()|json_encode|e('html_attr') }}"
-             data-tree-root-key-value="{{ formation.rootTypeKey }}">
+             data-tree-root-key-value="{{ formation.visibleRootTypeKey }}">
 
             <div class="px-4 pt-4 pb-3 border-b shrink-0" style="border-color:var(--c-border)">
                 <div class="flex items-center gap-2">

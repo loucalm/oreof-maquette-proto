@@ -202,15 +202,30 @@ class Formation
      */
     public function getEffectiveStructure(): array
     {
-        return $this->multiParcours
-            ? array_merge(['parcours'], $this->structure)
-            : $this->structure;
+        // le niveau « parcours » fait toujours partie du squelette : en
+        // multi-parcours c'est un vrai nœud, en mono la formation joue ce rôle.
+        return array_merge(['parcours'], $this->structure);
     }
 
-    /** Clé de type des nœuds racine, d'après le squelette. */
+    /** true = mono-parcours : pas de nœud « parcours », la formation l'incarne. */
+    public function isMono(): bool
+    {
+        return !$this->multiParcours;
+    }
+
+    /** Clé de type de la racine effective (pour la création de nœuds). */
     public function getRootTypeKey(): ?string
     {
         return $this->getEffectiveStructure()[0] ?? null;
+    }
+
+    /**
+     * Racine VISIBLE de l'arbre : « parcours » en multi, sinon le 1er maillon
+     * du corps (le niveau parcours est invisible en mono).
+     */
+    public function getVisibleRootTypeKey(): ?string
+    {
+        return $this->multiParcours ? 'parcours' : ($this->structure[0] ?? null);
     }
 
     /** Clé de type des enfants d'un nœud de type $typeKey, d'après le squelette. */
@@ -222,13 +237,18 @@ class Formation
         return $i === false ? null : ($chain[$i + 1] ?? null);
     }
 
-    /** Clé de type qui, dans le squelette, a $typeKey pour enfant (null si racine / hors squelette). */
+    /** Clé de type qui, dans le squelette, a $typeKey pour enfant (null si racine). */
     public function getParentTypeKey(string $typeKey): ?string
     {
         $chain = $this->getEffectiveStructure();
         $i = array_search($typeKey, $chain, true);
+        if ($i === false || $i === 0) {
+            return null;
+        }
+        $parent = $chain[$i - 1];
 
-        return ($i === false || $i === 0) ? null : $chain[$i - 1];
+        // en mono, le niveau « parcours » n'a pas de nœud → ses enfants sont racine
+        return ('parcours' === $parent && $this->isMono()) ? null : $parent;
     }
 
     /** $childTypeKey peut-il être enfant de $parentTypeKey selon le squelette ? */
@@ -243,10 +263,10 @@ class Formation
         return $this->getChildTypeKey($typeKey) === null;
     }
 
-    /** Un nœud de ce type peut-il être à la racine de la formation ? */
+    /** Un nœud de ce type peut-il être à la racine VISIBLE de l'arbre ? */
     public function canBeRootType(string $typeKey): bool
     {
-        return $this->getRootTypeKey() === $typeKey;
+        return $this->getVisibleRootTypeKey() === $typeKey;
     }
 
     /** @return Collection<int, Node> */
