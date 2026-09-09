@@ -43,6 +43,64 @@ body {
     cursor: default; white-space: nowrap;
 }
 
+/* ─── coquille éditeur : latéral + central fusionnés visuellement ─── */
+/* .editor-shell porte l'unique cadre + arrondi ; les deux colonnes n'ont
+   plus de bord propre, seule une fine séparation les distingue. */
+.editor-shell {
+    border: 1px solid var(--c-border);
+    border-radius: 14px;
+    overflow: hidden;
+    background: #fff;
+}
+.editor-aside {
+    background: #fff;
+    border-bottom: 1px solid var(--c-border);
+}
+@media (min-width: 1024px) {
+    .editor-aside { border-bottom: 0; border-right: 1px solid var(--c-border); }
+}
+
+/* panneau central : fond gris ; l'en-tête reste fixe, seule la carte blanche défile */
+.panel-frame {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--c-bg);
+}
+.panel-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+}
+.panel-head {
+    flex: 0 0 auto;
+    padding: 18px 24px 14px;
+    border-bottom: 1px solid var(--c-border);
+}
+.panel-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 20px 24px 28px;
+}
+.panel-card {
+    background: #fff;
+    border: 1px solid var(--c-border);
+    border-radius: 14px;
+    padding: 24px;
+}
+.panel-empty {
+    flex: 1 1 auto;
+    display: grid;
+    place-items: center;
+    padding: 64px;
+    text-align: center;
+    color: #9aa1ac;
+    font-size: 14px;
+}
+
 /* ─── champs de formulaire (style maquette) ─── */
 .fld {
     width: 100%; border: 1px solid var(--c-border); border-radius: 10px;

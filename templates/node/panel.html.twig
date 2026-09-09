@@ -9,18 +9,19 @@
 {% set hasMccc = caps.mccc ?? false %}
 
 <turbo-frame id="node-panel">
-<div class="p-6 space-y-5" data-controller="tabs modal" data-panel-active="node:{{ node.id }}">
+<div class="panel-body" data-controller="tabs modal" data-panel-active="node:{{ node.id }}">
 
-    <div>
+    <div class="panel-head">
         <h2 class="text-xl font-bold">Gestion de la structure</h2>
         <div class="text-sm text-gray-400">{{ T }}</div>
+        <div class="text-sm text-gray-400 mt-1">
+            {{ formation.name }}
+            {%- for p in node_path(node) %} › {{ p.label ?: p.type.label }}{% endfor -%}
+        </div>
     </div>
 
-    {# breadcrumb #}
-    <div class="text-sm text-gray-400">
-        {{ formation.name }}
-        {%- for p in node_path(node) %} › {{ p.label ?: p.type.label }}{% endfor -%}
-    </div>
+    <div class="panel-scroll">
+    <div class="panel-card space-y-5">
 
     {# onglets présents sur ce nœud (déduits des champs actifs) #}
     {% set nodeTabs = ['props'] %}
@@ -169,6 +170,9 @@
         <button class="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">＋ Ajouter</button>
     </form>
     {% endif %}
+
+    </div>
+    </div>
 
 </div>
 </turbo-frame>

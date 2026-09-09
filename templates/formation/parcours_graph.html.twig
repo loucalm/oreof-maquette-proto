@@ -8,28 +8,31 @@
 {% set g = graph %}
 
 <turbo-frame id="node-panel">
-<div class="p-6" data-panel-active="parcours">
-    {% if standalone %}
-        <div class="mb-4 text-xs text-gray-400">
-            🏠 <span class="fake-link">Accueil</span> ›
-            <a href="{{ path('formation_index') }}" class="hover:underline">Liste des formations</a> ›
-            <a href="{{ path('formation_view', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
-            Arborescence des parcours
+<div class="panel-body" data-panel-active="parcours">
+    <div class="panel-head">
+        {% if standalone %}
+            <div class="mb-2 text-xs text-gray-400">
+                🏠 <span class="fake-link">Accueil</span> ›
+                <a href="{{ path('formation_index') }}" class="hover:underline">Liste des formations</a> ›
+                <a href="{{ path('formation_view', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
+                Arborescence des parcours
+            </div>
+        {% endif %}
+        <div class="flex items-center justify-between gap-3">
+            <div>
+                <h2 class="text-xl font-bold">Arborescence des parcours</h2>
+                <div class="text-sm text-gray-400">{{ formation.name }} · {{ g.parcours|length }} parcours</div>
+            </div>
+            <a href="{{ path('formation_editor', {id: formation.id, param: 'structure'}) }}" data-turbo-frame="node-panel"
+               class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">← Configuration de la structure</a>
         </div>
-    {% endif %}
-    <div class="mb-1 flex items-center justify-between">
-        <div>
-            <h2 class="text-xl font-bold">Arborescence des parcours</h2>
-            <div class="text-sm text-gray-400">{{ formation.name }} · {{ g.parcours|length }} parcours</div>
-        </div>
-        <a href="{{ path('formation_editor', {id: formation.id, param: 'structure'}) }}" data-turbo-frame="node-panel"
-           class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">← Configuration de la structure</a>
+        <p class="text-xs text-gray-400 mt-1">
+            Axe : <strong>{{ g.unit|lower }}</strong> (dimension temporelle de la formation, réglable dans « Configuration de la structure »).
+            Le parent d'un parcours et ses {{ g.unit|lower }}s de début / fin se règlent dans le panneau du parcours.
+        </p>
     </div>
-    <p class="text-xs text-gray-400 mb-4">
-        Axe : <strong>{{ g.unit|lower }}</strong> (dimension temporelle de la formation, réglable dans « Configuration de la structure »).
-        Le parent d'un parcours et ses {{ g.unit|lower }}s de début / fin se règlent dans le panneau du parcours.
-    </p>
 
+    <div class="panel-scroll">
     {% if g.parcours is empty %}
         <div class="rounded-xl border border-dashed p-8 text-center text-sm text-gray-500" style="border-color:var(--c-border)">
             Aucun parcours. Ajoutez-en depuis « Configuration de la structure ».
@@ -86,6 +89,7 @@
             {% endfor %}
         </ul>
     {% endif %}
+    </div>
 </div>
 </turbo-frame>
 {% endblock %}

@@ -1,14 +1,15 @@
 {% import 'formation/param/_fields.html.twig' as fld %}
 <turbo-frame id="node-panel">
-<div class="p-6" data-panel-active="param:{{ key }}">
-    <div class="mb-3">
+<div class="panel-body" data-panel-active="param:{{ key }}">
+    <div class="panel-head">
         <h2 class="text-xl font-bold">Gestion de la formation</h2>
         <div class="text-sm text-gray-400">{{ label }}</div>
+        <div class="text-sm text-gray-400 mt-1">{{ formation.name }} › {{ label }}</div>
     </div>
-    <div class="text-sm text-gray-400 mb-4">{{ formation.name }} › {{ label }}</div>
 
+    <div class="panel-scroll">
     <form method="post" action="{{ path('formation_param_save', {id: formation.id, key: key}) }}" data-turbo-frame="_top"
-          class="rounded-xl border p-6 space-y-5" style="border-color:var(--c-border)">
+          class="panel-card space-y-5">
 
         {{ fld.divider('Informations globale') }}
 
@@ -98,5 +99,6 @@
             <button class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">Enregistrer</button>
         </div>
     </form>
+    </div>
 </div>
 </turbo-frame>

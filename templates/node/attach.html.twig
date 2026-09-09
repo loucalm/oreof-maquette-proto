@@ -1,7 +1,11 @@
 <turbo-frame id="node-panel">
-<div class="p-6 space-y-4" data-panel-active="node:{{ node.id }}">
-    <div class="text-sm text-gray-400">{{ node.formation.name }} › {{ node.label ?: node.type.label }}</div>
-    <h2 class="text-xl font-bold">Raccrocher un nœud mutualisé</h2>
+<div class="panel-body" data-panel-active="node:{{ node.id }}">
+    <div class="panel-head">
+        <h2 class="text-xl font-bold">Raccrocher un nœud mutualisé</h2>
+        <div class="text-sm text-gray-400">{{ node.formation.name }} › {{ node.label ?: node.type.label }}</div>
+    </div>
+    <div class="panel-scroll">
+    <div class="panel-card space-y-4">
     <p class="text-sm text-gray-500">
         Récupère une copie d'un nœud mis à disposition par une autre formation.
         La copie est indépendante (le lien vers la source est conservé pour info).
@@ -32,5 +36,7 @@
     {% endif %}
 
     <a href="{{ path('node_panel', {id: node.id}) }}" data-turbo-frame="node-panel" class="text-sm text-gray-500 hover:underline">← Retour au nœud</a>
+    </div>
+    </div>
 </div>
 </turbo-frame>

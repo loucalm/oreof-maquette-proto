@@ -52,10 +52,10 @@
     <h2 class="text-2xl font-extrabold tracking-tight">ÉDITEUR DE PARCOURS</h2>
     <p class="text-sm text-gray-500 mb-5">Construisez la structure de ce parcours nœud par nœud.</p>
 
-    <div class="grid gap-5 lg:grid-cols-[380px_1fr] lg:h-[calc(100vh-9rem)] min-h-[560px]">
+    <div class="editor-shell grid lg:grid-cols-[380px_1fr] lg:h-[calc(100vh-9rem)] min-h-[560px]">
 
         {# ─── panneau structure ─── #}
-        <div class="flex flex-col rounded-xl border overflow-hidden" style="border-color:var(--c-border)"
+        <div class="editor-aside flex flex-col overflow-hidden"
              data-controller="tree"
              data-tree-move-url-value="{{ path('node_move', {id: '__ID__'}) }}"
              data-tree-dup-url-value="{{ path('node_duplicate', {id: '__ID__'}) }}"
@@ -138,12 +138,10 @@
         </div>
 
         {# ─── panneau d'édition ─── #}
-        <turbo-frame id="node-panel" class="block rounded-xl border bg-white overflow-y-auto" style="border-color:var(--c-border)"
+        <turbo-frame id="node-panel" class="panel-frame"
                      {% if frameSrc %}src="{{ frameSrc }}"{% endif %}>
             {% if not frameSrc %}
-                <div class="grid h-full place-items-center p-16 text-sm text-gray-400">
-                    Sélectionnez une section ou un nœud pour le modifier
-                </div>
+                <div class="panel-empty">Sélectionnez une section ou un nœud pour le modifier</div>
             {% endif %}
         </turbo-frame>
     </div>
