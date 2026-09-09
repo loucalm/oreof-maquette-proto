@@ -330,12 +330,51 @@ class Formation
         return $this;
     }
 
-    /** @return list<Node> Nœuds racine (sans parent), triés. */
+    /**
+     * Nœuds racine de la structure PÉDAGOGIQUE (sans parent, hors référentiel de
+     * compétences), triés. Le référentiel BCC est un arbre parallèle : cf.
+     * getCompetenceBlocs().
+     *
+     * @return list<Node>
+     */
     public function getRootNodes(): array
     {
-        $roots = array_filter($this->nodes->toArray(), static fn (Node $n) => $n->getParent() === null);
+        $roots = array_filter(
+            $this->nodes->toArray(),
+            static fn (Node $n) => $n->getParent() === null && !$n->isCompetenceNode(),
+        );
         usort($roots, static fn (Node $a, Node $b) => $a->getPosition() <=> $b->getPosition());
 
         return array_values($roots);
+    }
+
+    /**
+     * Blocs du référentiel de compétences (BCC) : nœuds racine de la famille
+     * « compétence », triés par position. Le bloc « transversal » (RNCP) d'abord.
+     *
+     * @return list<Node>
+     */
+    public function getCompetenceBlocs(): array
+    {
+        $blocs = array_filter(
+            $this->nodes->toArray(),
+            static fn (Node $n) => $n->getParent() === null && $n->isCompetenceNode(),
+        );
+        usort($blocs, static function (Node $a, Node $b): int {
+            return [!$a->isTransversalBloc(), $a->getPosition()] <=> [!$b->isTransversalBloc(), $b->getPosition()];
+        });
+
+        return array_values($blocs);
+    }
+
+    public function hasTransversalBloc(): bool
+    {
+        foreach ($this->nodes as $n) {
+            if ($n->isTransversalBloc()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

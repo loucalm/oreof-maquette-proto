@@ -100,6 +100,42 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
         $mk($t['annee'], 'Année 2', null);
         $mk($t['annee'], 'Année 3', null);
 
+        // ─── référentiel de compétences (BCC) de la 1re démo ───
+        $tbloc = $this->getReference(NodeTypeFixtures::REF_PREFIX.'bloc_competences', NodeType::class);
+        $tcomp = $this->getReference(NodeTypeFixtures::REF_PREFIX.'competence', NodeType::class);
+        $blocPos = 0;
+        $mkBloc = function (string $label, array $comps, array $attrs = []) use ($manager, $formation, $tbloc, $tcomp, &$blocPos): void {
+            $bloc = new Node($tbloc, $label);
+            $bloc->setFormation($formation);
+            $bloc->setPosition($blocPos++);
+            $bloc->setAttributes($attrs);
+            $formation->addNode($bloc);
+            $manager->persist($bloc);
+            foreach (array_values($comps) as $i => [$cl, $cd]) {
+                $c = new Node($tcomp, $cl);
+                $c->setFormation($formation);
+                $c->setParent($bloc);
+                $c->setPosition($i);
+                $c->setAttributes($cd !== '' ? ['description' => $cd] : []);
+                $bloc->addChild($c);
+                $formation->addNode($c);
+                $manager->persist($c);
+            }
+        };
+        $mkBloc('Compétences transversales (RNCP)', [
+            ['Communiquer', "S'exprimer à l'écrit et à l'oral en français et en anglais dans un contexte professionnel."],
+            ['Travailler en équipe', 'Collaborer en mode projet et rendre compte de son travail.'],
+        ], ['transversal' => true]);
+        $mkBloc('BC 1 — Développer une application', [
+            ['1A', 'Concevoir et implémenter des algorithmes adaptés à un problème.'],
+            ['1B', 'Programmer dans plusieurs paradigmes (impératif, objet).'],
+            ['1C', 'Tester et documenter un logiciel.'],
+        ]);
+        $mkBloc('BC 2 — Administrer des données et des systèmes', [
+            ['2A', 'Modéliser et interroger une base de données relationnelle.'],
+            ['2B', ''],
+        ]);
+
         // ─── 2e démo : multi-parcours avec ramification cohérente sur 3 ans ───
         // Un parcours enfant est une spécialisation qui se sépare du parent : il
         // démarre APRÈS lui. Deux parcours sur la même période sont parallèles.

@@ -42,6 +42,7 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('param_sections', static fn () => FormationController::PARAM_SECTIONS),
             new TwigFunction('param_status', static fn (Formation $f, string $k) => FormationController::paramStatus($f, $k)),
             new TwigFunction('param_fields', static fn (string $k) => FormationController::PARAM_FIELDS[$k] ?? []),
+            new TwigFunction('bcc_status', $this->bccStatus(...)),
         ];
     }
 
@@ -203,6 +204,29 @@ final class MaquetteExtension extends AbstractExtension
         $type = $key !== null ? ($this->types->findAllIndexed()[$key] ?? null) : null;
 
         return $type?->getLabel() ?? 'Période';
+    }
+
+    /** Statut du référentiel BCC (pastille de la barre latérale). */
+    public function bccStatus(Formation $formation): string
+    {
+        $blocs = $formation->getCompetenceBlocs();
+        if ($blocs === []) {
+            return 'empty';
+        }
+        foreach ($blocs as $bloc) {
+            $hasCompetence = false;
+            foreach ($bloc->getChildren() as $child) {
+                if ($child->getType()->getKey() === 'competence') {
+                    $hasCompetence = true;
+                    break;
+                }
+            }
+            if (!$hasCompetence) {
+                return 'incomplete';
+            }
+        }
+
+        return 'ok';
     }
 
     /** @return list<Node> du racine jusqu'au nœud. */

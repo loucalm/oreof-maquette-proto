@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Enum\NodeFamily;
 use App\Repository\NodeRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -303,6 +304,26 @@ class Node
     public function isParcours(): bool
     {
         return $this->type->getKey() === 'parcours';
+    }
+
+    /** Nœud du référentiel de compétences (bloc ou compétence), pas de la structure pédagogique. */
+    public function isCompetenceNode(): bool
+    {
+        return $this->type->getFamily() === NodeFamily::Competence;
+    }
+
+    /** Bloc « compétences transversales (RNCP) » — au plus un par formation. */
+    public function isTransversalBloc(): bool
+    {
+        return $this->isCompetenceNode()
+            && $this->parent === null
+            && (bool) ($this->attributes['transversal'] ?? false);
+    }
+
+    /** Description courte (sous-titre) — pour les blocs et compétences du BCC. */
+    public function getDescription(): string
+    {
+        return trim((string) ($this->attributes['description'] ?? ''));
     }
 
     /** Période de début du parcours sur l'axe temporel (défaut 1). */

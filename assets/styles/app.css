@@ -152,3 +152,40 @@ li:not(.collapsed) > .tree-row > .tree-chevron { transform: rotate(90deg); }
 .tree-ects + .tree-chevron { margin-left: 6px; }
 .tree-chevron-spacer { width: 18px; margin-left: auto; flex: 0 0 auto; }
 .tree-ects + .tree-chevron-spacer { margin-left: 6px; }
+
+/* ─── référentiel de compétences (BCC) ─── */
+.bcc-bloc {
+    border: 1px solid var(--c-border);
+    border-radius: 14px;
+    overflow: hidden;
+    background: #fff;
+}
+.bcc-bloc-head {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 14px;
+    background: var(--c-primary);
+    color: #fff;
+}
+.bcc-bloc-head .drag-handle { color: rgba(255,255,255,.55); margin-top: 2px; }
+.bcc-bloc--transversal .bcc-bloc-head { background: #0f766e; }
+.bcc-bloc-body { padding: 4px 0 8px; }
+
+.bcc-comp-list { list-style: none; margin: 0; padding: 0; min-height: 6px; }
+.bcc-comp + .bcc-comp { border-top: 1px solid #f0f1f3; }
+.bcc-comp-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; }
+.bcc-comp-row .drag-handle { margin-top: 2px; }
+.bcc-comp-add { padding: 6px 14px 4px; }
+
+.bcc-edit-btn {
+    flex: 0 0 auto; width: 26px; height: 26px; display: grid; place-items: center;
+    border-radius: 7px; border: 1px solid rgba(255,255,255,.35); background: rgba(255,255,255,.12);
+    color: #fff; font-size: 12px; cursor: pointer;
+}
+.bcc-edit-btn:hover { background: rgba(255,255,255,.22); }
+.bcc-edit-btn--light {
+    border-color: var(--c-border); background: #fff; color: var(--c-muted);
+}
+.bcc-edit-btn--light:hover { background: #f3f4f6; }
+
+.bcc-edit { padding: 10px 14px; background: #f8f9fb; border-top: 1px solid var(--c-border); }
+.bcc-comp .bcc-edit { border-radius: 8px; border: 1px solid var(--c-border); margin: 0 0 6px; }

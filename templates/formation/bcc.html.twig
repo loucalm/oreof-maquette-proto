@@ -1,0 +1,125 @@
+{# Référentiel de compétences (BCC).
+   - dans l'éditeur : fragment <turbo-frame id="node-panel"> (standalone = false)
+   - ouvert directement : page complète avec en-tête + Tailwind (standalone = true) #}
+{% extends standalone ? 'base.html.twig' : '_frame.html.twig' %}
+{% block title %}{{ formation.name }} · BCC{% endblock %}
+
+{% macro editform(n, kind) %}
+    <form method="post" action="{{ path('bcc_node_save', {id: n.id}) }}" data-turbo-frame="_top"
+          data-bcc-target="edit" hidden class="bcc-edit">
+        <div class="grid gap-2 sm:grid-cols-[140px_1fr]">
+            <label class="text-xs font-medium text-gray-500 sm:pt-2">{{ kind == 'bloc' ? 'Libellé du bloc' : 'Libellé' }}</label>
+            <input name="label" value="{{ n.label }}" required class="fld">
+            <label class="text-xs font-medium text-gray-500 sm:pt-2">Code</label>
+            <input name="code" value="{{ n.code }}" placeholder="(facultatif)" class="fld">
+            <label class="text-xs font-medium text-gray-500 sm:pt-2">Description</label>
+            <textarea name="description" rows="2" class="fld" placeholder="Intitulé complet / précision">{{ n.description }}</textarea>
+        </div>
+        <div class="mt-2 flex items-center gap-2">
+            <button class="rounded-lg px-3 py-1.5 text-sm font-semibold text-white" style="background:var(--c-primary)">Enregistrer</button>
+            <button type="button" data-action="bcc#cancel" class="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">Annuler</button>
+            <span class="flex-1"></span>
+        </div>
+    </form>
+    <form method="post" action="{{ path('bcc_node_delete', {id: n.id}) }}" data-turbo-frame="_top"
+          data-bcc-target="edit" hidden class="bcc-edit -mt-1"
+          data-controller="confirm"
+          data-confirm-message-value="{{ kind == 'bloc' ? 'Supprimer ce bloc et toutes ses compétences ?' : 'Supprimer cette compétence ?' }}">
+        <button class="text-xs font-medium text-red-600 hover:underline">🗑 Supprimer {{ kind == 'bloc' ? 'le bloc' : 'la compétence' }}</button>
+    </form>
+{% endmacro %}
+
+{% block body %}
+{% import _self as bcc %}
+
+<turbo-frame id="node-panel">
+<div class="p-6" data-panel-active="bcc"
+     data-controller="bcc"
+     data-bcc-move-url-value="{{ path('bcc_move', {id: '__ID__'}) }}">
+
+    {% if standalone %}
+        <div class="mb-4 text-xs text-gray-400">
+            🏠 <span class="fake-link">Accueil</span> ›
+            <a href="{{ path('formation_index') }}" class="hover:underline">Liste des formations</a> ›
+            <a href="{{ path('formation_view', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
+            Référentiel de compétences
+        </div>
+    {% endif %}
+
+    <div class="mb-1">
+        <h2 class="text-xl font-bold">Référentiel de compétences (BCC)</h2>
+        <div class="text-sm text-gray-400">{{ formation.name }} · {{ blocs|length }} bloc(s)</div>
+    </div>
+    <p class="text-xs text-gray-400 mb-4">
+        Blocs de connaissances et de compétences. Chaque bloc regroupe des compétences ;
+        le bloc « transversales (RNCP) » porte les compétences communes à la mention.
+    </p>
+
+    <div class="flex items-center gap-3 text-gray-300 text-xs uppercase tracking-widest mb-4">
+        <div class="h-px flex-1 bg-gray-200"></div>Structure BCC<div class="h-px flex-1 bg-gray-200"></div>
+    </div>
+
+    {% if not formation.hasTransversalBloc %}
+        <form method="post" action="{{ path('bcc_bloc_add', {id: formation.id}) }}" data-turbo-frame="_top" class="mb-4">
+            <input type="hidden" name="transversal" value="1">
+            <button class="w-full rounded-xl border border-dashed px-4 py-2.5 text-sm font-medium text-green-700 hover:bg-green-50"
+                    style="border-color:#86efac;background:#f0fdf4">＋ Ajouter des compétences transversales (RNCP)</button>
+        </form>
+    {% endif %}
+
+    {% if blocs is empty %}
+        <div class="rounded-xl border border-dashed p-8 text-center text-sm text-gray-500" style="border-color:var(--c-border)">
+            Aucun bloc de compétences. Commencez par « ＋ Ajouter un bloc ».
+        </div>
+    {% endif %}
+
+    <div class="space-y-4" data-bcc-target="blocList">
+        {% for b in blocs %}
+            {% set n = b.node %}
+            <div class="bcc-bloc {{ b.transversal ? 'bcc-bloc--transversal' }}" data-node-id="{{ n.id }}">
+                <div class="bcc-bloc-head">
+                    <span class="drag-handle" data-bcc-handle title="Glisser pour réordonner">⠿</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="font-semibold">
+                            {% if b.transversal %}<span class="opacity-80">🎓 </span>{% endif %}{{ n.label }}
+                            {% if n.code %}<span class="ml-1 text-xs font-normal opacity-70">{{ n.code }}</span>{% endif %}
+                        </div>
+                        {% if n.description %}<div class="text-xs opacity-80">{{ n.description }}</div>{% endif %}
+                    </div>
+                    <button type="button" class="bcc-edit-btn" data-action="bcc#toggle" data-bcc-id-param="{{ n.id }}" title="Modifier / supprimer">✎</button>
+                </div>
+
+                <div class="bcc-bloc-body">
+                    <div data-bcc-node="{{ n.id }}">{{ bcc.editform(n, 'bloc') }}</div>
+
+                    <ul class="bcc-comp-list" data-bcc-target="compList" data-parent-id="{{ n.id }}">
+                        {% for c in b.competences %}
+                            <li class="bcc-comp" data-node-id="{{ c.id }}">
+                                <div class="bcc-comp-row">
+                                    <span class="drag-handle" data-bcc-handle title="Glisser">⠿</span>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="font-medium">{{ c.label }}{% if c.code %}<span class="ml-1 text-xs font-normal text-gray-400">{{ c.code }}</span>{% endif %}</div>
+                                        {% if c.description %}<div class="text-xs text-gray-500">{{ c.description }}</div>{% endif %}
+                                    </div>
+                                    <button type="button" class="bcc-edit-btn bcc-edit-btn--light" data-action="bcc#toggle" data-bcc-id-param="{{ c.id }}" title="Modifier / supprimer">✎</button>
+                                </div>
+                                <div data-bcc-node="{{ c.id }}" class="px-3 pb-2">{{ bcc.editform(c, 'competence') }}</div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+
+                    <form method="post" action="{{ path('bcc_competence_add', {id: n.id}) }}" data-turbo-frame="_top" class="bcc-comp-add">
+                        <button class="rounded-lg border border-dashed px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-50"
+                                style="border-color:#86efac;background:#f0fdf4">＋ Ajouter une compétence</button>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <form method="post" action="{{ path('bcc_bloc_add', {id: formation.id}) }}" data-turbo-frame="_top" class="mt-4 flex justify-center">
+        <button class="rounded-lg border px-4 py-2 text-sm font-semibold" style="border-color:#c7d2fe;background:#eef2ff;color:var(--c-primary)">＋ Ajouter un bloc</button>
+    </form>
+</div>
+</turbo-frame>
+{% endblock %}

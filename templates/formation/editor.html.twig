@@ -3,7 +3,10 @@
 
 {% set focus = app.request.query.get('focus') %}
 {% set param = app.request.query.get('param') %}
-{% set frameSrc = param ? path('formation_param', {id: formation.id, key: param}) : (focus ? path('node_panel', {id: focus}) : null) %}
+{% set bcc = app.request.query.get('bcc') %}
+{% set frameSrc = bcc ? path('bcc_editor', {id: formation.id})
+    : (param ? path('formation_param', {id: formation.id, key: param})
+    : (focus ? path('node_panel', {id: focus}) : null)) %}
 
 {% block body %}
 
@@ -111,6 +114,10 @@
                             <span class="status-dot" data-status="{{ param_status(formation, k) }}"></span>{{ s.label }}
                         </a>
                     {% endfor %}
+                    <a href="{{ path('bcc_editor', {id: formation.id}) }}" data-turbo-frame="node-panel"
+                       class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ bcc ? 'is-active' }}">
+                        <span class="status-dot" data-status="{{ bcc_status(formation) }}"></span>Référentiel de compétences (BCC)
+                    </a>
                     {% if formation.multiParcours %}
                         <a href="{{ path('formation_parcours_graph', {id: formation.id}) }}" data-turbo-frame="node-panel"
                            class="nav-section mt-1 flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50"

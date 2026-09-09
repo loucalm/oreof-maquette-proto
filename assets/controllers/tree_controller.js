@@ -125,6 +125,9 @@ export default class extends Controller {
             url = { param: key };
         } else if (token === 'parcours') {
             target = this.element.querySelector('a.nav-section[href*="/parcours"]');
+        } else if (token === 'bcc') {
+            target = this.element.querySelector('a.nav-section[href*="/bcc"]');
+            url = { bcc: 1 };
         }
 
         this.activate(target);
@@ -221,8 +224,7 @@ export default class extends Controller {
     updateUrl(params) {
         try {
             const url = new URL(window.location.href);
-            url.searchParams.delete('focus');
-            url.searchParams.delete('param');
+            ['focus', 'param', 'bcc'].forEach((k) => url.searchParams.delete(k));
             Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
             window.history.replaceState(window.history.state, '', url);
         } catch { /* ignore */ }

@@ -38,7 +38,12 @@ final class MaquetteBuilder
         }
         unset($list);
 
-        $roots = $childrenByParent[0] ?? [];
+        // le référentiel de compétences (BCC) est un arbre parallèle : on ne
+        // l'affiche pas dans l'éditeur de structure pédagogique.
+        $roots = array_values(array_filter(
+            $childrenByParent[0] ?? [],
+            static fn (Node $n) => !$n->isCompetenceNode(),
+        ));
 
         return array_map(fn (Node $n) => $this->view($n, $childrenByParent), $roots);
     }
