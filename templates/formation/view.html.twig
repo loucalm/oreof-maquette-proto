@@ -183,6 +183,18 @@
                     </div>
                     {% set regimes = data.regimes ?? [] %}
                     {% if regimes %}{{ m.prow("Régimes d'inscription", regimes|join(', ')) }}{% endif %}
+                    {% if formation.isMono %}
+                        {% for f in [
+                            {k: 'intituleMono', l: 'Intitulé mono-parcours'},
+                            {k: 'langue', l: "Langue d'enseignement"},
+                            {k: 'modalitesAlternance', l: "Modalités de l'alternance"},
+                            {k: 'poursuiteEtudes', l: "Poursuite d'études envisageables"},
+                            {k: 'debouches', l: 'Débouchés'},
+                            {k: 'codesRome', l: 'Code(s) ROME'}
+                        ] %}
+                            {% if data[f.k] ?? null %}{{ m.prow(f.l, data[f.k]) }}{% endif %}
+                        {% endfor %}
+                    {% endif %}
                 </dl>
             {% else %}
                 {% set present = param_fields(key)|filter(f => ((f.entity ?? false) ? attribute(formation, f.key) : (data[f.key] ?? null)) is not empty) %}

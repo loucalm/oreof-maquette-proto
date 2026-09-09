@@ -53,6 +53,14 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
                 'resultats' => "À l'issue de la formation, l'étudiant conçoit et développe une application, modélise des données et déploie un service.",
                 'contenu' => "Programmation, algorithmique, mathématiques pour l'informatique, systèmes et réseaux, bases de données, développement web, projet tutoré.",
                 'rythme' => 'Temps plein',
+            ])
+            ->setParametre('structure', [
+                'regimes' => ['FI', 'FC'],
+                'langue' => 'Français',
+                'modalitesAlternance' => 'Sans objet (formation initiale à temps plein).',
+                'poursuiteEtudes' => "Master informatique, master MIAGE, écoles d'ingénieurs sur titre.",
+                'debouches' => "Développeur, administrateur systèmes et bases de données, assistant chef de projet.",
+                'codesRome' => 'M1805 — Études et développement informatique',
             ]);
         $manager->persist($formation);
 

@@ -248,11 +248,21 @@ final class FormationController extends AbstractController
                 ? $request->request->getInt('calendarSpan') : null);
         }
 
-        // propriétés « formation mono-parcours » (portées par le parcours invisible)
-        if ($request->request->has('regimes')) {
+        // propriétés « formation mono-parcours » (portées par le parcours invisible) :
+        // régimes d'inscription + champs libres (intitulé, alternance, langue,
+        // poursuite d'études, débouchés, codes ROME…) rangés dans parametres.structure
+        if ($request->request->has('regimes') || $request->request->has('p')) {
             $data = $formation->getParametre('structure');
-            $data['regimes'] = array_values(array_filter($request->request->all('regimes')));
-            $formation->setParametre('structure', $data);
+            if ($request->request->has('regimes')) {
+                $data['regimes'] = array_values(array_filter($request->request->all('regimes')));
+            }
+            foreach ($request->request->all('p') as $k => $v) {
+                $data[$k] = \is_string($v) ? trim($v) : $v;
+            }
+            $formation->setParametre('structure', array_filter(
+                $data,
+                static fn ($v) => $v !== '' && $v !== null && $v !== [],
+            ));
         }
 
         $em->flush();
