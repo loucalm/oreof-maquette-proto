@@ -289,6 +289,38 @@ final class FormationController extends AbstractController
     ];
 
     /**
+     * Schéma d'affichage lecture seule des sections « Paramètre de la formation ».
+     * `entity` = valeur lue sur l'entité (getX), sinon dans parametres[section].
+     * `long` = texte multi-lignes. La section « structure » a un rendu dédié.
+     *
+     * @var array<string, list<array{key: string, label: string, entity?: bool, long?: bool}>>
+     */
+    public const PARAM_FIELDS = [
+        'organisation' => [
+            ['key' => 'name', 'label' => 'Nom de la formation', 'entity' => true],
+            ['key' => 'diplome', 'label' => 'Type de diplôme', 'entity' => true],
+            ['key' => 'domaine', 'label' => 'Domaine de formation', 'entity' => true],
+            ['key' => 'composante', 'label' => 'Composante porteuse de la formation', 'entity' => true],
+            ['key' => 'contacts', 'label' => 'Contacts de la formation', 'long' => true],
+            ['key' => 'mention', 'label' => 'Mention / spécialité'],
+            ['key' => 'niveauEntree', 'label' => "Niveau d'entrée en formation"],
+            ['key' => 'niveauSortie', 'label' => 'Niveau de sortie de la formation'],
+            ['key' => 'rncp', 'label' => 'Inscrite au RNCP ?'],
+            ['key' => 'codeRncp', 'label' => 'Code RNCP'],
+            ['key' => 'codeApogee', 'label' => 'Code Apogée de la mention'],
+            ['key' => 'respMention', 'label' => 'Responsable de la mention'],
+            ['key' => 'coRespMention', 'label' => 'Co-responsable de la mention'],
+        ],
+        'presentation' => [
+            ['key' => 'objectif', 'label' => 'Objectif de la formation', 'long' => true],
+            ['key' => 'resultats', 'label' => 'Résultats attendus de la formation', 'long' => true],
+            ['key' => 'contenu', 'label' => 'Contenu de la formation', 'long' => true],
+            ['key' => 'rythme', 'label' => 'Rythme de la formation'],
+            ['key' => 'rythmePrecision', 'label' => 'Précision du rythme de formation', 'long' => true],
+        ],
+    ];
+
+    /**
      * Statut d'une section « Paramètre de la formation » (pastille de l'arbre).
      */
     public static function paramStatus(Formation $formation, string $key): string

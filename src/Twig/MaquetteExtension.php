@@ -41,6 +41,7 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('period_unit', $this->periodUnit(...)),
             new TwigFunction('param_sections', static fn () => FormationController::PARAM_SECTIONS),
             new TwigFunction('param_status', static fn (Formation $f, string $k) => FormationController::paramStatus($f, $k)),
+            new TwigFunction('param_fields', static fn (string $k) => FormationController::PARAM_FIELDS[$k] ?? []),
         ];
     }
 

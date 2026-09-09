@@ -135,6 +135,72 @@
     {% endfor %}
 {% endmacro %}
 
+{# ligne clé / valeur d'un paramètre #}
+{% macro prow(label, value) %}
+    <div class="grid gap-1 py-2 sm:grid-cols-[240px_1fr]">
+        <dt class="text-sm text-gray-400">{{ label }}</dt>
+        <dd class="text-sm text-gray-800">{{ value }}</dd>
+    </div>
+{% endmacro %}
+
+{# panneaux de détail des sections « Paramètre de la formation » #}
+{% macro paramdetails(formation) %}
+    {% import _self as m %}
+    {% for key, section in param_sections() %}
+        {% set data = formation.getParametre(key) %}
+        <div data-rotree-target="detail" data-node="param:{{ key }}" hidden class="space-y-4">
+            <div class="text-sm text-gray-400">{{ formation.name }} › Paramètres de la formation</div>
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="status-dot" data-status="{{ param_status(formation, key) }}"></span>
+                <h3 class="text-lg font-bold">{{ section.label }}</h3>
+            </div>
+
+            {% if key == 'structure' %}
+                <dl class="divide-y" style="border-color:var(--c-border)">
+                    {{ m.prow('Organisation en parcours', formation.multiParcours ? 'Multi-parcours' : 'Mono-parcours') }}
+                    {{ m.prow('Dimension temporelle',
+                        formation.calendarSpan
+                            ? formation.calendarSpan ~ ' ' ~ period_unit(formation)|lower ~ (formation.calendarSpan > 1 ? 's' : '')
+                            : 'déduite de la structure (' ~ period_unit(formation)|lower ~ ')') }}
+                    {% if formation.ectsTotal %}{{ m.prow('ECTS total visé', formation.ectsTotal) }}{% endif %}
+                    <div class="grid gap-1 py-2 sm:grid-cols-[240px_1fr]">
+                        <dt class="text-sm text-gray-400">Hiérarchie des niveaux</dt>
+                        <dd class="flex flex-wrap items-center gap-1.5 text-sm text-gray-800">
+                            {% for tk in formation.effectiveStructure %}
+                                {% set tm = type_meta()[tk] ?? null %}
+                                {% if not loop.first %}<span class="text-gray-300">›</span>{% endif %}
+                                <span class="type-badge">{{ tm ? tm.icon }} [{{ tm ? tm.label : tk }}]</span>
+                                {%- if tk == 'parcours' and formation.isMono %}<span class="text-xs text-gray-400">implicite</span>{% endif -%}
+                            {% endfor %}
+                        </dd>
+                    </div>
+                    {% set regimes = data.regimes ?? [] %}
+                    {% if regimes %}{{ m.prow("Régimes d'inscription", regimes|join(', ')) }}{% endif %}
+                </dl>
+            {% else %}
+                {% set present = param_fields(key)|filter(f => ((f.entity ?? false) ? attribute(formation, f.key) : (data[f.key] ?? null)) is not empty) %}
+                {% if present is empty %}
+                    <p class="text-sm text-gray-400 italic">Section non renseignée.</p>
+                {% else %}
+                    <dl class="divide-y" style="border-color:var(--c-border)">
+                        {% for f in present %}
+                            {% set val = (f.entity ?? false) ? attribute(formation, f.key) : data[f.key] %}
+                            {% if f.key == 'rncp' %}{% set val = val|capitalize %}{% endif %}
+                            <div class="grid gap-1 py-2 sm:grid-cols-[240px_1fr]">
+                                <dt class="text-sm text-gray-400">{{ f.label }}</dt>
+                                <dd class="text-sm text-gray-800 {{ f.long ?? false ? 'whitespace-pre-line' }}">{{ val }}</dd>
+                            </div>
+                        {% endfor %}
+                    </dl>
+                {% endif %}
+            {% endif %}
+
+            <a href="{{ path('formation_editor', {id: formation.id, param: key}) }}"
+               class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">✎ Modifier cette section</a>
+        </div>
+    {% endfor %}
+{% endmacro %}
+
 {% block body %}
 {% import _self as m %}
 
@@ -174,26 +240,38 @@
 </div>
 
 <div class="rounded-2xl border bg-white overflow-hidden" style="border-color:var(--c-border)" data-controller="rotree">
-    {% if roots is empty %}
-        <p class="text-sm text-gray-400 p-7">Aucune structure définie.</p>
-    {% else %}
-        <div class="grid lg:grid-cols-[360px_1fr] lg:h-[calc(100vh-15rem)] min-h-[480px]">
-            {# arbre #}
-            <div class="border-b lg:border-b-0 lg:border-r overflow-y-auto p-3" style="border-color:var(--c-border)">
-                <div class="px-2 pb-2 text-[11px] font-bold uppercase tracking-wide" style="color:var(--c-primary)">Structure</div>
-                {{ m.rotree(roots) }}
+    <div class="grid lg:grid-cols-[360px_1fr] lg:h-[calc(100vh-15rem)] min-h-[480px]">
+        {# colonne gauche : paramètres de la formation + arbre de structure #}
+        <div class="border-b lg:border-b-0 lg:border-r overflow-y-auto p-3" style="border-color:var(--c-border)">
+            <div class="px-2 pb-2 text-[11px] font-bold uppercase tracking-wide" style="color:var(--c-primary)">Paramètres de la formation</div>
+            <div class="mb-4 space-y-0.5">
+                {% for key, section in param_sections() %}
+                    <div class="tree-row" data-action="click->rotree#select" data-rotree-id-param="param:{{ key }}">
+                        <span class="status-dot" data-status="{{ param_status(formation, key) }}"></span>
+                        <span class="tree-label">{{ section.label }}</span>
+                    </div>
+                {% endfor %}
                 {% if formation.multiParcours %}
-                    <a href="{{ path('formation_parcours_graph', {id: formation.id}) }}" class="mt-2 block px-2 py-1.5 text-sm hover:bg-gray-50 rounded-md" style="color:var(--c-primary)">🗺 Arborescence des parcours</a>
+                    <a href="{{ path('formation_parcours_graph', {id: formation.id}) }}" class="block rounded-md px-2 py-1.5 text-sm hover:bg-gray-50" style="color:var(--c-primary)">🗺 Arborescence des parcours</a>
                 {% endif %}
             </div>
-            {# détail #}
-            <div class="overflow-y-auto p-7">
-                <div data-rotree-target="empty" class="grid h-full place-items-center text-sm text-gray-400">
-                    ← Choisissez un nœud pour voir son contenu
-                </div>
-                {{ m.details(roots, catalog, domains) }}
-            </div>
+
+            <div class="px-2 pb-2 text-[11px] font-bold uppercase tracking-wide" style="color:var(--c-primary)">Structure</div>
+            {% if roots is empty %}
+                <p class="px-2 py-6 text-sm text-gray-400 italic">Aucune structure définie.</p>
+            {% else %}
+                {{ m.rotree(roots) }}
+            {% endif %}
         </div>
-    {% endif %}
+
+        {# colonne droite : détail du nœud ou de la section sélectionnée #}
+        <div class="overflow-y-auto p-7">
+            <div data-rotree-target="empty" class="grid h-full place-items-center text-sm text-gray-400">
+                ← Choisissez une section ou un nœud pour voir son contenu
+            </div>
+            {{ m.paramdetails(formation) }}
+            {{ m.details(roots, catalog, domains) }}
+        </div>
+    </div>
 </div>
 {% endblock %}

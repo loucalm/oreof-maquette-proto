@@ -36,7 +36,24 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
             ->setComposante('UFR Sciences Exactes et Naturelles')
             ->setMultiParcours(false)
             ->setStructure(['annee', 'semestre', 'ue', 'ec'])
-            ->setEctsTotal(180);
+            ->setEctsTotal(180)
+            ->setParametre('organisation', [
+                'contacts' => "Secrétariat pédagogique — licence.info@univ-demo.fr\n+33 (0)1 23 45 67 89",
+                'mention' => 'Informatique',
+                'niveauEntree' => 'Baccalauréat',
+                'niveauSortie' => 'Bac+3',
+                'rncp' => 'oui',
+                'codeRncp' => '24514',
+                'codeApogee' => 'L-INFO-01',
+                'respMention' => 'A. Martin',
+                'coRespMention' => 'C. Bernard',
+            ])
+            ->setParametre('presentation', [
+                'objectif' => "Former des informaticiens polyvalents maîtrisant les fondements de la programmation, des algorithmes, des systèmes et des bases de données.",
+                'resultats' => "À l'issue de la formation, l'étudiant conçoit et développe une application, modélise des données et déploie un service.",
+                'contenu' => "Programmation, algorithmique, mathématiques pour l'informatique, systèmes et réseaux, bases de données, développement web, projet tutoré.",
+                'rythme' => 'Temps plein',
+            ]);
         $manager->persist($formation);
 
         $pos = 0;
