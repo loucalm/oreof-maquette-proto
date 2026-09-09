@@ -110,27 +110,28 @@
 
             {% if tk == 'props' and node.isParcours %}
                 {% set pcands = parcours_candidates(node) %}
+                {% set unit = period_unit(formation) %}
                 <div class="rounded-lg border p-3 space-y-3" style="border-color:var(--c-border);background:#f8f9fb">
-                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Arborescence des parcours</div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Arborescence des parcours · axe : {{ unit|lower }}</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            {{ ui.label("Année de début", false) }}
-                            <input type="number" min="1" name="attr_anneeDebut" value="{{ node.getAttribute('anneeDebut') }}" placeholder="{{ node.anneeDebut }}" class="fld">
+                            {{ ui.label(unit ~ " de début", false) }}
+                            <input type="number" min="1" name="attr_periodeDebut" value="{{ node.getAttribute('periodeDebut') }}" placeholder="{{ node.periodeDebut }}" class="fld">
                         </div>
                         <div>
-                            {{ ui.label("Année de fin", false) }}
-                            <input type="number" min="1" name="attr_anneeFin" value="{{ node.getAttribute('anneeFin') }}" placeholder="{{ node.anneeFin }}" class="fld">
+                            {{ ui.label(unit ~ " de fin", false) }}
+                            <input type="number" min="1" name="attr_periodeFin" value="{{ node.getAttribute('periodeFin') }}" placeholder="{{ node.periodeFin }}" class="fld">
                         </div>
                     </div>
                     {{ ui.label("Parcours parent", false, "Une spécialisation qui se sépare d’un autre parcours : elle commence après lui et se prolonge au moins jusqu’à sa fin.") }}
                     <select name="parcoursParentId" class="fld">
                         <option value="">— Aucun (parcours racine) —</option>
                         {% for cand in pcands %}
-                            <option value="{{ cand.id }}" {{ node.parcoursParent and node.parcoursParent.id == cand.id ? 'selected' }}>{{ cand.label ?: '—' }} · années {{ cand.anneeDebut }}–{{ cand.anneeFin }}</option>
+                            <option value="{{ cand.id }}" {{ node.parcoursParent and node.parcoursParent.id == cand.id ? 'selected' }}>{{ cand.label ?: '—' }} · {{ unit|lower }}s {{ cand.periodeDebut }}–{{ cand.periodeFin }}</option>
                         {% endfor %}
                     </select>
                     {% if pcands is empty %}
-                        <p class="fld-help">Aucun parcours antérieur compatible. Renseignez les années ci-dessus puis enregistrez : les parcours qui se terminent avant deviendront sélectionnables.</p>
+                        <p class="fld-help">Aucun parcours antérieur compatible. Renseignez les {{ unit|lower }}s ci-dessus puis enregistrez : les parcours qui se terminent avant deviendront sélectionnables.</p>
                     {% endif %}
                     <a href="{{ path('formation_parcours_graph', {id: formation.id}) }}" data-turbo-frame="node-panel"
                        class="inline-block text-xs font-medium hover:underline" style="color:var(--c-primary)">🗺 Voir l'arborescence des parcours</a>

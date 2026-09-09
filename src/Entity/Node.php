@@ -305,37 +305,39 @@ class Node
         return $this->type->getKey() === 'parcours';
     }
 
-    /** Année de début du parcours pour la vue arborescence (défaut 1). */
-    public function getAnneeDebut(): int
+    /** Période de début du parcours sur l'axe temporel (défaut 1). */
+    public function getPeriodeDebut(): int
     {
-        return max(1, (int) ($this->attributes['anneeDebut'] ?? 1));
+        return max(1, (int) ($this->attributes['periodeDebut'] ?? $this->attributes['anneeDebut'] ?? 1));
     }
 
-    /** Année de fin ; par défaut, début + (nb d'années enfants - 1), min = début. */
-    public function getAnneeFin(): int
+    /** Période de fin ; par défaut, début + (nb de périodes enfants - 1), min = début. */
+    public function getPeriodeFin(): int
     {
-        $stored = (int) ($this->attributes['anneeFin'] ?? 0);
+        $stored = (int) ($this->attributes['periodeFin'] ?? $this->attributes['anneeFin'] ?? 0);
         if ($stored > 0) {
-            return max($stored, $this->getAnneeDebut());
+            return max($stored, $this->getPeriodeDebut());
         }
-        $nbAnnees = 0;
+        // le type « période » = 1er niveau du squelette (enfant de « parcours »)
+        $periodeKey = $this->formation?->getChildTypeKey('parcours');
+        $nb = 0;
         foreach ($this->children as $c) {
-            if ($c->getType()->getKey() === 'annee') {
-                ++$nbAnnees;
+            if ($c->getType()->getKey() === $periodeKey) {
+                ++$nb;
             }
         }
 
-        return $this->getAnneeDebut() + max(0, $nbAnnees - 1);
+        return $this->getPeriodeDebut() + max(0, $nb - 1);
     }
 
     /**
      * Règle de ramification entre parcours : un parcours « enfant » est une
      * spécialisation qui se sépare du parent. Il doit donc commencer au moins
-     * un an après le début du parent, s'enchaîner sans coupure après sa fin, et
-     * se prolonger au moins jusqu'à la fin du parent. Deux parcours sur la même
-     * période sont parallèles, pas parent / enfant.
+     * une période après le début du parent, s'enchaîner sans coupure après sa
+     * fin, et se prolonger au moins jusqu'à la fin du parent. Deux parcours sur
+     * la même période sont parallèles, pas parent / enfant.
      */
-    public static function parcoursYearsAllowChild(int $parentDebut, int $parentFin, int $childDebut, int $childFin): bool
+    public static function parcoursPeriodsAllowChild(int $parentDebut, int $parentFin, int $childDebut, int $childFin): bool
     {
         return $childDebut > $parentDebut
             && $childDebut <= $parentFin + 1

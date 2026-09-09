@@ -40,6 +40,20 @@ class Formation
     private ?int $ectsTotal = null;
 
     /**
+     * Dimension temporelle : nombre de périodes (3 ans, 6 mois, 12 semaines…).
+     * null = déduit de l'arbre / des parcours.
+     */
+    #[ORM\Column(nullable: true)]
+    private ?int $calendarSpan = null;
+
+    /**
+     * Libellé de l'unité de temps (« Année », « Mois », « Semaine »…).
+     * null = libellé du type du 1er niveau du squelette.
+     */
+    #[ORM\Column(length: 40, nullable: true)]
+    private ?string $calendarUnit = null;
+
+    /**
      * Sections « Paramètre de la formation » (organisation, présentation…).
      * Champs libres du prototype, une clé par section.
      *
@@ -146,6 +160,30 @@ class Formation
     public function setEctsTotal(?int $ectsTotal): self
     {
         $this->ectsTotal = $ectsTotal;
+
+        return $this;
+    }
+
+    public function getCalendarSpan(): ?int
+    {
+        return $this->calendarSpan;
+    }
+
+    public function setCalendarSpan(?int $calendarSpan): self
+    {
+        $this->calendarSpan = ($calendarSpan !== null && $calendarSpan > 0) ? $calendarSpan : null;
+
+        return $this;
+    }
+
+    public function getCalendarUnit(): ?string
+    {
+        return $this->calendarUnit;
+    }
+
+    public function setCalendarUnit(?string $calendarUnit): self
+    {
+        $this->calendarUnit = trim((string) $calendarUnit) ?: null;
 
         return $this;
     }

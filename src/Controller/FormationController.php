@@ -134,6 +134,14 @@ final class FormationController extends AbstractController
             ->setEctsTotal($request->request->get('ectsTotal') !== null && $request->request->get('ectsTotal') !== ''
                 ? $request->request->getInt('ectsTotal') : null);
 
+        if ($request->request->has('calendarUnit')) {
+            $formation->setCalendarUnit($request->request->get('calendarUnit'));
+        }
+        if ($request->request->has('calendarSpan')) {
+            $formation->setCalendarSpan($request->request->get('calendarSpan') !== ''
+                ? $request->request->getInt('calendarSpan') : null);
+        }
+
         // propriétés « formation mono-parcours » (portées par le parcours invisible)
         if ($request->request->has('regimes')) {
             $data = $formation->getParametre('structure');

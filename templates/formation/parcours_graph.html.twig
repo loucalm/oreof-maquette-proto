@@ -12,7 +12,8 @@
            class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">← Configuration de la structure</a>
     </div>
     <p class="text-xs text-gray-400 mb-4">
-        Le parent d'un parcours et ses années de début / fin se définissent dans le panneau du parcours.
+        Axe : <strong>{{ g.unit|lower }}</strong> (dimension temporelle de la formation, réglable dans « Configuration de la structure »).
+        Le parent d'un parcours et ses {{ g.unit|lower }}s de début / fin se règlent dans le panneau du parcours.
     </p>
 
     {% if g.parcours is empty %}
@@ -28,11 +29,13 @@
                     </marker>
                 </defs>
 
-                {# colonnes d'années (grille de fond, discrète) #}
-                {% for a in 1..g.maxAnnee %}
+                {# colonnes de périodes (grille de fond, discrète) #}
+                {% for a in 1..g.cols %}
                     {% set cx = g.pad + (a - 1) * g.colW %}
                     {% if a > 1 %}<line x1="{{ cx }}" y1="{{ g.headerH - 6 }}" x2="{{ cx }}" y2="{{ g.height - 8 }}" stroke="#eef1f4" stroke-dasharray="2 5"/>{% endif %}
-                    <text x="{{ cx + 12 }}" y="{{ g.headerH - 16 }}" font-size="13" font-weight="600" fill="#374151">{{ a == 1 ? '1ère' : a ~ 'ème' }} année</text>
+                    <text x="{{ cx + 12 }}" y="{{ g.headerH - 16 }}" font-size="13" font-weight="600" fill="#374151">
+                        {%- if g.unit|lower == 'année' %}{{ a == 1 ? '1ère' : a ~ 'ème' }} année{% else %}{{ g.unit }} {{ a }}{% endif -%}
+                    </text>
                 {% endfor %}
                 <line x1="{{ g.pad }}" y1="{{ g.headerH - 4 }}" x2="{{ g.width - g.pad }}" y2="{{ g.headerH - 4 }}" stroke="#e5e7eb"/>
 
@@ -64,7 +67,7 @@
                 <li class="flex flex-wrap items-center gap-2">
                     <span class="type-badge">🧭 Parcours</span>
                     <a href="{{ path('formation_editor', {id: formation.id, focus: r.node.id}) }}" data-turbo-frame="node-panel" class="font-medium hover:underline">{{ r.node.label ?: '—' }}</a>
-                    <span class="text-xs text-gray-400">années {{ r.colStart }}–{{ r.colEnd }}</span>
+                    <span class="text-xs text-gray-400">{{ g.unit|lower }}s {{ r.colStart }}–{{ r.colEnd }}</span>
                     {% if r.node.parcoursParent %}<span class="text-xs text-gray-400">· enfant de « {{ r.node.parcoursParent.label ?: '—' }} »</span>{% endif %}
                 </li>
             {% endfor %}

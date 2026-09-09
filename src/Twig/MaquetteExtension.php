@@ -38,6 +38,7 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('node_path', $this->nodePath(...)),
             new TwigFunction('capability_labels', $this->capabilityLabels(...)),
             new TwigFunction('param_nav', $this->paramNav(...)),
+            new TwigFunction('period_unit', $this->periodUnit(...)),
             new TwigFunction('param_sections', static fn () => FormationController::PARAM_SECTIONS),
             new TwigFunction('param_status', static fn (Formation $f, string $k) => FormationController::paramStatus($f, $k)),
         ];
@@ -184,8 +185,23 @@ final class MaquetteExtension extends AbstractExtension
         return array_values(array_filter(
             $all,
             fn (Node $p) => !isset($forbidden[$p->getId()])
-                && Node::parcoursYearsAllowChild($p->getAnneeDebut(), $p->getAnneeFin(), $node->getAnneeDebut(), $node->getAnneeFin()),
+                && Node::parcoursPeriodsAllowChild($p->getPeriodeDebut(), $p->getPeriodeFin(), $node->getPeriodeDebut(), $node->getPeriodeFin()),
         ));
+    }
+
+    /**
+     * Libellé de l'unité de temps de la formation : override explicite, sinon
+     * le libellé du type du 1er niveau du squelette, sinon « Période ».
+     */
+    public function periodUnit(Formation $formation): string
+    {
+        if ($formation->getCalendarUnit()) {
+            return $formation->getCalendarUnit();
+        }
+        $key = $formation->getChildTypeKey('parcours');
+        $type = $key !== null ? ($this->types->findAllIndexed()[$key] ?? null) : null;
+
+        return $type?->getLabel() ?? 'Période';
     }
 
     /** @return list<Node> du racine jusqu'au nœud. */

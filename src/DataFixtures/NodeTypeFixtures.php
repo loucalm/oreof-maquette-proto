@@ -28,6 +28,10 @@ final class NodeTypeFixtures extends Fixture
             ['parcours',    'Parcours',  '🧭', 10,       ['ects' => true, 'mutualisable' => true],                                                  null,       []],
             ['annee',       'Année',     '📅', 20,       ['mutualisable' => true],                                                                  60,         []],
             ['semestre',    'Semestre',  '🗓️', 30,       ['mutualisable' => true],                                                                  30,         []],
+            // autres unités de temps possibles pour le 1er niveau du squelette
+            ['trimestre',   'Trimestre', '🍂', 34,       ['mutualisable' => true],                                                                  20,         []],
+            ['mois',        'Mois',      '📆', 36,       ['mutualisable' => true],                                                                  null,       []],
+            ['semaine',     'Semaine',   '🗒️', 38,       ['mutualisable' => true],                                                                  null,       []],
             ['ue',          'UE',        '🧩', 40,       ['ects' => true, 'ueType' => true, 'nature' => true, 'competencies' => true, 'mutualisable' => true], null, ['nature']],
             ['ec',          'EC',        '📄', 50,       ['ects' => true, 'nature' => true, 'competencies' => true, 'ficheMatiere' => true, 'hours' => true, 'mccc' => true, 'mutualisable' => true], null, ['nature', 'mccc']],
             ['bloc_choix',  'Bloc de choix', '🔀', 60,   ['nature' => true, 'mutualisable' => true],                                                null,       ['nature']],

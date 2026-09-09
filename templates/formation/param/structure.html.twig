@@ -33,6 +33,34 @@
             </div>
         </form>
 
+        {# ── Dimension temporelle ── #}
+        {{ fld.divider('Dimension temporelle') }}
+        {% set unit = period_unit(formation) %}
+        <p class="text-xs text-gray-500 -mt-2">
+            Sur combien de temps la formation se déroule : 3 ans, 6 mois, 12 semaines…
+            Par défaut l'unité suit le type du 1er niveau du squelette (actuellement <strong>{{ unit }}</strong>) ;
+            renseigne un libellé pour le forcer.
+        </p>
+        <form method="post" action="{{ path('formation_settings', {id: formation.id}) }}" data-turbo-frame="_top" class="grid gap-4 sm:grid-cols-2">
+            <input type="hidden" name="name" value="{{ formation.name }}">
+            <input type="hidden" name="diplome" value="{{ formation.diplome }}">
+            <input type="hidden" name="domaine" value="{{ formation.domaine }}">
+            <input type="hidden" name="composante" value="{{ formation.composante }}">
+            <input type="hidden" name="multiParcours" value="{{ formation.multiParcours ? '1' : '0' }}">
+            <input type="hidden" name="ectsTotal" value="{{ formation.ectsTotal }}">
+            <div>
+                {{ fld.label('Unité de temps', false, 'Vide = ' ~ unit) }}
+                <input name="calendarUnit" value="{{ formation.calendarUnit }}" placeholder="{{ unit }}" class="fld mt-1">
+            </div>
+            <div>
+                {{ fld.label('Durée (nombre de ' ~ unit|lower ~ 's)', false, 'Vide = déduit de l’arbre / des parcours') }}
+                <div class="flex items-end gap-2">
+                    <input type="number" min="1" name="calendarSpan" value="{{ formation.calendarSpan }}" class="fld mt-1">
+                    <button class="rounded-lg px-3 py-2 text-sm font-semibold text-white shrink-0" style="background:var(--c-primary)">OK</button>
+                </div>
+            </div>
+        </form>
+
         {# ── Propriétés du parcours invisible (mono-parcours) ── #}
         {% if formation.isMono %}
             {{ fld.divider('Propriétés formation mono-parcours') }}

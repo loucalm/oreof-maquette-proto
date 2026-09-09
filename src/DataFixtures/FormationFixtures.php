@@ -93,12 +93,13 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
             ->setComposante('UFR Sciences Exactes et Naturelles')
             ->setMultiParcours(true)
             ->setStructure(['annee', 'semestre', 'ue', 'ec'])
+            ->setCalendarSpan(3)
             ->setEctsTotal(180);
         $manager->persist($multi);
 
         $p = [];
         $specs = [
-            // libellé, année de début, année de fin, parcours parent
+            // libellé, période de début, période de fin, parcours parent
             ['Portail commun (L1)', 1, 1, null],
             ['Parcours Informatique', 2, 3, 'Portail commun (L1)'],
             ['Parcours Mathématiques', 2, 3, 'Portail commun (L1)'],
@@ -109,13 +110,42 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
             $node = new Node($tp, $label);
             $node->setFormation($multi);
             $node->setPosition($i);
-            $node->setAttributes(['anneeDebut' => $debut, 'anneeFin' => $fin]);
+            $node->setAttributes(['periodeDebut' => $debut, 'periodeFin' => $fin]);
             if ($parentLabel !== null && isset($p[$parentLabel])) {
                 $node->setParcoursParent($p[$parentLabel]);
             }
             $multi->addNode($node);
             $manager->persist($node);
             $p[$label] = $node;
+        }
+
+        // ─── 3e démo : format court (dimension temporelle = semaines) ───
+        $tsem = $this->getReference(NodeTypeFixtures::REF_PREFIX.'semaine', NodeType::class);
+        $tue = $this->getReference(NodeTypeFixtures::REF_PREFIX.'ue', NodeType::class);
+        $court = (new Formation('Certificat Data Analyst (6 semaines)'))
+            ->setDiplome('Certificat')
+            ->setDomaine('Sciences, technologies, santé')
+            ->setComposante('Formation continue')
+            ->setMultiParcours(false)
+            ->setStructure(['semaine', 'ue', 'ec'])
+            ->setCalendarUnit('Semaine')
+            ->setCalendarSpan(6)
+            ->setEctsTotal(12);
+        $manager->persist($court);
+        for ($s = 1; $s <= 6; ++$s) {
+            $sem = new Node($tsem, "Semaine $s");
+            $sem->setFormation($court);
+            $sem->setPosition($s - 1);
+            $court->addNode($sem);
+            $manager->persist($sem);
+            $ue = new Node($tue, "Module S$s");
+            $ue->setFormation($court);
+            $ue->setParent($sem);
+            $ue->setPosition(0);
+            $ue->setAttributes(['ects' => 2]);
+            $sem->addChild($ue);
+            $court->addNode($ue);
+            $manager->persist($ue);
         }
 
         $manager->flush();

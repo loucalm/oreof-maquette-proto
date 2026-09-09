@@ -83,9 +83,10 @@ final class NodeController extends AbstractController
                 default => trim((string) $request->request->get("attr_$key")) ?: null,
             };
         }
-        // parcours : années de début / fin
+        // parcours : période de début / fin (sur l'axe temporel de la formation)
         if ($node->isParcours()) {
-            foreach (['anneeDebut', 'anneeFin'] as $k) {
+            unset($attrs['anneeDebut'], $attrs['anneeFin']); // ancien nommage
+            foreach (['periodeDebut', 'periodeFin'] as $k) {
                 $v = $request->request->get("attr_$k");
                 if ($v === null || $v === '') {
                     unset($attrs[$k]);
@@ -97,7 +98,7 @@ final class NodeController extends AbstractController
 
         $node->setAttributes(array_filter($attrs, static fn ($v) => $v !== null && $v !== '' && $v !== []));
 
-        // parcours : parent de ramification — validé une fois les années posées
+        // parcours : parent de ramification — validé une fois les périodes posées
         if ($node->isParcours() && $request->request->has('parcoursParentId')) {
             $this->applyParcoursParent($node, $request->request->getInt('parcoursParentId'));
         }
@@ -282,14 +283,14 @@ final class NodeController extends AbstractController
             return; // cible invalide : on ne touche pas au parent déjà en place
         }
 
-        if (!Node::parcoursYearsAllowChild($pp->getAnneeDebut(), $pp->getAnneeFin(), $node->getAnneeDebut(), $node->getAnneeFin())) {
+        if (!Node::parcoursPeriodsAllowChild($pp->getPeriodeDebut(), $pp->getPeriodeFin(), $node->getPeriodeDebut(), $node->getPeriodeFin())) {
             $this->addFlash('warning', sprintf(
-                'Ramification ignorée : « %s » couvre les années %d–%d. Un parcours enfant doit commencer après l’année %d et se prolonger au moins jusqu’à l’année %d.',
+                'Ramification ignorée : « %s » couvre les périodes %d–%d. Un parcours enfant doit commencer après la période %d et se prolonger au moins jusqu’à la période %d.',
                 $pp->getDisplayLabel(),
-                $pp->getAnneeDebut(),
-                $pp->getAnneeFin(),
-                $pp->getAnneeDebut(),
-                $pp->getAnneeFin(),
+                $pp->getPeriodeDebut(),
+                $pp->getPeriodeFin(),
+                $pp->getPeriodeDebut(),
+                $pp->getPeriodeFin(),
             ));
 
             return;

@@ -7,16 +7,20 @@ namespace App\Maquette;
 use App\Entity\Formation;
 use App\Entity\Node;
 use App\Repository\NodeRepository;
+use App\Repository\NodeTypeRepository;
 
 /**
  * Prépare la disposition de l'arborescence des parcours (ramification) :
- * une ligne par parcours, positionné en colonnes d'années, + les liens
+ * une ligne par parcours, positionné en colonnes de périodes (années, mois,
+ * semaines… selon la dimension temporelle de la formation), + les liens
  * parent → enfant.
  */
 final class ParcoursGraph
 {
-    public function __construct(private readonly NodeRepository $nodes)
-    {
+    public function __construct(
+        private readonly NodeRepository $nodes,
+        private readonly NodeTypeRepository $types,
+    ) {
     }
 
     private const COL_W = 240;
@@ -29,12 +33,11 @@ final class ParcoursGraph
     /**
      * @return array{
      *     rows: list<array{node: Node, row: int, colStart: int, colEnd: int}>,
-     *     edges: list<array{from: int, to: int}>,
-     *     maxAnnee: int,
+     *     edges: list<array{from: int, to: int, path: string}>,
+     *     cols: int, unit: string,
      *     parcours: list<Node>,
-     *     boxes: array<int, array{x: float, y: float, w: float, cy: float}>,
-     *     width: int,
-     *     height: int,
+     *     boxes: array<int, array<string, float>>,
+     *     width: int, height: int,
      *     colW: int, headerH: int, boxH: int, pad: int
      * }
      */
@@ -66,8 +69,8 @@ final class ParcoursGraph
             $rows[] = [
                 'node' => $p,
                 'row' => $rowIndex++,
-                'colStart' => $p->getAnneeDebut(),
-                'colEnd' => $p->getAnneeFin(),
+                'colStart' => $p->getPeriodeDebut(),
+                'colEnd' => $p->getPeriodeFin(),
             ];
             foreach ($childrenOf[$p->getId()] ?? [] as $child) {
                 $visit($child);
@@ -86,10 +89,14 @@ final class ParcoursGraph
             }
         }
 
-        $maxAnnee = 1;
+        $maxCol = 1;
         foreach ($rows as $r) {
-            $maxAnnee = max($maxAnnee, $r['colEnd']);
+            $maxCol = max($maxCol, $r['colEnd']);
         }
+        // la formation peut déclarer une durée plus longue que ce que couvrent
+        // les parcours (« 6 mois » même si un parcours ne dure que 3)
+        $cols = max($maxCol, $formation->getCalendarSpan() ?? 1);
+        $unit = $this->periodUnitLabel($formation);
 
         // géométrie des boîtes (clé = id du nœud)
         $rowByNode = [];
@@ -166,15 +173,28 @@ final class ParcoursGraph
         return [
             'rows' => $rows,
             'edges' => $edges,
-            'maxAnnee' => $maxAnnee,
+            'cols' => $cols,
+            'unit' => $unit,
             'parcours' => $parcours,
             'boxes' => $boxes,
-            'width' => self::PAD * 2 + $maxAnnee * self::COL_W,
+            'width' => self::PAD * 2 + $cols * self::COL_W,
             'height' => self::HEADER_H + \count($rows) * self::ROW_H + 20,
             'colW' => self::COL_W,
             'headerH' => self::HEADER_H,
             'boxH' => self::BOX_H,
             'pad' => self::PAD,
         ];
+    }
+
+    /** Libellé de l'unité de temps : override formation, sinon type du 1er niveau, sinon « Période ». */
+    private function periodUnitLabel(Formation $formation): string
+    {
+        if ($formation->getCalendarUnit()) {
+            return $formation->getCalendarUnit();
+        }
+        $key = $formation->getChildTypeKey('parcours');
+        $type = $key !== null ? ($this->types->findAllIndexed()[$key] ?? null) : null;
+
+        return $type?->getLabel() ?? 'Période';
     }
 }
