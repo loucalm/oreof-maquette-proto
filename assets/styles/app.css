@@ -4,6 +4,15 @@
  * (Le binaire standalone du bundle ne scannait pas les templates dans ce conteneur.)
  */
 
+/* Le preflight Tailwind v4 met margin:0 sur tout (dialog compris) → la modale
+   native se colle en haut à gauche. On rétablit le centrage + le défilement. */
+dialog:modal {
+    margin: auto;
+    max-height: min(88vh, 100%);
+    max-width: min(94vw, 100%);
+    overflow: auto;
+}
+
 /* ─── Prototype maquette — aux couleurs ORéOF (clair uniquement) ─── */
 :root {
     --c-bg: #f4f5f7;
