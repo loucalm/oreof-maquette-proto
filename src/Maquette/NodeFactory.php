@@ -58,8 +58,11 @@ final class NodeFactory
     public function duplicate(Node $node, ?Node $parent = null): Node
     {
         $parent ??= $node->getParent();
+        // « raccrocher » recopie un nœud d'une AUTRE formation : la copie
+        // appartient à la formation du parent cible, pas à celle de la source.
+        $formation = $parent?->getFormation() ?? $node->getFormation();
         $copy = $this->create(
-            $node->getFormation(),
+            $formation,
             $node->getType(),
             $parent,
             $node->getLabel() !== '' ? $node->getLabel().' (copie)' : '',

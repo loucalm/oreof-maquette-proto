@@ -42,10 +42,12 @@
                         <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ f.position }}</td>
                         <td class="px-4 py-2.5 text-right whitespace-nowrap">
                             <a href="{{ path('field_edit', {id: f.id}) }}" class="text-xs hover:underline">Modifier</a>
-                            <form method="post" action="{{ path('field_delete', {id: f.id}) }}" class="inline"
-                                  data-controller="confirm" data-confirm-message-value="Supprimer le champ « {{ f.label }} » ? Les valeurs déjà saisies dans les nœuds restent en base mais ne seront plus affichées.">
-                                <button class="text-xs text-red-600 hover:underline ml-2">Suppr.</button>
-                            </form>
+                            {% if not f.system %}
+                                <form method="post" action="{{ path('field_delete', {id: f.id}) }}" class="inline"
+                                      data-controller="confirm" data-confirm-message-value="Supprimer le champ « {{ f.label }} » ? Les valeurs déjà saisies dans les nœuds restent en base mais ne seront plus affichées.">
+                                    <button class="text-xs text-red-600 hover:underline ml-2">Suppr.</button>
+                                </form>
+                            {% endif %}
                         </td>
                     </tr>
                 {% endfor %}

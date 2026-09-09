@@ -134,9 +134,14 @@ final class FormationController extends AbstractController
             ->setDiplome(trim((string) $request->request->get('diplome')) ?: null)
             ->setDomaine(trim((string) $request->request->get('domaine')) ?: null)
             ->setComposante(trim((string) $request->request->get('composante')) ?: null)
-            ->setMultiParcours($willMulti)
-            ->setEctsTotal($request->request->get('ectsTotal') !== null && $request->request->get('ectsTotal') !== ''
+            ->setMultiParcours($willMulti);
+
+        // seuls les formulaires qui exposent le champ y touchent (le bouton radio
+        // mono/multi ne le poste pas → ne doit pas remettre l'ECTS total à zéro)
+        if ($request->request->has('ectsTotal')) {
+            $formation->setEctsTotal($request->request->get('ectsTotal') !== ''
                 ? $request->request->getInt('ectsTotal') : null);
+        }
 
         if ($request->request->has('calendarUnit')) {
             $formation->setCalendarUnit($request->request->get('calendarUnit'));

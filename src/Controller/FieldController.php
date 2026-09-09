@@ -89,6 +89,14 @@ final class FieldController extends AbstractController
     #[Route('/champs/{id}/supprimer', name: 'field_delete', methods: ['POST'])]
     public function delete(FieldDef $field, EntityManagerInterface $em): Response
     {
+        // les champs du socle (competencies, hours, mccc…) ont un rendu spécial
+        // câblé dans les gabarits : les supprimer casserait l'affichage.
+        if ($field->isSystem()) {
+            $this->addFlash('warning', sprintf('« %s » est un champ du socle : il ne peut pas être supprimé.', $field->getLabel()));
+
+            return $this->redirectToRoute('field_index');
+        }
+
         $em->remove($field);
         $em->flush();
         $this->addFlash('info', 'Champ supprimé.');

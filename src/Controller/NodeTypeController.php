@@ -78,6 +78,19 @@ final class NodeTypeController extends AbstractController
     #[Route('/node-types/{id}/delete', name: 'node_type_delete', methods: ['POST'])]
     public function delete(NodeType $nodeType, EntityManagerInterface $em): Response
     {
+        $used = (int) $em->createQuery('SELECT COUNT(n.id) FROM App\Entity\Node n WHERE n.type = :t')
+            ->setParameter('t', $nodeType)
+            ->getSingleScalarResult();
+        if ($used > 0) {
+            $this->addFlash('warning', sprintf(
+                'Impossible de supprimer « %s » : %d nœud(s) l’utilisent encore.',
+                $nodeType->getLabel(),
+                $used,
+            ));
+
+            return $this->redirectToRoute('node_type_index');
+        }
+
         $em->remove($nodeType);
         $em->flush();
         $this->addFlash('info', 'Type supprimé.');
