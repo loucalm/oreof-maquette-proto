@@ -120,22 +120,17 @@ final class FormationController extends AbstractController
     }
 
     #[Route('/formations/{id}/settings', name: 'formation_settings', methods: ['POST'])]
-    public function settings(Formation $formation, Request $request, EntityManagerInterface $em): Response
+    public function settings(Formation $formation, Request $request, EntityManagerInterface $em, NodeTypeRepository $types): Response
     {
         $wasMulti = $formation->isMultiParcours();
         $willMulti = $request->request->getBoolean('multiParcours');
-        if ($wasMulti !== $willMulti && $formation->getNodes()->count() > 0) {
-            $this->addFlash('warning', $willMulti
-                ? 'Passage en multi-parcours : ajoutez un nœud « Parcours » et rangez-y les nœuds existants.'
-                : 'Passage en mono-parcours : le niveau parcours devient invisible ; réorganisez les nœuds racine si besoin.');
-        }
 
         $formation
             ->setName(trim((string) $request->request->get('name')) ?: $formation->getName())
             ->setDiplome(trim((string) $request->request->get('diplome')) ?: null)
             ->setDomaine(trim((string) $request->request->get('domaine')) ?: null)
             ->setComposante(trim((string) $request->request->get('composante')) ?: null)
-            ->setMultiParcours($request->request->getBoolean('multiParcours'))
+            ->setMultiParcours($willMulti)
             ->setEctsTotal($request->request->get('ectsTotal') !== null && $request->request->get('ectsTotal') !== ''
                 ? $request->request->getInt('ectsTotal') : null);
 
@@ -148,7 +143,91 @@ final class FormationController extends AbstractController
 
         $em->flush();
 
+        // le passage mono ↔ multi réorganise l'arbre pour que rien ne casse
+        if ($wasMulti !== $willMulti) {
+            $moved = $this->reshapeParcoursLevel($formation, $willMulti, $types, $em);
+            if ($moved) {
+                $this->addFlash('success', $willMulti
+                    ? 'Multi-parcours : les nœuds racine ont été rangés dans un nouveau parcours.'
+                    : 'Mono-parcours : le niveau parcours a été retiré, ses nœuds sont remontés à la racine.');
+            }
+        }
+
         return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);
+    }
+
+    /**
+     * Réorganise l'arbre lors du passage mono ↔ multi-parcours.
+     *
+     * → multi : on emballe toutes les racines « corps » dans un nouveau nœud
+     *   Parcours (l'ECTS total de la formation devient sa cible).
+     * → mono : on remonte les enfants de tous les parcours à la racine puis on
+     *   supprime les nœuds Parcours (DQL en masse pour éviter les cascades).
+     *
+     * @return bool true si quelque chose a bougé
+     */
+    private function reshapeParcoursLevel(
+        Formation $formation,
+        bool $toMulti,
+        NodeTypeRepository $types,
+        EntityManagerInterface $em,
+    ): bool {
+        $roots = $formation->getRootNodes();
+
+        if ($toMulti) {
+            $bodyRoots = array_values(array_filter($roots, static fn (\App\Entity\Node $n) => !$n->isParcours()));
+            $parcoursType = $types->findOneByKey('parcours');
+            if ($bodyRoots === [] || $parcoursType === null) {
+                return false;
+            }
+
+            $parcours = new \App\Entity\Node($parcoursType, $formation->getName());
+            $parcours->setFormation($formation);
+            $parcours->setPosition(0);
+            if ($formation->getEctsTotal() !== null) {
+                $parcours->setAttribute('ects', $formation->getEctsTotal());
+            }
+            $formation->addNode($parcours);
+            $em->persist($parcours);
+
+            foreach ($bodyRoots as $i => $r) {
+                $r->setParent($parcours);
+                $parcours->addChild($r);
+                $r->setPosition($i);
+            }
+            $em->flush();
+
+            return true;
+        }
+
+        // → mono
+        $parcoursIds = array_values(array_filter(array_map(
+            static fn (\App\Entity\Node $n) => $n->isParcours() ? $n->getId() : null,
+            $roots,
+        )));
+        if ($parcoursIds === []) {
+            return false;
+        }
+
+        if ($formation->getEctsTotal() === null) {
+            foreach ($roots as $r) {
+                if ($r->isParcours() && $r->getAttribute('ects')) {
+                    $formation->setEctsTotal((int) $r->getAttribute('ects'));
+                    $em->flush();
+                    break;
+                }
+            }
+        }
+
+        // enfants des parcours → racine ; puis suppression des parcours
+        $em->createQuery('UPDATE App\Entity\Node n SET n.parent = NULL WHERE n.parent IN (:ids)')
+            ->execute(['ids' => $parcoursIds]);
+        $em->createQuery('UPDATE App\Entity\Node n SET n.parcoursParent = NULL WHERE n.parcoursParent IN (:ids)')
+            ->execute(['ids' => $parcoursIds]);
+        $em->createQuery('DELETE App\Entity\Node n WHERE n.id IN (:ids)')
+            ->execute(['ids' => $parcoursIds]);
+
+        return true;
     }
 
     #[Route('/formations/{id}/apply-template', name: 'formation_apply_template', methods: ['POST'])]
