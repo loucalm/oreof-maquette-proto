@@ -33,17 +33,23 @@
             </div>
         </header>
 
-        <main class="flex-1 mx-auto w-full max-w-[1600px] px-6 py-6">
-            {% for label, messages in app.flashes %}
-                {% for message in messages %}
-                    <div class="mb-4 rounded-lg border px-4 py-2 text-sm
-                        {{ label == 'success' ? 'bg-green-50 border-green-200 text-green-800' }}
-                        {{ label == 'danger' ? 'bg-red-50 border-red-200 text-red-800' }}
-                        {{ label == 'warning' ? 'bg-amber-50 border-amber-200 text-amber-800' }}
-                        {{ label == 'info' ? 'bg-indigo-50 border-indigo-200 text-indigo-800' }}">{{ message }}</div>
+        {# messages flash — toasts détachés, fixés en haut de l'écran (hors du flux,
+           retirés du cache Turbo pour ne pas réapparaître lors d'une navigation) #}
+        {% set _flashes = app.flashes %}
+        {% if _flashes %}
+            <div class="flash-stack" role="status" aria-live="polite" data-turbo-temporary>
+                {% for label, messages in _flashes %}
+                    {% for message in messages %}
+                        <div class="flash flash--{{ label ?: 'info' }}" data-controller="flash">
+                            <span class="flash-msg">{{ message }}</span>
+                            <button type="button" class="flash-x" data-action="flash#dismiss" aria-label="Fermer">✕</button>
+                        </div>
+                    {% endfor %}
                 {% endfor %}
-            {% endfor %}
+            </div>
+        {% endif %}
 
+        <main class="flex-1 mx-auto w-full max-w-[1600px] px-6 py-6">
             {% block body %}{% endblock %}
         </main>
 
