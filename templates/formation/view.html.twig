@@ -86,6 +86,35 @@
                 {{ unit }}s <strong>{{ n.periodeDebut }}–{{ n.periodeFin }}</strong>
                 {%- if n.parcoursParent %} · spécialisation de « {{ n.parcoursParent.label ?: '—' }} »{% endif -%}
             </div>
+            {% set plabels = {
+                'modalitesEnseignement': "Modalités d'enseignement", 'composante': "Composante d'inscription",
+                'modalitesAlternance': "Modalités de l'alternance", 'lieu': 'Localisation', 'codeApogee': 'Code Apogée',
+                'respParcours': 'Responsable', 'coRespParcours': 'Co-responsable',
+                'dureeValeur': 'Durée', 'dureeUnite': 'Unité de durée',
+                'objectif': 'Objectif', 'motsCles': 'Mots clés', 'resultats': 'Résultats attendus',
+                'contenu': 'Contenu', 'langue': "Langue d'enseignement", 'niveauLangue': 'Niveau de langue requis',
+                'rythme': 'Rythme', 'rythmePrecision': 'Précision du rythme', 'contacts': 'Contacts',
+                'poursuiteEtudes': "Poursuite d'études envisageables", 'debouches': 'Débouchés', 'codesRome': 'Code(s) ROME'
+            } %}
+            {% for sect, slabel in {'organisation': 'Organisation et localisation', 'presentation': 'Présentation'} %}
+                {% set pd = n.getParametre(sect) %}
+                {% set shown = pd|filter((v, k) => v is not empty and k != 'regimes') %}
+                {% if shown is not empty or (pd.regimes ?? []) %}
+                    <div class="fld-cat">{{ slabel }}</div>
+                    {% if pd.regimes ?? [] %}
+                        <div class="flex flex-wrap gap-x-2 text-sm py-0.5">
+                            <span class="text-gray-400">Régime(s) d'inscription :</span>
+                            <span class="text-gray-800">{{ pd.regimes|join(', ') }}</span>
+                        </div>
+                    {% endif %}
+                    {% for k, v in shown %}
+                        <div class="flex flex-wrap gap-x-2 text-sm py-0.5">
+                            <span class="text-gray-400">{{ plabels[k] ?? k }} :</span>
+                            <span class="text-gray-800 whitespace-pre-line">{{ v }}</span>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
         {% endif %}
 
         {% if not hasContent %}<div class="text-sm text-gray-400 italic">Aucun champ renseigné pour ce nœud.</div>{% endif %}

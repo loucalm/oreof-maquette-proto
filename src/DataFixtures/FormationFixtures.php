@@ -231,9 +231,28 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
             $multi->addNode($c);
             $manager->persist($c);
         }
+        $pInfo->setAttribute('ects', 120);
+        $pInfo->setParametre('organisation', [
+            'modalitesEnseignement' => 'En présentiel',
+            'composante' => 'UFR Sciences Exactes et Naturelles',
+            'regimes' => ['FI', 'FI_APP'],
+            'modalitesAlternance' => "Rythme 3 semaines entreprise / 2 semaines université en L3.",
+            'lieu' => 'Campus principal',
+            'respParcours' => 'B. Dupont',
+            'dureeValeur' => 2,
+            'dureeUnite' => 'Année',
+        ]);
         $pInfo->setParametre('presentation', [
             'objectif' => "Former des concepteurs et développeurs de systèmes logiciels complexes.",
-            'debouches' => "Ingénieur d'études, chef de projet junior, poursuite en master informatique.",
+            'motsCles' => 'génie logiciel, architecture, développement, tests',
+            'resultats' => "Concevoir, implémenter et tester une application de taille moyenne en équipe.",
+            'contenu' => "Programmation avancée, architecture logicielle, bases de données, gestion de projet.",
+            'langue' => 'Français',
+            'niveauLangue' => 'B2',
+            'rythme' => 'Alternance',
+            'poursuiteEtudes' => "Master informatique, master MIAGE.",
+            'debouches' => "Ingénieur d'études, chef de projet junior.",
+            'codesRome' => 'M1805 — Études et développement informatique',
         ]);
 
         // ─── 3e démo : format court (dimension temporelle = semaines) ───

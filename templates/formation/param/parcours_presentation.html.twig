@@ -1,0 +1,86 @@
+{# « Présentation » d'un parcours (formation multi-parcours).
+   data = Node.parametres['presentation']. #}
+{% import 'formation/param/_fields.html.twig' as fld %}
+<turbo-frame id="node-panel">
+<div class="panel-body" data-panel-active="param:{{ key }}">
+    <div class="panel-head">
+        <h2 class="text-xl font-bold">Gestion du parcours</h2>
+        <div class="text-sm text-gray-400">{{ label }}</div>
+        <div class="text-sm text-gray-400 mt-1">{{ formation.name }} › {{ parcours.displayLabel }} › {{ label }}</div>
+    </div>
+
+    <div class="panel-scroll">
+    <form method="post" action="{{ saveUrl }}" data-turbo-frame="_top" class="panel-card space-y-5">
+
+        {{ fld.divider('Informations du parcours') }}
+
+        <div>
+            {{ fld.label('Objectif du parcours', true, 'Expliquez brièvement les objectifs du parcours') }}
+            {{ fld.textarea('objectif', data.objectif ?? '') }}
+        </div>
+        <div>
+            {{ fld.label('Mots clés', true, 'Mots clés caractérisant le parcours') }}
+            {{ fld.textarea('motsCles', data.motsCles ?? '') }}
+        </div>
+        <div>
+            {{ fld.label('Résultats attendus du parcours', true, 'Indiquez en 3000 caractères maximum les compétences acquises via la formation (compétences à acquérir, à améliorer ou à entretenir).') }}
+            {{ fld.textarea('resultats', data.resultats ?? '') }}
+        </div>
+        <div>
+            {{ fld.label('Contenu du parcours', true, 'Expliquez brièvement le contenu du parcours') }}
+            {{ fld.textarea('contenu', data.contenu ?? '') }}
+        </div>
+        <div>
+            {{ fld.label("Langue d'enseignement", true, "Langue dans laquelle sont dispensés les cours (à l'exception des cours de langue)") }}
+            {{ fld.selectAdd('langue', data.langue ?? '', ['Français', 'Anglais', 'Français et anglais', 'Autre'], 'Ajouter une langue') }}
+        </div>
+        <div>
+            {{ fld.label('Niveau de langue requis', true, 'Indiquez le niveau de langue souhaité pour intégrer le parcours') }}
+            {{ fld.selectAdd('niveauLangue', data.niveauLangue ?? '', ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'], 'Ajouter une langue') }}
+        </div>
+
+        {{ fld.divider('Rythme de formation') }}
+
+        <div>
+            {{ fld.label('Rythme de formation du parcours', false, 'Choisissez un rythme de formation ou complétez le champ ci-dessous') }}
+            {{ fld.select('rythme', data.rythme ?? '', ['Temps plein', 'Alternance', 'Temps partiel', 'À distance']) }}
+        </div>
+        <div>
+            {{ fld.label('Si besoin, précisez le rythme de formation', false) }}
+            {{ fld.textarea('rythmePrecision', data.rythmePrecision ?? '') }}
+        </div>
+
+        {{ fld.divider('Contacts') }}
+
+        <div>
+            {{ fld.label('Contacts du parcours', false) }}
+            {{ fld.textarea('contacts', data.contacts ?? '') }}
+        </div>
+
+        {{ fld.divider('Et après…') }}
+
+        <div>
+            {{ fld.label("Poursuite d'études envisageables", true, "Indiquez en 3000 caractères maximum quelles sont les poursuites d'études envisageables.") }}
+            {{ fld.textarea('poursuiteEtudes', data.poursuiteEtudes ?? '') }}
+        </div>
+        <div>
+            {{ fld.label('Débouchés', true, "Indiquez les principaux débouchés professionnels accessibles à l'issue de cette formation.") }}
+            {{ fld.textarea('debouches', data.debouches ?? '') }}
+        </div>
+        <div>
+            {{ fld.label('Code(s) ROME', true, 'Ajoutez les codes ROME pour préciser les métiers accessibles aux diplômés.') }}
+            {{ fld.selectAdd('codesRome', data.codesRome ?? '', [
+                'M1805 — Études et développement informatique',
+                'M1802 — Expertise et support en systèmes d’information',
+                'M1806 — Conseil et maîtrise d’ouvrage en systèmes d’information',
+                'H1206 — Management et ingénierie études, recherche et développement industriel'
+            ], 'Ajouter un code ROME') }}
+        </div>
+
+        <div class="pt-2 border-t" style="border-color:var(--c-border)">
+            <button class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">Enregistrer</button>
+        </div>
+    </form>
+    </div>
+</div>
+</turbo-frame>

@@ -102,34 +102,45 @@ final class FormationController extends AbstractController
         'presentation' => 'Présentation',
     ];
 
-    /** @var array<string, list<array{key: string, label: string, long?: bool}>> */
+    /**
+     * Clés requises par section (pour la pastille de statut). Le détail des
+     * champs et leur rendu vivent dans les gabarits parcours_<section>.html.twig.
+     *
+     * @var array<string, list<string>>
+     */
     public const PARCOURS_PARAM_FIELDS = [
         'organisation' => [
-            ['key' => 'lieu', 'label' => 'Lieu(x) d’enseignement'],
-            ['key' => 'respParcours', 'label' => 'Responsable du parcours'],
-            ['key' => 'coRespParcours', 'label' => 'Co-responsable du parcours'],
-            ['key' => 'capacite', 'label' => 'Capacité d’accueil'],
-            ['key' => 'contacts', 'label' => 'Contacts du parcours', 'long' => true],
-            ['key' => 'modalites', 'label' => 'Modalités particulières (alternance, distanciel…)', 'long' => true],
+            'modalitesEnseignement', 'composante', 'regimes', 'modalitesAlternance',
+            'lieu', 'respParcours', 'dureeValeur',
         ],
         'presentation' => [
-            ['key' => 'objectif', 'label' => 'Objectif du parcours', 'long' => true],
-            ['key' => 'competencesVisees', 'label' => 'Compétences visées', 'long' => true],
-            ['key' => 'debouches', 'label' => 'Débouchés / poursuites d’études', 'long' => true],
-            ['key' => 'publicVise', 'label' => 'Public visé et prérequis', 'long' => true],
+            'objectif', 'motsCles', 'resultats', 'contenu', 'langue', 'niveauLangue',
+            'poursuiteEtudes', 'debouches', 'codesRome',
         ],
     ];
 
     public static function parcoursParamStatus(\App\Entity\Node $parcours, string $key): string
     {
         $data = $parcours->getParametre($key);
-        if ($data === []) {
+        $keys = self::PARCOURS_PARAM_FIELDS[$key] ?? [];
+
+        $filled = \count(array_filter($keys, static function (string $k) use ($data): bool {
+            $v = $data[$k] ?? null;
+
+            return \is_array($v) ? $v !== [] : trim((string) $v) !== '';
+        }));
+        // section « organisation » : le volume d'ECTS est porté par le nœud
+        $total = \count($keys);
+        if ($key === 'organisation') {
+            ++$total;
+            $filled += $parcours->getAttribute('ects') ? 1 : 0;
+        }
+
+        if ($filled === 0) {
             return 'empty';
         }
-        $fields = self::PARCOURS_PARAM_FIELDS[$key] ?? [];
-        $filled = array_filter($fields, static fn ($f) => trim((string) ($data[$f['key']] ?? '')) !== '');
 
-        return \count($filled) === \count($fields) ? 'ok' : 'incomplete';
+        return $filled === $total ? 'ok' : 'incomplete';
     }
 
     #[Route('/parcours/{id}', name: 'parcours_editor', methods: ['GET'])]
@@ -155,28 +166,86 @@ final class FormationController extends AbstractController
             throw $this->createNotFoundException();
         }
 
-        return $this->render('formation/param/_generic.html.twig', [
-            'title' => self::PARCOURS_PARAM_SECTIONS[$key],
-            'contextName' => $node->getDisplayLabel(),
-            'fields' => self::PARCOURS_PARAM_FIELDS[$key] ?? [],
+        return $this->render("formation/param/parcours_$key.html.twig", [
+            'formation' => $node->getFormation(),
+            'parcours' => $node,
+            'key' => $key,
+            'label' => self::PARCOURS_PARAM_SECTIONS[$key],
             'data' => $node->getParametre($key),
             'saveUrl' => $this->generateUrl('parcours_param_save', ['id' => $node->getId(), 'key' => $key]),
-            'panelToken' => 'param:'.$key,
         ]);
     }
 
     #[Route('/parcours/{id}/parametre/{key}', name: 'parcours_param_save', methods: ['POST'])]
-    public function parcoursParamSave(\App\Entity\Node $node, string $key, Request $request, EntityManagerInterface $em): Response
-    {
+    public function parcoursParamSave(
+        \App\Entity\Node $node,
+        string $key,
+        Request $request,
+        EntityManagerInterface $em,
+        \App\Repository\NodeRepository $nodes,
+    ): Response {
         if (!$node->isParcours() || !isset(self::PARCOURS_PARAM_SECTIONS[$key])) {
             throw $this->createNotFoundException();
         }
-        $data = $request->request->all('p');
-        $node->setParametre($key, array_filter($data, static fn ($v) => $v !== '' && $v !== null));
+
+        $data = $node->getParametre($key);
+        foreach ($request->request->all('p') as $k => $v) {
+            $data[$k] = \is_string($v) ? trim($v) : $v;
+        }
+        if ($request->request->has('regimes')) {
+            $data['regimes'] = array_values(array_filter($request->request->all('regimes')));
+        }
+        $node->setParametre($key, array_filter(
+            $data,
+            static fn ($v) => $v !== '' && $v !== null && $v !== [],
+        ));
+
+        // section « organisation » : le nom, le volume d'ECTS et le parent de
+        // ramification sont portés par le nœud parcours lui-même
+        if ($key === 'organisation') {
+            $nom = trim((string) $request->request->get('nom'));
+            if ($nom !== '') {
+                $node->setLabel($nom);
+            }
+            if ($request->request->has('ects')) {
+                $attrs = $node->getAttributes();
+                $ects = $request->request->get('ects');
+                if ($ects === '' || $ects === null) {
+                    unset($attrs['ects']);
+                } else {
+                    $attrs['ects'] = (int) $ects;
+                }
+                $node->setAttributes($attrs);
+            }
+            if ($request->request->has('parcoursParentId')) {
+                $this->linkParcoursParent($node, $request->request->getInt('parcoursParentId'), $nodes);
+            }
+        }
+
         $em->flush();
         $this->addFlash('success', sprintf('« %s » enregistré.', self::PARCOURS_PARAM_SECTIONS[$key]));
 
         return $this->redirectToRoute('parcours_editor', ['id' => $node->getId(), 'param' => $key]);
+    }
+
+    /** Rattache un parcours à un parent de ramification (garde-fou anti-cycle). */
+    private function linkParcoursParent(\App\Entity\Node $node, int $parentId, \App\Repository\NodeRepository $nodes): void
+    {
+        if ($parentId <= 0) {
+            $node->setParcoursParent(null);
+
+            return;
+        }
+        $pp = $nodes->find($parentId);
+        if ($pp === null || $pp === $node || !$pp->isParcours() || $pp->getFormation() !== $node->getFormation()) {
+            return;
+        }
+        for ($c = $pp; $c !== null; $c = $c->getParcoursParent()) {
+            if ($c === $node) {
+                return; // cycle
+            }
+        }
+        $node->setParcoursParent($pp);
     }
 
     #[Route('/formations/{id}/verifier', name: 'formation_check', methods: ['GET'])]

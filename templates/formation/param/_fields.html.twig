@@ -30,6 +30,28 @@
     </select>
 {% endmacro %}
 
+{# select + lien décoratif « ＋ … » sous le champ (ajout d'une valeur hors proto). #}
+{% macro selectAdd(name, value, options, addLabel, placeholder, prefix) %}
+    <select name="{{ prefix|default('p') }}[{{ name }}]" class="fld mt-1">
+        <option value="">{{ placeholder|default('-Choisir-') }}</option>
+        {% for opt in options %}
+            <option value="{{ opt }}" {{ value == opt ? 'selected' }}>{{ opt }}</option>
+        {% endfor %}
+    </select>
+    <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">＋ {{ addLabel }}</span></div>
+{% endmacro %}
+
+{# groupe de cases à cocher. `current` = liste des valeurs cochées. #}
+{% macro checkgroup(name, current, choices) %}
+    <div class="grid gap-2 sm:grid-cols-2 mt-2 text-sm">
+        {% for cv, cl in choices %}
+            <label class="flex items-center gap-2">
+                <input type="checkbox" name="{{ name }}[]" value="{{ cv }}" {{ cv in current ? 'checked' }}> {{ cl }}
+            </label>
+        {% endfor %}
+    </div>
+{% endmacro %}
+
 {% macro textarea(name, value, help, prefix) %}
     <div class="mt-1 rounded-lg border overflow-hidden" style="border-color:var(--c-border)">
         <div class="flex items-center gap-1 border-b bg-gray-50 px-2 py-1.5" style="border-color:var(--c-border)">

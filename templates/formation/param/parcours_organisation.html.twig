@@ -1,0 +1,118 @@
+{# « Organisation et localisation » d'un parcours (formation multi-parcours).
+   data = Node.parametres['organisation'] ; le nom + l'ECTS + le parent de
+   ramification sont portés par le nœud parcours lui-même. #}
+{% import 'formation/param/_fields.html.twig' as fld %}
+{% set regimeChoices = {
+    'FI': 'Formation Initiale',
+    'FI_APP': 'Formation Initiale en apprentissage',
+    'FC': 'Formation continue',
+    'FC_PRO': 'Formation continue en contrat de professionnalisation'
+} %}
+{% set unit = period_unit(formation) %}
+<turbo-frame id="node-panel">
+<div class="panel-body" data-panel-active="param:{{ key }}">
+    <div class="panel-head">
+        <h2 class="text-xl font-bold">Gestion du parcours</h2>
+        <div class="text-sm text-gray-400">{{ label }}</div>
+        <div class="text-sm text-gray-400 mt-1">{{ formation.name }} › {{ parcours.displayLabel }} › {{ label }}</div>
+    </div>
+
+    <div class="panel-scroll">
+    <form method="post" action="{{ saveUrl }}" data-turbo-frame="_top" class="panel-card space-y-5">
+
+        {{ fld.divider('Informations globale') }}
+
+        <div>
+            {{ fld.label('Nom du parcours', true, 'Nommer votre parcours') }}
+            <input name="nom" value="{{ parcours.label }}" class="fld mt-1">
+        </div>
+        <div>
+            {{ fld.label("Volume d'ECTS total", true, "Cela servira à vérifier le total d'ECTS de votre parcours") }}
+            <input type="number" name="ects" value="{{ parcours.getAttribute('ects') }}" class="fld mt-1">
+        </div>
+        <div>
+            {{ fld.label("Modalités d'enseignement de la formation", true) }}
+            {{ fld.select('modalitesEnseignement', data.modalitesEnseignement ?? '', ['En présentiel', 'À distance', 'Hybride (présentiel + distanciel)', 'En alternance']) }}
+        </div>
+        <div>
+            {{ fld.label("Composante d'inscription", true, "Composante(s) à laquelle les étudiants pourront s'inscrire") }}
+            {{ fld.selectAdd('composante', data.composante ?? '', [formation.composante ?: 'Composante exemple', 'Autre composante'], "Ajouter une composante d'inscription") }}
+        </div>
+        <div>
+            {{ fld.label("Régime(s) d'inscription", true, "Choix multiples") }}
+            {{ fld.checkgroup('regimes', data.regimes ?? [], regimeChoices) }}
+        </div>
+        <div>
+            {{ fld.label("Précisez les modalités de l'alternance", true) }}
+            {{ fld.textarea('modalitesAlternance', data.modalitesAlternance ?? '', 'Indiquez en 3000 caractères maximum les périodes et leurs durées en centre ou en entreprise.') }}
+        </div>
+
+        {{ fld.divider('Localisation') }}
+
+        <div>
+            {{ fld.label('Localisation du parcours', true) }}
+            {{ fld.selectAdd('lieu', data.lieu ?? '', ['Campus principal', 'Campus secondaire', 'À distance'], 'Ajouter une autre localisation') }}
+        </div>
+        <div>
+            {{ fld.label('Code Apogée de la mention', false, 'Code de la mention dans Apogée') }}
+            {{ fld.text('codeApogee', data.codeApogee ?? '', 'Code Apogée') }}
+        </div>
+
+        {{ fld.divider('Responsable(s)') }}
+
+        <div class="grid gap-5 md:grid-cols-2">
+            <div>
+                {{ fld.label('Responsable du parcours', true, 'Responsable principale du parcours') }}
+                {{ fld.selectAdd('respParcours', data.respParcours ?? '', ['A. Martin', 'B. Dupont', 'C. Bernard'], 'Créer nouveau', 'Choisir dans la liste ou choisir "+ nouveau"') }}
+            </div>
+            <div>
+                {{ fld.label('Co-responsable du parcours', false, 'Co-Responsable du parcours') }}
+                {{ fld.selectAdd('coRespParcours', data.coRespParcours ?? '', ['A. Martin', 'B. Dupont', 'C. Bernard'], 'Créer nouveau', 'Choisir dans la liste ou choisir "+ nouveau"') }}
+            </div>
+        </div>
+
+        {{ fld.divider('Relation inter-parcours') }}
+
+        <div>
+            {{ fld.label('Durée du parcours', true) }}
+            <div class="grid gap-3 sm:grid-cols-2 mt-1">
+                <input type="number" min="1" name="p[dureeValeur]" value="{{ data.dureeValeur ?? '' }}" class="fld" placeholder="ex. 3">
+                <select name="p[dureeUnite]" class="fld">
+                    {% for u in ['Année', 'Semestre', 'Mois', 'Semaine'] %}
+                        <option value="{{ u }}" {{ (data.dureeUnite ?? unit) == u ? 'selected' }}>{{ u }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div>
+            {{ fld.label('Liaison entre parcours', false, 'Liens parent-enfant du parcours') }}
+            {% set pcands = parcours_candidates(parcours) %}
+            {% set pchildren = formation.parcoursNodes|filter(p => p.parcoursParent and p.parcoursParent.id == parcours.id) %}
+            <div class="grid gap-3 sm:grid-cols-2 mt-1">
+                <div>
+                    <select name="parcoursParentId" class="fld">
+                        <option value="">— Choisir un parcours parent —</option>
+                        {% for c in pcands %}
+                            <option value="{{ c.id }}" {{ parcours.parcoursParent and parcours.parcoursParent.id == c.id ? 'selected' }}>{{ c.label ?: '—' }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">＋ Ajouter un parent</span></div>
+                </div>
+                <div>
+                    <div class="fld bg-gray-50 text-gray-500">
+                        {%- for ch in pchildren %}{{ ch.label ?: '—' }}{{ not loop.last ? ', ' }}{% else %}Aucun parcours enfant{% endfor -%}
+                    </div>
+                    <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">＋ Ajouter un enfant</span></div>
+                </div>
+            </div>
+            <a href="{{ path('node_panel', {id: parcours.id}) }}" data-turbo-frame="node-panel"
+               class="mt-1 inline-block text-xs font-medium hover:underline" style="color:var(--c-primary)">↳ Positionnement précis sur l'axe {{ unit|lower }} → « Positionnement &amp; ramification »</a>
+        </div>
+
+        <div class="pt-2 border-t" style="border-color:var(--c-border)">
+            <button class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">Enregistrer</button>
+        </div>
+    </form>
+    </div>
+</div>
+</turbo-frame>
