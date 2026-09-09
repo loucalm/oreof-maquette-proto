@@ -14,8 +14,10 @@ use App\Repository\NodeRepository;
  */
 final class MaquetteBuilder
 {
-    public function __construct(private readonly NodeRepository $nodes)
-    {
+    public function __construct(
+        private readonly NodeRepository $nodes,
+        private readonly AttributeCatalog $catalog,
+    ) {
     }
 
     /**
@@ -85,7 +87,7 @@ final class MaquetteBuilder
     {
         $missing = 0;
         $caps = $node->effectiveCapabilities();
-        foreach (AttributeCatalog::all() as $key => $def) {
+        foreach ($this->catalog->all() as $key => $def) {
             if (!($caps[$key] ?? false) || !($def['required'] ?? false)) {
                 continue;
             }
@@ -171,7 +173,7 @@ final class MaquetteBuilder
             $missing[] = 'libellé';
         }
         $caps = $node->effectiveCapabilities();
-        foreach (AttributeCatalog::all() as $key => $def) {
+        foreach ($this->catalog->all() as $key => $def) {
             if (!($caps[$key] ?? false) || !($def['required'] ?? false)) {
                 continue;
             }

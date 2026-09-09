@@ -11,4 +11,9 @@ export default class extends Controller {
     close() {
         this.dialogTarget.close();
     }
+
+    /** Clic sur le fond (hors contenu) → ferme. */
+    clickOutside(event) {
+        if (event.target === this.dialogTarget) this.dialogTarget.close();
+    }
 }

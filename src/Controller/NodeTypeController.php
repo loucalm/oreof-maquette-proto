@@ -22,6 +22,10 @@ use Symfony\Component\String\Slugger\AsciiSlugger;
  */
 final class NodeTypeController extends AbstractController
 {
+    public function __construct(private readonly AttributeCatalog $catalog)
+    {
+    }
+
     #[Route('/node-types', name: 'node_type_index', methods: ['GET'])]
     public function index(NodeTypeRepository $repo): Response
     {
@@ -85,7 +89,7 @@ final class NodeTypeController extends AbstractController
     private function capabilityLabels(): array
     {
         $out = [];
-        foreach (AttributeCatalog::all() as $key => $def) {
+        foreach ($this->catalog->all() as $key => $def) {
             $out[$key] = $def['label'];
         }
         foreach (AttributeCatalog::FLAGS as $key => $label) {

@@ -19,6 +19,7 @@ final class MaquetteExtension extends AbstractExtension
     public function __construct(
         private readonly NodeTypeRepository $types,
         private readonly NodeRepository $nodes,
+        private readonly AttributeCatalog $catalog,
     ) {
     }
 
@@ -36,6 +37,7 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('all_node_types', fn () => $this->types->findAllOrdered()),
             new TwigFunction('node_path', $this->nodePath(...)),
             new TwigFunction('capability_labels', $this->capabilityLabels(...)),
+            new TwigFunction('param_nav', $this->paramNav(...)),
             new TwigFunction('param_sections', static fn () => FormationController::PARAM_SECTIONS),
             new TwigFunction('param_status', static fn (Formation $f, string $k) => FormationController::paramStatus($f, $k)),
         ];
@@ -201,11 +203,52 @@ final class MaquetteExtension extends AbstractExtension
     public function capabilityLabels(): array
     {
         $out = [];
-        foreach (AttributeCatalog::all() as $key => $def) {
+        foreach ($this->catalog->all() as $key => $def) {
             $out[$key] = $def['label'];
         }
         foreach (AttributeCatalog::FLAGS as $key => $label) {
             $out[$key] = $label;
+        }
+
+        return $out;
+    }
+
+    /**
+     * Navigation rapide entre les « Paramètre du nœud » : pour chaque type du
+     * squelette, un nœud représentatif (le nœud courant, sinon un ancêtre de ce
+     * type, sinon le premier nœud de ce type dans la formation).
+     *
+     * @return list<array{type: NodeType, target: Node, current: bool}>
+     */
+    public function paramNav(Node $node): array
+    {
+        $formation = $node->getFormation();
+        $byKey = $this->types->findAllIndexed();
+        $all = $this->nodes->findForFormation($formation);
+
+        $ancestors = [];
+        for ($c = $node->getParent(); $c !== null; $c = $c->getParent()) {
+            $ancestors[$c->getType()->getKey()] ??= $c;
+        }
+
+        $out = [];
+        foreach ($formation->getEffectiveStructure() as $key) {
+            $type = $byKey[$key] ?? null;
+            if ($type === null) {
+                continue;
+            }
+            $target = $key === $node->getType()->getKey() ? $node : ($ancestors[$key] ?? null);
+            if ($target === null) {
+                foreach ($all as $n) {
+                    if ($n->getType()->getKey() === $key) {
+                        $target = $n;
+                        break;
+                    }
+                }
+            }
+            if ($target !== null) {
+                $out[] = ['type' => $type, 'target' => $target, 'current' => $target === $node];
+            }
         }
 
         return $out;

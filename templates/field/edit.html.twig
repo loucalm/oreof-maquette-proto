@@ -1,0 +1,75 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ isNew ? 'Nouveau champ' : field.label }}{% endblock %}
+
+{% block body %}
+<div class="max-w-2xl">
+    <div class="text-xs" style="color:var(--c-muted)">
+        <a href="{{ path('field_index') }}" class="hover:underline">Champs</a> › {{ isNew ? 'nouveau' : field.label }}
+    </div>
+    <h1 class="text-xl font-bold mt-1 mb-5">{{ isNew ? 'Nouveau champ' : 'Modifier « ' ~ field.label ~ ' »' }}</h1>
+
+    <form method="post" class="rounded-xl border bg-white p-5 space-y-4" style="border-color:var(--c-border)">
+        <div class="grid grid-cols-3 gap-3">
+            <label class="block col-span-2">
+                <span class="text-xs font-medium">Libellé</span>
+                <input name="label" required value="{{ field.label ?? '' }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+            </label>
+            <label class="block">
+                <span class="text-xs font-medium">Clé</span>
+                <input name="key" value="{{ field.key ?? '' }}" placeholder="auto" {{ not isNew and field.system ? 'readonly' }}
+                       class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+            </label>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+            <label class="block">
+                <span class="text-xs font-medium">Onglet</span>
+                <input name="tab" list="tabs" value="{{ field.tab ?? 'props' }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                <datalist id="tabs">{% for t in tabs %}<option value="{{ t }}">{% endfor %}</datalist>
+            </label>
+            <label class="block">
+                <span class="text-xs font-medium">Catégorie</span>
+                <input name="category" value="{{ field.category ?? '' }}" placeholder="(facultatif)" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+            </label>
+            <label class="block">
+                <span class="text-xs font-medium">Ordre</span>
+                <input type="number" name="position" value="{{ field.position ?? 100 }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+            </label>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3 items-end">
+            <label class="block col-span-2">
+                <span class="text-xs font-medium">Type de saisie</span>
+                <select name="type" {{ not isNew and field.isSystemType ? 'disabled' }} class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                    {% for k, lbl in types %}<option value="{{ k }}" {{ (field.type ?? 'text') == k ? 'selected' }}>{{ lbl }}</option>{% endfor %}
+                </select>
+                {% if not isNew and field.isSystemType %}
+                    <input type="hidden" name="type" value="{{ field.type }}">
+                    <span class="text-[11px]" style="color:var(--c-muted)">Type système — non modifiable.</span>
+                {% endif %}
+            </label>
+            <label class="flex items-center gap-2 text-sm pb-2">
+                <input type="checkbox" name="required" value="1" {{ (field.required ?? false) ? 'checked' }}>
+                Champ requis
+            </label>
+        </div>
+
+        <label class="block">
+            <span class="text-xs font-medium">Options (type « Liste de choix » — une par ligne : <code>valeur|Libellé</code>)</span>
+            <textarea name="options" rows="4" class="mt-1 w-full rounded-md border px-3 py-2 text-sm font-mono" style="border-color:var(--c-border)"
+                >{% for v, l in (field.options ?? {}) %}{{ v }}|{{ l }}
+{% endfor %}</textarea>
+        </label>
+
+        <label class="block">
+            <span class="text-xs font-medium">Aide (texte sous le champ)</span>
+            <input name="help" value="{{ field.help ?? '' }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+        </label>
+
+        <div class="flex gap-2 pt-1">
+            <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">Enregistrer</button>
+            <a href="{{ path('field_index') }}" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

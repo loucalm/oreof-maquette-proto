@@ -1,0 +1,84 @@
+{# Contenu de la modale « Paramètre du nœud ». Chargé dans son propre frame :
+   le select de type sert à sauter d'un nœud à l'autre sans quitter la modale. #}
+{% set caps = node.effectiveCapabilities() %}
+{% set typeCaps = node.type.capabilities %}
+{% set labels = capability_labels() %}
+{% set T = node.type.label %}
+
+<turbo-frame id="node-params-frame">
+<div class="p-5 space-y-4">
+
+    <div class="flex items-start justify-between gap-3">
+        <div>
+            <div class="text-lg font-bold">⚙ Paramètre du nœud</div>
+            <div class="text-xs text-gray-400">{{ node.formation.name }} › {{ node.label ?: T }}</div>
+        </div>
+        <button type="button" data-action="modal#close" class="grid h-8 w-8 place-items-center rounded-lg border text-gray-500 hover:bg-gray-50" style="border-color:var(--c-border)">✕</button>
+    </div>
+
+    {# navigation rapide entre nœuds #}
+    <div>
+        <div class="fld-label">Aller aux paramètres de…</div>
+        <select data-controller="params-nav" data-action="change->params-nav#go" class="fld mt-1">
+            {% for e in param_nav(node) %}
+                <option value="{{ path('node_params_form', {id: e.target.id}) }}" {{ e.current ? 'selected' }}>
+                    {{ e.type.icon }} {{ e.type.label }}{% if not e.current %} — {{ e.target.label ?: '—' }}{% endif %}{{ e.current ? ' (ce nœud)' }}
+                </option>
+            {% endfor %}
+        </select>
+        <div class="fld-help">Passe rapidement d'un niveau de la structure à un autre.</div>
+    </div>
+
+    <div class="flex items-center gap-3 text-gray-300 text-[11px] uppercase tracking-widest">
+        <div class="h-px flex-1 bg-gray-200"></div>Champs affichés sur ce nœud<div class="h-px flex-1 bg-gray-200"></div>
+    </div>
+    <p class="text-xs text-gray-400 -mt-1">
+        Cochez les champs à faire apparaître. Les champs <span class="pill">🔒 admin</span> sont imposés par l'administrateur du type.
+    </p>
+
+    <form method="post" action="{{ path('node_params', {id: node.id}) }}" data-turbo-frame="_top" class="space-y-3">
+
+        {% if typeCaps.mutualisable is defined %}
+            {% set mutLocked = node.type.isCapabilityLocked('mutualisable') %}
+            <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="capabilities[]" value="mutualisable"
+                       {{ (caps.mutualisable ?? false) ? 'checked' }} {{ mutLocked ? 'disabled' }}>
+                <span class="uppercase text-xs tracking-wide text-gray-500">Nœud mutualisable / accrochable</span>
+                {% if mutLocked %}<span class="pill">🔒 admin</span>{% endif %}
+            </label>
+        {% endif %}
+
+        <div class="space-y-1.5 opacity-70">
+            {% for coreLabel in ['Nœud parent', 'Libellé', 'Code'] %}
+                <label class="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked disabled>
+                    <span class="uppercase text-xs tracking-wide text-gray-500">{{ coreLabel }}</span>
+                    <span class="pill">🔒 cœur</span>
+                </label>
+            {% endfor %}
+        </div>
+
+        <div class="space-y-1.5">
+            {% for key, defaultOn in typeCaps|filter((v, k) => k != 'mutualisable') %}
+                {% set locked = node.type.isCapabilityLocked(key) %}
+                <label class="flex items-center gap-2 text-sm">
+                    <input type="checkbox" name="capabilities[]" value="{{ key }}"
+                           {{ (caps[key] ?? false) ? 'checked' }} {{ locked ? 'disabled' }}>
+                    <span class="uppercase text-xs tracking-wide text-gray-500">{{ labels[key] ?? key }}</span>
+                    {% if locked %}<span class="pill">🔒 admin</span>{% endif %}
+                </label>
+            {% else %}
+                <p class="text-xs text-gray-400">Ce type ne porte aucun champ. Ajoutez-en depuis la gestion du type.</p>
+            {% endfor %}
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 pt-3 border-t" style="border-color:var(--c-border)">
+            <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">Enregistrer</button>
+            <a href="{{ path('node_type_edit', {id: node.type.id}) }}" target="_blank"
+               class="text-xs hover:underline" style="color:var(--c-muted)">Gérer le type « {{ T }} » ↗</a>
+            <a href="{{ path('field_index') }}" target="_blank"
+               class="text-xs hover:underline" style="color:var(--c-muted)">Gérer les champs ↗</a>
+        </div>
+    </form>
+</div>
+</turbo-frame>

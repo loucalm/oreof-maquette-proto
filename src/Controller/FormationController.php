@@ -56,7 +56,7 @@ final class FormationController extends AbstractController
     }
 
     #[Route('/formations/{id}/voir', name: 'formation_view', methods: ['GET'])]
-    public function view(Formation $formation, MaquetteBuilder $builder): Response
+    public function view(Formation $formation, MaquetteBuilder $builder, \App\Maquette\AttributeCatalog $catalog): Response
     {
         $roots = $builder->build($formation);
 
@@ -64,7 +64,7 @@ final class FormationController extends AbstractController
             'formation' => $formation,
             'roots' => $roots,
             'progress' => $builder->progress($roots),
-            'catalog' => \App\Maquette\AttributeCatalog::all(),
+            'catalog' => $catalog->all(),
         ]);
     }
 

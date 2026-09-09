@@ -9,7 +9,7 @@
 {% set hasMccc = caps.mccc ?? false %}
 
 <turbo-frame id="node-panel">
-<div class="p-6 space-y-5" data-controller="tabs" data-panel-active="node:{{ node.id }}">
+<div class="p-6 space-y-5" data-controller="tabs modal" data-panel-active="node:{{ node.id }}">
 
     <div>
         <h2 class="text-xl font-bold">Gestion de la structure</h2>
@@ -22,21 +22,20 @@
         {%- for p in node_path(node) %} › {{ p.label ?: p.type.label }}{% endfor -%}
     </div>
 
-    {# onglets (pills) #}
+    {# onglets présents sur ce nœud (déduits des champs actifs) #}
+    {% set nodeTabs = ['props'] %}
+    {% for key, def in catalog %}
+        {% if (caps[key] ?? false) and def.domain not in nodeTabs %}
+            {% set nodeTabs = nodeTabs|merge([def.domain]) %}
+        {% endif %}
+    {% endfor %}
     <div class="flex flex-wrap gap-2">
-        <button type="button" data-tabs-target="tab" data-tab="props" class="tab-pill">
-            <span class="status-dot" data-status="{{ view.missingCount > 0 ? 'incomplete' : 'ok' }}"></span> Propriétés
-        </button>
-        {% if hasHours %}
-        <button type="button" data-tabs-target="tab" data-tab="volume_horaire" class="tab-pill">
-            <span class="status-dot" data-status="{{ view.totalHours > 0 ? 'ok' : 'empty' }}"></span> Volume horaire
-        </button>
-        {% endif %}
-        {% if hasMccc %}
-        <button type="button" data-tabs-target="tab" data-tab="mccc" class="tab-pill">
-            <span class="status-dot" data-status="{{ node.getAttribute('mccc') ? 'ok' : 'empty' }}"></span> MCCC
-        </button>
-        {% endif %}
+        {% for tk in nodeTabs %}
+            <button type="button" data-tabs-target="tab" data-tab="{{ tk }}" class="tab-pill">
+                {% if tk == 'props' %}<span class="status-dot" data-status="{{ view.missingCount > 0 ? 'incomplete' : 'ok' }}"></span>{% endif %}
+                {{ domains[tk] ?? tk }}
+            </button>
+        {% endfor %}
     </div>
 
     {# tuiles + actions #}
@@ -60,7 +59,7 @@
             <a href="{{ path('node_attach_index', {id: node.id}) }}" data-turbo-frame="node-panel"
                class="rounded-lg border px-3 py-2 text-sm text-green-700" style="border-color:#bbf7d0">↳ Raccrocher</a>
             {% endif %}
-            <button type="button" data-action="tabs#toParams" class="rounded-lg border px-3 py-2 text-sm text-gray-600" style="border-color:var(--c-border)">⚙ Paramètre du nœud [{{ T }}]</button>
+            <button type="button" data-action="modal#open" class="rounded-lg border px-3 py-2 text-sm text-gray-600" style="border-color:var(--c-border)">⚙ Paramètre du nœud [{{ T }}]</button>
         </div>
     </div>
 
@@ -69,113 +68,47 @@
         <div class="h-px flex-1 bg-gray-200"></div>{{ T }}<div class="h-px flex-1 bg-gray-200"></div>
     </div>
 
-    {# ── Paramètre du nœud : quels champs apparaissent sur ce nœud (masqué par défaut) ── #}
-    {% set labels = capability_labels() %}
-    {% set typeCaps = node.type.capabilities %}
-    <div data-tabs-target="panel" data-tab="__params" hidden class="rounded-xl border p-4 space-y-4" style="border-color:var(--c-border);background:#fafafb">
-        <div class="flex items-start justify-between gap-3">
-            <div>
-                <div class="font-semibold text-sm">⚙ Paramètre du nœud</div>
-                <p class="text-xs text-gray-400">
-                    Cochez les champs à afficher sur ce nœud. Les champs <span class="pill">🔒 admin</span>
-                    sont imposés par l'administrateur du type.
-                </p>
-            </div>
-            <button type="button" data-action="tabs#toProps" class="text-xs hover:underline shrink-0" style="color:var(--c-muted)">✕ Fermer</button>
-        </div>
-
-        <form method="post" action="{{ path('node_params', {id: node.id}) }}" data-turbo-frame="_top" class="space-y-4">
-
-            {# type de nœud (modifiable) #}
-            <div>
-                <div class="fld-label">Type de nœud</div>
-                <select name="typeKey" class="fld mt-1">
-                    {% for t in all_node_types() %}
-                        <option value="{{ t.key }}" {{ t.key == node.type.key ? 'selected' }}>{{ t.icon }} {{ t.label }}</option>
-                    {% endfor %}
-                </select>
-                <div class="fld-help">Changer le type réinitialise les champs de ce nœud sur les valeurs du nouveau type.</div>
-            </div>
-
-            <div class="flex items-center gap-3 text-gray-300 text-[11px] uppercase tracking-widest">
-                <div class="h-px flex-1 bg-gray-200"></div>Configuration du nœud<div class="h-px flex-1 bg-gray-200"></div>
-            </div>
-
-            {# flag mutualisable (si le type le porte) #}
-            {% if typeCaps.mutualisable is defined %}
-                {% set mutLocked = node.type.isCapabilityLocked('mutualisable') %}
-                <label class="flex items-center gap-3 text-sm">
-                    <input type="checkbox" name="capabilities[]" value="mutualisable"
-                           {{ (caps.mutualisable ?? false) ? 'checked' }} {{ mutLocked ? 'disabled' }}>
-                    <span class="font-medium uppercase text-xs tracking-wide text-gray-500">Nœud mutualisable / accrochable</span>
-                    {% if mutLocked %}<span class="pill">🔒 admin</span>{% endif %}
-                </label>
-            {% endif %}
-
-            {# champs toujours présents (cœur du nœud) — indicatif #}
-            <div class="space-y-1.5 opacity-70">
-                {% for coreLabel in ['Nœud parent', 'Libellé', 'Code'] %}
-                    <label class="flex items-center gap-2 text-sm">
-                        <input type="checkbox" checked disabled>
-                        <span class="uppercase text-xs tracking-wide text-gray-500">{{ coreLabel }}</span>
-                        <span class="pill">🔒 cœur</span>
-                    </label>
-                {% endfor %}
-            </div>
-
-            {# capacités « champ » que le type expose #}
-            <div class="space-y-1.5">
-                {% for key, defaultOn in typeCaps|filter((v, k) => k != 'mutualisable') %}
-                    {% set locked = node.type.isCapabilityLocked(key) %}
-                    <label class="flex items-center gap-2 text-sm">
-                        <input type="checkbox" name="capabilities[]" value="{{ key }}"
-                               {{ (caps[key] ?? false) ? 'checked' }} {{ locked ? 'disabled' }}>
-                        <span class="uppercase text-xs tracking-wide text-gray-500">{{ labels[key] ?? key }}</span>
-                        {% if locked %}<span class="pill">🔒 admin</span>{% endif %}
-                    </label>
-                {% endfor %}
-            </div>
-
-            <div class="flex items-center gap-2 pt-2 border-t" style="border-color:var(--c-border)">
-                <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">Enregistrer</button>
-                <a href="{{ path('node_type_edit', {id: node.type.id}) }}" target="_blank"
-                   class="text-xs hover:underline" style="color:var(--c-muted)">Gérer le type « {{ T }} » (admin) ↗</a>
-            </div>
-        </form>
-    </div>
-
     {# ── formulaire ── #}
     <form method="post" action="{{ path('node_save', {id: node.id}) }}" data-turbo-frame="_top" class="space-y-5">
 
-        {# --- onglet Propriétés --- #}
-        <div data-tabs-target="panel" data-tab="props" class="space-y-5">
-            {% set parents = valid_parents(node) %}
-            {{ ui.label("Nœud parent", true, "Emplacement autorisé par le squelette de la formation") }}
-            <select name="parentId" class="fld">
-                {% if can_be_root(node) %}<option value="">— Racine de la formation —</option>{% endif %}
-                {% for cand in parents %}
-                    <option value="{{ cand.id }}" {{ node.parent and node.parent.id == cand.id ? 'selected' }}>
-                        [{{ cand.type.label }}] {{ cand.label ?: '—' }}
-                    </option>
-                {% endfor %}
-            </select>
-            {% if parents is empty and not can_be_root(node) %}
-                <div class="fld-help text-amber-600">Aucun emplacement : le squelette ne prévoit pas ce type sous un autre nœud.</div>
+        {% for tk in nodeTabs %}
+        <div data-tabs-target="panel" data-tab="{{ tk }}" class="space-y-5" {{ not loop.first ? 'hidden' }}>
+
+            {% if tk == 'props' %}
+                {% set parents = valid_parents(node) %}
+                {{ ui.label("Nœud parent", true, "Emplacement autorisé par le squelette de la formation") }}
+                <select name="parentId" class="fld">
+                    {% if can_be_root(node) %}<option value="">— Racine de la formation —</option>{% endif %}
+                    {% for cand in parents %}
+                        <option value="{{ cand.id }}" {{ node.parent and node.parent.id == cand.id ? 'selected' }}>
+                            [{{ cand.type.label }}] {{ cand.label ?: '—' }}
+                        </option>
+                    {% endfor %}
+                </select>
+                {% if parents is empty and not can_be_root(node) %}
+                    <div class="fld-help text-amber-600">Aucun emplacement : le squelette ne prévoit pas ce type sous un autre nœud.</div>
+                {% endif %}
+
+                {{ ui.label("Libellé", true, "Max 200 caractères") }}
+                <input name="label" value="{{ node.label }}" maxlength="200" class="fld">
+
+                {{ ui.label("Code", false, "Code du nœud (ex. code de l'EC)") }}
+                <input name="code" value="{{ node.code }}" class="fld">
             {% endif %}
 
-            {{ ui.label("Libellé", true, "Max 200 caractères") }}
-            <input name="label" value="{{ node.label }}" maxlength="200" class="fld">
-
-            {{ ui.label("Code", false, "Code du nœud (ex. code de l'EC)") }}
-            <input name="code" value="{{ node.code }}" class="fld">
-
+            {# champs du catalogue pour cet onglet, groupés par catégorie #}
+            {% set curCat = '__init__' %}
             {% for key, def in catalog %}
-                {% if (caps[key] ?? false) and def.domain == 'props' %}
+                {% if def.domain == tk and (caps[key] ?? false) %}
+                    {% if (def.category ?? null) != curCat %}
+                        {% set curCat = def.category ?? null %}
+                        {% if curCat %}<div class="fld-cat">{{ curCat }}</div>{% endif %}
+                    {% endif %}
                     {{ ui.field(key, def, node) }}
                 {% endif %}
             {% endfor %}
 
-            {% if node.isParcours %}
+            {% if tk == 'props' and node.isParcours %}
                 {% set pcands = parcours_candidates(node) %}
                 <div class="rounded-lg border p-3 space-y-3" style="border-color:var(--c-border);background:#f8f9fb">
                     <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Arborescence des parcours</div>
@@ -204,26 +137,21 @@
                 </div>
             {% endif %}
         </div>
-
-        {# --- onglet Volume horaire --- #}
-        {% if hasHours %}
-        <div data-tabs-target="panel" data-tab="volume_horaire" class="space-y-3" hidden>
-            {{ ui.field('hours', catalog.hours, node) }}
-        </div>
-        {% endif %}
-
-        {# --- onglet MCCC --- #}
-        {% if hasMccc %}
-        <div data-tabs-target="panel" data-tab="mccc" class="space-y-3" hidden>
-            {{ ui.field('mccc', catalog.mccc, node) }}
-        </div>
-        {% endif %}
+        {% endfor %}
 
         <div class="flex items-center gap-2 pt-2 border-t" style="border-color:var(--c-border)">
             <button class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">Enregistrer</button>
             <span class="text-xs text-gray-400">Dupliquer / supprimer : bas de l'arborescence</span>
         </div>
     </form>
+
+    {# ── modale « Paramètre du nœud » ── #}
+    <dialog data-modal-target="dialog" data-action="click->modal#clickOutside"
+            class="rounded-2xl border-0 p-0 w-[min(600px,94vw)] backdrop:bg-black/40">
+        <turbo-frame id="node-params-frame" src="{{ path('node_params_form', {id: node.id}) }}" loading="lazy" class="block">
+            <div class="p-10 text-center text-sm text-gray-400">Chargement…</div>
+        </turbo-frame>
+    </dialog>
 
     {# ── ajouter un enfant ── #}
     {% if childTypes is not empty %}
@@ -261,6 +189,8 @@
     {{ ui.label(def.label, def.required ?? false, def.help ?? null) }}
     {% if def.field == 'number' %}
         <input type="number" step="0.5" name="attr_{{ key }}" value="{{ val }}" class="fld w-44">
+    {% elseif def.field == 'textarea' %}
+        <textarea name="attr_{{ key }}" rows="3" class="fld">{{ val }}</textarea>
     {% elseif def.field == 'choice' %}
         <select name="attr_{{ key }}" class="fld">
             <option value="">— Choisir —</option>

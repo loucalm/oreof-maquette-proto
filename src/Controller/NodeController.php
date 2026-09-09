@@ -25,6 +25,7 @@ final class NodeController extends AbstractController
         private readonly MaquetteBuilder $builder,
         private readonly NodeRepository $nodes,
         private readonly NodeFactory $factory,
+        private readonly AttributeCatalog $catalog,
     ) {
     }
 
@@ -34,8 +35,18 @@ final class NodeController extends AbstractController
         return $this->render('node/panel.html.twig', [
             'view' => $this->builder->buildSubtree($node),
             'node' => $node,
-            'catalog' => AttributeCatalog::all(),
-            'domains' => AttributeCatalog::domains(),
+            'catalog' => $this->catalog->all(),
+            'domains' => $this->catalog->domains(),
+        ]);
+    }
+
+    /** Contenu de la modale « Paramètre du nœud » (formulaire seul, dans son propre frame). */
+    #[Route('/nodes/{id}/parametres', name: 'node_params_form', methods: ['GET'])]
+    public function paramsForm(Node $node): Response
+    {
+        return $this->render('node/_params_form.html.twig', [
+            'node' => $node,
+            'view' => $this->builder->buildSubtree($node),
         ]);
     }
 
@@ -59,7 +70,7 @@ final class NodeController extends AbstractController
 
         $attrs = $node->getAttributes();
         $caps = $node->effectiveCapabilities();
-        foreach (AttributeCatalog::all() as $key => $def) {
+        foreach ($this->catalog->all() as $key => $def) {
             if (!($caps[$key] ?? false)) {
                 unset($attrs[$key]);
                 continue;
@@ -194,18 +205,8 @@ final class NodeController extends AbstractController
      * « réservées admin » (NodeType::lockedCapabilities) sont ignorées ici.
      */
     #[Route('/nodes/{id}/params', name: 'node_params', methods: ['POST'])]
-    public function params(Node $node, Request $request, NodeTypeRepository $types): Response
+    public function params(Node $node, Request $request): Response
     {
-        // changement de type éventuel (select « Type de nœud »)
-        $typeKey = trim((string) $request->request->get('typeKey'));
-        if ($typeKey !== '' && $typeKey !== $node->getType()->getKey()) {
-            $newType = $types->findOneByKey($typeKey);
-            if ($newType !== null) {
-                $node->setType($newType);
-                $node->setCapabilityOverrides(null); // les overrides ne s'appliquent plus
-            }
-        }
-
         $checked = $request->request->all('capabilities');
         $overrides = $node->getCapabilityOverrides() ?? [];
         foreach (array_keys($node->getType()->getCapabilities()) as $cap) {

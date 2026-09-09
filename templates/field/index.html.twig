@@ -1,0 +1,62 @@
+{% extends 'base.html.twig' %}
+{% block title %}Champs des formulaires{% endblock %}
+
+{% block body %}
+<div class="flex items-start justify-between mb-5">
+    <div>
+        <h1 class="text-xl font-bold">Champs des formulaires de nœud</h1>
+        <p class="text-sm" style="color:var(--c-muted)">
+            Les champs saisissables sur les nœuds, leur onglet et leur catégorie.
+            Un type de nœud active ensuite les champs qui le concernent (via ses capacités).
+        </p>
+    </div>
+    <a href="{{ path('field_new') }}" class="rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">＋ Nouveau champ</a>
+</div>
+
+{% for tab, fields in byTab %}
+    <div class="mb-6">
+        <div class="text-xs font-bold uppercase tracking-wide mb-2" style="color:var(--c-primary)">Onglet : {{ tab }}</div>
+        <div class="rounded-xl border bg-white overflow-hidden" style="border-color:var(--c-border)">
+            <table class="w-full text-sm">
+                <thead class="text-xs uppercase tracking-wide" style="color:var(--c-muted)">
+                    <tr class="border-b" style="border-color:var(--c-border)">
+                        <th class="text-left px-4 py-2.5">Champ</th>
+                        <th class="text-left px-4 py-2.5">Catégorie</th>
+                        <th class="text-left px-4 py-2.5">Type</th>
+                        <th class="text-left px-4 py-2.5">Requis</th>
+                        <th class="text-left px-4 py-2.5">Ordre</th>
+                        <th class="px-4 py-2.5"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for f in fields %}
+                    <tr class="border-b last:border-0" style="border-color:var(--c-border)">
+                        <td class="px-4 py-2.5">
+                            <span class="font-medium">{{ f.label }}</span>
+                            <code class="text-xs ml-1" style="color:var(--c-muted)">{{ f.key }}</code>
+                            {% if f.system %}<span class="pill ml-1">socle</span>{% endif %}
+                        </td>
+                        <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ f.category ?? '—' }}</td>
+                        <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ constant('App\\Entity\\FieldDef::TYPES')[f.type] ?? f.type }}</td>
+                        <td class="px-4 py-2.5">{{ f.required ? '✅' : '—' }}</td>
+                        <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ f.position }}</td>
+                        <td class="px-4 py-2.5 text-right whitespace-nowrap">
+                            <a href="{{ path('field_edit', {id: f.id}) }}" class="text-xs hover:underline">Modifier</a>
+                            <form method="post" action="{{ path('field_delete', {id: f.id}) }}" class="inline"
+                                  data-controller="confirm" data-confirm-message-value="Supprimer le champ « {{ f.label }} » ? Les valeurs déjà saisies dans les nœuds restent en base mais ne seront plus affichées.">
+                                <button class="text-xs text-red-600 hover:underline ml-2">Suppr.</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endfor %}
+
+<p class="text-xs" style="color:var(--c-muted)">
+    Les onglets <code>volume_horaire</code> et <code>mccc</code> ont un rendu spécial (grille d'heures, type + précision).
+    Les autres champs s'affichent de façon générique dans leur onglet, groupés par catégorie.
+</p>
+{% endblock %}
