@@ -80,6 +80,8 @@
         <div class="flex flex-col rounded-xl border overflow-hidden" style="border-color:var(--c-border)"
              data-controller="tree"
              data-tree-move-url-value="{{ path('node_move', {id: '__ID__'}) }}"
+             data-tree-dup-url-value="{{ path('node_duplicate', {id: '__ID__'}) }}"
+             data-tree-del-url-value="{{ path('node_delete', {id: '__ID__'}) }}"
              data-tree-chain-value="{{ formation.effectiveStructure|json_encode|e('html_attr') }}"
              data-tree-type-meta-value="{{ type_meta()|json_encode|e('html_attr') }}"
              data-tree-root-key-value="{{ formation.rootTypeKey }}">
@@ -116,20 +118,11 @@
                     {% endif %}
                 </div>
 
-                <div class="p-2" data-tree-target="treeBox">
-                    {% set rootType = root_type(formation) %}
+                {% set rootType = root_type(formation) %}
+                <div class="p-2">
                     {% if roots is not empty %}
                         {{ include('formation/_tree.html.twig', {views: roots, parentId: null, focus: focus}) }}
-                    {% endif %}
-
-                    {% if rootType %}
-                        <form method="post" action="{{ path('node_add', {id: formation.id}) }}" data-turbo-frame="_top"
-                              class="mt-1 px-1" data-tree-target="addForm">
-                            <input type="hidden" name="parentId" value="" data-tree-target="addParent">
-                            <input type="hidden" name="typeKey" value="{{ rootType.key }}" data-tree-target="addType">
-                            <button data-tree-target="addButton" class="tree-add-btn">＋ Ajouter {{ rootType.icon }} {{ rootType.label }}</button>
-                        </form>
-                    {% elseif roots is empty %}
+                    {% elseif not rootType %}
                         <p class="text-sm px-2 py-8 text-center text-gray-400">
                             Définissez d'abord le squelette dans
                             <a href="{{ path('formation_param', {id: formation.id, key: 'structure'}) }}" data-turbo-frame="node-panel" class="underline">Configuration de la structure</a>.
@@ -138,8 +131,28 @@
                 </div>
             </div>
 
-            <div class="px-4 py-3 border-t text-xs text-gray-400 shrink-0" style="border-color:var(--c-border)">
-                {{ roots is empty ? 'Aucun enfant de [Formation]' : (roots|length ~ ' nœud(s) racine') }}
+            {# ─── barre d'actions (bas de l'arborescence) ─── #}
+            <div class="px-3 py-3 border-t shrink-0 flex items-center gap-2" style="border-color:var(--c-border)">
+                {% if rootType %}
+                    <form method="post" action="{{ path('node_add', {id: formation.id}) }}" data-turbo-frame="_top"
+                          class="flex-1" data-tree-target="addForm">
+                        <input type="hidden" name="parentId" value="" data-tree-target="addParent">
+                        <input type="hidden" name="typeKey" value="{{ rootType.key }}" data-tree-target="addType">
+                        <button data-tree-target="addButton" class="tree-add-btn">＋ Ajouter {{ rootType.icon }} {{ rootType.label }}</button>
+                    </form>
+                {% else %}
+                    <span class="flex-1 text-xs text-gray-400">Aucune structure définie</span>
+                {% endif %}
+
+                <form method="post" data-turbo-frame="_top" data-tree-target="dupForm">
+                    <button type="submit" data-tree-target="dupButton" disabled title="Dupliquer le nœud sélectionné"
+                            class="tree-act-btn">⧉</button>
+                </form>
+                <form method="post" data-turbo-frame="_top" data-tree-target="delForm"
+                      data-controller="confirm" data-confirm-message-value="Supprimer ce nœud et tout ce qu'il contient ?">
+                    <button type="submit" data-tree-target="delButton" disabled title="Supprimer le nœud sélectionné"
+                            class="tree-act-btn tree-act-btn-danger">🗑</button>
+                </form>
             </div>
         </div>
 

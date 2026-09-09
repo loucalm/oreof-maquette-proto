@@ -68,11 +68,33 @@ final class NodeFactory
         $copy->setAttributes($node->getAttributes());
         $copy->setCapabilityOverrides($node->getCapabilityOverrides());
 
-        foreach ($node->getChildren() as $child) {
-            $this->duplicate($child, $copy);
-        }
+        $this->copyChildren($node, $copy);
 
         return $copy;
+    }
+
+    /**
+     * Recopie récursivement les enfants. On n'utilise PAS create() ici : le
+     * parent copié n'est pas encore flushé, donc pas d'ID à passer en requête
+     * (nextPosition). Les positions sont simplement reprises dans l'ordre source.
+     */
+    private function copyChildren(Node $source, Node $target): void
+    {
+        $pos = 0;
+        foreach ($source->getChildren() as $child) {
+            $childCopy = new Node($child->getType(), $child->getLabel());
+            $childCopy->setCode($child->getCode());
+            $childCopy->setAttributes($child->getAttributes());
+            $childCopy->setCapabilityOverrides($child->getCapabilityOverrides());
+            $childCopy->setFormation($target->getFormation());
+            $childCopy->setParent($target);
+            $childCopy->setPosition($pos++);
+            $target->addChild($childCopy);
+            $target->getFormation()->addNode($childCopy);
+            $this->em->persist($childCopy);
+
+            $this->copyChildren($child, $childCopy);
+        }
     }
 
     /**

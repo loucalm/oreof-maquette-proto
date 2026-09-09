@@ -13,8 +13,8 @@ import Sortable from 'sortablejs';
  * qu'on déplace la classe .is-active et qu'on tient l'URL à jour.
  */
 export default class extends Controller {
-    static values = { moveUrl: String, chain: Array, typeMeta: Object, rootKey: String };
-    static targets = ['treeBox', 'addForm', 'addParent', 'addType', 'addButton'];
+    static values = { moveUrl: String, dupUrl: String, delUrl: String, chain: Array, typeMeta: Object, rootKey: String };
+    static targets = ['addForm', 'addParent', 'addType', 'addButton', 'dupForm', 'dupButton', 'delForm', 'delButton'];
 
     connect() {
         this.storeKey = 'tree-collapsed';
@@ -44,7 +44,7 @@ export default class extends Controller {
         // si le frame est déjà peuplé (retour arrière, cache Turbo), on se cale ;
         // sinon on garde la surbrillance rendue par le serveur jusqu'au 1er load.
         if (this.markerToken()) this.syncActive();
-        this.updateAddButton();
+        this.updateActions();
     }
 
     disconnect() {
@@ -153,31 +153,40 @@ export default class extends Controller {
             }
         }
 
-        this.updateAddButton();
+        this.updateActions();
     }
 
     /**
-     * Le bouton « ＋ Ajouter » de l'arbre suit la sélection : il se place SOUS
-     * le nœud actif et ajoute un enfant (type déduit du squelette) ; sans
-     * sélection il revient en bas de l'arbre et ajoute un nœud racine. Le type
-     * réel est tranché côté serveur (valeur « auto »).
+     * Barre d'actions en bas de l'arborescence : « Ajouter » (contextuel :
+     * enfant du nœud sélectionné, sinon nœud racine), « Dupliquer » et
+     * « Supprimer » qui agissent sur le nœud sélectionné.
      */
-    updateAddButton() {
+    updateActions() {
+        const activeLi = this.element.querySelector('.tree-row.is-active')?.closest('li[data-node-id]');
+        const activeId = activeLi?.dataset.nodeId || null;
+        const name = activeLi?.querySelector('.tree-label')?.textContent.trim() || '';
+
+        // ── dupliquer / supprimer ──
+        if (this.hasDupButtonTarget) {
+            this.dupButtonTarget.disabled = !activeId;
+            if (activeId && this.hasDupUrlValue) {
+                this.dupFormTarget.action = this.dupUrlValue.replace('__ID__', activeId);
+            }
+        }
+        if (this.hasDelButtonTarget) {
+            this.delButtonTarget.disabled = !activeId;
+            if (activeId && this.hasDelUrlValue) {
+                this.delFormTarget.action = this.delUrlValue.replace('__ID__', activeId);
+                this.delFormTarget.dataset.confirmMessageValue =
+                    `Supprimer « ${name || 'ce nœud'} » et tout ce qu'il contient ?`;
+            }
+        }
+
+        // ── bouton « Ajouter » ──
         if (!this.hasAddButtonTarget) return;
 
         const meta = this.hasTypeMetaValue ? this.typeMetaValue : {};
         const chain = this.hasChainValue ? this.chainValue : [];
-        const form = this.addFormTarget;
-        const activeLi = this.element.querySelector('.tree-row.is-active')?.closest('li[data-node-id]');
-
-        // ── position du formulaire ──
-        if (activeLi) {
-            if (activeLi.lastElementChild !== form) activeLi.appendChild(form);
-            form.classList.add('tree-add-nested');
-        } else if (this.hasTreeBoxTarget) {
-            if (this.treeBoxTarget.lastElementChild !== form) this.treeBoxTarget.appendChild(form);
-            form.classList.remove('tree-add-nested');
-        }
 
         if (!activeLi) {
             const rootKey = this.hasRootKeyValue ? this.rootKeyValue : '';
@@ -191,11 +200,10 @@ export default class extends Controller {
         }
 
         const nodeType = activeLi.dataset.nodeType;
-        const name = activeLi.querySelector('.tree-label')?.textContent.trim() || 'ce nœud';
         const idx = chain.indexOf(nodeType);
         const childKey = idx >= 0 ? chain[idx + 1] : null;
 
-        this.addParentTarget.value = activeLi.dataset.nodeId;
+        this.addParentTarget.value = activeId;
         this.addTypeTarget.value = childKey || 'auto';
 
         if (idx >= 0 && !childKey) {
@@ -206,8 +214,8 @@ export default class extends Controller {
 
         this.addButtonTarget.disabled = false;
         this.addButtonTarget.textContent = childKey && meta[childKey]
-            ? `＋ Ajouter ${meta[childKey].icon} ${meta[childKey].label} sous « ${name} »`
-            : `＋ Ajouter un nœud sous « ${name} »`;
+            ? `＋ Ajouter ${meta[childKey].icon} ${meta[childKey].label}`
+            : '＋ Ajouter un nœud';
     }
 
     updateUrl(params) {
