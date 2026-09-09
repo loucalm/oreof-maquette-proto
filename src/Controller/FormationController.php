@@ -65,6 +65,7 @@ final class FormationController extends AbstractController
             'roots' => $roots,
             'progress' => $builder->progress($roots),
             'catalog' => $catalog->all(),
+            'domains' => $catalog->domains(),
         ]);
     }
 

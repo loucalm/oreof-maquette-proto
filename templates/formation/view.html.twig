@@ -1,29 +1,114 @@
 {% extends 'base.html.twig' %}
 {% block title %}{{ formation.name }} · consultation{% endblock %}
 
-{% macro branch(views, catalog) %}
+{# ─────────── macros ─────────── #}
+
+{% macro fieldval(key, def, n) %}
+    {%- set v = n.getAttribute(key) -%}
+    {%- if def.field == 'choice' -%}{{ def.options[v] ?? v }}
+    {%- elseif def.field == 'competencies' -%}
+        <span class="flex flex-wrap gap-1">{% for c in v %}<span class="pill">{{ c }}</span>{% endfor %}</span>
+    {%- elseif def.field == 'textarea' -%}<span class="whitespace-pre-line">{{ v }}</span>
+    {%- else -%}{{ v }}
+    {%- endif -%}
+{% endmacro %}
+
+{% macro nodefields(n, catalog, domains) %}
     {% import _self as m %}
-    <ul class="ml-4 border-l border-dashed pl-4 space-y-1" style="border-color:var(--c-border)">
+    {% set caps = n.effectiveCapabilities() %}
+    {% set HM = constant('App\\Maquette\\AttributeCatalog::HOUR_MODALITIES') %}
+    {% set HP = constant('App\\Maquette\\AttributeCatalog::HOUR_PLACES') %}
+
+    {# onglets présents sur ce nœud, dans l'ordre du catalogue #}
+    {% set tabs = [] %}
+    {% for key, def in catalog %}
+        {% if (caps[key] ?? false) and def.domain not in tabs %}
+            {% set tabs = tabs|merge([def.domain]) %}
+        {% endif %}
+    {% endfor %}
+
+    {% set hasContent = false %}
+    <div class="ml-6 mt-1.5 space-y-2">
+        {% for tab in tabs %}
+            {# --- onglet volume horaire : la grille --- #}
+            {% if tab == 'volume_horaire' and n.getAttribute('hours') %}
+                {% set hasContent = true %}
+                {% set hours = n.getAttribute('hours') %}
+                <div>
+                    <div class="fld-cat">{{ domains[tab] ?? tab }}</div>
+                    <div class="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-gray-600 mt-1">
+                        {% for m, ml in HM %}{% for p, pl in HP %}
+                            {% if hours[m][p] is defined and hours[m][p] %}
+                                <span>{{ ml }} {{ pl|lower }} : <strong>{{ hours[m][p] }} h</strong></span>
+                            {% endif %}
+                        {% endfor %}{% endfor %}
+                    </div>
+                </div>
+            {# --- onglet MCCC --- #}
+            {% elseif tab == 'mccc' and n.getAttribute('mccc') %}
+                {% set hasContent = true %}
+                {% set mccc = n.getAttribute('mccc') %}
+                <div>
+                    <div class="fld-cat">{{ domains[tab] ?? tab }}</div>
+                    <div class="text-xs text-gray-600 mt-1">
+                        {{ mccc.type ?? '—' }}{% if mccc.note ?? null %} — {{ mccc.note }}{% endif %}
+                    </div>
+                </div>
+            {# --- onglet Propriétés (et autres onglets custom) : champs par catégorie --- #}
+            {% else %}
+                {% set curCat = '__init__' %}
+                {% set tabHasFields = false %}
+                {% for key, def in catalog %}
+                    {% if def.domain == tab and (caps[key] ?? false) and def.field not in ['hours','mccc']
+                          and n.getAttribute(key) is not null and n.getAttribute(key) is not empty %}
+                        {% set hasContent = true %}
+                        {% if not tabHasFields %}
+                            {% set tabHasFields = true %}
+                            {% if tab != 'props' %}<div class="fld-cat">{{ domains[tab] ?? tab }}</div>{% endif %}
+                        {% endif %}
+                        {% if (def.category ?? null) != curCat %}
+                            {% set curCat = def.category ?? null %}
+                            {% if curCat %}<div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mt-1.5">{{ curCat }}</div>{% endif %}
+                        {% endif %}
+                        <div class="flex gap-2 text-xs">
+                            <span class="text-gray-400 shrink-0">{{ def.label }} :</span>
+                            <span class="text-gray-700">{{ m.fieldval(key, def, n) }}</span>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endfor %}
+
+        {# infos parcours (ramification) #}
+        {% if n.isParcours %}
+            {% set hasContent = true %}
+            {% set unit = period_unit(n.formation)|lower %}
+            <div class="text-xs text-gray-500">
+                {{ unit }}s {{ n.periodeDebut }}–{{ n.periodeFin }}
+                {%- if n.parcoursParent %} · spécialisation de « {{ n.parcoursParent.label ?: '—' }} »{% endif -%}
+            </div>
+        {% endif %}
+
+        {% if not hasContent and tabs is not empty %}<div class="text-xs text-gray-300 italic">aucun champ renseigné</div>{% endif %}
+    </div>
+{% endmacro %}
+
+{% macro branch(views, catalog, domains) %}
+    {% import _self as m %}
+    <ul class="ml-4 border-l pl-4 space-y-2" style="border-color:var(--c-border)">
         {% for view in views %}
             {% set n = view.node %}
             <li class="py-1">
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2">
                     <span class="status-dot" data-status="{{ view.status }}"></span>
                     <span class="type-badge">{{ n.type.icon }} [{{ n.type.label }}]</span>
-                    <span class="text-sm font-medium">{{ n.label ?: '—' }}</span>
-                    {% if n.code %}<span class="text-xs text-gray-400">{{ n.code }}</span>{% endif %}
+                    <span class="text-sm font-semibold">{{ n.label ?: '—' }}</span>
+                    {% if n.code %}<code class="text-xs text-gray-400">{{ n.code }}</code>{% endif %}
                     {% if view.totalHours %}<span class="text-xs text-gray-400">· {{ view.totalHours|round }} h</span>{% endif %}
-                    {% if view.totalEcts %}<span class="text-xs text-gray-400">· {{ view.totalEcts|round }} ECTS{% if view.ectsTarget %}/{{ view.ectsTarget }}{% endif %}</span>{% endif %}
+                    {% if view.totalEcts %}<span class="text-xs text-gray-400">· {{ view.totalEcts|round }}{% if view.ectsTarget %}/{{ view.ectsTarget }}{% endif %} ECTS</span>{% endif %}
                 </div>
-                {% set caps = n.effectiveCapabilities() %}
-                {% set shown = [] %}
-                {% for key, def in catalog %}
-                    {% if (caps[key] ?? false) and n.getAttribute(key) is not null and n.getAttribute(key) is not empty %}
-                        {% set shown = shown|merge(['%s : %s'|format(def.label, key == 'competencies' ? n.getAttribute(key)|join(', ') : (key in ['hours','mccc'] ? '…' : n.getAttribute(key)))]) %}
-                    {% endif %}
-                {% endfor %}
-                {% if shown %}<div class="ml-6 text-xs text-gray-500">{{ shown|join(' · ') }}</div>{% endif %}
-                {% if view.children %}{{ m.branch(view.children, catalog) }}{% endif %}
+                {{ m.nodefields(n, catalog, domains) }}
+                {% if view.children %}{{ m.branch(view.children, catalog, domains) }}{% endif %}
             </li>
         {% endfor %}
     </ul>
@@ -31,6 +116,7 @@
 
 {% block body %}
 {% import _self as m %}
+
 <div class="rounded-2xl border bg-white px-7 py-6 mb-4" style="border-color:var(--c-border)">
     <div class="flex items-start justify-between">
         <div>
@@ -47,19 +133,36 @@
             <a href="{{ path('formation_index') }}" class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">← Liste</a>
         </div>
     </div>
-    <div class="mt-4 grid grid-cols-2 md:grid-cols-5 gap-4">
-        {% for k, v in {'Domaine': formation.domaine ?: 'Non défini', 'Type diplôme': formation.diplome ?: '—', 'Composante': formation.composante ?: '—', 'Parcours': formation.multiParcours ? 'Multi' : 'Mono', 'Progression': progress ~ '%'} %}
+    <div class="mt-4 grid grid-cols-2 md:grid-cols-6 gap-4">
+        {% for k, v in {
+            'Domaine': formation.domaine ?: 'Non défini',
+            'Type diplôme': formation.diplome ?: '—',
+            'Composante': formation.composante ?: '—',
+            'Parcours': formation.multiParcours ? 'Multi' : 'Mono',
+            'Durée': (formation.calendarSpan ? formation.calendarSpan ~ ' ' ~ period_unit(formation)|lower ~ (formation.calendarSpan > 1 ? 's' : '') : '—'),
+            'Progression': progress ~ '%'
+        } %}
             <div><div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{{ k }}</div><div class="text-sm mt-1">{{ v }}</div></div>
         {% endfor %}
     </div>
 </div>
 
+{% if formation.isMono and formation.getParametre('structure').regimes is defined and formation.getParametre('structure').regimes %}
+<div class="rounded-2xl border bg-white px-7 py-5 mb-4" style="border-color:var(--c-border)">
+    <h2 class="text-sm font-bold uppercase tracking-wide text-gray-500 mb-2">Formation mono-parcours</h2>
+    <div class="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+        {% if formation.ectsTotal %}<span class="text-gray-500">ECTS total : <strong class="text-gray-800">{{ formation.ectsTotal }}</strong></span>{% endif %}
+        <span class="text-gray-500">Régimes : <strong class="text-gray-800">{{ formation.getParametre('structure').regimes|join(', ') }}</strong></span>
+    </div>
+</div>
+{% endif %}
+
 <div class="rounded-2xl border bg-white px-7 py-6" style="border-color:var(--c-border)">
-    <h2 class="text-lg font-bold mb-3">Structure</h2>
+    <h2 class="text-lg font-bold mb-4">Structure &amp; contenu</h2>
     {% if roots is empty %}
         <p class="text-sm text-gray-400">Aucune structure définie.</p>
     {% else %}
-        <div class="-ml-4">{{ m.branch(roots, catalog) }}</div>
+        <div class="-ml-4">{{ m.branch(roots, catalog, domains) }}</div>
     {% endif %}
 </div>
 {% endblock %}
