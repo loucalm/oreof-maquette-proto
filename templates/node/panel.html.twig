@@ -219,22 +219,45 @@
             {% endfor %}
         </div>
     {% elseif def.field == 'competencies' %}
-        {% set comps = bcc_competences(node) %}
+        {% set groups = bcc_competences(node) %}
         {% set cur = val ?? [] %}
-        {% if comps is empty %}
+        {% if groups is empty %}
             <p class="fld-help">Aucune compétence dans le référentiel (BCC). Ajoutez-en dans « Référentiel de compétences (BCC) ».</p>
         {% else %}
-            <div class="mt-1 space-y-1.5">
-                {% for c in comps %}
-                    <label class="flex items-start gap-2 text-sm cursor-pointer">
-                        <input type="checkbox" name="attr_competencies[]" value="{{ c.label }}" {{ c.label in cur ? 'checked' }} class="mt-0.5">
-                        <span><span class="font-medium">{{ c.label }}</span>{% if c.code %} <span class="text-xs text-gray-400">{{ c.code }}</span>{% endif %}
-                            <span class="block text-xs text-gray-400">{{ c.bloc }}</span></span>
-                    </label>
-                {% endfor %}
+            <div data-controller="cbxfilter" class="mt-1">
+                <div class="rounded-lg border overflow-hidden" style="border-color:var(--c-border)">
+                    <div class="border-b bg-gray-50 px-2 py-1.5" style="border-color:var(--c-border)">
+                        <input type="search" placeholder="Filtrer les compétences…" data-cbxfilter-target="input"
+                               data-action="input->cbxfilter#filter"
+                               class="w-full rounded-md border px-2 py-1 text-sm" style="border-color:var(--c-border)">
+                    </div>
+                    <div class="max-h-64 overflow-y-auto p-2 space-y-3">
+                        {% for g in groups %}
+                            <div data-cbxfilter-target="group">
+                                <div class="text-[11px] font-semibold uppercase tracking-wide {{ g.transversal ? 'text-teal-700' : 'text-gray-400' }}">{{ g.bloc }}</div>
+                                <div class="mt-1 space-y-0.5">
+                                    {% for c in g.items %}
+                                        <label class="flex items-center gap-2 text-sm cursor-pointer rounded px-1 py-1 hover:bg-gray-50"
+                                               data-cbxfilter-target="row"
+                                               data-text="{{ (c.label ~ ' ' ~ c.code ~ ' ' ~ c.description ~ ' ' ~ g.bloc)|lower }}">
+                                            <input type="checkbox" name="attr_competencies[]" value="{{ c.label }}" {{ c.label in cur ? 'checked' }}>
+                                            <span class="font-medium shrink-0">{{ c.label }}</span>
+                                            {% if c.code %}<span class="text-xs text-gray-400 shrink-0">{{ c.code }}</span>{% endif %}
+                                            {% if c.description %}<span class="min-w-0 truncate text-xs text-gray-400">· {{ c.description }}</span>{% endif %}
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <p data-cbxfilter-target="empty" hidden class="px-1 py-3 text-center text-sm text-gray-400">Aucune compétence ne correspond.</p>
+                    </div>
+                </div>
+                <div class="mt-1 flex items-center justify-between">
+                    <span class="text-xs text-gray-400" data-cbxfilter-target="count"></span>
+                    <span class="text-xs text-gray-400 cursor-default">＋ Ajouter une compétence</span>
+                </div>
             </div>
         {% endif %}
-        <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">＋ Ajouter une compétence</span></div>
     {% elseif key == 'ficheMatiere' %}
         {% set fiches = ['Fiche — Algorithmique', 'Fiche — Programmation', 'Fiche — Bases de données', 'Fiche — Mathématiques'] %}
         <select name="attr_ficheMatiere" class="fld">

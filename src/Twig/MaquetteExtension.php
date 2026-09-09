@@ -302,10 +302,11 @@ final class MaquetteExtension extends AbstractExtension
     }
 
     /**
-     * Compétences du référentiel (BCC) proposables sur ce nœud : celles du BCC
-     * du parcours si le nœud vit sous un parcours, sinon celles de la formation.
+     * Compétences du référentiel (BCC) proposables sur ce nœud, groupées par
+     * bloc : celles du BCC du parcours si le nœud vit sous un parcours, sinon
+     * celles de la formation.
      *
-     * @return list<array{label: string, code: ?string, bloc: string}>
+     * @return list<array{bloc: string, transversal: bool, items: list<array{label: string, code: ?string, description: string}>}>
      */
     public function bccCompetences(Node $node): array
     {
@@ -322,14 +323,18 @@ final class MaquetteExtension extends AbstractExtension
 
         $out = [];
         foreach ($blocs as $bloc) {
+            $items = [];
             foreach ($bloc->getChildren() as $comp) {
                 if ($comp->getType()->getKey() === 'competence') {
-                    $out[] = [
+                    $items[] = [
                         'label' => $comp->getLabel(),
                         'code' => $comp->getCode(),
-                        'bloc' => $bloc->getLabel(),
+                        'description' => $comp->getDescription(),
                     ];
                 }
+            }
+            if ($items !== []) {
+                $out[] = ['bloc' => $bloc->getLabel(), 'transversal' => $bloc->isTransversalBloc(), 'items' => $items];
             }
         }
 

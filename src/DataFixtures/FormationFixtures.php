@@ -135,15 +135,31 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
         $mkBloc('Compétences transversales (RNCP)', [
             ['Communiquer', "S'exprimer à l'écrit et à l'oral en français et en anglais dans un contexte professionnel."],
             ['Travailler en équipe', 'Collaborer en mode projet et rendre compte de son travail.'],
+            ['Se documenter', 'Rechercher, évaluer et exploiter une information technique.'],
+            ['Agir en responsabilité', 'Prendre en compte les enjeux éthiques, juridiques et de sécurité.'],
         ], ['transversal' => true]);
         $mkBloc('BC 1 — Développer une application', [
             ['1A', 'Concevoir et implémenter des algorithmes adaptés à un problème.'],
             ['1B', 'Programmer dans plusieurs paradigmes (impératif, objet).'],
             ['1C', 'Tester et documenter un logiciel.'],
+            ['1D', 'Utiliser un gestionnaire de versions et un outil de build.'],
+            ['1E', 'Concevoir une interface utilisateur simple.'],
         ]);
         $mkBloc('BC 2 — Administrer des données et des systèmes', [
             ['2A', 'Modéliser et interroger une base de données relationnelle.'],
-            ['2B', ''],
+            ['2B', 'Administrer un système d’exploitation et ses services.'],
+            ['2C', 'Configurer un réseau local et diagnostiquer une panne.'],
+            ['2D', 'Mettre en place une sauvegarde et une restauration.'],
+        ]);
+        $mkBloc('BC 3 — Mobiliser les mathématiques pour l’informatique', [
+            ['3A', 'Utiliser l’algèbre linéaire et l’analyse pour modéliser.'],
+            ['3B', 'Raisonner avec la logique et les mathématiques discrètes.'],
+            ['3C', 'Appliquer les probabilités et les statistiques à des données.'],
+        ]);
+        $mkBloc('BC 4 — Conduire un projet', [
+            ['4A', 'Analyser un besoin et rédiger un cahier des charges.'],
+            ['4B', 'Planifier et suivre l’avancement d’un projet.'],
+            ['4C', 'Présenter et soutenir un livrable devant un jury.'],
         ]);
 
         // ─── 2e démo : multi-parcours avec ramification cohérente sur 3 ans ───
