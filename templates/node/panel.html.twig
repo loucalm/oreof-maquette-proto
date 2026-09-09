@@ -33,7 +33,7 @@
     <div class="flex flex-wrap gap-2">
         {% for tk in nodeTabs %}
             <button type="button" data-tabs-target="tab" data-tab="{{ tk }}" class="tab-pill">
-                {% if tk == 'props' %}<span class="status-dot" data-status="{{ view.missingCount > 0 ? 'incomplete' : 'ok' }}"></span>{% endif %}
+                <span class="status-dot" data-status="{{ node_tab_status(node, tk) }}"></span>
                 {{ domains[tk] ?? tk }}
             </button>
         {% endfor %}
@@ -64,16 +64,16 @@
         </div>
     </div>
 
-    {# séparateur type #}
-    <div class="flex items-center gap-3 text-gray-300 text-xs uppercase tracking-widest">
-        <div class="h-px flex-1 bg-gray-200"></div>{{ T }}<div class="h-px flex-1 bg-gray-200"></div>
-    </div>
-
     {# ── formulaire ── #}
     <form method="post" action="{{ path('node_save', {id: node.id}) }}" data-turbo-frame="_top" class="space-y-5">
 
         {% for tk in nodeTabs %}
         <div data-tabs-target="panel" data-tab="{{ tk }}" class="space-y-5" {{ not loop.first ? 'hidden' }}>
+
+            {# séparateur : nom de l'onglet actif #}
+            <div class="flex items-center gap-3 text-gray-300 text-xs uppercase tracking-widest">
+                <div class="h-px flex-1 bg-gray-200"></div>{{ domains[tk] ?? tk }}<div class="h-px flex-1 bg-gray-200"></div>
+            </div>
 
             {% if tk == 'props' %}
                 {% set parents = valid_parents(node) %}
@@ -191,7 +191,9 @@
 {% macro field(key, def, node) %}
     {% import _self as ui %}
     {% set val = node.getAttribute(key) %}
-    {{ ui.label(def.label, def.required ?? false, def.help ?? null) }}
+    {% if def.field not in ['hours', 'mccc'] %}
+        {{ ui.label(def.label, def.required ?? false, def.help ?? null) }}
+    {% endif %}
     {% if def.field == 'number' %}
         <input type="number" step="0.5" name="attr_{{ key }}" value="{{ val }}" class="fld w-44">
     {% elseif def.field == 'textarea' %}
@@ -204,23 +206,70 @@
     {% elseif def.field == 'competencies' %}
         <input name="attr_competencies" value="{{ val ? val|join(', ') : '' }}" placeholder="Compétence 1, Compétence 2…" class="fld">
     {% elseif def.field == 'hours' %}
-        <table class="text-sm">
-            <thead><tr><th></th>{% for p, pl in constant('App\\Maquette\\AttributeCatalog::HOUR_PLACES') %}<th class="px-2 text-xs font-medium text-gray-500">{{ pl }}</th>{% endfor %}</tr></thead>
-            <tbody>
-            {% for m, ml in constant('App\\Maquette\\AttributeCatalog::HOUR_MODALITIES') %}
-                <tr><td class="pr-3 text-xs font-semibold text-gray-500">{{ ml }}</td>
-                    {% for p, pl in constant('App\\Maquette\\AttributeCatalog::HOUR_PLACES') %}
-                        <td class="py-0.5"><input type="number" min="0" step="0.5" name="attr_hours_{{ m }}_{{ p }}" value="{{ val[m][p] ?? '' }}" class="w-16 rounded-md border px-2 py-1" style="border-color:var(--c-border)"></td>
-                    {% endfor %}
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    {% elseif def.field == 'mccc' %}
-        <div class="space-y-2">
-            <input name="attr_mccc[type]" value="{{ val.type ?? '' }}" placeholder="Type d'épreuve (CC, examen terminal…)" class="fld">
-            <input name="attr_mccc[note]" value="{{ val.note ?? '' }}" placeholder="Précision (pondération, session…)" class="fld">
+        {% set mods = {'cm': 'CM', 'td': 'TD', 'tp': 'TP'} %}
+        <div data-controller="hours" class="space-y-4">
+            <label class="flex items-center gap-3 text-sm">
+                <input type="checkbox" class="switch" name="attr_hours[none]" value="1" {{ (val.none ?? false) ? 'checked' }}
+                       data-hours-target="none" data-action="change->hours#sync">
+                <span class="font-medium">EC sans volume horaire</span>
+            </label>
+
+            <div data-hours-target="fields" class="space-y-4">
+                {% for place, plabel in {'pres': 'présentiel', 'dist': 'distanciel'} %}
+                    <div class="rounded-xl border p-4" style="border-color:var(--c-border)">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="fld-label">Volume horaire en {{ plabel }}</div>
+                            <span class="text-[11px] font-semibold text-red-500 uppercase tracking-wide shrink-0">Champs requis</span>
+                        </div>
+                        <div class="mt-2 grid gap-3 sm:grid-cols-3">
+                            {% for m, mlabel in mods %}
+                                <div class="relative">
+                                    <input type="number" min="0" step="0.5" placeholder="0"
+                                           name="attr_hours[{{ place }}][{{ m }}]" value="{{ val[place][m] ?? '' }}"
+                                           data-hours-target="input" class="fld pr-24">
+                                    <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-gray-400">Heure(s) {{ mlabel }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="fld-help">ℹ Précisez le volume horaire en {{ plabel }}</div>
+                    </div>
+                {% endfor %}
+
+                <div class="rounded-xl border p-4" style="border-color:var(--c-border)">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="fld-label">Volume horaire de travail étudiant (TE)</div>
+                        <span class="text-[11px] font-semibold text-red-500 uppercase tracking-wide shrink-0">Champs requis</span>
+                    </div>
+                    <div class="relative mt-2">
+                        <input type="number" min="0" step="0.5" placeholder="0"
+                               name="attr_hours[te]" value="{{ val.te ?? '' }}"
+                               data-hours-target="input" class="fld pr-24">
+                        <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-gray-400">Heure(s) TE</span>
+                    </div>
+                    <div class="fld-help">ℹ Précisez le volume horaire en TE (stage, projet, autonomie, …)</div>
+                </div>
+            </div>
         </div>
+    {% elseif def.field == 'mccc' %}
+        {% set mtypes = constant('App\\Maquette\\AttributeCatalog::MCCC_TYPES') %}
+        <div class="flex items-center gap-2">
+            <span class="fld-label">Type de MCCC</span>
+            <span class="text-[11px] font-semibold text-red-500 uppercase tracking-wide">Champs requis</span>
+        </div>
+        <div class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {% for mk, mv in mtypes %}
+                {% set on = (val.type ?? '') == mk %}
+                <label class="flex items-start gap-2.5 text-sm cursor-pointer rounded-lg border px-3 py-2.5 hover:bg-gray-50"
+                       style="border-color:{{ on ? 'var(--c-primary)' : 'var(--c-border)' }};background:{{ on ? 'var(--c-primary-soft)' : '#fff' }}">
+                    <input type="radio" name="attr_mccc[type]" value="{{ mk }}" {{ on ? 'checked' }} class="mt-0.5">
+                    <span><span class="font-semibold">{{ mv.short }}</span>
+                        <span class="block text-xs text-gray-400">{{ mv.label }}</span></span>
+                </label>
+            {% endfor %}
+        </div>
+        <button type="button" disabled title="Fonctionnalité à venir"
+                class="mt-4 inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white opacity-60 cursor-not-allowed"
+                style="background:#134e4a">＋ Ajouter une épreuve pour la 1ère session</button>
     {% else %}
         <input name="attr_{{ key }}" value="{{ val }}" class="fld">
     {% endif %}

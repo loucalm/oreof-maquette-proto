@@ -23,9 +23,21 @@ final class AttributeCatalog
     public const DOMAIN_HOURS = 'volume_horaire';
     public const DOMAIN_MCCC = 'mccc';
 
-    /** Sous-champs du volume horaire : modalité x lieu (structurel). */
+    /**
+     * Volume horaire : deux lieux (présentiel / distanciel) déclinés en CM/TD/TP,
+     * plus un volume de travail étudiant (TE) global. Stockage :
+     * `hours = { none?: true, pres?: {cm,td,tp}, dist?: {cm,td,tp}, te?: number }`.
+     */
     public const HOUR_MODALITIES = ['cm' => 'CM', 'td' => 'TD', 'tp' => 'TP'];
-    public const HOUR_PLACES = ['pres' => 'Présentiel', 'dist' => 'Distanciel', 'travail' => 'Travail étudiant'];
+    public const HOUR_PLACES = ['pres' => 'Présentiel', 'dist' => 'Distanciel'];
+
+    /** Types de MCCC d'un EC (clé => libellé court + intitulé). */
+    public const MCCC_TYPES = [
+        'CCI' => ['short' => 'CCI', 'label' => 'Contrôle continu intégral'],
+        'CC_CT' => ['short' => 'CC + CT', 'label' => 'Contrôle continu & contrôle terminal'],
+        'CT' => ['short' => 'CT', 'label' => 'Contrôle terminal'],
+        'CC' => ['short' => 'CC', 'label' => 'Contrôle continu'],
+    ];
 
     /** Capacités qui ne sont pas des champs de saisie mais des drapeaux. */
     public const FLAGS = [
@@ -97,23 +109,35 @@ final class AttributeCatalog
     }
 
     /**
-     * Somme des heures d'un sac d'attributs `hours`.
+     * Somme des heures d'un sac d'attributs `hours` (présentiel + distanciel + TE).
+     * « EC sans volume horaire » (`none`) compte pour 0.
      *
      * @param array<string, mixed>|null $hours
      */
     public static function sumHours(mixed $hours): float
     {
-        if (!\is_array($hours)) {
+        if (!\is_array($hours) || !empty($hours['none'])) {
             return 0.0;
         }
-        $total = 0.0;
-        foreach (self::HOUR_MODALITIES as $m => $_) {
-            foreach (self::HOUR_PLACES as $p => $_p) {
-                $total += (float) ($hours[$m][$p] ?? 0);
+        $total = (float) ($hours['te'] ?? 0);
+        foreach (self::HOUR_PLACES as $p => $_p) {
+            foreach (self::HOUR_MODALITIES as $m => $_m) {
+                $total += (float) ($hours[$p][$m] ?? 0);
             }
         }
 
         return $total;
+    }
+
+    /**
+     * Le volume horaire est-il renseigné ? Vrai si « sans volume horaire » est
+     * coché, ou si au moins une heure est saisie.
+     *
+     * @param array<string, mixed>|null $hours
+     */
+    public static function hoursProvided(mixed $hours): bool
+    {
+        return \is_array($hours) && (!empty($hours['none']) || self::sumHours($hours) > 0);
     }
 
     /** Défauts pour amorcer les fixtures / restaurer le socle. */

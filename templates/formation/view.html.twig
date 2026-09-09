@@ -34,19 +34,26 @@
                 <div>
                     <div class="fld-cat">{{ domains[tab] ?? tab }}</div>
                     <div class="flex flex-wrap gap-x-5 gap-y-1 text-sm text-gray-600 mt-2">
-                        {% for hm, ml in HM %}{% for hp, pl in HP %}
-                            {% if hours[hm][hp] is defined and hours[hm][hp] %}
-                                <span>{{ ml }} {{ pl|lower }} : <strong>{{ hours[hm][hp] }} h</strong></span>
-                            {% endif %}
-                        {% endfor %}{% endfor %}
+                        {% if hours.none ?? false %}
+                            <span class="italic text-gray-400">EC sans volume horaire</span>
+                        {% else %}
+                            {% for hp, pl in HP %}{% for hm, ml in HM %}
+                                {% if hours[hp][hm] ?? false %}
+                                    <span>{{ ml }} {{ pl|lower }} : <strong>{{ hours[hp][hm] }} h</strong></span>
+                                {% endif %}
+                            {% endfor %}{% endfor %}
+                            {% if hours.te ?? false %}<span>Travail étudiant : <strong>{{ hours.te }} h</strong></span>{% endif %}
+                        {% endif %}
                     </div>
                 </div>
             {% elseif tab == 'mccc' and n.getAttribute('mccc') %}
                 {% set hasContent = true %}
                 {% set mccc = n.getAttribute('mccc') %}
+                {% set mtypes = constant('App\\Maquette\\AttributeCatalog::MCCC_TYPES') %}
+                {% set mt = (mccc.type is defined) ? (mtypes[mccc.type] ?? null) : null %}
                 <div>
                     <div class="fld-cat">{{ domains[tab] ?? tab }}</div>
-                    <div class="text-sm text-gray-600 mt-2">{{ mccc.type ?? '—' }}{% if mccc.note ?? null %} — {{ mccc.note }}{% endif %}</div>
+                    <div class="text-sm text-gray-600 mt-2">{{ mt ? mt.short ~ ' — ' ~ mt.label : (mccc.type ?? '—') }}</div>
                 </div>
             {% else %}
                 {% set curCat = '__init__' %}

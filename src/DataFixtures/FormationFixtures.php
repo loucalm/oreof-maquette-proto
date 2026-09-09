@@ -79,18 +79,18 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
         $ue1 = $mk($t['ue'], 'UE 1.1 — Programmation', $s1, ['ects' => 6, 'nature' => 'obligatoire', 'ueType' => 'disciplinaire']);
         $mk($t['ec'], 'Algorithmique', $ue1, [
             'ects' => 3, 'nature' => 'obligatoire',
-            'hours' => ['cm' => ['pres' => 12], 'td' => ['pres' => 18], 'tp' => ['pres' => 0]],
-            'mccc' => ['type' => 'CC', 'note' => '100% contrôle continu'],
+            'hours' => ['pres' => ['cm' => 12, 'td' => 18], 'te' => 20],
+            'mccc' => ['type' => 'CCI'],
         ]);
         $mk($t['ec'], 'Langage C', $ue1, [
             'ects' => 3, 'nature' => 'obligatoire',
-            'hours' => ['tp' => ['pres' => 24]],
-            'mccc' => ['type' => 'CC + examen'],
+            'hours' => ['pres' => ['tp' => 24], 'dist' => ['tp' => 6]],
+            'mccc' => ['type' => 'CC_CT'],
         ]);
 
         // UE incomplète (ECTS manquant sur un EC, pas de MCCC)
         $ue2 = $mk($t['ue'], 'UE 1.2 — Mathématiques', $s1, ['ects' => 6, 'nature' => 'obligatoire']);
-        $mk($t['ec'], 'Analyse', $ue2, ['ects' => 3, 'nature' => 'obligatoire', 'hours' => ['cm' => ['pres' => 20]]]);
+        $mk($t['ec'], 'Analyse', $ue2, ['ects' => 3, 'nature' => 'obligatoire', 'hours' => ['pres' => ['cm' => 20]]]);
         $mk($t['ec'], 'Algèbre', $ue2, ['nature' => 'obligatoire']); // volontairement vide
 
         // Semestre 2 vide

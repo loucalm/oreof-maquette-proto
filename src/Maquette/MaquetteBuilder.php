@@ -103,7 +103,7 @@ final class MaquetteBuilder
             }
             $value = $node->getAttribute($key);
             if ($key === 'hours') {
-                if (AttributeCatalog::sumHours($value) <= 0) {
+                if (!AttributeCatalog::hoursProvided($value)) {
                     ++$missing;
                 }
                 continue;
@@ -189,7 +189,7 @@ final class MaquetteBuilder
             }
             $value = $node->getAttribute($key);
             $empty = $key === 'hours'
-                ? AttributeCatalog::sumHours($value) <= 0
+                ? !AttributeCatalog::hoursProvided($value)
                 : ($value === null || $value === '' || $value === []);
             if ($empty) {
                 $missing[] = mb_strtolower($def['label']);

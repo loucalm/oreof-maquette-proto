@@ -355,17 +355,31 @@ final class NodeController extends AbstractController
         return ($v === null || $v === '') ? null : (float) $v;
     }
 
-    /** @return array<string, array<string, float>> */
+    /**
+     * Volume horaire : `attr_hours[none]` (case « EC sans volume horaire »),
+     * `attr_hours[pres|dist][cm|td|tp]` et `attr_hours[te]`.
+     *
+     * @return array<string, mixed>
+     */
     private function readHours(Request $request): array
     {
+        $raw = $request->request->all('attr_hours');
+        if (!empty($raw['none'])) {
+            return ['none' => true];
+        }
+
         $out = [];
-        foreach (array_keys(AttributeCatalog::HOUR_MODALITIES) as $m) {
-            foreach (array_keys(AttributeCatalog::HOUR_PLACES) as $p) {
-                $val = (float) $request->request->get("attr_hours_{$m}_{$p}", 0);
+        foreach (array_keys(AttributeCatalog::HOUR_PLACES) as $p) {
+            foreach (array_keys(AttributeCatalog::HOUR_MODALITIES) as $m) {
+                $val = (float) ($raw[$p][$m] ?? 0);
                 if ($val > 0) {
-                    $out[$m][$p] = $val;
+                    $out[$p][$m] = $val;
                 }
             }
+        }
+        $te = (float) ($raw['te'] ?? 0);
+        if ($te > 0) {
+            $out['te'] = $te;
         }
 
         return $out;

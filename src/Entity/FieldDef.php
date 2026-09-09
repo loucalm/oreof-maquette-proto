@@ -27,8 +27,8 @@ class FieldDef
         'number' => 'Nombre',
         'choice' => 'Liste de choix',
         'competencies' => 'Compétences (référentiel)',
-        'hours' => 'Volume horaire (grille)',
-        'mccc' => 'MCCC (type + précision)',
+        'hours' => 'Volume horaire (présentiel / distanciel / TE)',
+        'mccc' => 'MCCC (type de contrôle)',
     ];
 
     public const SYSTEM_TYPES = ['competencies', 'hours', 'mccc'];

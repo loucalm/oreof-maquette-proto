@@ -37,6 +37,7 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('all_node_types', fn () => $this->types->findAllOrdered()),
             new TwigFunction('node_path', $this->nodePath(...)),
             new TwigFunction('capability_labels', $this->capabilityLabels(...)),
+            new TwigFunction('node_tab_status', $this->nodeTabStatus(...)),
             new TwigFunction('param_nav', $this->paramNav(...)),
             new TwigFunction('period_unit', $this->periodUnit(...)),
             new TwigFunction('param_sections', static fn () => FormationController::PARAM_SECTIONS),
@@ -245,6 +246,55 @@ final class MaquetteExtension extends AbstractExtension
         }
 
         return $path;
+    }
+
+    /**
+     * Statut d'un onglet du panneau de nœud (pastille) : « ok » si les champs
+     * requis de l'onglet sont remplis, « incomplete » s'il en manque, « empty »
+     * si rien n'y est saisi.
+     */
+    public function nodeTabStatus(Node $node, string $tab): string
+    {
+        $caps = $node->effectiveCapabilities();
+
+        if ($tab === 'props') {
+            $missing = trim($node->getLabel()) === '';
+            foreach ($this->catalog->all() as $key => $def) {
+                if (($def['domain'] ?? null) !== 'props' || !($caps[$key] ?? false) || !($def['required'] ?? false)) {
+                    continue;
+                }
+                $v = $node->getAttribute($key);
+                if ($v === null || $v === '' || $v === []) {
+                    $missing = true;
+                }
+            }
+
+            return $missing ? 'incomplete' : 'ok';
+        }
+
+        $required = 0;
+        $filled = 0;
+        foreach ($this->catalog->all() as $key => $def) {
+            if (($def['domain'] ?? null) !== $tab || !($caps[$key] ?? false)) {
+                continue;
+            }
+            $v = $node->getAttribute($key);
+            $has = $key === 'hours'
+                ? AttributeCatalog::hoursProvided($v)
+                : !($v === null || $v === '' || $v === []);
+            if ($def['required'] ?? false) {
+                ++$required;
+                $filled += $has ? 1 : 0;
+            } elseif ($has) {
+                ++$filled;
+            }
+        }
+
+        if ($filled === 0) {
+            return 'empty';
+        }
+
+        return ($required > 0 && $filled < $required) ? 'incomplete' : 'ok';
     }
 
     /** @return array<string, string> */
