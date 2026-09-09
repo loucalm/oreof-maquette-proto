@@ -1,8 +1,22 @@
-{# Arborescence des parcours (ramification). Rendu dans <turbo-frame id="node-panel">. #}
+{# Arborescence des parcours (ramification).
+   - dans l'éditeur : fragment <turbo-frame id="node-panel"> (standalone = false)
+   - ouvert directement : page complète avec en-tête + Tailwind (standalone = true) #}
+{% extends standalone ? 'base.html.twig' : '_frame.html.twig' %}
+{% block title %}{{ formation.name }} · arborescence des parcours{% endblock %}
+
+{% block body %}
 {% set g = graph %}
 
 <turbo-frame id="node-panel">
 <div class="p-6" data-panel-active="parcours">
+    {% if standalone %}
+        <div class="mb-4 text-xs text-gray-400">
+            🏠 <span class="fake-link">Accueil</span> ›
+            <a href="{{ path('formation_index') }}" class="hover:underline">Liste des formations</a> ›
+            <a href="{{ path('formation_view', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
+            Arborescence des parcours
+        </div>
+    {% endif %}
     <div class="mb-1 flex items-center justify-between">
         <div>
             <h2 class="text-xl font-bold">Arborescence des parcours</h2>
@@ -75,3 +89,4 @@
     {% endif %}
 </div>
 </turbo-frame>
+{% endblock %}

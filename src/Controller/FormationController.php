@@ -71,11 +71,14 @@ final class FormationController extends AbstractController
 
     /** Vue arborescence des parcours (ramification) — formations multi-parcours. */
     #[Route('/formations/{id}/parcours', name: 'formation_parcours_graph', methods: ['GET'])]
-    public function parcoursGraph(Formation $formation, \App\Maquette\ParcoursGraph $graph): Response
+    public function parcoursGraph(Request $request, Formation $formation, \App\Maquette\ParcoursGraph $graph): Response
     {
         return $this->render('formation/parcours_graph.html.twig', [
             'formation' => $formation,
             'graph' => $graph->build($formation),
+            // Chargé dans la frame « node-panel » de l'éditeur → fragment seul.
+            // Ouvert directement (lien de la consultation, URL) → page complète.
+            'standalone' => 'node-panel' !== $request->headers->get('Turbo-Frame'),
         ]);
     }
 
