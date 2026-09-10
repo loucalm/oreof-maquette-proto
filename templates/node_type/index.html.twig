@@ -31,6 +31,7 @@
                 <td class="px-4 py-3">
                     <div class="font-medium">{{ t.icon }} {{ t.label }}</div>
                     <code class="text-xs" style="color:var(--c-muted)">{{ t.key }}</code>
+                    {% if t.numbered %}<span class="pill ml-1" title="Numérotation : {{ t.numberStyle }}">№ {{ t.numberStyle == 'alpha' ? 'a,b,c' : (t.numberStyle == 'roman' ? 'i,ii' : '1,2,3') }}</span>{% endif %}
                 </td>
                 <td class="px-4 py-3" style="color:var(--c-muted)">{{ t.family.label }}</td>
                 <td class="px-4 py-3">

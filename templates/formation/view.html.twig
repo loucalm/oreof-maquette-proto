@@ -130,6 +130,7 @@
                 <div class="tree-row" data-action="click->rotree#select" data-rotree-id-param="{{ n.id }}">
                     <span class="status-dot" data-status="{{ view.status }}" title="{{ view.status }}"></span>
                     <span class="type-badge"><span class="opacity-70">{{ n.type.icon }}</span> [{{ n.type.label }}]</span>
+                    {% if view.ref %}<span class="tree-ref">{{ view.ref }}</span>{% endif %}
                     <span class="tree-label">{{ n.label ?: '—' }}</span>
                     {% if view.ectsTarget %}<span class="tree-ects {{ view.ectsReached ? 'text-green-600' : 'text-gray-400' }}">{{ view.totalEcts|round }}/{{ view.ectsTarget }}</span>{% endif %}
                     {% if view.children %}
@@ -154,6 +155,7 @@
             <div class="flex flex-wrap items-center gap-2">
                 <span class="status-dot" data-status="{{ view.status }}"></span>
                 <span class="type-badge">{{ n.type.icon }} [{{ n.type.label }}]</span>
+                {% if view.ref %}<span class="tree-ref">{{ view.ref }}</span>{% endif %}
                 <h3 class="text-lg font-bold">{{ n.label ?: '—' }}</h3>
                 {% if n.code %}<code class="text-xs text-gray-400">{{ n.code }}</code>{% endif %}
             </div>
@@ -254,19 +256,25 @@
         <p class="text-sm text-gray-400 italic">Aucun bloc de compétences.</p>
     {% else %}
         <div class="space-y-3">
+            {% set bcNum = 0 %}
             {% for bloc in blocs %}
+                {% set bcRef = '' %}
+                {% if not bloc.transversalBloc and bloc.type.numbered %}{% set bcNum = bcNum + 1 %}{% set bcRef = bcNum %}{% endif %}
                 <div class="bcc-bloc {{ bloc.transversalBloc ? 'bcc-bloc--transversal' }}">
                     <div class="bcc-bloc-head">
                         <div class="min-w-0 flex-1">
-                            <div class="font-semibold">{% if bloc.transversalBloc %}🎓 {% endif %}{{ bloc.label }}{% if bloc.code %} <span class="text-xs font-normal opacity-70">{{ bloc.code }}</span>{% endif %}</div>
+                            <div class="font-semibold">{% if bloc.transversalBloc %}🎓 {% endif %}{% if bcRef %}BC {{ bcRef }} · {% endif %}{{ bloc.label }}{% if bloc.code %} <span class="text-xs font-normal opacity-70">{{ bloc.code }}</span>{% endif %}</div>
                             {% if bloc.description %}<div class="text-xs opacity-80">{{ bloc.description }}</div>{% endif %}
                         </div>
                     </div>
                     <ul class="bcc-comp-list">
+                        {% set cNum = 0 %}
                         {% for c in bloc.children|filter(c => c.type.key == 'competence') %}
+                            {% set cRef = '' %}
+                            {% if bcRef and c.type.numbered %}{% set cNum = cNum + 1 %}{% set cRef = bcRef ~ '.' ~ cNum %}{% endif %}
                             <li class="bcc-comp"><div class="bcc-comp-row">
                                 <div class="min-w-0 flex-1">
-                                    <div class="font-medium">{{ c.label }}{% if c.code %} <span class="text-xs font-normal text-gray-400">{{ c.code }}</span>{% endif %}</div>
+                                    <div class="font-medium">{% if cRef %}<span class="text-xs font-bold" style="color:var(--c-primary)">{{ cRef }}</span> {% endif %}{{ c.label }}{% if c.code %} <span class="text-xs font-normal text-gray-400">{{ c.code }}</span>{% endif %}</div>
                                     {% if c.description %}<div class="text-xs text-gray-500">{{ c.description }}</div>{% endif %}
                                 </div>
                             </div></li>

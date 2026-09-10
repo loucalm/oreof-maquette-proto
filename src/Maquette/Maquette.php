@@ -83,6 +83,21 @@ final class Maquette
         return $out;
     }
 
+    /** Nombre de nœuds d'un type donné, toutes formations confondues. */
+    public function countNodesOfType(string $typeKey): int
+    {
+        $count = 0;
+        foreach ($this->formations->findAll() as $formation) {
+            foreach ($this->open($formation)->allNodes() as $node) {
+                if ($node->typeKey === $typeKey) {
+                    ++$count;
+                }
+            }
+        }
+
+        return $count;
+    }
+
     // ─── interne ───
 
     /** @return array<string, \App\Entity\NodeType> */

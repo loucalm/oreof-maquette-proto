@@ -68,6 +68,18 @@ class NodeType
     #[ORM\Column(nullable: true)]
     private ?int $ectsTarget = null;
 
+    /**
+     * Ce type porte-t-il une référence hiérarchique calculée (« Année 1 »,
+     * « UE 1.1 ») ? Les niveaux non numérotés (ex. Semestre) sont « transparents »
+     * pour la numérotation : leurs enfants héritent du contexte du parent numéroté.
+     */
+    #[ORM\Column]
+    private bool $numbered = false;
+
+    /** Style de l'indice : "decimal" (1, 2…), "alpha" (a, b…), "roman" (i, ii…). */
+    #[ORM\Column(length: 12)]
+    private string $numberStyle = 'decimal';
+
     /** Type "socle" livré par les fixtures — informatif, non bloquant dans le proto. */
     #[ORM\Column]
     private bool $system = false;
@@ -199,6 +211,32 @@ class NodeType
     public function setEctsTarget(?int $ectsTarget): self
     {
         $this->ectsTarget = $ectsTarget;
+
+        return $this;
+    }
+
+    public const NUMBER_STYLES = ['decimal' => 'Décimal (1, 2, 3…)', 'alpha' => 'Alphabétique (a, b, c…)', 'roman' => 'Romain (i, ii, iii…)'];
+
+    public function isNumbered(): bool
+    {
+        return $this->numbered;
+    }
+
+    public function setNumbered(bool $numbered): self
+    {
+        $this->numbered = $numbered;
+
+        return $this;
+    }
+
+    public function getNumberStyle(): string
+    {
+        return $this->numberStyle;
+    }
+
+    public function setNumberStyle(string $style): self
+    {
+        $this->numberStyle = \array_key_exists($style, self::NUMBER_STYLES) ? $style : 'decimal';
 
         return $this;
     }

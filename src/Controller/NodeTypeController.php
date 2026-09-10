@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Entity\NodeType;
 use App\Enum\NodeFamily;
 use App\Maquette\AttributeCatalog;
+use App\Maquette\Maquette;
 use App\Repository\NodeTypeRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -58,6 +59,8 @@ final class NodeTypeController extends AbstractController
                 ->setFamily(NodeFamily::from((string) $request->request->get('family', 'structural')))
                 ->setPosition($request->request->getInt('position'))
                 ->setEctsTarget($request->request->get('ectsTarget') !== '' ? $request->request->getInt('ectsTarget') : null)
+                ->setNumbered($request->request->getBoolean('numbered'))
+                ->setNumberStyle((string) $request->request->get('numberStyle', 'decimal'))
                 ->setCapabilities(array_fill_keys($request->request->all('capabilities'), true))
                 ->setLockedCapabilities($request->request->all('lockedCapabilities'));
 
@@ -76,11 +79,9 @@ final class NodeTypeController extends AbstractController
     }
 
     #[Route('/node-types/{id}/delete', name: 'node_type_delete', methods: ['POST'])]
-    public function delete(NodeType $nodeType, EntityManagerInterface $em): Response
+    public function delete(NodeType $nodeType, EntityManagerInterface $em, Maquette $maquette): Response
     {
-        $used = (int) $em->createQuery('SELECT COUNT(n.id) FROM App\Entity\Node n WHERE n.type = :t')
-            ->setParameter('t', $nodeType)
-            ->getSingleScalarResult();
+        $used = $maquette->countNodesOfType($nodeType->getKey());
         if ($used > 0) {
             $this->addFlash('warning', sprintf(
                 'Impossible de supprimer « %s » : %d nœud(s) l’utilisent encore.',

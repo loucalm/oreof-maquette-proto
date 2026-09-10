@@ -47,6 +47,25 @@
             chaque formation, dans « Configuration de la structure ».
         </p>
 
+        <fieldset class="rounded-md border p-3" style="border-color:var(--c-border)">
+            <legend class="text-xs font-medium px-1">Numérotation automatique</legend>
+            <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="numbered" value="1" {{ (nodeType.numbered ?? false) ? 'checked' }}>
+                Ce type porte une référence calculée (« Année 1 », « UE 1.1 »…)
+            </label>
+            <label class="mt-2 flex items-center gap-2 text-sm">
+                <span class="text-xs" style="color:var(--c-muted)">Style de l'indice</span>
+                <select name="numberStyle" class="rounded-md border px-2 py-1 text-sm" style="border-color:var(--c-border)">
+                    {% for v, l in constant('App\\Entity\\NodeType::NUMBER_STYLES') %}
+                        <option value="{{ v }}" {{ (nodeType.numberStyle ?? 'decimal') == v ? 'selected' }}>{{ l }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <p class="mt-2 text-xs" style="color:var(--c-muted)">
+                Un type non numéroté (ex. Semestre) est « transparent » : ses enfants héritent du contexte du parent numéroté.
+            </p>
+        </fieldset>
+
         <fieldset>
             <legend class="text-xs font-medium mb-1">Capacités &amp; champs du type</legend>
             <p class="text-xs mb-2" style="color:var(--c-muted)">

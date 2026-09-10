@@ -40,6 +40,33 @@ final class MaquetteBuilder
         return $view;
     }
 
+    /**
+     * Vue d'un nœud AVEC sa référence hiérarchique correcte (numérotée depuis
+     * les racines de la formation), pour le panneau d'édition.
+     */
+    public function locate(Formation $formation, string $nid): ?NodeView
+    {
+        return $this->findView($this->build($formation), $nid);
+    }
+
+    /**
+     * @param list<NodeView> $views
+     */
+    private function findView(array $views, string $nid): ?NodeView
+    {
+        foreach ($views as $v) {
+            if ($v->node->getId() === $nid) {
+                return $v;
+            }
+            $found = $this->findView($v->children, $nid);
+            if ($found !== null) {
+                return $found;
+            }
+        }
+
+        return null;
+    }
+
     private function view(TreeNode $node): NodeView
     {
         // le BCC (famille compétence) est un arbre parallèle : jamais dans la

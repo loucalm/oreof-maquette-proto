@@ -85,7 +85,7 @@
                     <span class="drag-handle" data-bcc-handle title="Glisser pour réordonner">⠿</span>
                     <div class="min-w-0 flex-1">
                         <div class="font-semibold">
-                            {% if b.transversal %}<span class="opacity-80">🎓 </span>{% endif %}{{ n.label }}
+                            {% if b.transversal %}<span class="opacity-80">🎓 </span>{% endif %}{% if b.ref %}<span class="opacity-80">BC {{ b.ref }} · </span>{% endif %}{{ n.label }}
                             {% if n.code %}<span class="ml-1 text-xs font-normal opacity-70">{{ n.code }}</span>{% endif %}
                         </div>
                         {% if n.description %}<div class="text-xs opacity-80">{{ n.description }}</div>{% endif %}
@@ -97,12 +97,13 @@
                     <div data-bcc-node="{{ n.id }}">{{ bcc.editform(n, 'bloc') }}</div>
 
                     <ul class="bcc-comp-list {{ b.competences is empty ? 'bcc-comp-list--empty' }}" data-bcc-target="compList" data-parent-id="{{ n.id }}">
-                        {% for c in b.competences %}
+                        {% for row in b.competences %}
+                            {% set c = row.node %}
                             <li class="bcc-comp" data-node-id="{{ c.id }}">
                                 <div class="bcc-comp-row">
                                     <span class="drag-handle" data-bcc-handle title="Glisser">⠿</span>
                                     <div class="min-w-0 flex-1">
-                                        <div class="font-medium">{{ c.label }}{% if c.code %}<span class="ml-1 text-xs font-normal text-gray-400">{{ c.code }}</span>{% endif %}</div>
+                                        <div class="font-medium">{% if row.ref %}<span class="text-xs font-bold" style="color:var(--c-primary)">{{ row.ref }}</span> {% endif %}{{ c.label }}{% if c.code %}<span class="ml-1 text-xs font-normal text-gray-400">{{ c.code }}</span>{% endif %}</div>
                                         {% if c.description %}<div class="text-xs text-gray-500">{{ c.description }}</div>{% endif %}
                                     </div>
                                     <button type="button" class="bcc-edit-btn bcc-edit-btn--light" data-action="bcc#toggle" data-bcc-id-param="{{ c.id }}" title="Modifier / supprimer">✎</button>

@@ -8,6 +8,7 @@ use App\Entity\Formation;
 use App\Maquette\Doc\MaquetteDoc;
 use App\Maquette\Doc\TreeNode;
 use App\Maquette\Maquette;
+use App\Maquette\Numbering;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -32,6 +33,7 @@ final class BccController extends AbstractController
 
     public function __construct(
         private readonly Maquette $maquette,
+        private readonly Numbering $numbering,
     ) {
     }
 
@@ -179,9 +181,9 @@ final class BccController extends AbstractController
             return $this->contextRedirect($formation, $parcours);
         }
 
-        $regular = array_filter($blocs, static fn (TreeNode $b) => !$b->isTransversalBloc());
+        // le libellé n'embarque plus « BC N » : la référence « BC 1 » est calculée
         $label = trim((string) $request->request->get('label'))
-            ?: ($transversal ? 'Compétences transversales (RNCP)' : 'BC '.(\count($regular) + 1));
+            ?: ($transversal ? 'Compétences transversales (RNCP)' : 'Nouveau bloc de compétences');
 
         $bloc = $doc->addNode($parcours?->getId(), self::BLOC, $label);
         if ($transversal) {
@@ -220,17 +222,33 @@ final class BccController extends AbstractController
     /**
      * @param list<TreeNode> $blocs
      *
-     * @return list<array{node: TreeNode, competences: list<TreeNode>, transversal: bool}>
+     * @return list<array{node: TreeNode, ref: string, transversal: bool, competences: list<array{node: TreeNode, ref: string}>}>
      */
     private function buildTree(array $blocs): array
     {
         $out = [];
+        $regularIdx = 0;
         foreach ($blocs as $bloc) {
-            $comps = array_values(array_filter(
-                $bloc->getChildren(),
-                static fn (TreeNode $c) => $c->getType()->getKey() === self::COMPETENCE,
-            ));
-            $out[] = ['node' => $bloc, 'competences' => $comps, 'transversal' => $bloc->isTransversalBloc()];
+            $transversal = $bloc->isTransversalBloc();
+            $blocRef = '';
+            if (!$transversal && $bloc->getType()->isNumbered()) {
+                $blocRef = $this->numbering->format(++$regularIdx, $bloc->getType()->getNumberStyle());
+            }
+
+            $comps = [];
+            $ci = 0;
+            foreach ($bloc->getChildren() as $c) {
+                if ($c->getType()->getKey() !== self::COMPETENCE) {
+                    continue;
+                }
+                $ref = '';
+                if ($blocRef !== '' && $c->getType()->isNumbered()) {
+                    $ref = $blocRef.'.'.$this->numbering->format(++$ci, $c->getType()->getNumberStyle());
+                }
+                $comps[] = ['node' => $c, 'ref' => $ref];
+            }
+
+            $out[] = ['node' => $bloc, 'ref' => $blocRef, 'transversal' => $transversal, 'competences' => $comps];
         }
 
         return $out;

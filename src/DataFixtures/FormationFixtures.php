@@ -65,7 +65,7 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
         $arbre = [
             $this->node('annee', 'Année 1', [], [
                 $this->node('semestre', 'Semestre 1', [], [
-                    $this->node('ue', 'UE 1.1 — Programmation', ['ects' => 6, 'nature' => 'obligatoire', 'ueType' => 'disciplinaire'], [
+                    $this->node('ue', 'Programmation', ['ects' => 6, 'nature' => 'obligatoire', 'ueType' => 'disciplinaire'], [
                         $this->node('ec', 'Algorithmique', [
                             'ects' => 3, 'nature' => 'obligatoire', 'ecType' => 'cm', 'competencies' => ['1A', '1B'],
                             'ficheMatiere' => 'Fiche — Algorithmique',
@@ -79,7 +79,7 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
                             'mccc' => ['type' => 'CC_CT'],
                         ], [], 'INF-LANGC'),
                     ]),
-                    $this->node('ue', 'UE 1.2 — Mathématiques', ['ects' => 6, 'nature' => 'obligatoire'], [
+                    $this->node('ue', 'Mathématiques', ['ects' => 6, 'nature' => 'obligatoire'], [
                         $this->node('ec', 'Analyse', ['ects' => 3, 'nature' => 'obligatoire', 'hours' => ['pres' => ['cm' => 20]]], [], 'MAT-ANA'),
                         $this->node('ec', 'Algèbre', ['nature' => 'obligatoire']), // volontairement vide
                     ]),
@@ -96,25 +96,25 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
                 ['Se documenter', 'Rechercher, évaluer et exploiter une information technique.'],
                 ['Agir en responsabilité', 'Prendre en compte les enjeux éthiques, juridiques et de sécurité.'],
             ], true),
-            $this->bloc('BC 1 — Développer une application', [
+            $this->bloc('Développer une application', [
                 ['1A', 'Concevoir et implémenter des algorithmes adaptés à un problème.'],
                 ['1B', 'Programmer dans plusieurs paradigmes (impératif, objet).'],
                 ['1C', 'Tester et documenter un logiciel.'],
                 ['1D', 'Utiliser un gestionnaire de versions et un outil de build.'],
                 ['1E', 'Concevoir une interface utilisateur simple.'],
             ]),
-            $this->bloc('BC 2 — Administrer des données et des systèmes', [
+            $this->bloc('Administrer des données et des systèmes', [
                 ['2A', 'Modéliser et interroger une base de données relationnelle.'],
                 ['2B', "Administrer un système d'exploitation et ses services."],
                 ['2C', 'Configurer un réseau local et diagnostiquer une panne.'],
                 ['2D', 'Mettre en place une sauvegarde et une restauration.'],
             ]),
-            $this->bloc('BC 3 — Mobiliser les mathématiques pour l’informatique', [
+            $this->bloc('Mobiliser les mathématiques pour l’informatique', [
                 ['3A', "Utiliser l'algèbre linéaire et l'analyse pour modéliser."],
                 ['3B', 'Raisonner avec la logique et les mathématiques discrètes.'],
                 ['3C', 'Appliquer les probabilités et les statistiques à des données.'],
             ]),
-            $this->bloc('BC 4 — Conduire un projet', [
+            $this->bloc('Conduire un projet', [
                 ['4A', 'Analyser un besoin et rédiger un cahier des charges.'],
                 ['4B', "Planifier et suivre l'avancement d'un projet."],
                 ['4C', 'Présenter et soutenir un livrable devant un jury.'],
@@ -198,7 +198,7 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
                             $this->node('ue', 'UE Programmation avancée', ['ects' => 6]),
                         ]),
                     ]),
-                    $this->bloc('BC 1 — Concevoir un système logiciel', [
+                    $this->bloc('Concevoir un système logiciel', [
                         ['C1', 'Analyser un besoin et spécifier une solution.'],
                         ['C2', 'Concevoir une architecture logicielle.'],
                         ['C3', ''],

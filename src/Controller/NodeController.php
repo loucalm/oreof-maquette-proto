@@ -39,7 +39,7 @@ final class NodeController extends AbstractController
         $node = $this->node($formation, $nid);
 
         return $this->render('node/panel.html.twig', [
-            'view' => $this->builder->buildSubtree($node),
+            'view' => $this->builder->locate($formation, $nid) ?? $this->builder->buildSubtree($node),
             'node' => $node,
             'catalog' => $this->catalog->all(),
             'domains' => $this->catalog->domains(),

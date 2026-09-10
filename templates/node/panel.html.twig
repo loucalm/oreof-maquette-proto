@@ -13,7 +13,9 @@
 
     <div class="panel-head">
         <h2 class="text-xl font-bold">Gestion de la structure</h2>
-        <div class="text-sm text-gray-400">{{ T }}</div>
+        <div class="text-sm text-gray-400">
+            {{ T }}{% if view.ref %} <span class="font-bold" style="color:var(--c-primary)">{{ view.ref }}</span>{% endif %}
+        </div>
         <div class="text-sm text-gray-400 mt-1">
             {{ formation.name }}
             {%- for p in node_path(node) %} › {{ p.label ?: p.type.label }}{% endfor -%}
