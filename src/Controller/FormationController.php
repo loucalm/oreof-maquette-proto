@@ -107,6 +107,35 @@ final class FormationController extends AbstractController
         ]);
     }
 
+    #[Route('/formations/{id}/export', name: 'formation_export', methods: ['GET'])]
+    public function export(Formation $formation, Request $request, \App\Maquette\MaquetteExporter $exporter): Response
+    {
+        $view = $request->query->get('view') === 'enriched' ? 'enriched' : 'raw';
+        $data = $view === 'enriched' ? $exporter->enriched($formation) : $exporter->raw($formation);
+
+        return $this->render('formation/export.html.twig', [
+            'formation' => $formation,
+            'view' => $view,
+            'json' => json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+        ]);
+    }
+
+    #[Route('/formations/{id}/export.json', name: 'formation_export_json', methods: ['GET'])]
+    public function exportJson(Formation $formation, Request $request, \App\Maquette\MaquetteExporter $exporter): Response
+    {
+        $enriched = $request->query->get('view') === 'enriched';
+        $data = $enriched ? $exporter->enriched($formation) : $exporter->raw($formation);
+
+        $slug = preg_replace('/[^a-z0-9]+/i', '-', strtolower($formation->getName())) ?: 'maquette';
+        $name = sprintf('%s-%s.json', trim($slug, '-'), $enriched ? 'enrichi' : 'brut');
+
+        $response = new \Symfony\Component\HttpFoundation\JsonResponse($data);
+        $response->setEncodingOptions($response->getEncodingOptions() | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $response->headers->set('Content-Disposition', sprintf('attachment; filename="%s"', $name));
+
+        return $response;
+    }
+
     /** Vue arborescence des parcours (ramification) — formations multi-parcours. */
     #[Route('/formations/{id}/parcours', name: 'formation_parcours_graph', methods: ['GET'])]
     public function parcoursGraph(Request $request, Formation $formation, \App\Maquette\ParcoursGraph $graph): Response
