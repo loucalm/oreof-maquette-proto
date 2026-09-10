@@ -1,10 +1,11 @@
-{% extends 'base.html.twig' %}
+{% extends 'admin/_layout.html.twig' %}
+{% set adminSection = 'types' %}
 {% block title %}Types de nœuds{% endblock %}
 
-{% block body %}
+{% block admin_body %}
 <div class="flex items-start justify-between mb-5">
     <div>
-        <h1 class="text-xl font-bold">Types de nœuds</h1>
+        <h2 class="text-lg font-bold">Types de nœuds</h2>
         <p class="text-sm" style="color:var(--c-muted)">
             Le métamodèle. Créez / modifiez les types et leurs capacités. La hiérarchie (qui contient qui)
             est propre à chaque formation, dans « Configuration de la structure ».

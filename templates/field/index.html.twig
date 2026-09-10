@@ -1,10 +1,11 @@
-{% extends 'base.html.twig' %}
+{% extends 'admin/_layout.html.twig' %}
+{% set adminSection = 'fields' %}
 {% block title %}Champs des formulaires{% endblock %}
 
-{% block body %}
+{% block admin_body %}
 <div class="flex items-start justify-between mb-5">
     <div>
-        <h1 class="text-xl font-bold">Champs des formulaires de nœud</h1>
+        <h2 class="text-lg font-bold">Champs des formulaires de nœud</h2>
         <p class="text-sm" style="color:var(--c-muted)">
             Les champs saisissables sur les nœuds, leur onglet et leur catégorie.
             Un type de nœud active ensuite les champs qui le concernent (via ses capacités).

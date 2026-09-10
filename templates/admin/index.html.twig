@@ -1,0 +1,37 @@
+{% extends 'admin/_layout.html.twig' %}
+{% set adminSection = 'overview' %}
+{% block title %}Administration{% endblock %}
+
+{% block admin_body %}
+{% set sections = constant('App\\Controller\\AdminController::SECTIONS') %}
+
+<div class="grid gap-4 md:grid-cols-2">
+    {% for card in cards %}
+        {% set s = sections[card.section] %}
+        <a href="{{ path(s.route) }}"
+           class="group flex flex-col rounded-xl border bg-white p-5 hover:shadow-sm hover:border-gray-300 transition"
+           style="border-color:var(--c-border)">
+            <div class="flex items-start justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <span class="grid h-9 w-9 place-items-center rounded-lg text-lg" style="background:var(--c-primary-soft)">{{ s.icon }}</span>
+                    <div>
+                        <div class="font-semibold">{{ s.label }}</div>
+                        <div class="text-xs text-gray-400">{{ card.count }} · {{ card.sub }}</div>
+                    </div>
+                </div>
+                <span class="text-gray-300 group-hover:text-[var(--c-primary)]">→</span>
+            </div>
+            <p class="mt-3 text-sm text-gray-500">{{ card.text }}</p>
+        </a>
+    {% endfor %}
+</div>
+
+<div class="mt-6 rounded-xl border px-5 py-4 text-sm" style="border-color:#c7d2fe;background:var(--c-primary-soft)">
+    <div class="font-semibold" style="color:var(--c-primary)">Où se configure quoi&nbsp;?</div>
+    <ul class="mt-1.5 space-y-1 text-gray-600">
+        <li>• La <strong>hiérarchie</strong> des niveaux (qui contient qui) est propre à chaque formation : « Configuration de la structure » dans son éditeur.</li>
+        <li>• Les <strong>paramètres d’une formation / d’un parcours</strong> (organisation, présentation…) se saisissent dans l’éditeur concerné.</li>
+        <li>• Ici on définit ce qui est <strong>commun</strong> : les types, les champs, les squelettes et les listes de valeurs.</li>
+    </ul>
+</div>
+{% endblock %}

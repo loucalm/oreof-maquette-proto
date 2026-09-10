@@ -1,4 +1,5 @@
 {% import 'formation/param/_fields.html.twig' as fld %}
+{% set R = 'App\\Maquette\\Referentiels' %}
 <turbo-frame id="node-panel">
 <div class="panel-body" data-panel-active="param:{{ key }}">
     <div class="panel-head">
@@ -21,7 +22,7 @@
             <div>
                 {{ fld.label('Type de diplôme', true, 'Licence, Master, BUT, DU, Ingénieur, etc.') }}
                 <select name="diplome" class="fld mt-1">
-                    {% for d in ['Licence', 'Licence professionnelle', 'BUT', 'Master', 'DU', 'Ingénieur', 'DAEU'] %}
+                    {% for d in constant(R ~ '::DIPLOMES') %}
                         <option value="{{ d }}" {{ formation.diplome == d ? 'selected' }}>{{ d }}</option>
                     {% endfor %}
                 </select>
@@ -30,7 +31,7 @@
                 {{ fld.label('Domaine de formation', true, 'Domaine auquel appartient votre formation') }}
                 <select name="domaine" class="fld mt-1">
                     <option value="">-Choisir-</option>
-                    {% for d in ['Sciences, technologies, santé', 'Droit, économie, gestion', 'Sciences humaines et sociales', 'Arts, lettres, langues'] %}
+                    {% for d in constant(R ~ '::DOMAINES') %}
                         <option value="{{ d }}" {{ formation.domaine == d ? 'selected' }}>{{ d }}</option>
                     {% endfor %}
                 </select>
@@ -49,17 +50,17 @@
 
         <div>
             {{ fld.label('Mention / spécialité', false) }}
-            {{ fld.select('mention', data.mention ?? '', ['Informatique', 'Mathématiques', 'Physique', 'MIAGE']) }}
+            {{ fld.select('mention', data.mention ?? '', constant(R ~ '::MENTIONS')) }}
             <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">＋ Ajouter une autre mention/spécialité</span></div>
         </div>
         <div class="grid gap-5 md:grid-cols-2">
             <div>
                 {{ fld.label("Niveau d'entrée en formation", true) }}
-                {{ fld.select('niveauEntree', data.niveauEntree ?? '', ['Baccalauréat', 'Bac+1', 'Bac+2', 'Bac+3', 'Bac+4']) }}
+                {{ fld.select('niveauEntree', data.niveauEntree ?? '', constant(R ~ '::NIVEAUX_ENTREE')) }}
             </div>
             <div>
                 {{ fld.label('Niveau de sortie de la formation', true) }}
-                {{ fld.select('niveauSortie', data.niveauSortie ?? '', ['Bac+2', 'Bac+3', 'Bac+5']) }}
+                {{ fld.select('niveauSortie', data.niveauSortie ?? '', constant(R ~ '::NIVEAUX_SORTIE')) }}
             </div>
         </div>
         <div class="grid gap-5 md:grid-cols-2">
@@ -85,12 +86,12 @@
         <div class="grid gap-5 md:grid-cols-2">
             <div>
                 {{ fld.label('Responsable de la mention', true, 'Responsable principale de la mention') }}
-                {{ fld.select('respMention', data.respMention ?? '', ['A. Martin', 'B. Dupont', 'C. Bernard'], 'Choisir dans la liste ou "+ nouveau"') }}
+                {{ fld.select('respMention', data.respMention ?? '', constant(R ~ '::RESPONSABLES'), 'Choisir dans la liste ou "+ nouveau"') }}
                 <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">＋ Créer nouveau</span></div>
             </div>
             <div>
                 {{ fld.label('Co-responsable de la mention', false, 'Co-responsable de la mention') }}
-                {{ fld.select('coRespMention', data.coRespMention ?? '', ['A. Martin', 'B. Dupont', 'C. Bernard'], 'Choisir dans la liste ou "+ nouveau"') }}
+                {{ fld.select('coRespMention', data.coRespMention ?? '', constant(R ~ '::RESPONSABLES'), 'Choisir dans la liste ou "+ nouveau"') }}
                 <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">＋ Créer nouveau</span></div>
             </div>
         </div>

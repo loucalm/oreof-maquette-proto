@@ -259,7 +259,7 @@
             </div>
         {% endif %}
     {% elseif key == 'ficheMatiere' %}
-        {% set fiches = ['Fiche — Algorithmique', 'Fiche — Programmation', 'Fiche — Bases de données', 'Fiche — Mathématiques'] %}
+        {% set fiches = constant('App\\Maquette\\Referentiels::FICHES_MATIERE') %}
         <select name="attr_ficheMatiere" class="fld">
             <option value="">Choisir dans la liste ou « ＋ Créer une nouvelle »…</option>
             {% for f in fiches %}<option value="{{ f }}" {{ val == f ? 'selected' }}>{{ f }}</option>{% endfor %}

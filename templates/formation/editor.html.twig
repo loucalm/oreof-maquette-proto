@@ -70,7 +70,24 @@
         <span class="fake-btn" style="color:#b45309;border-color:#fcd34d">⇄ Changer co/resp. formation</span>
         <span class="fake-btn">⚙ Action complémentaire ⌄</span>
         <span class="fake-btn">⬇ Export</span>
-        <span class="fake-btn">≣ Gestion SES ⌄</span>
+        <div class="relative" data-controller="menu">
+            <button type="button" data-action="menu#toggle"
+                    class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    style="border-color:var(--c-border)">≣ Gestion SES <span class="text-gray-400">⌄</span></button>
+            <div data-menu-target="menu" hidden
+                 class="absolute right-0 z-30 mt-1 w-64 rounded-xl border bg-white py-1.5 text-sm shadow-lg"
+                 style="border-color:var(--c-border)">
+                <div class="px-3 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Administration</div>
+                <a href="{{ path('admin_index') }}" class="block px-3 py-2 hover:bg-gray-50">⚙ Vue d’ensemble</a>
+                <a href="{{ path('node_type_index') }}" class="block px-3 py-2 hover:bg-gray-50">🧩 Types de nœud</a>
+                <a href="{{ path('field_index') }}" class="block px-3 py-2 hover:bg-gray-50">📝 Champs des formulaires</a>
+                <a href="{{ path('template_index') }}" class="block px-3 py-2 hover:bg-gray-50">🗂 Templates de structure</a>
+                <a href="{{ path('admin_referentiels') }}" class="block px-3 py-2 hover:bg-gray-50">📚 Référentiels</a>
+                <div class="my-1 border-t" style="border-color:var(--c-border)"></div>
+                <a href="{{ path('formation_editor', {id: formation.id, param: 'structure'}) }}"
+                   class="block px-3 py-2 hover:bg-gray-50">↳ Configuration de la structure de cette formation</a>
+            </div>
+        </div>
     </div>
 </div>
 

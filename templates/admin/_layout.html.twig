@@ -1,0 +1,31 @@
+{# Coquille commune de l'administration : en-tête + onglets de navigation.
+   Chaque page d'admin fait {% set adminSection = '<clé>' %} puis remplit
+   {% block admin_body %}. #}
+{% extends 'base.html.twig' %}
+
+{% set _sections = constant('App\\Controller\\AdminController::SECTIONS') %}
+{% set adminSection = adminSection ?? 'overview' %}
+
+{% block body %}
+<div class="mb-4">
+    <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Administration</div>
+    <h1 class="text-2xl font-extrabold tracking-tight">Paramétrage de l’offre de formation</h1>
+    <p class="text-sm text-gray-500">
+        Le métamodèle (types de nœud, champs), les squelettes réutilisables et les nomenclatures.
+        « Rien n’est figé » : tout se configure ici.
+    </p>
+</div>
+
+<nav class="flex flex-wrap gap-1 border-b mb-6" style="border-color:var(--c-border)">
+    {% for key, s in _sections %}
+        {% set active = key == adminSection %}
+        <a href="{{ path(s.route) }}"
+           class="-mb-px rounded-t-lg border-b-2 px-3.5 py-2 text-sm font-medium {{ active ? '' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}"
+           style="border-color:{{ active ? 'var(--c-primary)' : 'transparent' }};{{ active ? 'color:var(--c-primary)' }}">
+            {{ s.icon }} {{ s.label }}
+        </a>
+    {% endfor %}
+</nav>
+
+{% block admin_body %}{% endblock %}
+{% endblock %}

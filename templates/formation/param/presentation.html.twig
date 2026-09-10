@@ -1,4 +1,5 @@
 {% import 'formation/param/_fields.html.twig' as fld %}
+{% set R = 'App\\Maquette\\Referentiels' %}
 <turbo-frame id="node-panel">
 <div class="panel-body" data-panel-active="param:{{ key }}">
     <div class="panel-head">
@@ -30,7 +31,7 @@
 
         <div>
             {{ fld.label('Rythme de la formation', false, 'Choisissez un rythme de formation ou complétez le champ ci-dessous') }}
-            {{ fld.select('rythme', data.rythme ?? '', ['Temps plein', 'Alternance', 'Temps partiel', 'À distance']) }}
+            {{ fld.select('rythme', data.rythme ?? '', constant(R ~ '::RYTHMES')) }}
         </div>
         <div>
             {{ fld.label('Si besoin, précisez le rythme de formation', false) }}

@@ -1,0 +1,69 @@
+{% extends 'admin/_layout.html.twig' %}
+{% set adminSection = 'referentiels' %}
+{% block title %}Référentiels{% endblock %}
+
+{# rangée : valeurs = liste de libellés, ou map {clé: libellé} #}
+{% macro row(title, help, values) %}
+    <div>
+        <div class="fld-label">{{ title }}</div>
+        {% if help %}<div class="fld-help mb-1.5">{{ help }}</div>{% else %}<div class="mb-1.5"></div>{% endif %}
+        <div class="flex flex-wrap gap-1.5">
+            {% for k, label in values %}
+                <span class="rounded-md border px-2 py-0.5 text-xs" style="border-color:var(--c-border);background:#fff">
+                    {{ label }}{% if k is not same as(loop.index0) and k != label %}<span class="text-gray-400"> · {{ k }}</span>{% endif %}
+                </span>
+            {% endfor %}
+        </div>
+    </div>
+{% endmacro %}
+
+{% block admin_body %}
+{% import _self as ui %}
+
+<div class="mb-5">
+    <h2 class="text-lg font-bold">Référentiels &amp; nomenclatures</h2>
+    <p class="text-sm text-gray-500">
+        Les listes de valeurs proposées dans les formulaires. Dans le prototype elles sont figées ;
+        dans une instance réelle elles seraient administrées ici.
+    </p>
+</div>
+
+<div class="space-y-4">
+
+    <div class="rounded-xl border bg-white p-5 space-y-4" style="border-color:var(--c-border)">
+        <div class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">Métamodèle</div>
+        {% set famMap = {} %}
+        {% for f in families %}{% set famMap = famMap|merge({(f.value): f.label}) %}{% endfor %}
+        {{ ui.row('Familles de type de nœud', 'Déterminent le rendu et l’emplacement d’un type.', famMap) }}
+        {{ ui.row('Types de saisie d’un champ', 'Choisis à la création d’un champ.', fieldTypes) }}
+    </div>
+
+    {% if choiceFields %}
+        <div class="rounded-xl border bg-white p-5 space-y-3" style="border-color:var(--c-border)">
+            <div class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">
+                Options des champs « liste » / « radio »
+                <a href="{{ path('field_index') }}" class="ml-2 font-normal normal-case text-gray-400 underline">modifier dans Champs</a>
+            </div>
+            {% for f in choiceFields %}
+                {{ ui.row(f.label ~ '  (' ~ f.key ~ ')', null, f.options) }}
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="rounded-xl border bg-white p-5 space-y-4" style="border-color:var(--c-border)">
+        <div class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">Évaluation &amp; volume horaire</div>
+        {% set mccc = {} %}
+        {% for k, v in mcccTypes %}{% set mccc = mccc|merge({(k): v.short ~ ' — ' ~ v.label}) %}{% endfor %}
+        {{ ui.row('Types de MCCC', 'Contrôle continu intégral, mixte, terminal…', mccc) }}
+        {{ ui.row('Modalités d’heures', null, hourModalities) }}
+        {{ ui.row('Lieux', 'Le volume « travail étudiant (TE) » est un total global à part.', hourPlaces) }}
+    </div>
+
+    <div class="rounded-xl border bg-white p-5 space-y-4" style="border-color:var(--c-border)">
+        <div class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">Nomenclatures de l’offre de formation</div>
+        {% for title, ref in referentiels %}
+            {{ ui.row(title, ref.description, ref.values) }}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

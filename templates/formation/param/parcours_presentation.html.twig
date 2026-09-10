@@ -1,6 +1,7 @@
 {# « Présentation » d'un parcours (formation multi-parcours).
    data = Node.parametres['presentation']. #}
 {% import 'formation/param/_fields.html.twig' as fld %}
+{% set R = 'App\\Maquette\\Referentiels' %}
 <turbo-frame id="node-panel">
 <div class="panel-body" data-panel-active="param:{{ key }}">
     <div class="panel-head">
@@ -32,18 +33,18 @@
         </div>
         <div>
             {{ fld.label("Langue d'enseignement", true, "Langue dans laquelle sont dispensés les cours (à l'exception des cours de langue)") }}
-            {{ fld.selectAdd('langue', data.langue ?? '', ['Français', 'Anglais', 'Français et anglais', 'Autre'], 'Ajouter une langue') }}
+            {{ fld.selectAdd('langue', data.langue ?? '', constant(R ~ '::LANGUES'), 'Ajouter une langue') }}
         </div>
         <div>
             {{ fld.label('Niveau de langue requis', true, 'Indiquez le niveau de langue souhaité pour intégrer le parcours') }}
-            {{ fld.selectAdd('niveauLangue', data.niveauLangue ?? '', ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'], 'Ajouter une langue') }}
+            {{ fld.selectAdd('niveauLangue', data.niveauLangue ?? '', constant(R ~ '::NIVEAUX_LANGUE'), 'Ajouter une langue') }}
         </div>
 
         {{ fld.divider('Rythme de formation') }}
 
         <div>
             {{ fld.label('Rythme de formation du parcours', false, 'Choisissez un rythme de formation ou complétez le champ ci-dessous') }}
-            {{ fld.select('rythme', data.rythme ?? '', ['Temps plein', 'Alternance', 'Temps partiel', 'À distance']) }}
+            {{ fld.select('rythme', data.rythme ?? '', constant(R ~ '::RYTHMES')) }}
         </div>
         <div>
             {{ fld.label('Si besoin, précisez le rythme de formation', false) }}
@@ -69,12 +70,7 @@
         </div>
         <div>
             {{ fld.label('Code(s) ROME', true, 'Ajoutez les codes ROME pour préciser les métiers accessibles aux diplômés.') }}
-            {{ fld.selectAdd('codesRome', data.codesRome ?? '', [
-                'M1805 — Études et développement informatique',
-                'M1802 — Expertise et support en systèmes d’information',
-                'M1806 — Conseil et maîtrise d’ouvrage en systèmes d’information',
-                'H1206 — Management et ingénierie études, recherche et développement industriel'
-            ], 'Ajouter un code ROME') }}
+            {{ fld.selectAdd('codesRome', data.codesRome ?? '', constant(R ~ '::CODES_ROME'), 'Ajouter un code ROME') }}
         </div>
 
         <div class="pt-2 border-t" style="border-color:var(--c-border)">

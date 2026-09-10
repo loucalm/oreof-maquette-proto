@@ -1,10 +1,6 @@
 {% import 'formation/param/_fields.html.twig' as fld %}
-{% set regimeChoices = {
-    'FI': 'Formation initiale',
-    'FI_APP': 'Formation initiale en apprentissage',
-    'FC': 'Formation continue',
-    'FC_PRO': 'Formation continue en contrat de professionnalisation'
-} %}
+{% set R = 'App\\Maquette\\Referentiels' %}
+{% set regimeChoices = constant(R ~ '::REGIMES_INSCRIPTION') %}
 <turbo-frame id="node-panel">
 <div class="panel-body" data-panel-active="param:{{ key }}" data-controller="modal">
     <div class="panel-head">
@@ -111,7 +107,7 @@
 
                 <div>
                     {{ fld.label("Langue d'enseignement", true, "Langue dans laquelle sont dispensés les cours (à l'exception des cours de langue)") }}
-                    {{ fld.select('langue', data.langue ?? '', ['Français', 'Anglais', 'Français et anglais', 'Autre']) }}
+                    {{ fld.select('langue', data.langue ?? '', constant(R ~ '::LANGUES')) }}
                     <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">＋ Ajouter une langue</span></div>
                 </div>
 
@@ -127,12 +123,7 @@
                 </div>
                 <div>
                     {{ fld.label('Code(s) ROME', true, 'Ajoutez les codes ROME pour préciser les métiers accessibles aux diplômés.') }}
-                    {{ fld.select('codesRome', data.codesRome ?? '', [
-                        'M1805 — Études et développement informatique',
-                        'M1802 — Expertise et support en systèmes d’information',
-                        'M1806 — Conseil et maîtrise d’ouvrage en systèmes d’information',
-                        'H1206 — Management et ingénierie études, recherche et développement industriel'
-                    ]) }}
+                    {{ fld.select('codesRome', data.codesRome ?? '', constant(R ~ '::CODES_ROME')) }}
                     <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">＋ Ajouter un code ROME</span></div>
                 </div>
 

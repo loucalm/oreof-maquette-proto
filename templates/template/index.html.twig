@@ -1,8 +1,9 @@
-{% extends 'base.html.twig' %}
+{% extends 'admin/_layout.html.twig' %}
+{% set adminSection = 'templates' %}
 {% block title %}Templates de structure{% endblock %}
 
-{% block body %}
-<h1 class="text-xl font-bold">Templates de structure</h1>
+{% block admin_body %}
+<h2 class="text-lg font-bold">Templates de structure</h2>
 <p class="text-sm mb-5" style="color:var(--c-muted)">
     Une base réutilisable, instanciée dans une formation puis librement modifiable.
 </p>

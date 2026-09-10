@@ -188,7 +188,7 @@
                             <span class="text-[11px] font-semibold text-red-500 uppercase">Champs requis</span>
                         </div>
                         <select name="diplome" class="fld mt-1">
-                            {% for d in ['Licence', 'Licence professionnelle', 'BUT', 'Master', 'DU', 'Ingénieur', 'DAEU'] %}
+                            {% for d in constant('App\\Maquette\\Referentiels::DIPLOMES') %}
                                 <option value="{{ d }}">{{ d }}</option>
                             {% endfor %}
                         </select>
@@ -201,7 +201,7 @@
                         </div>
                         <select name="domaine" class="fld mt-1">
                             <option value="">— Choisir —</option>
-                            {% for d in ['Sciences, technologies, santé', 'Droit, économie, gestion', 'Sciences humaines et sociales', 'Arts, lettres, langues'] %}
+                            {% for d in constant('App\\Maquette\\Referentiels::DOMAINES') %}
                                 <option value="{{ d }}">{{ d }}</option>
                             {% endfor %}
                         </select>

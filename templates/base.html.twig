@@ -20,10 +20,16 @@
                 <a href="{{ path('formation_index') }}" class="font-extrabold tracking-tight">
                     <span style="color:var(--c-primary)">ORéOF</span><span class="text-gray-400">/ Adm.</span>
                 </a>
+                {% set _route = app.request.attributes.get('_route') ?? '' %}
                 <nav class="hidden lg:flex items-center gap-6 text-sm text-gray-600">
-                    {% for item in ['Tableau de bord', 'Offre de formation', 'Pilotage', 'Conseils', 'Utilisateurs et droits', 'Administration'] %}
-                        <span class="fake-link cursor-default">{{ item }}{% if not loop.first %} <span class="text-gray-300">⌄</span>{% endif %}</span>
-                    {% endfor %}
+                    <span class="fake-link cursor-default">Tableau de bord</span>
+                    <a href="{{ path('formation_index') }}"
+                       class="hover:text-gray-900 {{ _route matches '/^(formation_|node_|bcc_|parcours_)/' ? 'font-semibold text-gray-900' }}">Offre de formation</a>
+                    <span class="fake-link cursor-default">Pilotage <span class="text-gray-300">⌄</span></span>
+                    <span class="fake-link cursor-default">Conseils <span class="text-gray-300">⌄</span></span>
+                    <span class="fake-link cursor-default">Utilisateurs et droits <span class="text-gray-300">⌄</span></span>
+                    <a href="{{ path('admin_index') }}"
+                       class="hover:text-gray-900 {{ _route matches '/^(admin_|node_type_|field_|template_)/' ? 'font-semibold text-gray-900' }}">Administration</a>
                 </nav>
                 <div class="ml-auto flex items-center gap-3 text-gray-400">
                     <span>🔍</span><span>💬</span><span>🌐</span><span>🔔</span>
@@ -58,9 +64,8 @@
             <div class="mx-auto max-w-[1600px] px-6 py-5 flex flex-wrap items-center gap-x-6 gap-y-2">
                 <div>
                     <span class="font-semibold text-gray-700">ORéOF</span> ·
-                    prototype maquette par nœuds · <a href="{{ path('node_type_index') }}" class="hover:underline">types</a>
-                    · <a href="{{ path('field_index') }}" class="hover:underline">champs</a>
-                    · <a href="{{ path('template_index') }}" class="hover:underline">templates</a>
+                    prototype maquette par nœuds ·
+                    <a href="{{ path('admin_index') }}" class="hover:underline">Administration</a>
                 </div>
                 <div class="ml-auto flex items-center gap-3 text-gray-400">
                     {% for item in ['Documents', 'Aide', 'FAQ', 'Contact', 'GitHub'] %}<span class="fake-link cursor-default">{{ item }}</span>{% endfor %}
