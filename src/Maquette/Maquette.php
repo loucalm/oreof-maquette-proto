@@ -32,6 +32,7 @@ final class Maquette
         private readonly EntityManagerInterface $em,
         private readonly NodeTypeRepository $types,
         private readonly FormationRepository $formations,
+        private readonly Completion $completion,
     ) {
     }
 
@@ -48,10 +49,18 @@ final class Maquette
         $formation->setArbre($doc->dumpTree());
         $formation->setDataParcours($doc->parcours);
         $formation->setParametres($doc->parametres);
+        $formation->setStats($this->completion->docStats($doc));
         $this->em->flush();
 
         $id = $formation->getId() ?? spl_object_id($formation);
         $this->cache[$id] = $doc;
+    }
+
+    /** Recalcule et persiste le cache de stats sans autre modification (amorçage). */
+    public function refreshStats(Formation $formation): void
+    {
+        $formation->setStats($this->completion->docStats($this->open($formation)));
+        $this->em->flush();
     }
 
     /** Vide le cache (après un reshape lourd, un import…). */

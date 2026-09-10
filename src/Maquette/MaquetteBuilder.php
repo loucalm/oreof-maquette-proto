@@ -17,6 +17,7 @@ final class MaquetteBuilder
         private readonly Maquette $maquette,
         private readonly AttributeCatalog $catalog,
         private readonly Numbering $numbering,
+        private readonly Completion $completion,
     ) {
     }
 
@@ -90,42 +91,11 @@ final class MaquetteBuilder
         $view->totalEcts = $children === [] ? $ownEcts : $childEcts;
 
         // --- statut ---
-        $view->missingCount = $this->missingRequired($node);
+        $s = $this->completion->node($node);
+        $view->missingCount = $s['req'] - $s['filled'];
         $view->status = $this->resolveStatus($node, $view);
 
         return $view;
-    }
-
-    private function missingRequired(TreeNode $node): int
-    {
-        $missing = 0;
-        $caps = $node->effectiveCapabilities();
-        foreach ($this->catalog->all() as $key => $def) {
-            if (!($caps[$key] ?? false) || !($def['required'] ?? false)) {
-                continue;
-            }
-            $value = $node->getAttribute($key);
-            if ($key === 'hours') {
-                if (!AttributeCatalog::hoursProvided($value)) {
-                    ++$missing;
-                }
-                continue;
-            }
-            if ($value === null || $value === '' || $value === []) {
-                ++$missing;
-            }
-        }
-
-        // libellé requis partout
-        if (trim($node->getLabel()) === '') {
-            ++$missing;
-        }
-        // code requis sur les EC
-        if (($caps['code'] ?? false) && 'ec' === $node->getType()->getKey() && trim((string) $node->getCode()) === '') {
-            ++$missing;
-        }
-
-        return $missing;
     }
 
     private function resolveStatus(TreeNode $node, NodeView $view): string
@@ -209,25 +179,24 @@ final class MaquetteBuilder
     }
 
     /**
-     * Progression globale d'une formation : % de nœuds au statut OK.
+     * Progression globale : % de champs requis remplis sur l'ensemble des nœuds.
+     * Même formule que le cache Formation::stats (Completion).
      *
      * @param list<NodeView> $roots
      */
     public function progress(array $roots): int
     {
-        $ok = 0;
-        $total = 0;
-        $walk = static function (array $views) use (&$walk, &$ok, &$total): void {
+        $acc = ['req' => 0, 'filled' => 0];
+        $walk = function (array $views) use (&$walk, &$acc): void {
             foreach ($views as $v) {
-                ++$total;
-                if ($v->status === NodeView::STATUS_OK) {
-                    ++$ok;
-                }
+                $s = $this->completion->node($v->node);
+                $acc['req'] += $s['req'];
+                $acc['filled'] += $s['filled'];
                 $walk($v->children);
             }
         };
         $walk($roots);
 
-        return $total === 0 ? 0 : (int) round($ok / $total * 100);
+        return $this->completion->pct($acc);
     }
 }

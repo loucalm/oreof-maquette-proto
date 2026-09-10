@@ -117,15 +117,14 @@
                                         </thead>
                                         <tbody>
                                         {% for p in row.parcours %}
-                                            {% set pn = p.node %}
                                             <tr class="border-b last:border-0" style="border-color:var(--c-border)">
                                                 <td class="px-4 py-2.5">
-                                                    <div class="font-medium">{{ pn.displayLabel }}</div>
-                                                    {% if pn.parcoursParent %}<div class="text-[11px] text-gray-400">spécialisation de « {{ pn.parcoursParent.displayLabel }} »</div>{% endif %}
+                                                    <div class="font-medium">{{ p.label }}</div>
+                                                    {% if p.parent %}<div class="text-[11px] text-gray-400">spécialisation de « {{ p.parent }} »</div>{% endif %}
                                                 </td>
-                                                <td class="px-4 py-2.5 text-gray-500">{{ period_unit(f)|lower }}s {{ pn.periodeDebut }}–{{ pn.periodeFin }}</td>
+                                                <td class="px-4 py-2.5 text-gray-500">{{ period_unit(f)|lower }}s {{ p.debut }}–{{ p.fin }}</td>
                                                 <td class="px-4 py-2.5">
-                                                    {% set bs = bcc_status(pn) %}
+                                                    {% set bs = p.bcc ?? 'empty' %}
                                                     <span class="pill" style="background:{{ bs == 'ok' ? '#dcfce7' : (bs == 'incomplete' ? '#fef3c7' : '#fee2e2') }};color:{{ bs == 'ok' ? '#15803d' : (bs == 'incomplete' ? '#b45309' : '#b91c1c') }}">
                                                         {{ bs == 'ok' ? 'Complet' : (bs == 'incomplete' ? 'Incomplet' : 'Vide') }}
                                                     </span>
@@ -138,7 +137,7 @@
                                                 </td>
                                                 <td class="px-4 py-2.5 text-right whitespace-nowrap">
                                                     <a href="{{ path('formation_view', {id: f.id}) }}" class="text-xs hover:underline">ⓘ Voir</a>
-                                                    <a href="{{ path('parcours_editor', {fid: f.id, nid: pn.id}) }}" class="ml-2 text-xs font-medium text-amber-700 hover:underline">✎ Modifier</a>
+                                                    <a href="{{ path('parcours_editor', {fid: f.id, nid: p.nid}) }}" class="ml-2 text-xs font-medium text-amber-700 hover:underline">✎ Modifier</a>
                                                 </td>
                                             </tr>
                                         {% endfor %}

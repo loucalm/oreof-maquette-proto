@@ -86,6 +86,16 @@ class Formation
     private array $arbre = [];
 
     /**
+     * Cache de progression, recalculé par Maquette::save() (Completion::docStats).
+     * Évite de reconstruire l'arbre de chaque formation sur la page liste.
+     * Forme : { progress, req, filled, parcours: [{nid,label,debut,fin,parent,progress,bcc}] }.
+     *
+     * @var array<string, mixed>
+     */
+    #[ORM\Column(type: Types::JSON)]
+    private array $stats = [];
+
+    /**
      * Squelette de la formation : chaîne ordonnée de clés de type, du plus haut
      * niveau du « corps » vers la feuille — ex. ['annee','semestre','ue','ec'].
      * Le niveau « parcours » n'y figure jamais : il est implicite quand la
@@ -263,6 +273,20 @@ class Formation
     public function setArbre(array $arbre): self
     {
         $this->arbre = $arbre;
+
+        return $this;
+    }
+
+    /** @return array<string, mixed> */
+    public function getStats(): array
+    {
+        return $this->stats;
+    }
+
+    /** @param array<string, mixed> $stats */
+    public function setStats(array $stats): self
+    {
+        $this->stats = $stats;
 
         return $this;
     }

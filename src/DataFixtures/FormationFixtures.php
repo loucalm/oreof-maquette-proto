@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\DataFixtures;
 
 use App\Entity\Formation;
+use App\Maquette\Maquette;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
@@ -24,12 +25,22 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
     /** Compteur de nid, réinitialisé par formation. */
     private int $seq = 0;
 
+    public function __construct(private readonly Maquette $maquette)
+    {
+    }
+
     public function load(ObjectManager $manager): void
     {
-        $manager->persist($this->licenceInfo());
-        $manager->persist($this->licenceMulti());
-        $manager->persist($this->certificatCourt());
+        $formations = [$this->licenceInfo(), $this->licenceMulti(), $this->certificatCourt()];
+        foreach ($formations as $f) {
+            $manager->persist($f);
+        }
         $manager->flush();
+
+        // amorce le cache de progression (Formation::stats)
+        foreach ($formations as $f) {
+            $this->maquette->refreshStats($f);
+        }
     }
 
     /**

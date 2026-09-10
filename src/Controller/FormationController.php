@@ -27,23 +27,21 @@ final class FormationController extends AbstractController
     }
 
     #[Route('/', name: 'formation_index', methods: ['GET'])]
-    public function index(FormationRepository $formations, MaquetteBuilder $builder): Response
+    public function index(FormationRepository $formations, \App\Maquette\Completion $completion): Response
     {
         $rows = [];
         foreach ($formations->findAllRecent() as $formation) {
-            $roots = $builder->build($formation);
-
-            // en multi-parcours : une ligne dépliable par parcours (remplissage direct)
-            $parcours = [];
-            foreach ($this->maquette->open($formation)->parcoursNodes() as $p) {
-                $sub = $builder->buildSubtree($p)->children;
-                $parcours[] = ['node' => $p, 'progress' => $builder->progress($sub)];
+            // cache de progression (Maquette::save) — pas de reconstruction d'arbre ici.
+            // Amorçage : une formation jamais enregistrée (fixtures) est calculée à la volée.
+            $stats = $formation->getStats();
+            if ($stats === []) {
+                $stats = $completion->docStats($this->maquette->open($formation));
             }
 
             $rows[] = [
                 'formation' => $formation,
-                'progress' => $builder->progress($roots),
-                'parcours' => $parcours,
+                'progress' => $stats['progress'] ?? 0,
+                'parcours' => $stats['parcours'] ?? [],
             ];
         }
 

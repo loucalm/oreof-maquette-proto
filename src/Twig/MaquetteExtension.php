@@ -22,6 +22,7 @@ final class MaquetteExtension extends AbstractExtension
         private readonly Maquette $maquette,
         private readonly AttributeCatalog $catalog,
         private readonly UrlGeneratorInterface $router,
+        private readonly \App\Maquette\Completion $completion,
     ) {
     }
 
@@ -221,23 +222,7 @@ final class MaquetteExtension extends AbstractExtension
             ? $context->getBccBlocs()
             : $this->maquette->open($context)->competenceBlocs();
 
-        if ($blocs === []) {
-            return 'empty';
-        }
-        foreach ($blocs as $bloc) {
-            $hasCompetence = false;
-            foreach ($bloc->getChildren() as $child) {
-                if ($child->getType()->getKey() === 'competence') {
-                    $hasCompetence = true;
-                    break;
-                }
-            }
-            if (!$hasCompetence) {
-                return 'incomplete';
-            }
-        }
-
-        return 'ok';
+        return $this->completion->bccStatus($blocs);
     }
 
     /**

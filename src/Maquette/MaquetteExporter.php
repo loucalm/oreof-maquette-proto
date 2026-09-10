@@ -43,6 +43,7 @@ final class MaquetteExporter
             'parametres' => $doc->parametres,
             'dataParcours' => $doc->parcours,
             'arbre' => $doc->dumpTree(),
+            'stats' => $formation->getStats(),
         ];
     }
 
