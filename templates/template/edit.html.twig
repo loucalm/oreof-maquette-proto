@@ -1,0 +1,134 @@
+{% extends 'admin/_layout.html.twig' %}
+{% set adminSection = 'templates' %}
+{% block title %}{{ template.label }} · template{% endblock %}
+
+{% set R = 'App\\Maquette\\Referentiels' %}
+{% set tid = template.id %}
+
+{# ─── un nœud du template + sa branche ─── #}
+{% macro node(n, p, template, types) %}
+    {% import _self as m %}
+    {% set locked = n.locked is defined and n.locked is not empty %}
+    {% set meta = types_by_key()[n.type] %}
+    <li class="template-node">
+        <div class="flex flex-wrap items-center gap-1.5 py-1">
+            <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'lock'}) }}" class="inline">
+                <button title="{{ locked ? 'Nœud imposé — cliquer pour libérer' : 'Rendre ce nœud imposé (non supprimable côté formation)' }}"
+                        class="grid h-6 w-6 place-items-center rounded border text-xs"
+                        style="border-color:var(--c-border);{{ locked ? 'background:#fef3c7' }}">{{ locked ? '🔒' : '🔓' }}</button>
+            </form>
+
+            <span class="type-badge">{{ meta ? meta.icon }} [{{ meta ? meta.label : n.type }}]</span>
+
+            <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'rename'}) }}" class="inline flex items-center gap-1">
+                <input name="label" value="{{ n.label ?? '' }}" placeholder="(libellé)"
+                       class="rounded border px-2 py-0.5 text-sm" style="border-color:var(--c-border);width:220px">
+                <button class="text-xs hover:underline" style="color:var(--c-muted)">renommer</button>
+            </form>
+
+            <span class="flex-1"></span>
+
+            <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'up'}) }}" class="inline">
+                <button class="template-mini" title="Monter">↑</button>
+            </form>
+            <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'down'}) }}" class="inline">
+                <button class="template-mini" title="Descendre">↓</button>
+            </form>
+            <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'delete'}) }}" class="inline"
+                  data-controller="confirm" data-confirm-message-value="Supprimer « {{ n.label ?? n.type }} » et sa branche du template ?">
+                <button class="template-mini template-mini--danger" title="Supprimer">🗑</button>
+            </form>
+        </div>
+
+        {% if n.children is defined and n.children is not empty %}
+            <ul class="template-branch">
+                {% for c in n.children %}
+                    {{ m.node(c, p ~ '.' ~ loop.index0, template, types) }}
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {# ajouter un enfant #}
+        <form method="post" action="{{ path('template_node_add', {id: template.id}) }}"
+              class="template-branch mt-1 flex flex-wrap items-center gap-1.5">
+            <input type="hidden" name="parent" value="{{ p }}">
+            <select name="type" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
+                {% for t in types %}<option value="{{ t.key }}">{{ t.icon }} {{ t.label }}</option>{% endfor %}
+            </select>
+            <input name="label" placeholder="libellé (optionnel)" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
+            <button class="rounded border px-2 py-1 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">＋ enfant</button>
+        </form>
+    </li>
+{% endmacro %}
+
+{% block admin_body %}
+{% import _self as m %}
+
+<div class="text-xs mb-1" style="color:var(--c-muted)">
+    <a href="{{ path('template_index') }}" class="hover:underline">Templates</a> › {{ template.label }}
+</div>
+
+<div class="grid gap-5 lg:grid-cols-[320px_1fr]">
+
+    {# ─── métadonnées ─── #}
+    <form method="post" action="{{ path('template_meta', {id: template.id}) }}"
+          class="rounded-xl border bg-white p-4 space-y-3 self-start" style="border-color:var(--c-border)">
+        <div>
+            <div class="text-xs font-medium">Libellé</div>
+            <input name="label" value="{{ template.label }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+        </div>
+        <div>
+            <div class="text-xs font-medium">Diplôme imposé</div>
+            <select name="diplome" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                <option value="">— aucun (template libre) —</option>
+                {% for d in constant(R ~ '::DIPLOMES') %}
+                    <option value="{{ d }}" {{ template.diplome == d ? 'selected' }}>{{ d }}</option>
+                {% endfor %}
+            </select>
+            <div class="fld-help">Un seul template par diplôme. Appliqué automatiquement à la création d'une formation.</div>
+        </div>
+        <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" name="multiParcours" value="1" {{ template.multiParcours ? 'checked' }}> Multi-parcours
+        </label>
+        <div>
+            <div class="text-xs font-medium">Description</div>
+            <textarea name="description" rows="3" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">{{ template.description }}</textarea>
+        </div>
+        <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">Enregistrer</button>
+    </form>
+
+    {# ─── arbre ─── #}
+    <div class="rounded-xl border bg-white p-4" style="border-color:var(--c-border)">
+        <div class="flex items-center gap-2 text-xs uppercase tracking-wide mb-3" style="color:var(--c-muted)">
+            <span class="h-px flex-1 bg-gray-200"></span>Arbre du template<span class="h-px flex-1 bg-gray-200"></span>
+        </div>
+
+        {% if template.tree is empty %}
+            <p class="text-sm mb-3" style="color:var(--c-muted)">Aucun nœud. Ajoutez le premier niveau ci-dessous.</p>
+        {% else %}
+            <ul class="template-branch template-branch--root">
+                {% for n in template.tree %}
+                    {{ m.node(n, loop.index0 ~ '', template, types) }}
+                {% endfor %}
+            </ul>
+            <p class="mt-2 text-xs" style="color:var(--c-muted)">🔒 = nœud imposé : le responsable de formation ne pourra ni le supprimer ni le déplacer.</p>
+        {% endif %}
+
+        <form method="post" action="{{ path('template_node_add', {id: template.id}) }}"
+              class="mt-3 flex flex-wrap items-center gap-1.5 border-t pt-3" style="border-color:var(--c-border)">
+            <input type="hidden" name="parent" value="">
+            <span class="text-xs font-medium" style="color:var(--c-muted)">Ajouter un nœud racine :</span>
+            <select name="type" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
+                {% for t in types %}<option value="{{ t.key }}">{{ t.icon }} {{ t.label }}</option>{% endfor %}
+            </select>
+            <input name="label" placeholder="libellé" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
+            <button class="rounded border px-2 py-1 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">＋ racine</button>
+        </form>
+    </div>
+</div>
+
+<form method="post" action="{{ path('template_delete', {id: template.id}) }}" class="mt-4"
+      data-controller="confirm" data-confirm-message-value="Supprimer définitivement le template « {{ template.label }} » ?">
+    <button class="text-xs text-red-600 hover:underline">Supprimer ce template</button>
+</form>
+{% endblock %}

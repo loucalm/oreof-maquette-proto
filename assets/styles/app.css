@@ -289,6 +289,20 @@ body {
 
 /* nœud imposé par le diplôme */
 .tree-lock { font-size: 10px; flex: 0 0 auto; filter: grayscale(.2); }
+
+/* éditeur visuel de template */
+.template-branch { list-style: none; margin: 0; padding: 0; }
+.template-branch--root > .template-node { border-top: 1px solid #eceef1; }
+.template-node > .template-branch { margin-left: 16px; border-left: 2px solid #eceef1; padding-left: 10px; }
+.template-node > form.template-branch { margin-left: 16px; padding-left: 10px; }
+.template-mini {
+    display: grid; place-items: center; width: 26px; height: 26px;
+    border: 1px solid var(--c-border); border-radius: 6px; background: #fff;
+    font-size: 12px; cursor: pointer;
+}
+.template-mini:hover { background: #f0f1f3; }
+.template-mini--danger { border-color: #fecaca; color: #dc2626; }
+.template-mini--danger:hover { background: #fee2e2; }
 .tree-label {
     font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     max-width: 150px;

@@ -3,18 +3,30 @@
 {% block title %}Templates de structure{% endblock %}
 
 {% block admin_body %}
-<h2 class="text-lg font-bold">Templates de structure</h2>
-<p class="text-sm mb-5" style="color:var(--c-muted)">
-    Une base réutilisable, instanciée dans une formation puis librement modifiable.
-</p>
+<div class="flex items-start justify-between gap-4">
+    <div>
+        <h2 class="text-lg font-bold">Templates de structure</h2>
+        <p class="text-sm mb-5" style="color:var(--c-muted)">
+            L'arbre imposé d'un diplôme. Rattaché à un diplôme, il est appliqué automatiquement
+            à la création d'une formation ; ses nœuds verrouillés 🔒 figent la structure.
+        </p>
+    </div>
+    <form method="post" action="{{ path('template_new') }}" class="shrink-0">
+        <input type="hidden" name="label" value="Nouveau template">
+        <button class="rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">＋ Nouveau template</button>
+    </form>
+</div>
 
 <div class="grid gap-4 md:grid-cols-2">
     {% for tpl in templates %}
-        <a href="{{ path('template_show', {id: tpl.id}) }}"
+        <a href="{{ path('template_edit', {id: tpl.id}) }}"
            class="block rounded-xl border bg-white p-4 hover:shadow-sm" style="border-color:var(--c-border)">
-            <div class="font-semibold">{{ tpl.label }}</div>
+            <div class="flex items-center gap-2">
+                <span class="font-semibold">{{ tpl.label }}</span>
+                {% if tpl.diplome %}<span class="pill" style="background:var(--c-primary-soft);color:var(--c-primary)">diplôme : {{ tpl.diplome }}</span>{% endif %}
+            </div>
             <div class="text-xs mb-2" style="color:var(--c-muted)">
-                <code>{{ tpl.key }}</code> · {{ tpl.multiParcours ? 'multi-parcours' : 'mono-parcours' }}
+                <code>{{ tpl.key }}</code> · {{ tpl.multiParcours ? 'multi-parcours' : 'mono-parcours' }} · {{ tpl.tree|length }} nœud(s) racine
             </div>
             <p class="text-sm" style="color:var(--c-muted)">{{ tpl.description }}</p>
         </a>
