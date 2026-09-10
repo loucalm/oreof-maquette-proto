@@ -111,7 +111,7 @@ final class FormationController extends AbstractController
     public const PARCOURS_PARAM_FIELDS = [
         'organisation' => [
             'modalitesEnseignement', 'composante', 'regimes', 'modalitesAlternance',
-            'lieu', 'respParcours', 'dureeValeur',
+            'lieu', 'respParcours',
         ],
         'presentation' => [
             'objectif', 'motsCles', 'resultats', 'contenu', 'langue', 'niveauLangue',
@@ -182,7 +182,6 @@ final class FormationController extends AbstractController
         string $key,
         Request $request,
         EntityManagerInterface $em,
-        \App\Repository\NodeRepository $nodes,
     ): Response {
         if (!$node->isParcours() || !isset(self::PARCOURS_PARAM_SECTIONS[$key])) {
             throw $this->createNotFoundException();
@@ -200,8 +199,9 @@ final class FormationController extends AbstractController
             static fn ($v) => $v !== '' && $v !== null && $v !== [],
         ));
 
-        // section « organisation » : le nom, le volume d'ECTS et le parent de
-        // ramification sont portés par le nœud parcours lui-même
+        // section « organisation » : le nom et le volume d'ECTS sont portés par
+        // le nœud parcours lui-même. Le positionnement (périodes) et le parent
+        // de ramification s'éditent dans « Positionnement & ramification ».
         if ($key === 'organisation') {
             $nom = trim((string) $request->request->get('nom'));
             if ($nom !== '') {
@@ -217,35 +217,12 @@ final class FormationController extends AbstractController
                 }
                 $node->setAttributes($attrs);
             }
-            if ($request->request->has('parcoursParentId')) {
-                $this->linkParcoursParent($node, $request->request->getInt('parcoursParentId'), $nodes);
-            }
         }
 
         $em->flush();
         $this->addFlash('success', sprintf('« %s » enregistré.', self::PARCOURS_PARAM_SECTIONS[$key]));
 
         return $this->redirectToRoute('parcours_editor', ['id' => $node->getId(), 'param' => $key]);
-    }
-
-    /** Rattache un parcours à un parent de ramification (garde-fou anti-cycle). */
-    private function linkParcoursParent(\App\Entity\Node $node, int $parentId, \App\Repository\NodeRepository $nodes): void
-    {
-        if ($parentId <= 0) {
-            $node->setParcoursParent(null);
-
-            return;
-        }
-        $pp = $nodes->find($parentId);
-        if ($pp === null || $pp === $node || !$pp->isParcours() || $pp->getFormation() !== $node->getFormation()) {
-            return;
-        }
-        for ($c = $pp; $c !== null; $c = $c->getParcoursParent()) {
-            if ($c === $node) {
-                return; // cycle
-            }
-        }
-        $node->setParcoursParent($pp);
     }
 
     #[Route('/formations/{id}/verifier', name: 'formation_check', methods: ['GET'])]

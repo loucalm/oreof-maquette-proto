@@ -257,8 +257,6 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
             'modalitesAlternance' => "Rythme 3 semaines entreprise / 2 semaines université en L3.",
             'lieu' => 'Campus principal',
             'respParcours' => 'B. Dupont',
-            'dureeValeur' => 2,
-            'dureeUnite' => 'Année',
         ]);
         $pInfo->setParametre('presentation', [
             'objectif' => "Former des concepteurs et développeurs de systèmes logiciels complexes.",
