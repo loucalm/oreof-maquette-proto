@@ -70,6 +70,7 @@
         <span class="fake-btn" style="color:#b45309;border-color:#fcd34d">⇄ Changer co/resp. formation</span>
         <span class="fake-btn">⚙ Action complémentaire ⌄</span>
         <span class="fake-btn">⬇ Export</span>
+        {% if is_admin() %}
         <div class="relative" data-controller="menu">
             <button type="button" data-action="menu#toggle"
                     class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
@@ -88,6 +89,7 @@
                    class="block px-3 py-2 hover:bg-gray-50">↳ Configuration de la structure de cette formation</a>
             </div>
         </div>
+        {% endif %}
     </div>
 </div>
 

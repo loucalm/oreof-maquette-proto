@@ -133,6 +133,21 @@
 
         {# ── Structure : la hiérarchie des TYPES de nœud ── #}
         {{ fld.divider('Structure') }}
+
+        {% if not is_admin() %}
+            {# vue responsable : la hiérarchie des niveaux est imposée, lecture seule #}
+            <p class="text-xs text-gray-500 -mt-2">
+                La hiérarchie des niveaux est définie par le diplôme (administrateur SES). Vous construisez
+                l'arbre à l'intérieur de ce cadre depuis l'éditeur.
+            </p>
+            <div class="flex flex-wrap items-center gap-1.5">
+                {% for row in structure_rows(formation) %}
+                    {% if not loop.first %}<span class="text-gray-300">›</span>{% endif %}
+                    <span class="type-badge">{{ row.type ? row.type.icon }} [{{ row.type ? row.type.label : row.key }}]</span>
+                    {%- if row.mono %}<span class="text-[11px] text-gray-400">(porté par la formation)</span>{% endif -%}
+                {% endfor %}
+            </div>
+        {% else %}
         <p class="text-xs text-gray-500 -mt-2">
             Définissez la hiérarchie : chaque ligne est le type des enfants de la ligne du dessus.
             L'éditeur ne proposera que ces types lors de la construction de l'arbre.
@@ -247,10 +262,11 @@
                 <button class="rounded-lg border px-3 py-2.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">💾 Enregistrer comme template</button>
             </form>
             <form method="post" action="{{ path('formation_reset', {id: formation.id}) }}" data-turbo-frame="_top" class="ml-auto"
-                  data-controller="confirm" data-confirm-message-value="Vider tous les nœuds de l'arbre ? (le squelette est conservé)">
+                  data-controller="confirm" data-confirm-message-value="Vider tous les nœuds de l'arbre ? (le squelette et les nœuds imposés sont conservés)">
                 <button class="rounded-lg border px-3 py-2.5 text-sm text-red-600 hover:bg-red-50" style="border-color:var(--c-border)">🗑 Vider les nœuds</button>
             </form>
         </div>
+        {% endif %}
     </div>
     </div>
 </div>

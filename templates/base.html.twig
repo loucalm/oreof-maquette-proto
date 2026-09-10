@@ -28,13 +28,33 @@
                     <span class="fake-link cursor-default">Pilotage <span class="text-gray-300">⌄</span></span>
                     <span class="fake-link cursor-default">Conseils <span class="text-gray-300">⌄</span></span>
                     <span class="fake-link cursor-default">Utilisateurs et droits <span class="text-gray-300">⌄</span></span>
-                    <a href="{{ path('admin_index') }}"
-                       class="hover:text-gray-900 {{ _route matches '/^(admin_|node_type_|field_|template_)/' ? 'font-semibold text-gray-900' }}">Administration</a>
+                    {% if is_admin() %}
+                        <a href="{{ path('admin_index') }}"
+                           class="hover:text-gray-900 {{ _route matches '/^(admin_|node_type_|field_|template_)/' ? 'font-semibold text-gray-900' }}">Administration</a>
+                    {% endif %}
                 </nav>
                 <div class="ml-auto flex items-center gap-3 text-gray-400">
+                    {# bascule de rôle (proto — pas d'auth réelle) #}
+                    <div class="relative" data-controller="menu">
+                        <button type="button" data-action="menu#toggle"
+                                class="rounded-lg border px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50" style="border-color:var(--c-border)">
+                            👁 {{ role_labels()[current_role()] }} <span class="text-gray-300">⌄</span>
+                        </button>
+                        <div data-menu-target="menu" hidden class="absolute right-0 z-40 mt-1 w-60 rounded-xl border bg-white py-1 text-sm shadow-lg" style="border-color:var(--c-border)">
+                            <div class="px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Voir en tant que</div>
+                            {% for r, label in role_labels() %}
+                                <form method="post" action="{{ path('role_switch', {role: r}) }}">
+                                    <button class="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 {{ current_role() == r ? 'font-semibold' }}">
+                                        {{ current_role() == r ? '●' : '○' }} {{ label }}
+                                    </button>
+                                </form>
+                            {% endfor %}
+                            <div class="border-t px-3 py-1.5 text-[11px] text-gray-400" style="border-color:var(--c-border)">Le responsable ne voit pas le métamodèle ni la configuration de structure.</div>
+                        </div>
+                    </div>
                     <span>🔍</span><span>💬</span><span>🌐</span><span>🔔</span>
                     <span class="rounded-lg px-3 py-1 text-xs font-medium" style="background:var(--c-primary-soft);color:var(--c-primary)">2026-2027 ⌄</span>
-                    <span class="grid h-8 w-8 place-items-center rounded-full text-xs font-bold text-white" style="background:var(--c-primary)">DA</span>
+                    <span class="grid h-8 w-8 place-items-center rounded-full text-xs font-bold text-white" style="background:var(--c-primary)">{{ is_admin() ? 'DA' : 'RF' }}</span>
                 </div>
             </div>
         </header>
@@ -64,8 +84,8 @@
             <div class="mx-auto max-w-[1600px] px-6 py-5 flex flex-wrap items-center gap-x-6 gap-y-2">
                 <div>
                     <span class="font-semibold text-gray-700">ORéOF</span> ·
-                    prototype maquette par nœuds ·
-                    <a href="{{ path('admin_index') }}" class="hover:underline">Administration</a>
+                    prototype maquette par nœuds
+                    {% if is_admin() %} · <a href="{{ path('admin_index') }}" class="hover:underline">Administration</a>{% endif %}
                 </div>
                 <div class="ml-auto flex items-center gap-3 text-gray-400">
                     {% for item in ['Documents', 'Aide', 'FAQ', 'Contact', 'GitHub'] %}<span class="fake-link cursor-default">{{ item }}</span>{% endfor %}

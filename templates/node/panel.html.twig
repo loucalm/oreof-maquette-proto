@@ -63,7 +63,9 @@
             <a href="{{ node_url(node, 'node_attach_index') }}" data-turbo-frame="node-panel"
                class="rounded-lg border px-3 py-2 text-sm text-green-700" style="border-color:#bbf7d0">↳ Raccrocher</a>
             {% endif %}
+            {% if is_admin() %}
             <button type="button" data-action="modal#open" class="rounded-lg border px-3 py-2 text-sm text-gray-600" style="border-color:var(--c-border)">⚙ Paramètre du nœud [{{ T }}]</button>
+            {% endif %}
         </div>
     </div>
 
