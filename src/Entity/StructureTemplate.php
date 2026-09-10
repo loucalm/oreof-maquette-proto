@@ -34,6 +34,14 @@ class StructureTemplate
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
 
+    /**
+     * Type de diplôme auquel ce modèle est rattaché (un seul modèle par diplôme).
+     * À la création d'une formation de ce diplôme, le modèle est appliqué
+     * automatiquement et ses nœuds « imposés » (locked) verrouillent la structure.
+     */
+    #[ORM\Column(length: 80, nullable: true, unique: true)]
+    private ?string $diplome = null;
+
     /** Si le modèle suppose des parcours (multi) ou non (mono). */
     #[ORM\Column]
     private bool $multiParcours = false;
@@ -87,6 +95,18 @@ class StructureTemplate
     public function setDescription(?string $description): self
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    public function getDiplome(): ?string
+    {
+        return $this->diplome;
+    }
+
+    public function setDiplome(?string $diplome): self
+    {
+        $this->diplome = trim((string) $diplome) ?: null;
 
         return $this;
     }

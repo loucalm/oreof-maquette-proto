@@ -286,6 +286,9 @@ body {
     padding: 5px 6px; border-radius: 7px; cursor: pointer;
 }
 .ro-subtree-row:hover { background: #f0f1f3; }
+
+/* nœud imposé par le diplôme */
+.tree-lock { font-size: 10px; flex: 0 0 auto; filter: grayscale(.2); }
 .tree-label {
     font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     max-width: 150px;

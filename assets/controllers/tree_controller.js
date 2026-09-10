@@ -169,6 +169,7 @@ export default class extends Controller {
         const activeLi = this.element.querySelector('.tree-row.is-active')?.closest('li[data-node-id]');
         const activeId = activeLi?.dataset.nodeId || null;
         const name = activeLi?.querySelector('.tree-label')?.textContent.trim() || '';
+        const lockedDel = activeLi?.dataset.locked === '1';
 
         // ── dupliquer / supprimer ──
         if (this.hasDupButtonTarget) {
@@ -178,8 +179,11 @@ export default class extends Controller {
             }
         }
         if (this.hasDelButtonTarget) {
-            this.delButtonTarget.disabled = !activeId;
-            if (activeId && this.hasDelUrlValue) {
+            this.delButtonTarget.disabled = !activeId || lockedDel;
+            this.delButtonTarget.title = lockedDel
+                ? 'Nœud imposé par le diplôme : suppression impossible'
+                : 'Supprimer le nœud sélectionné';
+            if (activeId && !lockedDel && this.hasDelUrlValue) {
                 this.delFormTarget.action = this.delUrlValue.replace('__ID__', activeId);
                 this.delFormTarget.dataset.confirmMessageValue =
                     `Supprimer « ${name || 'ce nœud'} » et tout ce qu'il contient ?`;
@@ -272,6 +276,9 @@ export default class extends Controller {
      * ou à la racine si c'est le type racine.
      */
     canDropHere(evt) {
+        // nœud imposé : réordonnancement entre frères OK, changement de parent refusé
+        if (evt.dragged?.dataset.lockedMove === '1' && evt.to !== evt.from) return false;
+
         if (!this.hasChainValue) return true;
         const chain = this.chainValue;
         const draggedType = evt.dragged?.dataset.nodeType;

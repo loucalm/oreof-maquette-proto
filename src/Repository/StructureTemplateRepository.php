@@ -23,6 +23,11 @@ class StructureTemplateRepository extends ServiceEntityRepository
         return $this->findOneBy(['key' => $key]);
     }
 
+    public function findOneByDiplome(string $diplome): ?StructureTemplate
+    {
+        return $this->findOneBy(['diplome' => $diplome]);
+    }
+
     /** @return list<StructureTemplate> */
     public function findAllOrdered(): array
     {

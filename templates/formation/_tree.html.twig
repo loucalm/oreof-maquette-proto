@@ -5,11 +5,14 @@
         {% set node = view.node %}
         {% set hasChildren = view.children is not empty %}
         {% set canHaveChildren = not node.formation.isLeafType(node.type.key) %}
-        <li data-node-id="{{ node.id }}" data-node-type="{{ node.type.key }}">
+        {% set lockedDel = node.isLocked('delete') %}
+        <li data-node-id="{{ node.id }}" data-node-type="{{ node.type.key }}"
+            {{ lockedDel ? 'data-locked="1"' }} {{ node.isLocked('move') ? 'data-locked-move="1"' }}>
             <div class="tree-row {{ focus and focus == node.id ~ '' ? 'is-active' }}">
                 <span class="drag-handle" data-tree-target="handle" title="Glisser pour déplacer">⠿</span>
                 <span class="status-dot" data-status="{{ view.status }}"
                       title="{{ view.status == 'ok' ? 'Complet' : (view.status == 'incomplete' ? 'Incomplet' : 'Vide') }}"></span>
+                {% if lockedDel %}<span class="tree-lock" title="Nœud imposé par le diplôme">🔒</span>{% endif %}
                 <span class="type-badge"><span class="opacity-70">{{ node.type.icon }}</span> [{{ node.type.label }}]</span>
                 {% if view.ref %}<span class="tree-ref" title="Référence calculée">{{ view.ref }}</span>{% endif %}
                 <a href="{{ node_url(node) }}" data-turbo-frame="node-panel"

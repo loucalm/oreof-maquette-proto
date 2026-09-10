@@ -51,8 +51,12 @@ final class FormationController extends AbstractController
     }
 
     #[Route('/formations', name: 'formation_create', methods: ['POST'])]
-    public function create(Request $request, EntityManagerInterface $em): Response
-    {
+    public function create(
+        Request $request,
+        EntityManagerInterface $em,
+        StructureTemplateRepository $templates,
+        TemplateApplier $applier,
+    ): Response {
         $name = trim((string) $request->request->get('name'));
         if ($name === '') {
             $this->addFlash('danger', 'Un nom de formation est requis.');
@@ -60,17 +64,31 @@ final class FormationController extends AbstractController
             return $this->redirectToRoute('formation_index');
         }
 
+        $diplome = trim((string) $request->request->get('diplome')) ?: null;
+
         $formation = (new Formation($name))
-            ->setDiplome(trim((string) $request->request->get('diplome')) ?: null)
+            ->setDiplome($diplome)
             ->setDomaine(trim((string) $request->request->get('domaine')) ?: null)
             ->setComposante(trim((string) $request->request->get('composante')) ?: null)
             ->setMultiParcours($request->request->getBoolean('multiParcours'))
-            // squelette par défaut, entièrement modifiable ensuite
             ->setStructure(['annee', 'semestre', 'ue', 'ec']);
 
         $em->persist($formation);
         $em->flush();
-        $this->addFlash('success', sprintf('Formation « %s » créée. Complétez sa structure.', $name));
+
+        // structure imposée par le diplôme, s'il en existe une
+        $template = $diplome !== null ? $templates->findOneByDiplome($diplome) : null;
+        if ($template !== null) {
+            $doc = $this->maquette->open($formation);
+            $applier->apply($doc, $template);
+            $this->maquette->save($formation, $doc);
+            $this->addFlash('success', sprintf(
+                'Formation « %s » créée. La structure imposée par le diplôme %s (« %s ») a été appliquée — ses nœuds verrouillés 🔒 ne peuvent pas être supprimés.',
+                $name, $diplome, $template->getLabel(),
+            ));
+        } else {
+            $this->addFlash('success', sprintf('Formation « %s » créée. Complétez sa structure.', $name));
+        }
 
         return $this->redirectToRoute('formation_editor', ['id' => $formation->getId()]);
     }

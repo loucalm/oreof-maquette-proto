@@ -15,6 +15,7 @@
         <h2 class="text-xl font-bold">Gestion de la structure</h2>
         <div class="text-sm text-gray-400">
             {{ T }}{% if view.ref %} <span class="font-bold" style="color:var(--c-primary)">{{ view.ref }}</span>{% endif %}
+            {%- if node.isLocked('delete') %} · <span title="Ce nœud fait partie de la structure imposée par le diplôme">🔒 imposé</span>{% endif -%}
         </div>
         <div class="text-sm text-gray-400 mt-1">
             {{ formation.name }}
@@ -79,8 +80,9 @@
 
             {% if tk == 'props' %}
                 {% set parents = valid_parents(node) %}
+                {% set lockedMove = node.isLocked('move') %}
                 {{ ui.label("Nœud parent", true, "Emplacement autorisé par le squelette de la formation") }}
-                <select name="parentId" class="fld">
+                <select name="parentId" class="fld" {{ lockedMove ? 'disabled' }}>
                     {% if can_be_root(node) %}<option value="">— Racine de la formation —</option>{% endif %}
                     {% for cand in parents %}
                         <option value="{{ cand.id }}" {{ node.parent and node.parent.id == cand.id ? 'selected' }}>
@@ -88,7 +90,9 @@
                         </option>
                     {% endfor %}
                 </select>
-                {% if parents is empty and not can_be_root(node) %}
+                {% if lockedMove %}
+                    <div class="fld-help">🔒 Emplacement imposé par le diplôme — non modifiable.</div>
+                {% elseif parents is empty and not can_be_root(node) %}
                     <div class="fld-help text-amber-600">Aucun emplacement : le squelette ne prévoit pas ce type sous un autre nœud.</div>
                 {% endif %}
 

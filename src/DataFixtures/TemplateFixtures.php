@@ -20,22 +20,28 @@ final class TemplateFixtures extends Fixture implements DependentFixtureInterfac
         return [NodeTypeFixtures::class];
     }
 
+    /** Verrous d'un nœud « imposé » : ni suppression, ni changement de parent. */
+    private const LOCK = ['delete', 'move'];
+
     public function load(ObjectManager $manager): void
     {
         $but = (new StructureTemplate('but', 'BUT (Bachelor Universitaire de Technologie)'))
-            ->setDescription("3 années, 2 semestres par année, UE adossées aux compétences, ressources et SAÉ.")
+            ->setDescription('3 années, 2 semestres par année, UE adossées aux compétences, ressources et SAÉ.')
+            ->setDiplome('BUT')
             ->setMultiParcours(false)
             ->setTree($this->butTree());
         $manager->persist($but);
 
         $licence = (new StructureTemplate('licence_lmd', 'Licence LMD'))
-            ->setDescription('3 années · 6 semestres · UE / EC. Squelette générique à adapter.')
+            ->setDescription('3 années · 6 semestres · UE / EC. Les années et semestres sont imposés par le diplôme.')
+            ->setDiplome('Licence')
             ->setMultiParcours(false)
             ->setTree($this->licenceTree());
         $manager->persist($licence);
 
         $master = (new StructureTemplate('master_parcours', 'Master à parcours'))
             ->setDescription('Formation multi-parcours : 1 tronc + parcours, 2 années chacun.')
+            ->setDiplome('Master')
             ->setMultiParcours(true)
             ->setTree($this->masterTree());
         $manager->persist($master);
@@ -54,7 +60,7 @@ final class TemplateFixtures extends Fixture implements DependentFixtureInterfac
         $ec = static fn (string $label) => ['type' => 'ec', 'label' => $label, 'attributes' => ['nature' => 'obligatoire']];
 
         $semestre = static fn (string $label) => [
-            'type' => 'semestre', 'label' => $label,
+            'type' => 'semestre', 'label' => $label, 'locked' => self::LOCK,
             'children' => [
                 $ue('UE 1 — Compétence 1', [$ec('Ressource R1.01'), $ec('Ressource R1.02'), $ec('SAÉ 1')]),
                 $ue('UE 2 — Compétence 2', [$ec('Ressource R2.01'), $ec('Ressource R2.02'), $ec('SAÉ 2')]),
@@ -62,7 +68,7 @@ final class TemplateFixtures extends Fixture implements DependentFixtureInterfac
         ];
 
         $annee = static fn (string $label, string $s1, string $s2) => [
-            'type' => 'annee', 'label' => $label,
+            'type' => 'annee', 'label' => $label, 'locked' => self::LOCK,
             'children' => [$semestre($s1), $semestre($s2)],
         ];
 
@@ -82,19 +88,15 @@ final class TemplateFixtures extends Fixture implements DependentFixtureInterfac
             for ($s = 1; $s <= 2; ++$s) {
                 $num = ($y - 1) * 2 + $s;
                 $semestres[] = [
-                    'type' => 'semestre', 'label' => "Semestre $num",
+                    'type' => 'semestre', 'label' => "Semestre $num", 'locked' => self::LOCK,
                     'children' => [
-                        ['type' => 'ue', 'label' => "UE $num.1", 'attributes' => ['nature' => 'obligatoire'], 'children' => [
-                            ['type' => 'ec', 'label' => "EC $num.1.a"],
-                            ['type' => 'ec', 'label' => "EC $num.1.b"],
-                        ]],
-                        ['type' => 'ue', 'label' => "UE $num.2", 'attributes' => ['nature' => 'obligatoire'], 'children' => [
-                            ['type' => 'ec', 'label' => "EC $num.2.a"],
+                        ['type' => 'ue', 'label' => 'UE disciplinaire', 'attributes' => ['nature' => 'obligatoire'], 'children' => [
+                            ['type' => 'ec', 'label' => 'EC à compléter'],
                         ]],
                     ],
                 ];
             }
-            $out[] = ['type' => 'annee', 'label' => "Licence $y", 'children' => $semestres];
+            $out[] = ['type' => 'annee', 'label' => "Licence $y", 'locked' => self::LOCK, 'children' => $semestres];
         }
 
         return $out;
@@ -104,20 +106,19 @@ final class TemplateFixtures extends Fixture implements DependentFixtureInterfac
     private function masterTree(): array
     {
         $annee = static fn (string $label) => [
-            'type' => 'annee', 'label' => $label,
+            'type' => 'annee', 'label' => $label, 'locked' => self::LOCK,
             'children' => [
-                ['type' => 'semestre', 'label' => 'Semestre A', 'children' => [
+                ['type' => 'semestre', 'label' => 'Semestre A', 'locked' => self::LOCK, 'children' => [
                     ['type' => 'ue', 'label' => 'UE fondamentale', 'children' => [['type' => 'ec', 'label' => 'Cours magistral']]],
                 ]],
-                ['type' => 'semestre', 'label' => 'Semestre B', 'children' => [
+                ['type' => 'semestre', 'label' => 'Semestre B', 'locked' => self::LOCK, 'children' => [
                     ['type' => 'ue', 'label' => 'UE professionnalisante', 'children' => [['type' => 'ec', 'label' => 'Stage / mémoire']]],
                 ]],
             ],
         ];
 
         return [
-            ['type' => 'parcours', 'label' => 'Parcours A', 'children' => [$annee('M1'), $annee('M2')]],
-            ['type' => 'parcours', 'label' => 'Parcours B', 'children' => [$annee('M1'), $annee('M2')]],
+            ['type' => 'parcours', 'label' => 'Parcours type', 'locked' => self::LOCK, 'children' => [$annee('M1'), $annee('M2')]],
         ];
     }
 }

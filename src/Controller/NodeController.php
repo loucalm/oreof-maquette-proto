@@ -70,6 +70,7 @@ final class NodeController extends AbstractController
             $targetNid = trim((string) $request->request->get('parentId'));
             $target = $targetNid !== '' ? $doc->node($targetNid) : null;
             if ($target !== $node->getParent()
+                && !$node->isLocked('move')
                 && !$this->isDescendant($target, $node)
                 && $this->reparentAllowed($node, $target)) {
                 $doc->moveNode($node, $target, PHP_INT_MAX);
@@ -167,6 +168,10 @@ final class NodeController extends AbstractController
         if (!$this->reparentAllowed($node, $newParent)) {
             return new JsonResponse(['ok' => false, 'error' => 'hierarchy'], 422);
         }
+        // nœud imposé : réordonnancement entre frères OK, changement de parent refusé
+        if ($node->isLocked('move') && $newParent !== $node->getParent()) {
+            return new JsonResponse(['ok' => false, 'error' => 'locked'], 422);
+        }
 
         $doc->moveNode($node, $newParent, (int) ($payload['index'] ?? 0));
         $this->maquette->save($formation, $doc);
@@ -189,8 +194,17 @@ final class NodeController extends AbstractController
     {
         $doc = $this->maquette->open($formation);
         $node = $this->pick($doc, $nid);
-        $parcours = $this->parcoursAncestor($node);
 
+        if ($node->isLocked('delete')) {
+            $this->addFlash('warning', sprintf(
+                '« %s » fait partie de la structure imposée par le diplôme : il ne peut pas être supprimé.',
+                $node->getDisplayLabel(),
+            ));
+
+            return $this->editorRedirect($node);
+        }
+
+        $parcours = $this->parcoursAncestor($node);
         $doc->removeNode($node);
         $this->maquette->save($formation, $doc);
         $this->addFlash('info', 'Nœud supprimé.');

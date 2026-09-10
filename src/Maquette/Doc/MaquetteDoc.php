@@ -192,9 +192,12 @@ final class MaquetteDoc
         }
     }
 
-    /** Retire $node (et toute sa descendance) de l'arbre. */
+    /** Retire $node (et toute sa descendance) de l'arbre. Ignore un nœud imposé. */
     public function removeNode(TreeNode $node): void
     {
+        if ($node->isLocked('delete')) {
+            return;
+        }
         $this->detach($node);
         foreach ($this->descendants($node) as $d) {
             unset($this->index[$d->nid], $this->parcours[$d->nid]);
