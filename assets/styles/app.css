@@ -277,6 +277,15 @@ body {
     font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums;
     color: var(--c-primary); white-space: nowrap; flex: 0 0 auto;
 }
+
+/* arbre compact des descendants (consultation /voir) */
+.ro-subtree { list-style: none; margin: 0; padding: 0; }
+.ro-subtree .ro-subtree { margin-left: 15px; border-left: 1px solid #eceef1; padding-left: 8px; }
+.ro-subtree-row {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 6px; border-radius: 7px; cursor: pointer;
+}
+.ro-subtree-row:hover { background: #f0f1f3; }
 .tree-label {
     font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     max-width: 150px;

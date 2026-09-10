@@ -167,9 +167,39 @@
             <div class="border-t pt-3" style="border-color:var(--c-border)">
                 {{ m.nodefields(n, catalog, domains) }}
             </div>
+
+            {% if view.children %}
+                <div class="border-t pt-3" style="border-color:var(--c-border)">
+                    <div class="fld-cat">Contenu de ce nœud</div>
+                    {{ m.subtree(view.children) }}
+                </div>
+            {% endif %}
         </div>
         {% if view.children %}{{ m.details(view.children, catalog, domains) }}{% endif %}
     {% endfor %}
+{% endmacro %}
+
+{# arbre compact des descendants d'un nœud (lecture seule, cliquable) #}
+{% macro subtree(views) %}
+    {% import _self as m %}
+    <ul class="ro-subtree">
+        {% for v in views %}
+            <li>
+                <div class="ro-subtree-row" data-action="click->rotree#select" data-rotree-id-param="{{ v.node.id }}">
+                    <span class="status-dot" data-status="{{ v.status }}" title="{{ v.status }}"></span>
+                    <span class="type-badge"><span class="opacity-70">{{ v.node.type.icon }}</span> [{{ v.node.type.label }}]</span>
+                    {% if v.ref %}<span class="tree-ref">{{ v.ref }}</span>{% endif %}
+                    <span class="text-sm font-medium">{{ v.node.label ?: '—' }}</span>
+                    {% if v.node.code %}<code class="text-[11px] text-gray-400">{{ v.node.code }}</code>{% endif %}
+                    <span class="ml-auto shrink-0 text-[11px] text-gray-400 tabular-nums">
+                        {%- if v.totalHours %}{{ v.totalHours|round }} h · {% endif -%}
+                        {{ v.totalEcts|round }}{% if v.ectsTarget %}/{{ v.ectsTarget }}{% endif %} ECTS
+                    </span>
+                </div>
+                {% if v.children %}{{ m.subtree(v.children) }}{% endif %}
+            </li>
+        {% endfor %}
+    </ul>
 {% endmacro %}
 
 {# ligne clé / valeur d'un paramètre #}
