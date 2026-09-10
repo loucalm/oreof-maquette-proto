@@ -198,6 +198,23 @@ body {
 .tree-children { margin-left: 18px; border-left: 1px solid #eceef1; padding-left: 4px; }
 .tree-list li.collapsed > .tree-children { display: none; }
 
+/* nœud non-feuille encore vide : cible de dépôt visible pour le glisser-déposer */
+.tree-list--empty {
+    min-height: 34px;
+    margin: 3px 0 3px 18px;
+    padding: 3px;
+    border: 1px dashed #d3d8de;
+    border-radius: 8px;
+    display: flex; align-items: center;
+    transition: border-color .12s, background .12s;
+}
+.tree-list--empty::after {
+    content: "déposer un nœud ici";
+    font-size: 11px; color: #aab0b8; padding-left: 6px; pointer-events: none;
+}
+.tree-list--empty:has(li) { border-style: solid; border-color: var(--c-primary); background: var(--c-primary-soft); }
+.tree-list--empty:has(li)::after { display: none; }
+
 .tree-row {
     display: flex; align-items: center; gap: 7px;
     padding: 7px 8px; border-radius: 8px;
@@ -290,6 +307,20 @@ li:not(.collapsed) > .tree-row > .tree-chevron { transform: rotate(90deg); }
 .bcc-bloc-body { padding: 4px 0 8px; }
 
 .bcc-comp-list { list-style: none; margin: 0; padding: 0; min-height: 6px; }
+/* bloc sans compétence : cible de dépôt assez haute pour recevoir un glisser */
+.bcc-comp-list--empty {
+    min-height: 34px;
+    margin: 4px 14px;
+    border: 1px dashed var(--c-border);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+}
+.bcc-comp-list--empty::after {
+    content: "déposer une compétence ici";
+    font-size: 11px; color: #aab0b8; pointer-events: none;
+}
+.bcc-comp-list--empty:has(li) { border-color: var(--c-primary); }
+.bcc-comp-list--empty:has(li)::after { display: none; }
 .bcc-comp + .bcc-comp { border-top: 1px solid #f0f1f3; }
 .bcc-comp-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; }
 .bcc-comp-row .drag-handle { margin-top: 2px; }

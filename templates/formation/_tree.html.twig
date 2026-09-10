@@ -4,6 +4,7 @@
     {% for view in views %}
         {% set node = view.node %}
         {% set hasChildren = view.children is not empty %}
+        {% set canHaveChildren = not node.formation.isLeafType(node.type.key) %}
         <li data-node-id="{{ node.id }}" data-node-type="{{ node.type.key }}">
             <div class="tree-row {{ focus and focus == node.id ~ '' ? 'is-active' }}">
                 <span class="drag-handle" data-tree-target="handle" title="Glisser pour déplacer">⠿</span>
@@ -25,6 +26,10 @@
             </div>
             {% if hasChildren %}
                 {{ include('formation/_tree.html.twig', {views: view.children, parentId: node.id, focus: focus}) }}
+            {% elseif canHaveChildren %}
+                {# nœud non-feuille encore vide : zone de dépôt pour le glisser-déposer #}
+                <ul class="tree-list tree-children tree-list--empty"
+                    data-tree-target="list" data-parent-id="{{ node.id }}"></ul>
             {% endif %}
         </li>
     {% endfor %}

@@ -96,7 +96,7 @@
                 <div class="bcc-bloc-body">
                     <div data-bcc-node="{{ n.id }}">{{ bcc.editform(n, 'bloc') }}</div>
 
-                    <ul class="bcc-comp-list" data-bcc-target="compList" data-parent-id="{{ n.id }}">
+                    <ul class="bcc-comp-list {{ b.competences is empty ? 'bcc-comp-list--empty' }}" data-bcc-target="compList" data-parent-id="{{ n.id }}">
                         {% for c in b.competences %}
                             <li class="bcc-comp" data-node-id="{{ c.id }}">
                                 <div class="bcc-comp-row">
