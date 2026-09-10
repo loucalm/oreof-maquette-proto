@@ -4,9 +4,9 @@
 {% set focus = app.request.query.get('focus') %}
 {% set param = app.request.query.get('param') %}
 {% set bcc = app.request.query.get('bcc') %}
-{% set frameSrc = bcc ? path('bcc_parcours_editor', {id: parcours.id})
-    : (param ? path('parcours_param', {id: parcours.id, key: param})
-    : (focus ? path('node_panel', {id: focus}) : null)) %}
+{% set frameSrc = bcc ? path('bcc_parcours_editor', {fid: formation.id, nid: parcours.id})
+    : (param ? path('parcours_param', {fid: formation.id, nid: parcours.id, key: param})
+    : (focus ? path('node_panel', {fid: formation.id, nid: focus}) : null)) %}
 {% set bodyRoot = type_meta()[formation.getChildTypeKey('parcours')] ?? null %}
 
 {% block body %}
@@ -57,9 +57,9 @@
         {# ─── panneau structure ─── #}
         <div class="editor-aside flex flex-col overflow-hidden"
              data-controller="tree"
-             data-tree-move-url-value="{{ path('node_move', {id: '__ID__'}) }}"
-             data-tree-dup-url-value="{{ path('node_duplicate', {id: '__ID__'}) }}"
-             data-tree-del-url-value="{{ path('node_delete', {id: '__ID__'}) }}"
+             data-tree-move-url-value="{{ path('node_move', {fid: formation.id, nid: '__ID__'}) }}"
+             data-tree-dup-url-value="{{ path('node_duplicate', {fid: formation.id, nid: '__ID__'}) }}"
+             data-tree-del-url-value="{{ path('node_delete', {fid: formation.id, nid: '__ID__'}) }}"
              data-tree-chain-value="{{ formation.effectiveStructure|json_encode|e('html_attr') }}"
              data-tree-type-meta-value="{{ type_meta()|json_encode|e('html_attr') }}"
              data-tree-root-key-value="{{ formation.getChildTypeKey('parcours') }}"
@@ -84,16 +84,16 @@
                 <div class="px-4 py-3 border-b" style="border-color:var(--c-border)">
                     <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Paramètre du parcours</div>
                     {% for k, label in parcours_param_sections() %}
-                        <a href="{{ path('parcours_param', {id: parcours.id, key: k}) }}" data-turbo-frame="node-panel"
+                        <a href="{{ path('parcours_param', {fid: formation.id, nid: parcours.id, key: k}) }}" data-turbo-frame="node-panel"
                            class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ param == k ? 'is-active' }}">
                             <span class="status-dot" data-status="{{ parcours_param_status(parcours, k) }}"></span>{{ label }}
                         </a>
                     {% endfor %}
-                    <a href="{{ path('node_panel', {id: parcours.id}) }}" data-turbo-frame="node-panel"
+                    <a href="{{ node_url(parcours) }}" data-turbo-frame="node-panel"
                        class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ focus == parcours.id ~ '' ? 'is-active' }}">
                         <span class="status-dot" data-status="ok"></span>Positionnement &amp; ramification
                     </a>
-                    <a href="{{ path('bcc_parcours_editor', {id: parcours.id}) }}" data-turbo-frame="node-panel"
+                    <a href="{{ path('bcc_parcours_editor', {fid: formation.id, nid: parcours.id}) }}" data-turbo-frame="node-panel"
                        class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ bcc ? 'is-active' }}">
                         <span class="status-dot" data-status="{{ bcc_status(parcours) }}"></span>Référentiel de compétences (BCC)
                     </a>
@@ -118,7 +118,7 @@
 
             {# ─── barre d'actions ─── #}
             <div class="px-3 py-3 border-t shrink-0 flex items-center gap-2" style="border-color:var(--c-border)">
-                <form method="post" action="{{ path('node_add', {id: formation.id}) }}" data-turbo-frame="_top"
+                <form method="post" action="{{ path('node_add', {fid: formation.id}) }}" data-turbo-frame="_top"
                       class="flex-1" data-tree-target="addForm">
                     <input type="hidden" name="parentId" value="{{ parcours.id }}" data-tree-target="addParent">
                     <input type="hidden" name="typeKey" value="{{ formation.getChildTypeKey('parcours') }}" data-tree-target="addType">

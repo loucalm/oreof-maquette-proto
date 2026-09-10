@@ -4,41 +4,35 @@ declare(strict_types=1);
 
 namespace App\Maquette;
 
-use App\Entity\Formation;
-use App\Entity\Node;
 use App\Entity\StructureTemplate;
-use App\Repository\NodeTypeRepository;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Maquette\Doc\MaquetteDoc;
+use App\Maquette\Doc\TreeNode;
 
 /**
- * Applique un modèle de structure à une formation.
+ * Applique un modèle de structure à une maquette (MaquetteDoc).
  *
  * ⚠️ Écrase la structure existante (comportement voulu, confirmé côté UI).
  * L'arbre instancié reste ensuite librement modifiable.
  */
 final class TemplateApplier
 {
-    public function __construct(
-        private readonly EntityManagerInterface $em,
-        private readonly NodeTypeRepository $types,
-    ) {
-    }
-
-    public function apply(Formation $formation, StructureTemplate $template): void
+    public function apply(MaquetteDoc $doc, StructureTemplate $template): void
     {
-        foreach ($formation->getRootNodes() as $root) {
-            $this->em->remove($root);
-        }
-        $formation->getNodes()->clear();
-        $this->em->flush();
+        $doc->formation
+            ->setMultiParcours($template->isMultiParcours())
+            ->setStructure($this->chainFromTree($template->getTree()));
 
-        $formation->setMultiParcours($template->isMultiParcours());
-        $formation->setStructure($this->chainFromTree($template->getTree()));
+        $doc->roots = [];
+        $doc->parcours = [];
+        $doc->index = [];
 
-        $typeMap = $this->types->findAllIndexed();
-        foreach ($template->getTree() as $i => $spec) {
-            $this->instantiate($formation, null, $spec, $i, $typeMap);
+        foreach ($template->getTree() as $spec) {
+            $node = $this->instantiate($doc, (array) $spec);
+            if ($node !== null) {
+                $doc->roots[] = $node;
+            }
         }
+        $doc->reindex();
     }
 
     /**
@@ -70,29 +64,35 @@ final class TemplateApplier
         return array_values(array_filter($byDepth, static fn (string $k) => $k !== 'parcours'));
     }
 
-    /**
-     * @param array<string, mixed>    $spec
-     * @param array<string, \App\Entity\NodeType> $typeMap
-     */
-    private function instantiate(Formation $formation, ?Node $parent, array $spec, int $position, array $typeMap): void
+    /** @param array<string, mixed> $spec */
+    private function instantiate(MaquetteDoc $doc, array $spec): ?TreeNode
     {
         $typeKey = (string) ($spec['type'] ?? '');
-        $type = $typeMap[$typeKey] ?? null;
+        $type = $doc->type($typeKey);
         if ($type === null) {
-            return; // type inconnu : on ignore silencieusement dans le proto
+            return null; // type inconnu : ignoré silencieusement (proto)
         }
 
-        $node = new Node($type, (string) ($spec['label'] ?? ''));
-        $node->setCode($spec['code'] ?? null);
-        $node->setAttributes((array) ($spec['attributes'] ?? []));
-        $node->setPosition($position);
-        $node->setFormation($formation);
-        $node->setParent($parent);
-        $formation->addNode($node);
-        $this->em->persist($node);
+        $node = new TreeNode(
+            nid: $doc->newNid(),
+            typeKey: $typeKey,
+            label: (string) ($spec['label'] ?? ''),
+            code: ($spec['code'] ?? null) !== null && $spec['code'] !== '' ? (string) $spec['code'] : null,
+            attributes: \is_array($spec['attributes'] ?? null) ? $spec['attributes'] : [],
+            locked: array_values(array_filter((array) ($spec['locked'] ?? []), 'is_string')),
+        );
+        $node->bindType($type);
+        $node->doc = $doc;
+        $doc->index[$node->nid] = $node;
 
-        foreach ((array) ($spec['children'] ?? []) as $j => $childSpec) {
-            $this->instantiate($formation, $node, (array) $childSpec, $j, $typeMap);
+        foreach ((array) ($spec['children'] ?? []) as $childSpec) {
+            $child = $this->instantiate($doc, (array) $childSpec);
+            if ($child !== null) {
+                $child->parent = $node;
+                $node->children[] = $child;
+            }
         }
+
+        return $node;
     }
 }

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Maquette;
 
-use App\Entity\Node;
+use App\Maquette\Doc\TreeNode;
 
 /**
  * Vue calculée d'un nœud pour l'affichage : statut de complétude + agrégats
- * (heures et ECTS remontés des descendants).
+ * (heures et ECTS remontés des descendants) + référence calculée (numérotation).
  */
 final class NodeView
 {
@@ -18,17 +18,19 @@ final class NodeView
 
     /** @param list<NodeView> $children */
     public function __construct(
-        public readonly Node $node,
+        public readonly TreeNode $node,
         public array $children = [],
         public string $status = self::STATUS_EMPTY,
         public float $totalHours = 0.0,
         public float $totalEcts = 0.0,
         /** Nombre d'attributs requis manquants sur ce nœud seul. */
         public int $missingCount = 0,
+        /** Référence hiérarchique calculée (« UE 1.1 ») — Phase 3, vide avant. */
+        public string $ref = '',
     ) {
     }
 
-    public function id(): ?int
+    public function id(): ?string
     {
         return $this->node->getId();
     }

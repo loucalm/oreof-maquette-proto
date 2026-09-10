@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace App\Maquette;
 
 use App\Entity\Formation;
-use App\Entity\Node;
-use App\Repository\NodeRepository;
+use App\Maquette\Doc\TreeNode;
 use App\Repository\NodeTypeRepository;
 
 /**
@@ -18,7 +17,7 @@ use App\Repository\NodeTypeRepository;
 final class ParcoursGraph
 {
     public function __construct(
-        private readonly NodeRepository $nodes,
+        private readonly Maquette $maquette,
         private readonly NodeTypeRepository $types,
     ) {
     }
@@ -32,36 +31,32 @@ final class ParcoursGraph
 
     /**
      * @return array{
-     *     rows: list<array{node: Node, row: int, colStart: int, colEnd: int}>,
-     *     edges: list<array{from: int, to: int, path: string}>,
+     *     rows: list<array{node: TreeNode, row: int, colStart: int, colEnd: int}>,
+     *     edges: list<array{from: string, to: string, path: string}>,
      *     cols: int, unit: string,
-     *     parcours: list<Node>,
-     *     boxes: array<int, array<string, float>>,
+     *     parcours: list<TreeNode>,
+     *     boxes: array<string, array<string, float>>,
      *     width: int, height: int,
      *     colW: int, headerH: int, boxH: int, pad: int
      * }
      */
     public function build(Formation $formation): array
     {
-        $parcours = array_values(array_filter(
-            $this->nodes->findForFormation($formation),
-            static fn (Node $n) => $n->isParcours(),
-        ));
-        usort($parcours, static fn (Node $a, Node $b) => $a->getPosition() <=> $b->getPosition());
+        $parcours = $this->maquette->open($formation)->parcoursNodes();
 
-        /** @var array<int, list<Node>> $childrenOf */
+        /** @var array<string, list<TreeNode>> $childrenOf */
         $childrenOf = [];
         $ids = [];
         foreach ($parcours as $p) {
             $ids[$p->getId()] = true;
-            $childrenOf[$p->getParcoursParent()?->getId() ?? 0][] = $p;
+            $childrenOf[$p->getParcoursParent()?->getId() ?? ''][] = $p;
         }
 
         // DFS pré-ordre depuis les racines (parcours sans parent, ou parent hors formation)
         $rows = [];
         $rowIndex = 0;
         $seen = [];
-        $visit = function (Node $p) use (&$visit, &$rows, &$rowIndex, &$seen, $childrenOf): void {
+        $visit = function (TreeNode $p) use (&$visit, &$rows, &$rowIndex, &$seen, $childrenOf): void {
             if (isset($seen[$p->getId()])) {
                 return; // garde-fou anti-cycle
             }

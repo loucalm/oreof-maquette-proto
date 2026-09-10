@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\FormationRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -54,13 +52,38 @@ class Formation
     private ?string $calendarUnit = null;
 
     /**
-     * Sections « Paramètre de la formation » (organisation, présentation…).
-     * Champs libres du prototype, une clé par section.
+     * DOCUMENT JSON 1/3 — propriétés de la formation.
+     * Sections « Paramètre de la formation » (organisation, présentation,
+     * structure…). Champs libres du prototype, une clé par section.
      *
      * @var array<string, array<string, mixed>>
      */
     #[ORM\Column(type: Types::JSON)]
     private array $parametres = [];
+
+    /**
+     * DOCUMENT JSON 2/3 — propriétés des parcours (formations multi-parcours).
+     * Map `nid → { parametres: { organisation: {…}, presentation: {…} } }`.
+     * Vide en mono-parcours. Le service App\Maquette\Maquette en est l'unique
+     * gestionnaire.
+     *
+     * @var array<string, array<string, mixed>>
+     */
+    #[ORM\Column(type: Types::JSON)]
+    private array $dataParcours = [];
+
+    /**
+     * DOCUMENT JSON 3/3 — arborescence + données des nœuds.
+     * Arbre imbriqué : chaque nœud = { nid, type, label, code, attributes,
+     * capabilityOverrides, locked, mutualized, mutualizedFrom, children[] }.
+     * Le référentiel de compétences (BCC) y figure aussi (nœuds de famille
+     * « compétence », arbre parallèle filtré à l'affichage pédagogique).
+     * L'ordre du tableau porte la position. Manipulé uniquement via Maquette.
+     *
+     * @var list<array<string, mixed>>
+     */
+    #[ORM\Column(type: Types::JSON)]
+    private array $arbre = [];
 
     /**
      * Squelette de la formation : chaîne ordonnée de clés de type, du plus haut
@@ -76,15 +99,10 @@ class Formation
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
-    /** @var Collection<int, Node> */
-    #[ORM\OneToMany(targetEntity: Node::class, mappedBy: 'formation', cascade: ['persist', 'remove'], orphanRemoval: true)]
-    private Collection $nodes;
-
     public function __construct(string $name)
     {
         $this->name = $name;
         $this->createdAt = new \DateTimeImmutable();
-        $this->nodes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -207,6 +225,48 @@ class Formation
         return $this;
     }
 
+    /** @return array<string, array<string, mixed>> */
+    public function getParametres(): array
+    {
+        return $this->parametres;
+    }
+
+    /** @param array<string, array<string, mixed>> $parametres */
+    public function setParametres(array $parametres): self
+    {
+        $this->parametres = $parametres;
+
+        return $this;
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    public function getDataParcours(): array
+    {
+        return $this->dataParcours;
+    }
+
+    /** @param array<string, array<string, mixed>> $data */
+    public function setDataParcours(array $data): self
+    {
+        $this->dataParcours = $data;
+
+        return $this;
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function getArbre(): array
+    {
+        return $this->arbre;
+    }
+
+    /** @param list<array<string, mixed>> $arbre */
+    public function setArbre(array $arbre): self
+    {
+        $this->arbre = $arbre;
+
+        return $this;
+    }
+
     /** @return list<string> */
     public function getStructure(): array
     {
@@ -305,90 +365,5 @@ class Formation
     public function canBeRootType(string $typeKey): bool
     {
         return $this->getVisibleRootTypeKey() === $typeKey;
-    }
-
-    /** @return Collection<int, Node> */
-    public function getNodes(): Collection
-    {
-        return $this->nodes;
-    }
-
-    public function addNode(Node $node): self
-    {
-        if (!$this->nodes->contains($node)) {
-            $this->nodes->add($node);
-            $node->setFormation($this);
-        }
-
-        return $this;
-    }
-
-    public function removeNode(Node $node): self
-    {
-        $this->nodes->removeElement($node);
-
-        return $this;
-    }
-
-    /**
-     * Nœuds racine de la structure PÉDAGOGIQUE (sans parent, hors référentiel de
-     * compétences), triés. Le référentiel BCC est un arbre parallèle : cf.
-     * getCompetenceBlocs().
-     *
-     * @return list<Node>
-     */
-    public function getRootNodes(): array
-    {
-        $roots = array_filter(
-            $this->nodes->toArray(),
-            static fn (Node $n) => $n->getParent() === null && !$n->isCompetenceNode(),
-        );
-        usort($roots, static fn (Node $a, Node $b) => $a->getPosition() <=> $b->getPosition());
-
-        return array_values($roots);
-    }
-
-    /**
-     * Blocs du référentiel de compétences (BCC) : nœuds racine de la famille
-     * « compétence », triés par position. Le bloc « transversal » (RNCP) d'abord.
-     *
-     * @return list<Node>
-     */
-    public function getCompetenceBlocs(): array
-    {
-        $blocs = array_filter(
-            $this->nodes->toArray(),
-            static fn (Node $n) => $n->getParent() === null && $n->isCompetenceNode(),
-        );
-        usort($blocs, static function (Node $a, Node $b): int {
-            return [!$a->isTransversalBloc(), $a->getPosition()] <=> [!$b->isTransversalBloc(), $b->getPosition()];
-        });
-
-        return array_values($blocs);
-    }
-
-    /** true si un bloc transversal existe au niveau formation (mono-parcours). */
-    public function hasTransversalBloc(): bool
-    {
-        foreach ($this->getCompetenceBlocs() as $bloc) {
-            if ($bloc->isTransversalBloc()) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Nœuds « parcours » de la formation (multi-parcours), triés par position.
-     *
-     * @return list<Node>
-     */
-    public function getParcoursNodes(): array
-    {
-        $parcours = array_filter($this->nodes->toArray(), static fn (Node $n) => $n->isParcours());
-        usort($parcours, static fn (Node $a, Node $b) => $a->getPosition() <=> $b->getPosition());
-
-        return array_values($parcours);
     }
 }

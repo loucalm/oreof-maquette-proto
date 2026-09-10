@@ -10,7 +10,7 @@
                 <span class="status-dot" data-status="{{ view.status }}"
                       title="{{ view.status == 'ok' ? 'Complet' : (view.status == 'incomplete' ? 'Incomplet' : 'Vide') }}"></span>
                 <span class="type-badge"><span class="opacity-70">{{ node.type.icon }}</span> [{{ node.type.label }}]</span>
-                <a href="{{ path('node_panel', {id: node.id}) }}" data-turbo-frame="node-panel"
+                <a href="{{ node_url(node) }}" data-turbo-frame="node-panel"
                    class="tree-label" data-tree-target="link">{{ node.label ?: '—' }}</a>
 
                 {% if view.ectsTarget %}

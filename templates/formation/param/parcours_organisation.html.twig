@@ -72,7 +72,7 @@
            parent de ramification s'éditent dans « Positionnement & ramification »
            (validation des périodes + graphe). #}
         {% set span = parcours.periodeFin - parcours.periodeDebut + 1 %}
-        {% set pchildren = formation.parcoursNodes|filter(p => p.parcoursParent and p.parcoursParent.id == parcours.id) %}
+        {% set pchildren = parcours_nodes(formation)|filter(p => p.parcoursParent and p.parcoursParent.id == parcours.id) %}
         <div class="rounded-lg border p-4 space-y-2 text-sm" style="border-color:var(--c-border);background:#f8f9fb">
             <div class="flex flex-wrap justify-between gap-x-3">
                 <span class="text-gray-400">Durée du parcours</span>
@@ -92,7 +92,7 @@
                     {%- for ch in pchildren %}{{ ch.displayLabel }}{{ not loop.last ? ', ' }}{% else %}—{% endfor -%}
                 </span>
             </div>
-            <a href="{{ path('node_panel', {id: parcours.id}) }}" data-turbo-frame="node-panel"
+            <a href="{{ node_url(parcours) }}" data-turbo-frame="node-panel"
                class="inline-block pt-1 text-xs font-medium hover:underline" style="color:var(--c-primary)">✎ Modifier dans « Positionnement &amp; ramification »</a>
         </div>
 

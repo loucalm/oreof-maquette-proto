@@ -27,7 +27,7 @@
                             {% if c.children|length %} · {{ c.children|length }} enfant(s){% endif %}
                         </div>
                     </div>
-                    <form method="post" action="{{ path('node_attach', {id: node.id, source: c.id}) }}" data-turbo-frame="_top">
+                    <form method="post" action="{{ path('node_attach', {fid: node.formation.id, nid: node.id, sfid: c.formation.id, snid: c.id}) }}" data-turbo-frame="_top">
                         <button class="rounded-lg border px-3 py-1.5 text-sm text-green-700 hover:bg-green-50" style="border-color:#bbf7d0">Raccrocher</button>
                     </form>
                 </li>
@@ -35,7 +35,7 @@
         </ul>
     {% endif %}
 
-    <a href="{{ path('node_panel', {id: node.id}) }}" data-turbo-frame="node-panel" class="text-sm text-gray-500 hover:underline">← Retour au nœud</a>
+    <a href="{{ node_url(node) }}" data-turbo-frame="node-panel" class="text-sm text-gray-500 hover:underline">← Retour au nœud</a>
     </div>
     </div>
 </div>

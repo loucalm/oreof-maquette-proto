@@ -290,11 +290,11 @@
         </div>
         {% if formation.multiParcours %}
             <p class="text-sm text-gray-500">En multi-parcours, le référentiel est défini par parcours.</p>
-            {% for p in formation.parcoursNodes %}
+            {% for p in parcours_nodes(formation) %}
                 <div class="space-y-2">
                     <div class="flex items-center gap-2 text-sm font-semibold">
                         <span class="status-dot" data-status="{{ bcc_status(p) }}"></span>{{ p.displayLabel }}
-                        <a href="{{ path('parcours_editor', {id: p.id}) }}?bcc=1" class="text-xs font-normal hover:underline" style="color:var(--c-primary)">✎ modifier</a>
+                        <a href="{{ path('parcours_editor', {fid: formation.id, nid: p.id, bcc: 1}) }}" class="text-xs font-normal hover:underline" style="color:var(--c-primary)">✎ modifier</a>
                     </div>
                     {{ m.bloclist(p.bccBlocs) }}
                 </div>
@@ -302,9 +302,9 @@
         {% else %}
             <div class="flex items-center gap-2">
                 <span class="status-dot" data-status="{{ bcc_status(formation) }}"></span>
-                <span class="text-sm text-gray-500">{{ formation.competenceBlocs|length }} bloc(s)</span>
+                <span class="text-sm text-gray-500">{{ mono_blocs(formation)|length }} bloc(s)</span>
             </div>
-            {{ m.bloclist(formation.competenceBlocs) }}
+            {{ m.bloclist(mono_blocs(formation)) }}
             <a href="{{ path('formation_editor', {id: formation.id}) }}?bcc=1"
                class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">✎ Modifier le référentiel</a>
         {% endif %}

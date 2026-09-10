@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\Formation;
+use App\Maquette\Doc\TreeNode;
+use App\Maquette\Maquette;
 use App\Maquette\MaquetteBuilder;
 use App\Maquette\TemplateApplier;
 use App\Repository\FormationRepository;
 use App\Repository\NodeTypeRepository;
 use App\Repository\StructureTemplateRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,6 +21,11 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class FormationController extends AbstractController
 {
+    public function __construct(
+        private readonly Maquette $maquette,
+    ) {
+    }
+
     #[Route('/', name: 'formation_index', methods: ['GET'])]
     public function index(FormationRepository $formations, MaquetteBuilder $builder): Response
     {
@@ -27,7 +35,7 @@ final class FormationController extends AbstractController
 
             // en multi-parcours : une ligne dépliable par parcours (remplissage direct)
             $parcours = [];
-            foreach ($formation->getParcoursNodes() as $p) {
+            foreach ($this->maquette->open($formation)->parcoursNodes() as $p) {
                 $sub = $builder->buildSubtree($p)->children;
                 $parcours[] = ['node' => $p, 'progress' => $builder->progress($sub)];
             }
@@ -119,7 +127,7 @@ final class FormationController extends AbstractController
         ],
     ];
 
-    public static function parcoursParamStatus(\App\Entity\Node $parcours, string $key): string
+    public static function parcoursParamStatus(TreeNode $parcours, string $key): string
     {
         $data = $parcours->getParametre($key);
         $keys = self::PARCOURS_PARAM_FIELDS[$key] ?? [];
@@ -143,49 +151,50 @@ final class FormationController extends AbstractController
         return $filled === $total ? 'ok' : 'incomplete';
     }
 
-    #[Route('/parcours/{id}', name: 'parcours_editor', methods: ['GET'])]
-    public function parcoursEditor(\App\Entity\Node $node, MaquetteBuilder $builder): Response
+    #[Route('/formations/{fid}/parcours/{nid}', name: 'parcours_editor', methods: ['GET'])]
+    public function parcoursEditor(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid, MaquetteBuilder $builder): Response
     {
-        if (!$node->isParcours()) {
-            throw $this->createNotFoundException();
-        }
+        $node = $this->parcoursNode($formation, $nid);
         $view = $builder->buildSubtree($node);
 
         return $this->render('formation/parcours_editor.html.twig', [
-            'formation' => $node->getFormation(),
+            'formation' => $formation,
             'parcours' => $node,
             'roots' => $view->children,
             'progress' => $builder->progress($view->children),
         ]);
     }
 
-    #[Route('/parcours/{id}/parametre/{key}', name: 'parcours_param', methods: ['GET'])]
-    public function parcoursParam(\App\Entity\Node $node, string $key): Response
+    #[Route('/formations/{fid}/parcours/{nid}/parametre/{key}', name: 'parcours_param', methods: ['GET'])]
+    public function parcoursParam(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid, string $key): Response
     {
-        if (!$node->isParcours() || !isset(self::PARCOURS_PARAM_SECTIONS[$key])) {
+        if (!isset(self::PARCOURS_PARAM_SECTIONS[$key])) {
             throw $this->createNotFoundException();
         }
+        $node = $this->parcoursNode($formation, $nid);
 
         return $this->render("formation/param/parcours_$key.html.twig", [
-            'formation' => $node->getFormation(),
+            'formation' => $formation,
             'parcours' => $node,
             'key' => $key,
             'label' => self::PARCOURS_PARAM_SECTIONS[$key],
             'data' => $node->getParametre($key),
-            'saveUrl' => $this->generateUrl('parcours_param_save', ['id' => $node->getId(), 'key' => $key]),
+            'saveUrl' => $this->generateUrl('parcours_param_save', ['fid' => $formation->getId(), 'nid' => $nid, 'key' => $key]),
         ]);
     }
 
-    #[Route('/parcours/{id}/parametre/{key}', name: 'parcours_param_save', methods: ['POST'])]
+    #[Route('/formations/{fid}/parcours/{nid}/parametre/{key}', name: 'parcours_param_save', methods: ['POST'])]
     public function parcoursParamSave(
-        \App\Entity\Node $node,
+        #[MapEntity(mapping: ['fid' => 'id'])] Formation $formation,
+        string $nid,
         string $key,
         Request $request,
-        EntityManagerInterface $em,
     ): Response {
-        if (!$node->isParcours() || !isset(self::PARCOURS_PARAM_SECTIONS[$key])) {
+        if (!isset(self::PARCOURS_PARAM_SECTIONS[$key])) {
             throw $this->createNotFoundException();
         }
+        $doc = $this->maquette->open($formation);
+        $node = $this->pickParcours($formation, $nid);
 
         $data = $node->getParametre($key);
         foreach ($request->request->all('p') as $k => $v) {
@@ -200,29 +209,37 @@ final class FormationController extends AbstractController
         ));
 
         // section « organisation » : le nom et le volume d'ECTS sont portés par
-        // le nœud parcours lui-même. Le positionnement (périodes) et le parent
-        // de ramification s'éditent dans « Positionnement & ramification ».
+        // le nœud parcours lui-même.
         if ($key === 'organisation') {
             $nom = trim((string) $request->request->get('nom'));
             if ($nom !== '') {
                 $node->setLabel($nom);
             }
             if ($request->request->has('ects')) {
-                $attrs = $node->getAttributes();
                 $ects = $request->request->get('ects');
-                if ($ects === '' || $ects === null) {
-                    unset($attrs['ects']);
-                } else {
-                    $attrs['ects'] = (int) $ects;
-                }
-                $node->setAttributes($attrs);
+                $node->setAttribute('ects', ($ects === '' || $ects === null) ? null : (int) $ects);
             }
         }
 
-        $em->flush();
+        $this->maquette->save($formation, $doc);
         $this->addFlash('success', sprintf('« %s » enregistré.', self::PARCOURS_PARAM_SECTIONS[$key]));
 
-        return $this->redirectToRoute('parcours_editor', ['id' => $node->getId(), 'param' => $key]);
+        return $this->redirectToRoute('parcours_editor', ['fid' => $formation->getId(), 'nid' => $nid, 'param' => $key]);
+    }
+
+    private function parcoursNode(Formation $formation, string $nid): TreeNode
+    {
+        return $this->pickParcours($formation, $nid);
+    }
+
+    private function pickParcours(Formation $formation, string $nid): TreeNode
+    {
+        $node = $this->maquette->open($formation)->node($nid);
+        if ($node === null || !$node->isParcours()) {
+            throw $this->createNotFoundException();
+        }
+
+        return $node;
     }
 
     #[Route('/formations/{id}/verifier', name: 'formation_check', methods: ['GET'])]
@@ -267,10 +284,12 @@ final class FormationController extends AbstractController
     }
 
     #[Route('/formations/{id}/settings', name: 'formation_settings', methods: ['POST'])]
-    public function settings(Formation $formation, Request $request, EntityManagerInterface $em, NodeTypeRepository $types): Response
+    public function settings(Formation $formation, Request $request, EntityManagerInterface $em): Response
     {
         $wasMulti = $formation->isMultiParcours();
         $willMulti = $request->request->getBoolean('multiParcours');
+
+        $doc = $this->maquette->open($formation);
 
         $formation
             ->setName(trim((string) $request->request->get('name')) ?: $formation->getName())
@@ -294,28 +313,24 @@ final class FormationController extends AbstractController
                 ? $request->request->getInt('calendarSpan') : null);
         }
 
-        // propriétés « formation mono-parcours » (portées par le parcours invisible) :
-        // régimes d'inscription + champs libres (intitulé, alternance, langue,
-        // poursuite d'études, débouchés, codes ROME…) rangés dans parametres.structure
+        // propriétés « formation mono-parcours » rangées dans parametres.structure
         if ($request->request->has('regimes') || $request->request->has('p')) {
-            $data = $formation->getParametre('structure');
+            $data = $doc->formationParam('structure');
             if ($request->request->has('regimes')) {
                 $data['regimes'] = array_values(array_filter($request->request->all('regimes')));
             }
             foreach ($request->request->all('p') as $k => $v) {
                 $data[$k] = \is_string($v) ? trim($v) : $v;
             }
-            $formation->setParametre('structure', array_filter(
+            $doc->setFormationParam('structure', array_filter(
                 $data,
                 static fn ($v) => $v !== '' && $v !== null && $v !== [],
             ));
         }
 
-        $em->flush();
-
         // le passage mono ↔ multi réorganise l'arbre pour que rien ne casse
         if ($wasMulti !== $willMulti) {
-            $moved = $this->reshapeParcoursLevel($formation, $willMulti, $types, $em);
+            $moved = $this->reshapeParcoursLevel($formation, $doc, $willMulti);
             if ($moved) {
                 $this->addFlash('success', $willMulti
                     ? 'Multi-parcours : les nœuds racine ont été rangés dans un nouveau parcours.'
@@ -323,79 +338,64 @@ final class FormationController extends AbstractController
             }
         }
 
+        $this->maquette->save($formation, $doc);
+
         return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);
     }
 
     /**
-     * Réorganise l'arbre lors du passage mono ↔ multi-parcours.
+     * Réorganise l'arbre JSON lors du passage mono ↔ multi-parcours.
      *
-     * → multi : on emballe toutes les racines « corps » dans un nouveau nœud
-     *   Parcours (l'ECTS total de la formation devient sa cible).
+     * → multi : on emballe les racines « corps » (et le BCC mono) dans un
+     *   nouveau nœud Parcours (l'ECTS total de la formation devient sa cible).
      * → mono : on remonte les enfants de tous les parcours à la racine puis on
-     *   supprime les nœuds Parcours (DQL en masse pour éviter les cascades).
+     *   supprime les nœuds Parcours.
      *
      * @return bool true si quelque chose a bougé
      */
-    private function reshapeParcoursLevel(
-        Formation $formation,
-        bool $toMulti,
-        NodeTypeRepository $types,
-        EntityManagerInterface $em,
-    ): bool {
-        $roots = $formation->getRootNodes();
-
+    private function reshapeParcoursLevel(Formation $formation, \App\Maquette\Doc\MaquetteDoc $doc, bool $toMulti): bool
+    {
         if ($toMulti) {
-            $bodyRoots = array_values(array_filter($roots, static fn (\App\Entity\Node $n) => !$n->isParcours()));
-            $parcoursType = $types->findOneByKey('parcours');
-            if ($bodyRoots === [] || $parcoursType === null) {
+            $bodyRoots = array_values(array_filter(
+                $doc->roots,
+                static fn (TreeNode $n) => !$n->isParcours(),
+            ));
+            if ($bodyRoots === [] || $doc->type('parcours') === null) {
                 return false;
             }
 
-            $parcours = new \App\Entity\Node($parcoursType, $formation->getName());
-            $parcours->setFormation($formation);
-            $parcours->setPosition(0);
+            $parcours = $doc->addNode(null, 'parcours', $formation->getName());
             if ($formation->getEctsTotal() !== null) {
                 $parcours->setAttribute('ects', $formation->getEctsTotal());
             }
-            $formation->addNode($parcours);
-            $em->persist($parcours);
-
-            foreach ($bodyRoots as $i => $r) {
-                $r->setParent($parcours);
-                $parcours->addChild($r);
-                $r->setPosition($i);
+            foreach ($bodyRoots as $r) {
+                $doc->moveNode($r, $parcours, PHP_INT_MAX);
             }
-            $em->flush();
 
             return true;
         }
 
         // → mono
-        $parcoursIds = array_values(array_filter(array_map(
-            static fn (\App\Entity\Node $n) => $n->isParcours() ? $n->getId() : null,
-            $roots,
-        )));
-        if ($parcoursIds === []) {
+        $parcours = $doc->parcoursNodes();
+        if ($parcours === []) {
             return false;
         }
 
         if ($formation->getEctsTotal() === null) {
-            foreach ($roots as $r) {
-                if ($r->isParcours() && $r->getAttribute('ects')) {
-                    $formation->setEctsTotal((int) $r->getAttribute('ects'));
-                    $em->flush();
+            foreach ($parcours as $p) {
+                if ($p->getAttribute('ects')) {
+                    $formation->setEctsTotal((int) $p->getAttribute('ects'));
                     break;
                 }
             }
         }
 
-        // enfants des parcours → racine ; puis suppression des parcours
-        $em->createQuery('UPDATE App\Entity\Node n SET n.parent = NULL WHERE n.parent IN (:ids)')
-            ->execute(['ids' => $parcoursIds]);
-        $em->createQuery('UPDATE App\Entity\Node n SET n.parcoursParent = NULL WHERE n.parcoursParent IN (:ids)')
-            ->execute(['ids' => $parcoursIds]);
-        $em->createQuery('DELETE App\Entity\Node n WHERE n.id IN (:ids)')
-            ->execute(['ids' => $parcoursIds]);
+        foreach ($parcours as $p) {
+            foreach ($p->getChildren() as $child) { // snapshot : moveNode reconstruit children
+                $doc->moveNode($child, null, PHP_INT_MAX);
+            }
+            $doc->removeNode($p);
+        }
 
         return true;
     }
@@ -406,7 +406,6 @@ final class FormationController extends AbstractController
         Request $request,
         StructureTemplateRepository $templates,
         TemplateApplier $applier,
-        EntityManagerInterface $em,
     ): Response {
         $template = $templates->findOneByKey((string) $request->request->get('template'));
         if ($template === null) {
@@ -415,23 +414,23 @@ final class FormationController extends AbstractController
             return $this->redirectToRoute('formation_editor', ['id' => $formation->getId()]);
         }
 
-        $applier->apply($formation, $template);
-        $em->flush();
+        $doc = $this->maquette->open($formation);
+        $applier->apply($doc, $template);
+        $this->maquette->save($formation, $doc);
         $this->addFlash('success', sprintf('Structure « %s » chargée. Elle reste entièrement modifiable.', $template->getLabel()));
 
         return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);
     }
 
     /**
-     * Enregistre le squelette (chaîne de types) de la formation. Le tableau
-     * `chain[]` est la nouvelle liste ordonnée de clés de type ; l'ajout, le
-     * retrait et le glisser-déposer postent tous la liste complète.
+     * Enregistre le squelette (chaîne de types) de la formation.
      */
     #[Route('/formations/{id}/structure', name: 'formation_structure_save', methods: ['POST'])]
     public function structureSave(Formation $formation, Request $request, EntityManagerInterface $em): Response
     {
         $formation->setStructure(array_map('strval', (array) $request->request->all('chain')));
         $em->flush();
+        $this->maquette->forget($formation);
 
         if ($request->isXmlHttpRequest()) {
             return new Response(null, Response::HTTP_NO_CONTENT);
@@ -519,17 +518,18 @@ final class FormationController extends AbstractController
             'label' => self::PARAM_SECTIONS[$key]['label'],
             'data' => $formation->getParametre($key),
             // seulement pour "structure"
-            'nodeCount' => $key === 'structure' ? $formation->getNodes()->count() : 0,
+            'nodeCount' => $key === 'structure' ? \count($this->maquette->open($formation)->allNodes()) : 0,
             'templates' => $templates->findAllOrdered(),
         ]);
     }
 
     #[Route('/formations/{id}/parametre/{key}', name: 'formation_param_save', methods: ['POST'])]
-    public function paramSave(Formation $formation, string $key, Request $request, EntityManagerInterface $em): Response
+    public function paramSave(Formation $formation, string $key, Request $request): Response
     {
         if (!isset(self::PARAM_SECTIONS[$key])) {
             throw $this->createNotFoundException();
         }
+        $doc = $this->maquette->open($formation);
 
         // le bloc « Informations globale » de "organisation" édite l'entité elle-même
         if ($key === 'organisation') {
@@ -541,20 +541,21 @@ final class FormationController extends AbstractController
         }
 
         $data = $request->request->all('p');
-        $formation->setParametre($key, array_filter($data, static fn ($v) => $v !== '' && $v !== null));
-        $em->flush();
+        $doc->setFormationParam($key, array_filter($data, static fn ($v) => $v !== '' && $v !== null));
+        $this->maquette->save($formation, $doc);
         $this->addFlash('success', sprintf('« %s » enregistré.', self::PARAM_SECTIONS[$key]['label']));
 
         return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => $key]);
     }
 
     #[Route('/formations/{id}/reset', name: 'formation_reset', methods: ['POST'])]
-    public function reset(Formation $formation, EntityManagerInterface $em): Response
+    public function reset(Formation $formation): Response
     {
-        foreach ($formation->getRootNodes() as $root) {
-            $em->remove($root);
+        $doc = $this->maquette->open($formation);
+        foreach ($doc->pedagogicalRoots() as $root) {
+            $doc->removeNode($root);
         }
-        $em->flush();
+        $this->maquette->save($formation, $doc);
         $this->addFlash('info', 'Structure vidée.');
 
         return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);

@@ -138,7 +138,7 @@
                                                 </td>
                                                 <td class="px-4 py-2.5 text-right whitespace-nowrap">
                                                     <a href="{{ path('formation_view', {id: f.id}) }}" class="text-xs hover:underline">ⓘ Voir</a>
-                                                    <a href="{{ path('parcours_editor', {id: pn.id}) }}" class="ml-2 text-xs font-medium text-amber-700 hover:underline">✎ Modifier</a>
+                                                    <a href="{{ path('parcours_editor', {fid: f.id, nid: pn.id}) }}" class="ml-2 text-xs font-medium text-amber-700 hover:underline">✎ Modifier</a>
                                                 </td>
                                             </tr>
                                         {% endfor %}

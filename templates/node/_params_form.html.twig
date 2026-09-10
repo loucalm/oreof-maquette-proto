@@ -21,7 +21,7 @@
         <div class="fld-label">Aller aux paramètres de…</div>
         <select data-controller="params-nav" data-action="change->params-nav#go" class="fld mt-1">
             {% for e in param_nav(node) %}
-                <option value="{{ path('node_params_form', {id: e.target.id}) }}" {{ e.current ? 'selected' }}>
+                <option value="{{ node_url(e.target, 'node_params_form') }}" {{ e.current ? 'selected' }}>
                     {{ e.type.icon }} {{ e.type.label }}{% if not e.current %} — {{ e.target.label ?: '—' }}{% endif %}{{ e.current ? ' (ce nœud)' }}
                 </option>
             {% endfor %}
@@ -36,7 +36,7 @@
         Cochez les champs à faire apparaître. Les champs <span class="pill">🔒 admin</span> sont imposés par l'administrateur du type.
     </p>
 
-    <form method="post" action="{{ path('node_params', {id: node.id}) }}" data-turbo-frame="_top" class="space-y-3">
+    <form method="post" action="{{ node_url(node, 'node_params') }}" data-turbo-frame="_top" class="space-y-3">
 
         {% if typeCaps.mutualisable is defined %}
             {% set mutLocked = node.type.isCapabilityLocked('mutualisable') %}

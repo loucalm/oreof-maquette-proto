@@ -5,7 +5,7 @@
 {% block title %}{{ formation.name }} · BCC{% endblock %}
 
 {% macro editform(n, kind) %}
-    <form method="post" action="{{ path('bcc_node_save', {id: n.id}) }}" data-turbo-frame="_top"
+    <form method="post" action="{{ node_url(n, 'bcc_node_save') }}" data-turbo-frame="_top"
           data-bcc-target="edit" hidden class="bcc-edit">
         <div class="grid gap-2 sm:grid-cols-[140px_1fr]">
             <label class="text-xs font-medium text-gray-500 sm:pt-2">{{ kind == 'bloc' ? 'Libellé du bloc' : 'Libellé' }}</label>
@@ -21,7 +21,7 @@
             <span class="flex-1"></span>
         </div>
     </form>
-    <form method="post" action="{{ path('bcc_node_delete', {id: n.id}) }}" data-turbo-frame="_top"
+    <form method="post" action="{{ node_url(n, 'bcc_node_delete') }}" data-turbo-frame="_top"
           data-bcc-target="edit" hidden class="bcc-edit -mt-1"
           data-controller="confirm"
           data-confirm-message-value="{{ kind == 'bloc' ? 'Supprimer ce bloc et toutes ses compétences ?' : 'Supprimer cette compétence ?' }}">
@@ -35,7 +35,7 @@
 <turbo-frame id="node-panel">
 <div class="panel-body" data-panel-active="bcc"
      data-controller="bcc"
-     data-bcc-move-url-value="{{ path('bcc_move', {id: '__ID__'}) }}">
+     data-bcc-move-url-value="{{ path('bcc_move', {fid: formation.id, nid: '__ID__'}) }}">
 
     <div class="panel-head">
         {% if standalone %}
@@ -112,7 +112,7 @@
                         {% endfor %}
                     </ul>
 
-                    <form method="post" action="{{ path('bcc_competence_add', {id: n.id}) }}" data-turbo-frame="_top" class="bcc-comp-add">
+                    <form method="post" action="{{ node_url(n, 'bcc_competence_add') }}" data-turbo-frame="_top" class="bcc-comp-add">
                         <button class="rounded-lg border border-dashed px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-50"
                                 style="border-color:#86efac;background:#f0fdf4">＋ Ajouter une compétence</button>
                     </form>

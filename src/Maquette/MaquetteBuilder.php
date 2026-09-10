@@ -5,73 +5,50 @@ declare(strict_types=1);
 namespace App\Maquette;
 
 use App\Entity\Formation;
-use App\Entity\Node;
-use App\Repository\NodeRepository;
+use App\Maquette\Doc\TreeNode;
 
 /**
- * Construit l'arbre calculé d'une formation : NodeView imbriqués, avec statut
- * et agrégats (heures / ECTS) résolus en une passe ascendante.
+ * Construit l'arbre calculé d'une formation : NodeView imbriqués, avec statut,
+ * agrégats (heures / ECTS) et référence hiérarchique, résolus en une passe.
  */
 final class MaquetteBuilder
 {
     public function __construct(
-        private readonly NodeRepository $nodes,
+        private readonly Maquette $maquette,
         private readonly AttributeCatalog $catalog,
+        private readonly Numbering $numbering,
     ) {
     }
 
     /**
-     * @return list<NodeView> racines
+     * @return list<NodeView> racines pédagogiques
      */
     public function build(Formation $formation): array
     {
-        $all = $this->nodes->findForFormation($formation);
+        $roots = $this->maquette->open($formation)->pedagogicalRoots();
+        $views = array_map(fn (TreeNode $n) => $this->view($n), $roots);
+        $this->numbering->apply($views);
 
-        /** @var array<int, list<Node>> $childrenByParent */
-        $childrenByParent = [];
-        foreach ($all as $node) {
-            $pid = $node->getParent()?->getId() ?? 0;
-            $childrenByParent[$pid][] = $node;
-        }
-        foreach ($childrenByParent as &$list) {
-            usort($list, static fn (Node $a, Node $b) => $a->getPosition() <=> $b->getPosition());
-        }
-        unset($list);
-
-        // le référentiel de compétences (BCC) est un arbre parallèle : on ne
-        // l'affiche pas dans l'éditeur de structure pédagogique.
-        $roots = array_values(array_filter(
-            $childrenByParent[0] ?? [],
-            static fn (Node $n) => !$n->isCompetenceNode(),
-        ));
-
-        return array_map(fn (Node $n) => $this->view($n, $childrenByParent), $roots);
+        return $views;
     }
 
-    public function buildSubtree(Node $root): NodeView
+    public function buildSubtree(TreeNode $root): NodeView
     {
-        $all = $this->nodes->findForFormation($root->getFormation());
-        $childrenByParent = [];
-        foreach ($all as $node) {
-            $pid = $node->getParent()?->getId() ?? 0;
-            $childrenByParent[$pid][] = $node;
-        }
+        $view = $this->view($root);
+        $this->numbering->apply([$view]);
 
-        return $this->view($root, $childrenByParent);
+        return $view;
     }
 
-    /**
-     * @param array<int, list<Node>> $childrenByParent
-     */
-    private function view(Node $node, array $childrenByParent): NodeView
+    private function view(TreeNode $node): NodeView
     {
         // le BCC (famille compétence) est un arbre parallèle : jamais dans la
         // structure pédagogique, même quand il est porté par un parcours.
         $childNodes = array_values(array_filter(
-            $childrenByParent[$node->getId()] ?? [],
-            static fn (Node $c) => !$c->isCompetenceNode(),
+            $node->getChildren(),
+            static fn (TreeNode $c) => !$c->isCompetenceNode(),
         ));
-        $children = array_map(fn (Node $c) => $this->view($c, $childrenByParent), $childNodes);
+        $children = array_map(fn (TreeNode $c) => $this->view($c), $childNodes);
 
         $view = new NodeView($node, $children);
 
@@ -82,7 +59,6 @@ final class MaquetteBuilder
         $childHours = array_sum(array_map(static fn (NodeView $c) => $c->totalHours, $children));
         $childEcts = array_sum(array_map(static fn (NodeView $c) => $c->totalEcts, $children));
 
-        // une feuille compte ses propres valeurs ; un nœud parent additionne ses enfants
         $view->totalHours = $children === [] ? $ownHours : $childHours + $ownHours;
         $view->totalEcts = $children === [] ? $ownEcts : $childEcts;
 
@@ -93,7 +69,7 @@ final class MaquetteBuilder
         return $view;
     }
 
-    private function missingRequired(Node $node): int
+    private function missingRequired(TreeNode $node): int
     {
         $missing = 0;
         $caps = $node->effectiveCapabilities();
@@ -125,7 +101,7 @@ final class MaquetteBuilder
         return $missing;
     }
 
-    private function resolveStatus(Node $node, NodeView $view): string
+    private function resolveStatus(TreeNode $node, NodeView $view): string
     {
         $childStatuses = array_map(static fn (NodeView $c) => $c->status, $view->children);
         $anyChildNotOk = \in_array(NodeView::STATUS_INCOMPLETE, $childStatuses, true)
@@ -134,7 +110,6 @@ final class MaquetteBuilder
         $ownMissing = $view->missingCount;
         $hasAnyOwnData = $node->getAttributes() !== [] || trim($node->getLabel()) !== '';
 
-        // Un nœud qui, selon le squelette, doit avoir des enfants mais n'en a pas => incomplet
         $needsChildren = !$node->getFormation()->isLeafType($node->getType()->getKey());
         if ($needsChildren && $view->children === []) {
             return $hasAnyOwnData ? NodeView::STATUS_INCOMPLETE : NodeView::STATUS_EMPTY;
@@ -156,7 +131,7 @@ final class MaquetteBuilder
      *
      * @param list<NodeView> $roots
      *
-     * @return list<array{node: Node, missing: list<string>}>
+     * @return list<array{node: TreeNode, missing: list<string>}>
      */
     public function collectIssues(array $roots): array
     {
@@ -180,7 +155,7 @@ final class MaquetteBuilder
     }
 
     /** @return list<string> intitulés des champs requis manquants */
-    private function missingFields(Node $node): array
+    private function missingFields(TreeNode $node): array
     {
         $missing = [];
         if (trim($node->getLabel()) === '') {

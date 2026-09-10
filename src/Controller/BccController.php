@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\Formation;
-use App\Entity\Node;
-use App\Maquette\NodeFactory;
-use App\Repository\NodeRepository;
-use App\Repository\NodeTypeRepository;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Maquette\Doc\MaquetteDoc;
+use App\Maquette\Doc\TreeNode;
+use App\Maquette\Maquette;
+use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,9 +20,10 @@ use Symfony\Component\Routing\Attribute\Route;
  * pédagogique — des blocs de compétences, chacun contenant des compétences,
  * plus un bloc « compétences transversales (RNCP) » optionnel.
  *
- * Contexte : la formation en mono-parcours (blocs = nœuds racine), un nœud
- * parcours en multi-parcours (blocs = enfants du parcours). La hiérarchie est
- * fixe (bloc → compétence) : pas besoin du squelette, d'où un contrôleur dédié.
+ * Les nœuds BCC vivent dans le même document `Formation::arbre` que la structure
+ * pédagogique (famille « compétence », filtrée à l'affichage). Contexte : la
+ * formation en mono-parcours (blocs = racines), un nœud parcours en multi
+ * (blocs = enfants du parcours).
  */
 final class BccController extends AbstractController
 {
@@ -31,70 +31,58 @@ final class BccController extends AbstractController
     private const COMPETENCE = 'competence';
 
     public function __construct(
-        private readonly EntityManagerInterface $em,
-        private readonly NodeRepository $nodes,
-        private readonly NodeFactory $factory,
-        private readonly NodeTypeRepository $types,
+        private readonly Maquette $maquette,
     ) {
     }
 
-    #[Route('/formations/{id}/bcc', name: 'bcc_editor', methods: ['GET'])]
-    public function editor(Request $request, Formation $formation): Response
+    #[Route('/formations/{fid}/bcc', name: 'bcc_editor', methods: ['GET'])]
+    public function editor(Request $request, #[MapEntity(mapping: ['fid' => 'id'])] Formation $formation): Response
     {
         return $this->renderEditor($request, $formation, null);
     }
 
-    #[Route('/parcours/{id}/bcc', name: 'bcc_parcours_editor', methods: ['GET'])]
-    public function parcoursEditor(Request $request, Node $node): Response
+    #[Route('/formations/{fid}/parcours/{nid}/bcc', name: 'bcc_parcours_editor', methods: ['GET'])]
+    public function parcoursEditor(Request $request, #[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid): Response
     {
-        if (!$node->isParcours()) {
-            throw $this->createNotFoundException();
-        }
+        $parcours = $this->parcours($formation, $nid);
 
-        return $this->renderEditor($request, $node->getFormation(), $node);
+        return $this->renderEditor($request, $formation, $parcours);
     }
 
-    #[Route('/formations/{id}/bcc/blocs', name: 'bcc_bloc_add', methods: ['POST'])]
-    public function addBloc(Formation $formation, Request $request): Response
+    #[Route('/formations/{fid}/bcc/blocs', name: 'bcc_bloc_add', methods: ['POST'])]
+    public function addBloc(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, Request $request): Response
     {
         return $this->doAddBloc($request, $formation, null);
     }
 
-    #[Route('/parcours/{id}/bcc/blocs', name: 'bcc_parcours_bloc_add', methods: ['POST'])]
-    public function addParcoursBloc(Node $node, Request $request): Response
+    #[Route('/formations/{fid}/parcours/{nid}/bcc/blocs', name: 'bcc_parcours_bloc_add', methods: ['POST'])]
+    public function addParcoursBloc(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid, Request $request): Response
     {
-        if (!$node->isParcours()) {
-            throw $this->createNotFoundException();
-        }
-
-        return $this->doAddBloc($request, $node->getFormation(), $node);
+        return $this->doAddBloc($request, $formation, $this->parcours($formation, $nid));
     }
 
-    #[Route('/nodes/{id}/bcc/competences', name: 'bcc_competence_add', methods: ['POST'])]
-    public function addCompetence(Node $node, Request $request): Response
+    #[Route('/formations/{fid}/nodes/{nid}/bcc/competences', name: 'bcc_competence_add', methods: ['POST'])]
+    public function addCompetence(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid, Request $request): Response
     {
-        if (!$node->isBloc()) {
+        $doc = $this->maquette->open($formation);
+        $bloc = $this->pick($doc, $nid);
+        if (!$bloc->isBloc()) {
             throw $this->createNotFoundException();
-        }
-
-        $type = $this->types->findOneByKey(self::COMPETENCE);
-        if ($type === null) {
-            $this->addFlash('danger', 'Type « compétence » introuvable.');
-
-            return $this->ownerRedirect($node);
         }
 
         $label = trim((string) $request->request->get('label')) ?: 'Nouvelle compétence';
-        $this->factory->create($node->getFormation(), $type, $node, $label);
-        $this->em->flush();
+        $doc->addNode($bloc->getId(), self::COMPETENCE, $label);
+        $this->maquette->save($formation, $doc);
         $this->addFlash('success', 'Compétence ajoutée.');
 
-        return $this->ownerRedirect($node);
+        return $this->ownerRedirect($bloc);
     }
 
-    #[Route('/nodes/{id}/bcc', name: 'bcc_node_save', methods: ['POST'])]
-    public function save(Node $node, Request $request): Response
+    #[Route('/formations/{fid}/nodes/{nid}/bcc', name: 'bcc_node_save', methods: ['POST'])]
+    public function save(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid, Request $request): Response
     {
+        $doc = $this->maquette->open($formation);
+        $node = $this->pick($doc, $nid);
         if (!$node->isCompetenceNode()) {
             throw $this->createNotFoundException();
         }
@@ -103,196 +91,187 @@ final class BccController extends AbstractController
         $node->setCode(trim((string) $request->request->get('code')) ?: null);
         $node->setAttribute('description', trim((string) $request->request->get('description')));
 
-        $this->em->flush();
+        $this->maquette->save($formation, $doc);
         $this->addFlash('success', 'Enregistré.');
 
         return $this->ownerRedirect($node);
     }
 
-    #[Route('/nodes/{id}/bcc/delete', name: 'bcc_node_delete', methods: ['POST'])]
-    public function delete(Node $node): Response
+    #[Route('/formations/{fid}/nodes/{nid}/bcc/delete', name: 'bcc_node_delete', methods: ['POST'])]
+    public function delete(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid): Response
     {
+        $doc = $this->maquette->open($formation);
+        $node = $this->pick($doc, $nid);
         if (!$node->isCompetenceNode()) {
             throw $this->createNotFoundException();
         }
         $redirect = $this->ownerRedirect($node);
         $isBloc = $node->isBloc();
-        $this->em->remove($node);
-        $this->em->flush();
+
+        $doc->removeNode($node);
+        $this->maquette->save($formation, $doc);
         $this->addFlash('info', $isBloc ? 'Bloc supprimé.' : 'Compétence supprimée.');
 
         return $redirect;
     }
 
-    #[Route('/nodes/{id}/bcc/move', name: 'bcc_move', methods: ['POST'])]
-    public function move(Node $node, Request $request): JsonResponse
+    #[Route('/formations/{fid}/nodes/{nid}/bcc/move', name: 'bcc_move', methods: ['POST'])]
+    public function move(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid, Request $request): JsonResponse
     {
-        if (!$node->isCompetenceNode()) {
+        $doc = $this->maquette->open($formation);
+        $node = $doc->node($nid);
+        if ($node === null || !$node->isCompetenceNode()) {
             return new JsonResponse(['ok' => false, 'error' => 'type'], 422);
         }
 
         $payload = json_decode($request->getContent() ?: '{}', true) ?: [];
-        $newParent = !empty($payload['parentId']) ? $this->nodes->find((int) $payload['parentId']) : null;
         $index = max(0, (int) ($payload['index'] ?? 0));
 
-        // règles fixes du BCC : un bloc reste au niveau des blocs, une compétence va dans un bloc
         if ($node->isBloc()) {
-            if ($newParent !== null) {
+            if (!empty($payload['parentId'])) {
                 return new JsonResponse(['ok' => false, 'error' => 'hierarchy'], 422);
             }
             if ($node->isTransversalBloc()) {
                 return new JsonResponse(['ok' => true]); // épinglé en tête
             }
-            $siblings = array_values(array_filter(
-                $this->siblingBlocs($node),
-                static fn (Node $b) => !$b->isTransversalBloc(),
-            ));
+            $doc->reorderRegularBlocs($this->bccContext($node), $node, $index);
         } else {
-            if ($newParent === null || !$newParent->isBloc() || $newParent->getFormation() !== $node->getFormation()) {
+            $newParent = !empty($payload['parentId']) ? $doc->node((string) $payload['parentId']) : null;
+            if ($newParent === null || !$newParent->isBloc()) {
                 return new JsonResponse(['ok' => false, 'error' => 'hierarchy'], 422);
             }
-            $oldParent = $node->getParent();
-            $node->setParent($newParent);
-            $newParent->addChild($node);
-            $siblings = $this->competenceChildren($newParent, $node);
+            $doc->moveNode($node, $newParent, $index);
         }
 
-        array_splice($siblings, min($index, \count($siblings)), 0, [$node]);
-        foreach ($siblings as $i => $s) {
-            $s->setPosition($i);
-        }
-
-        if (isset($oldParent) && $oldParent !== null && $oldParent !== $newParent) {
-            foreach ($this->competenceChildren($oldParent, $node) as $i => $s) {
-                $s->setPosition($i);
-            }
-        }
-
-        $this->em->flush();
+        $this->maquette->save($formation, $doc);
 
         return new JsonResponse(['ok' => true]);
     }
 
     // ─── helpers ────────────────────────────────────────────────
 
-    private function renderEditor(Request $request, Formation $formation, ?Node $parcours): Response
+    private function renderEditor(Request $request, Formation $formation, ?TreeNode $parcours): Response
     {
+        $doc = $this->maquette->open($formation);
+        $blocs = $parcours !== null ? $parcours->getBccBlocs() : $doc->competenceBlocs();
+
         return $this->render('formation/bcc.html.twig', [
             'formation' => $formation,
             'parcours' => $parcours,
-            'blocs' => $this->buildTree($this->blocsOf($formation, $parcours)),
-            'hasTransversal' => $this->hasTransversal($formation, $parcours),
-            'addBlocUrl' => $parcours
-                ? $this->generateUrl('bcc_parcours_bloc_add', ['id' => $parcours->getId()])
-                : $this->generateUrl('bcc_bloc_add', ['id' => $formation->getId()]),
+            'blocs' => $this->buildTree($blocs),
+            'hasTransversal' => $this->hasTransversal($blocs),
+            'addBlocUrl' => $parcours !== null
+                ? $this->generateUrl('bcc_parcours_bloc_add', ['fid' => $formation->getId(), 'nid' => $parcours->getId()])
+                : $this->generateUrl('bcc_bloc_add', ['fid' => $formation->getId()]),
             'standalone' => 'node-panel' !== $request->headers->get('Turbo-Frame'),
         ]);
     }
 
-    private function doAddBloc(Request $request, Formation $formation, ?Node $parcours): Response
+    private function doAddBloc(Request $request, Formation $formation, ?TreeNode $parcours): Response
     {
-        $type = $this->types->findOneByKey(self::BLOC);
-        if ($type === null) {
-            $this->addFlash('danger', 'Type « bloc de compétences » introuvable.');
-
-            return $this->contextRedirect($formation, $parcours);
-        }
+        $doc = $this->maquette->open($formation);
+        $blocs = $parcours !== null ? $parcours->getBccBlocs() : $doc->competenceBlocs();
 
         $transversal = $request->request->getBoolean('transversal');
-        if ($transversal && $this->hasTransversal($formation, $parcours)) {
+        if ($transversal && $this->hasTransversal($blocs)) {
             $this->addFlash('warning', 'Le bloc de compétences transversales existe déjà.');
 
             return $this->contextRedirect($formation, $parcours);
         }
 
-        $regular = array_filter($this->blocsOf($formation, $parcours), static fn (Node $b) => !$b->isTransversalBloc());
+        $regular = array_filter($blocs, static fn (TreeNode $b) => !$b->isTransversalBloc());
         $label = trim((string) $request->request->get('label'))
             ?: ($transversal ? 'Compétences transversales (RNCP)' : 'BC '.(\count($regular) + 1));
 
-        $bloc = $this->factory->create($formation, $type, $parcours, $label);
+        $bloc = $doc->addNode($parcours?->getId(), self::BLOC, $label);
         if ($transversal) {
             $bloc->setAttribute('transversal', true);
         }
-        $this->em->flush();
+        $this->maquette->save($formation, $doc);
         $this->addFlash('success', $transversal ? 'Bloc transversal ajouté.' : sprintf('« %s » ajouté.', $label));
 
         return $this->contextRedirect($formation, $parcours);
     }
 
-    /** @return list<Node> */
-    private function blocsOf(Formation $formation, ?Node $parcours): array
+    /** @param list<TreeNode> $blocs */
+    private function hasTransversal(array $blocs): bool
     {
-        return $parcours ? $parcours->getBccBlocs() : $formation->getCompetenceBlocs();
+        foreach ($blocs as $b) {
+            if ($b->isTransversalBloc()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    private function hasTransversal(Formation $formation, ?Node $parcours): bool
+    /** Contexte BCC d'un nœud : le parcours ancêtre, sinon null (mono). */
+    private function bccContext(TreeNode $bccNode): ?TreeNode
     {
-        return $parcours ? $parcours->hasTransversalBloc() : $formation->hasTransversalBloc();
-    }
+        for ($c = $bccNode->getParent(); $c !== null; $c = $c->getParent()) {
+            if ($c->isParcours()) {
+                return $c;
+            }
+        }
 
-    /** Autres blocs du même contexte (même parent) que $bloc. @return list<Node> */
-    private function siblingBlocs(Node $bloc): array
-    {
-        $parentId = $bloc->getParent()?->getId();
-        $out = array_values(array_filter(
-            $this->nodes->findForFormation($bloc->getFormation()),
-            static fn (Node $b) => $b !== $bloc && $b->isBloc() && $b->getParent()?->getId() === $parentId,
-        ));
-        usort($out, static fn (Node $a, Node $b) => $a->getPosition() <=> $b->getPosition());
-
-        return $out;
-    }
-
-    /** @return list<Node> */
-    private function competenceChildren(Node $bloc, ?Node $exclude = null): array
-    {
-        $out = array_values(array_filter(
-            $this->nodes->findForFormation($bloc->getFormation()),
-            static fn (Node $c) => $c !== $exclude
-                && $c->getParent() === $bloc
-                && $c->getType()->getKey() === self::COMPETENCE,
-        ));
-        usort($out, static fn (Node $a, Node $b) => $a->getPosition() <=> $b->getPosition());
-
-        return $out;
+        return null;
     }
 
     /**
-     * @param list<Node> $blocs
+     * @param list<TreeNode> $blocs
      *
-     * @return list<array{node: Node, competences: list<Node>, transversal: bool}>
+     * @return list<array{node: TreeNode, competences: list<TreeNode>, transversal: bool}>
      */
     private function buildTree(array $blocs): array
     {
         $out = [];
         foreach ($blocs as $bloc) {
             $comps = array_values(array_filter(
-                $bloc->getChildren()->toArray(),
-                static fn (Node $c) => $c->getType()->getKey() === self::COMPETENCE,
+                $bloc->getChildren(),
+                static fn (TreeNode $c) => $c->getType()->getKey() === self::COMPETENCE,
             ));
-            usort($comps, static fn (Node $a, Node $b) => $a->getPosition() <=> $b->getPosition());
             $out[] = ['node' => $bloc, 'competences' => $comps, 'transversal' => $bloc->isTransversalBloc()];
         }
 
         return $out;
     }
 
-    /** Redirige vers l'éditeur du contexte du nœud BCC (parcours ou formation). */
-    private function ownerRedirect(Node $bccNode): Response
+    private function ownerRedirect(TreeNode $bccNode): Response
     {
+        $formation = $bccNode->getFormation();
         for ($c = $bccNode; $c !== null; $c = $c->getParent()) {
             if ($c->isParcours()) {
-                return $this->redirectToRoute('parcours_editor', ['id' => $c->getId(), 'bcc' => 1]);
+                return $this->redirectToRoute('parcours_editor', ['fid' => $formation->getId(), 'nid' => $c->getId(), 'bcc' => 1]);
             }
         }
 
-        return $this->redirectToRoute('formation_editor', ['id' => $bccNode->getFormation()->getId(), 'bcc' => 1]);
+        return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'bcc' => 1]);
     }
 
-    private function contextRedirect(Formation $formation, ?Node $parcours): Response
+    private function contextRedirect(Formation $formation, ?TreeNode $parcours): Response
     {
-        return $parcours
-            ? $this->redirectToRoute('parcours_editor', ['id' => $parcours->getId(), 'bcc' => 1])
+        return $parcours !== null
+            ? $this->redirectToRoute('parcours_editor', ['fid' => $formation->getId(), 'nid' => $parcours->getId(), 'bcc' => 1])
             : $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'bcc' => 1]);
+    }
+
+    private function parcours(Formation $formation, string $nid): TreeNode
+    {
+        $node = $this->pick($this->maquette->open($formation), $nid);
+        if (!$node->isParcours()) {
+            throw $this->createNotFoundException();
+        }
+
+        return $node;
+    }
+
+    private function pick(MaquetteDoc $doc, string $nid): TreeNode
+    {
+        $node = $doc->node($nid);
+        if ($node === null) {
+            throw $this->createNotFoundException();
+        }
+
+        return $node;
     }
 }

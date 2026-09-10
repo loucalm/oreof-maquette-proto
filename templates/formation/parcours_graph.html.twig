@@ -70,7 +70,7 @@
                    le href des <a> SVG) : navigation pleine page vers l'éditeur du parcours #}
                 {% for r in g.rows %}
                     {% set b = g.boxes[r.node.id] %}
-                    <a xlink:href="{{ path('parcours_editor', {id: r.node.id}) }}" style="cursor:pointer">
+                    <a xlink:href="{{ path('parcours_editor', {fid: formation.id, nid: r.node.id}) }}" style="cursor:pointer">
                         <rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ g.boxH }}" rx="10" fill="#eef2ff" stroke="#c7d2fe" stroke-width="1.5"/>
                         <text x="{{ b.x + b.w / 2 }}" y="{{ b.cy + 4 }}" text-anchor="middle" font-size="13" font-weight="600" fill="#3730a3">{{ r.node.label ?: 'Parcours' }}</text>
                     </a>
@@ -82,7 +82,7 @@
             {% for r in g.rows %}
                 <li class="flex flex-wrap items-center gap-2">
                     <span class="type-badge">🧭 Parcours</span>
-                    <a href="{{ path('parcours_editor', {id: r.node.id}) }}" class="font-medium hover:underline">{{ r.node.label ?: '—' }}</a>
+                    <a href="{{ path('parcours_editor', {fid: formation.id, nid: r.node.id}) }}" class="font-medium hover:underline">{{ r.node.label ?: '—' }}</a>
                     <span class="text-xs text-gray-400">{{ g.unit|lower }}s {{ r.colStart }}–{{ r.colEnd }}</span>
                     {% if r.node.parcoursParent %}<span class="text-xs text-gray-400">· enfant de « {{ r.node.parcoursParent.label ?: '—' }} »</span>{% endif %}
                 </li>

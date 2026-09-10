@@ -6,6 +6,8 @@ namespace App\Controller;
 
 use App\Entity\Formation;
 use App\Entity\StructureTemplate;
+use App\Maquette\Doc\TreeNode;
+use App\Maquette\Maquette;
 use App\Repository\StructureTemplateRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -15,6 +17,10 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class TemplateController extends AbstractController
 {
+    public function __construct(private readonly Maquette $maquette)
+    {
+    }
+
     #[Route('/templates', name: 'template_index', methods: ['GET'])]
     public function index(StructureTemplateRepository $repo): Response
     {
@@ -43,7 +49,7 @@ final class TemplateController extends AbstractController
         $template = (new StructureTemplate($key, $label))
             ->setDescription('Créé depuis la formation « '.$formation->getName().' ».')
             ->setMultiParcours($formation->isMultiParcours())
-            ->setTree($this->serialize($formation->getRootNodes()));
+            ->setTree($this->serialize($this->maquette->open($formation)->pedagogicalRoots()));
 
         $em->persist($template);
         $em->flush();
@@ -53,7 +59,7 @@ final class TemplateController extends AbstractController
     }
 
     /**
-     * @param iterable<\App\Entity\Node> $nodes
+     * @param iterable<TreeNode> $nodes
      *
      * @return list<array<string, mixed>>
      */

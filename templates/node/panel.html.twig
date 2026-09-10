@@ -50,14 +50,14 @@
         </div>
         <div class="ml-auto flex flex-wrap gap-2">
             {% if caps.mutualisable ?? false %}
-            <form method="post" action="{{ path('node_mutualize', {id: node.id}) }}" data-turbo-frame="_top">
+            <form method="post" action="{{ node_url(node, 'node_mutualize') }}" data-turbo-frame="_top">
                 <button class="rounded-lg border px-3 py-2 text-sm" style="border-color:#fcd34d;color:#b45309">
                     ⬆ {{ node.mutualized ? 'Ne plus mutualiser' : 'Mutualiser' }} [{{ T }}]
                 </button>
             </form>
             {% endif %}
             {% if childTypes is not empty %}
-            <a href="{{ path('node_attach_index', {id: node.id}) }}" data-turbo-frame="node-panel"
+            <a href="{{ node_url(node, 'node_attach_index') }}" data-turbo-frame="node-panel"
                class="rounded-lg border px-3 py-2 text-sm text-green-700" style="border-color:#bbf7d0">↳ Raccrocher</a>
             {% endif %}
             <button type="button" data-action="modal#open" class="rounded-lg border px-3 py-2 text-sm text-gray-600" style="border-color:var(--c-border)">⚙ Paramètre du nœud [{{ T }}]</button>
@@ -65,7 +65,7 @@
     </div>
 
     {# ── formulaire ── #}
-    <form method="post" action="{{ path('node_save', {id: node.id}) }}" data-turbo-frame="_top" class="space-y-5">
+    <form method="post" action="{{ node_url(node, 'node_save') }}" data-turbo-frame="_top" class="space-y-5">
 
         {% for tk in nodeTabs %}
         <div data-tabs-target="panel" data-tab="{{ tk }}" class="space-y-5" {{ not loop.first ? 'hidden' }}>
@@ -153,14 +153,14 @@
     {# ── modale « Paramètre du nœud » ── #}
     <dialog data-modal-target="dialog" data-action="click->modal#clickOutside"
             class="rounded-2xl border-0 p-0 w-[min(600px,94vw)] backdrop:bg-black/40">
-        <turbo-frame id="node-params-frame" src="{{ path('node_params_form', {id: node.id}) }}" loading="lazy" class="block">
+        <turbo-frame id="node-params-frame" src="{{ node_url(node, 'node_params_form') }}" loading="lazy" class="block">
             <div class="p-10 text-center text-sm text-gray-400">Chargement…</div>
         </turbo-frame>
     </dialog>
 
     {# ── ajouter un enfant ── #}
     {% if childTypes is not empty %}
-    <form method="post" action="{{ path('node_add', {id: formation.id}) }}" data-turbo-frame="_top"
+    <form method="post" action="{{ path('node_add', {fid: formation.id}) }}" data-turbo-frame="_top"
           class="rounded-xl border p-3 flex flex-wrap items-end gap-2" style="border-color:var(--c-border)">
         <input type="hidden" name="parentId" value="{{ node.id }}">
         <div class="flex-1 min-w-[180px]">
