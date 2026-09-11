@@ -83,19 +83,22 @@
             <div class="flex-1 overflow-y-auto">
                 <div class="px-4 py-3 border-b" style="border-color:var(--c-border)">
                     <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Paramètre du parcours</div>
-                    {% for k, label in parcours_param_sections() %}
-                        <a href="{{ path('parcours_param', {fid: formation.id, nid: parcours.id, key: k}) }}" data-turbo-frame="node-panel"
-                           class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ param == k ? 'is-active' }}">
-                            <span class="status-dot" data-status="{{ parcours_param_status(parcours, k) }}"></span>{{ label }}
-                        </a>
-                    {% endfor %}
-                    <a href="{{ node_url(parcours) }}" data-turbo-frame="node-panel"
-                       class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ focus == parcours.id ~ '' ? 'is-active' }}">
-                        <span class="status-dot" data-status="ok"></span>Positionnement &amp; ramification
+                    {% set psections = parcours_param_sections() %}
+                    <a href="{{ path('parcours_param', {fid: formation.id, nid: parcours.id, key: 'organisation'}) }}" data-turbo-frame="node-panel"
+                       class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ param == 'organisation' ? 'is-active' }}">
+                        <span class="status-dot" data-status="{{ parcours_param_status(parcours, 'organisation') }}"></span>1 | {{ psections.organisation }}
+                    </a>
+                    <a href="{{ path('parcours_param', {fid: formation.id, nid: parcours.id, key: 'presentation'}) }}" data-turbo-frame="node-panel"
+                       class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ param == 'presentation' ? 'is-active' }}">
+                        <span class="status-dot" data-status="{{ parcours_param_status(parcours, 'presentation') }}"></span>2 | {{ psections.presentation }}
                     </a>
                     <a href="{{ path('bcc_parcours_editor', {fid: formation.id, nid: parcours.id}) }}" data-turbo-frame="node-panel"
                        class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ bcc ? 'is-active' }}">
-                        <span class="status-dot" data-status="{{ bcc_status(parcours) }}"></span>Référentiel de compétences (BCC)
+                        <span class="status-dot" data-status="{{ bcc_status(parcours) }}"></span>3 | Référentiel de compétences (BCC)
+                    </a>
+                    <a href="{{ node_url(parcours) }}" data-turbo-frame="node-panel"
+                       class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ focus == parcours.id ~ '' ? 'is-active' }}">
+                        <span class="status-dot" data-status="ok"></span>4 | Positionnement &amp; ramification
                     </a>
                 </div>
 

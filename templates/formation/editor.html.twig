@@ -135,22 +135,29 @@
             <div class="flex-1 overflow-y-auto">
                 <div class="px-4 py-3 border-b" style="border-color:var(--c-border)">
                     <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Paramètre de la formation</div>
-                    {% for k, s in param_sections() %}
-                        <a href="{{ path('formation_param', {id: formation.id, key: k}) }}" data-turbo-frame="node-panel"
-                           class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ param == k ? 'is-active' }}">
-                            <span class="status-dot" data-status="{{ param_status(formation, k) }}"></span>{{ s.label }}
-                        </a>
-                    {% endfor %}
+                    {% set sections = param_sections() %}
+                    <a href="{{ path('formation_param', {id: formation.id, key: 'organisation'}) }}" data-turbo-frame="node-panel"
+                       class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ param == 'organisation' ? 'is-active' }}">
+                        <span class="status-dot" data-status="{{ param_status(formation, 'organisation') }}"></span>1 | {{ sections.organisation.label }}
+                    </a>
+                    <a href="{{ path('formation_param', {id: formation.id, key: 'presentation'}) }}" data-turbo-frame="node-panel"
+                       class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ param == 'presentation' ? 'is-active' }}">
+                        <span class="status-dot" data-status="{{ param_status(formation, 'presentation') }}"></span>2 | {{ sections.presentation.label }}
+                    </a>
                     {% if not multi %}
                         <a href="{{ path('bcc_editor', {fid: formation.id}) }}" data-turbo-frame="node-panel"
                            class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ bcc ? 'is-active' }}">
-                            <span class="status-dot" data-status="{{ bcc_status(formation) }}"></span>Référentiel de compétences (BCC)
+                            <span class="status-dot" data-status="{{ bcc_status(formation) }}"></span>3 | Référentiel de compétences (BCC)
                         </a>
                     {% else %}
                         <a href="{{ path('formation_parcours_graph', {id: formation.id}) }}" data-turbo-frame="node-panel"
-                           class="nav-section mt-1 flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ (not param and not focus and not bcc) ? 'is-active' }}"
-                           style="color:var(--c-primary)">🗺 Arborescence des parcours</a>
+                           class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ (not param and not focus and not bcc) ? 'is-active' }}"
+                           style="color:var(--c-primary)">3 | 🗺 Arborescence des parcours</a>
                     {% endif %}
+                    <a href="{{ path('formation_param', {id: formation.id, key: 'structure'}) }}" data-turbo-frame="node-panel"
+                       class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ param == 'structure' ? 'is-active' }}">
+                        <span class="status-dot" data-status="{{ param_status(formation, 'structure') }}"></span>4 | {{ sections.structure.label }}
+                    </a>
                 </div>
 
                 {% if multi %}
