@@ -96,6 +96,17 @@ class Formation
     private array $stats = [];
 
     /**
+     * Un seul niveau de « rétablir » (redo) : l'état quitté par le dernier
+     * « Annuler » depuis le bandeau d'actions, réappliqué par « Rétablir ».
+     * Vide = rien à rétablir. Vidé par Maquette::save() dès qu'une modification
+     * normale intervient (le rétablir ne survit pas à un nouveau changement).
+     *
+     * @var array<string, mixed>
+     */
+    #[ORM\Column(type: Types::JSON)]
+    private array $redoSnapshot = [];
+
+    /**
      * Squelette de la formation : chaîne ordonnée de clés de type, du plus haut
      * niveau du « corps » vers la feuille — ex. ['annee','semestre','ue','ec'].
      * Le niveau « parcours » n'y figure jamais : il est implicite quand la
@@ -287,6 +298,20 @@ class Formation
     public function setStats(array $stats): self
     {
         $this->stats = $stats;
+
+        return $this;
+    }
+
+    /** @return array<string, mixed> */
+    public function getRedoSnapshot(): array
+    {
+        return $this->redoSnapshot;
+    }
+
+    /** @param array<string, mixed> $snapshot */
+    public function setRedoSnapshot(array $snapshot): self
+    {
+        $this->redoSnapshot = $snapshot;
 
         return $this;
     }

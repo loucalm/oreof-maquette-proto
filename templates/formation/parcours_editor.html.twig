@@ -19,6 +19,12 @@
             <p class="text-sm text-gray-500">Page de modification du parcours</p>
         </div>
         <div class="flex items-center gap-2">
+            <form method="post" action="{{ path('formation_undo', {id: formation.id}) }}" data-turbo-frame="_top">
+                <button type="submit" {{ canUndo ? '' : 'disabled' }} title="Annuler la dernière modification" class="quickbar-icon-btn">↶</button>
+            </form>
+            <form method="post" action="{{ path('formation_redo', {id: formation.id}) }}" data-turbo-frame="_top">
+                <button type="submit" {{ canRedo ? '' : 'disabled' }} title="Rétablir la modification annulée" class="quickbar-icon-btn">↷</button>
+            </form>
             <a href="{{ path('formation_view', {id: formation.id}) }}" class="fake-btn">👁 Voir la fiche descriptive</a>
             <a href="{{ path('formation_index') }}" class="rounded-lg border px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-50" style="border-color:#bbf7d0">← Retour à la liste des formation</a>
         </div>

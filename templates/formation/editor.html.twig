@@ -69,6 +69,14 @@
         <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mr-1">Actions rapide</span>
         <span class="fake-btn" style="color:#b45309;border-color:#fcd34d">⇄ Changer co/resp. formation</span>
         <span class="fake-btn">⚙ Action complémentaire ⌄</span>
+        <form method="post" action="{{ path('formation_undo', {id: formation.id}) }}" data-turbo-frame="_top">
+            <button type="submit" {{ canUndo ? '' : 'disabled' }} title="Annuler la dernière modification"
+                    class="quickbar-icon-btn">↶</button>
+        </form>
+        <form method="post" action="{{ path('formation_redo', {id: formation.id}) }}" data-turbo-frame="_top">
+            <button type="submit" {{ canRedo ? '' : 'disabled' }} title="Rétablir la modification annulée"
+                    class="quickbar-icon-btn">↷</button>
+        </form>
         <a href="{{ path('formation_history', {id: formation.id}) }}"
            class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
            style="border-color:var(--c-border)">🕐 Historique</a>

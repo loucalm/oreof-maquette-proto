@@ -144,6 +144,25 @@ final class FormationController extends AbstractController
         ]);
     }
 
+    /** Annuler / Rétablir rapides (bandeau d'actions) — un seul niveau de rétablissement. */
+    #[Route('/formations/{id}/undo', name: 'formation_undo', methods: ['POST'])]
+    public function undo(Formation $formation, Request $request): Response
+    {
+        $ok = $this->maquette->undo($formation);
+        $this->addFlash($ok ? 'success' : 'info', $ok ? 'Dernière modification annulée.' : 'Rien à annuler.');
+
+        return $this->redirect($request->headers->get('referer') ?: $this->generateUrl('formation_editor', ['id' => $formation->getId()]));
+    }
+
+    #[Route('/formations/{id}/redo', name: 'formation_redo', methods: ['POST'])]
+    public function redo(Formation $formation, Request $request): Response
+    {
+        $ok = $this->maquette->redo($formation);
+        $this->addFlash($ok ? 'success' : 'info', $ok ? 'Modification rétablie.' : 'Rien à rétablir.');
+
+        return $this->redirect($request->headers->get('referer') ?: $this->generateUrl('formation_editor', ['id' => $formation->getId()]));
+    }
+
     #[Route('/formations/{id}/history/{revisionId}/restore', name: 'formation_history_restore', methods: ['POST'])]
     public function historyRestore(
         Formation $formation,
@@ -232,6 +251,8 @@ final class FormationController extends AbstractController
             'parcours' => $node,
             'roots' => $view->children,
             'progress' => $builder->progress($view->children),
+            'canUndo' => $this->maquette->canUndo($formation),
+            'canRedo' => $this->maquette->canRedo($formation),
         ]);
     }
 
@@ -351,6 +372,8 @@ final class FormationController extends AbstractController
             'progress' => $builder->progress($roots),
             'types' => $types->findAllOrdered(),
             'templates' => $templates->findAllOrdered(),
+            'canUndo' => $this->maquette->canUndo($formation),
+            'canRedo' => $this->maquette->canRedo($formation),
         ]);
     }
 

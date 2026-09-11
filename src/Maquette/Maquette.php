@@ -78,6 +78,10 @@ final class Maquette
                 $this->revisions->pruneOlderThan($formation, self::MAX_REVISIONS);
             }
         }
+        // une modification normale invalide le « rétablir » en attente
+        if ($formation->getRedoSnapshot() !== []) {
+            $formation->setRedoSnapshot([]);
+        }
 
         $this->em->flush();
 
@@ -93,20 +97,64 @@ final class Maquette
     {
         $this->open($formation); // capture l'état courant comme « avant », pour cette restauration
         $snap = $revision->getSnapshot();
-
-        $formation
-            ->setName((string) ($snap['name'] ?? $formation->getName()))
-            ->setDiplome($snap['diplome'] ?? null)
-            ->setDomaine($snap['domaine'] ?? null)
-            ->setComposante($snap['composante'] ?? null)
-            ->setMultiParcours((bool) ($snap['multiParcours'] ?? false))
-            ->setEctsTotal($snap['ectsTotal'] ?? null)
-            ->setCalendarSpan($snap['calendarSpan'] ?? null)
-            ->setCalendarUnit($snap['calendarUnit'] ?? null)
-            ->setStructure((array) ($snap['structure'] ?? []));
+        $this->applySnapshotScalars($formation, $snap);
 
         $doc = $this->hydrateRaw($formation, $snap);
         $this->save($formation, $doc, sprintf('Restauration de l’état du %s', $revision->getCreatedAt()->format('d/m/Y à H:i')));
+    }
+
+    /** Y a-t-il une modification à annuler (bandeau d'actions) ? */
+    public function canUndo(Formation $formation): bool
+    {
+        return $formation->getId() !== null && $this->revisions->findRecentFor($formation, 1) !== [];
+    }
+
+    /** Y a-t-il un « annuler » précédent à rétablir ? */
+    public function canRedo(Formation $formation): bool
+    {
+        return $formation->getRedoSnapshot() !== [];
+    }
+
+    /**
+     * Annule la dernière modification enregistrée : bascule l'état courant vers
+     * la révision la plus récente, et range l'état quitté dans le tampon
+     * « rétablir » (1 seul niveau — cf. redo()). La révision consommée est
+     * retirée de l'historique : son contenu vit désormais dans ce tampon.
+     */
+    public function undo(Formation $formation): bool
+    {
+        $this->open($formation);
+        $top = $this->revisions->findRecentFor($formation, 1);
+        if ($top === []) {
+            return false;
+        }
+        $revision = $top[0];
+
+        $formation->setRedoSnapshot($this->snapshotOf($formation));
+        $doc = $this->applySnapshot($formation, $revision->getSnapshot());
+        $this->em->remove($revision);
+        $this->finishSnapshotSwitch($formation, $doc);
+
+        return true;
+    }
+
+    /** Réapplique l'état quitté par le dernier undo() (cf. undo()). */
+    public function redo(Formation $formation): bool
+    {
+        $this->open($formation);
+        $snap = $formation->getRedoSnapshot();
+        if ($snap === []) {
+            return false;
+        }
+
+        $this->em->persist(new FormationRevision($formation, 'Avant rétablissement', $this->snapshotOf($formation)));
+        $this->revisions->pruneOlderThan($formation, self::MAX_REVISIONS);
+
+        $formation->setRedoSnapshot([]);
+        $doc = $this->applySnapshot($formation, $snap);
+        $this->finishSnapshotSwitch($formation, $doc);
+
+        return true;
     }
 
     /** Recalcule et persiste le cache de stats sans autre modification (amorçage). */
@@ -173,6 +221,47 @@ final class Maquette
     }
 
     // ─── interne ───
+
+    /** @param array<string, mixed> $snap */
+    private function applySnapshotScalars(Formation $formation, array $snap): void
+    {
+        $formation
+            ->setName((string) ($snap['name'] ?? $formation->getName()))
+            ->setDiplome($snap['diplome'] ?? null)
+            ->setDomaine($snap['domaine'] ?? null)
+            ->setComposante($snap['composante'] ?? null)
+            ->setMultiParcours((bool) ($snap['multiParcours'] ?? false))
+            ->setEctsTotal($snap['ectsTotal'] ?? null)
+            ->setCalendarSpan($snap['calendarSpan'] ?? null)
+            ->setCalendarUnit($snap['calendarUnit'] ?? null)
+            ->setStructure((array) ($snap['structure'] ?? []));
+    }
+
+    /** Applique les scalaires d'un snapshot et retourne le doc hydraté correspondant. */
+    private function applySnapshot(Formation $formation, array $snap): MaquetteDoc
+    {
+        $this->applySnapshotScalars($formation, $snap);
+
+        return $this->hydrateRaw($formation, $snap);
+    }
+
+    /**
+     * Écrit un doc comme état courant SANS créer de révision (undo()/redo()
+     * gèrent eux-mêmes l'historique et le tampon de rétablissement).
+     */
+    private function finishSnapshotSwitch(Formation $formation, MaquetteDoc $doc): void
+    {
+        $doc->reindex();
+        $formation->setArbre($doc->dumpTree());
+        $formation->setDataParcours($doc->parcours);
+        $formation->setParametres($doc->parametres);
+        $formation->setStats($this->completion->docStats($doc));
+        $this->em->flush();
+
+        $id = $formation->getId() ?? spl_object_id($formation);
+        $this->before[$id] = $this->snapshotOf($formation);
+        $this->cache[$id] = $doc;
+    }
 
     /** @return array<string, \App\Entity\NodeType> */
     private function typeMap(): array

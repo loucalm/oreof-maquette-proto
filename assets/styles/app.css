@@ -290,6 +290,20 @@ body {
 /* nœud imposé par le diplôme */
 .tree-lock { font-size: 10px; flex: 0 0 auto; filter: grayscale(.2); }
 
+/* bouton icône neutre de la barre « Actions rapide » (Annuler / Rétablir) */
+.quickbar-icon-btn {
+    display: grid; place-items: center;
+    width: 38px; height: 38px;
+    border: 1px solid var(--c-border);
+    border-radius: 8px;
+    background: #fff;
+    color: #4b5563;
+    font-size: 16px;
+    transition: background .12s;
+}
+.quickbar-icon-btn:hover:not(:disabled) { background: #f0f1f3; }
+.quickbar-icon-btn:disabled { opacity: .35; cursor: not-allowed; }
+
 /* éditeur visuel de template */
 .template-branch { list-style: none; margin: 0; padding: 0; }
 .template-branch--root > .template-node { border-top: 1px solid #eceef1; }
