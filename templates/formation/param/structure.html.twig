@@ -14,18 +14,27 @@
 
         {# ── Nombre de parcours ── #}
         {{ fld.divider('Nombre de parcours') }}
-        <form method="post" action="{{ path('formation_settings', {id: formation.id}) }}" data-turbo-frame="_top">
+        <form method="post" action="{{ path('formation_settings', {id: formation.id}) }}" data-turbo-frame="_top" data-controller="confirm">
             <input type="hidden" name="name" value="{{ formation.name }}">
             <input type="hidden" name="diplome" value="{{ formation.diplome }}">
             <input type="hidden" name="domaine" value="{{ formation.domaine }}">
             <input type="hidden" name="composante" value="{{ formation.composante }}">
             {{ fld.label('La formation contient-elle des parcours ?', true, 'Oui → chaque parcours est un nœud racine. Non → le niveau parcours reste invisible, la formation le porte elle-même.') }}
+            <p class="fld-help">⚠️ Changement important : bascule l'organisation de l'arbre existant, confirmation demandée.</p>
             <div class="flex flex-wrap gap-8 mt-2 text-sm">
                 <label class="flex items-center gap-2">
-                    <input type="radio" name="multiParcours" value="1" {{ formation.multiParcours ? 'checked' }} onchange="this.form.requestSubmit()"> Oui (options)
+                    <input type="radio" name="multiParcours" value="1" {{ formation.multiParcours ? 'checked' }}
+                           data-confirm-target="restore" data-confirm-checked="{{ formation.multiParcours ? '1' : '0' }}"
+                           data-action="change->confirm#confirmChange"
+                           data-confirm-message-param="⚠️ Passer en multi-parcours va rassembler les nœuds actuels de la formation dans un nouveau parcours. Continuer ?">
+                    Oui (options)
                 </label>
                 <label class="flex items-center gap-2">
-                    <input type="radio" name="multiParcours" value="0" {{ not formation.multiParcours ? 'checked' }} onchange="this.form.requestSubmit()"> Non (mono-parcours)
+                    <input type="radio" name="multiParcours" value="0" {{ not formation.multiParcours ? 'checked' }}
+                           data-confirm-target="restore" data-confirm-checked="{{ not formation.multiParcours ? '1' : '0' }}"
+                           data-action="change->confirm#confirmChange"
+                           data-confirm-message-param="⚠️ Passer en mono-parcours va supprimer le(s) parcours et remonter leurs nœuds à la racine de la formation. Continuer ?">
+                    Non (mono-parcours)
                 </label>
             </div>
         </form>
