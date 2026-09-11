@@ -364,6 +364,7 @@
         </div>
         <div class="flex items-center gap-2 shrink-0">
             <span class="pill" style="background:#eef2ff;color:var(--c-primary)">Lecture seule</span>
+            <a href="{{ path('formation_history', {id: formation.id}) }}" class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">🕐 Historique</a>
             <a href="{{ path('formation_export', {id: formation.id}) }}" class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">⬇ Export JSON</a>
             <a href="{{ path('formation_editor', {id: formation.id}) }}" class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">✎ Modifier</a>
             <a href="{{ path('formation_index') }}" class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">← Liste</a>

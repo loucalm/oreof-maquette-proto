@@ -134,6 +134,31 @@ final class FormationController extends AbstractController
         return $response;
     }
 
+    /** Historique des modifications (filet de sécurité, cf. App\Maquette\Maquette::save). */
+    #[Route('/formations/{id}/history', name: 'formation_history', methods: ['GET'])]
+    public function history(Formation $formation): Response
+    {
+        return $this->render('formation/history.html.twig', [
+            'formation' => $formation,
+            'revisions' => $this->maquette->history($formation),
+        ]);
+    }
+
+    #[Route('/formations/{id}/history/{revisionId}/restore', name: 'formation_history_restore', methods: ['POST'])]
+    public function historyRestore(
+        Formation $formation,
+        #[MapEntity(mapping: ['revisionId' => 'id'])] \App\Entity\FormationRevision $revision,
+    ): Response {
+        if ($revision->getFormation() !== $formation) {
+            throw $this->createNotFoundException();
+        }
+
+        $this->maquette->restore($formation, $revision);
+        $this->addFlash('success', sprintf('État du %s restauré.', $revision->getCreatedAt()->format('d/m/Y à H:i')));
+
+        return $this->redirectToRoute('formation_history', ['id' => $formation->getId()]);
+    }
+
     /** Vue arborescence des parcours (ramification) — formations multi-parcours. */
     #[Route('/formations/{id}/parcours', name: 'formation_parcours_graph', methods: ['GET'])]
     public function parcoursGraph(Request $request, Formation $formation, \App\Maquette\ParcoursGraph $graph): Response
@@ -303,6 +328,7 @@ final class FormationController extends AbstractController
     public function delete(Formation $formation, EntityManagerInterface $em): Response
     {
         $name = $formation->getName();
+        $this->maquette->deleteHistory($formation);
         $em->remove($formation);
         $em->flush();
         $this->addFlash('info', sprintf('Formation « %s » supprimée.', $name));
@@ -471,11 +497,11 @@ final class FormationController extends AbstractController
      * Enregistre le squelette (chaîne de types) de la formation.
      */
     #[Route('/formations/{id}/structure', name: 'formation_structure_save', methods: ['POST'])]
-    public function structureSave(Formation $formation, Request $request, EntityManagerInterface $em): Response
+    public function structureSave(Formation $formation, Request $request): Response
     {
+        $doc = $this->maquette->open($formation);
         $formation->setStructure(array_map('strval', (array) $request->request->all('chain')));
-        $em->flush();
-        $this->maquette->forget($formation);
+        $this->maquette->save($formation, $doc, 'Squelette de la formation modifié');
 
         if ($request->isXmlHttpRequest()) {
             return new Response(null, Response::HTTP_NO_CONTENT);

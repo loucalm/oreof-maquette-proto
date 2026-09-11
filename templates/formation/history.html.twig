@@ -1,0 +1,60 @@
+{% extends 'base.html.twig' %}
+{% block title %}Historique · {{ formation.name }}{% endblock %}
+
+{% block body %}
+<div class="rounded-2xl border bg-white px-7 py-6 mb-4" style="border-color:var(--c-border)">
+    <div class="flex items-start justify-between gap-4">
+        <div>
+            <div class="text-xs text-gray-400">
+                🏠 <span class="fake-link">Accueil</span> ›
+                <a href="{{ path('formation_index') }}" class="hover:underline">Liste des formation</a> ›
+                <a href="{{ path('formation_editor', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
+                Historique
+            </div>
+            <h1 class="text-2xl font-extrabold tracking-tight mt-1">Historique — {{ formation.name }}</h1>
+            <p class="text-sm text-gray-500">
+                Chaque modification importante est archivée automatiquement. « Restaurer » remplace l'état actuel
+                par celui-ci — l'état remplacé reste lui-même dans l'historique, restaurable à son tour.
+            </p>
+        </div>
+        <a href="{{ path('formation_editor', {id: formation.id}) }}"
+           class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">← Éditeur</a>
+    </div>
+</div>
+
+<div class="rounded-2xl border bg-white overflow-hidden" style="border-color:var(--c-border)">
+    {% if revisions is empty %}
+        <div class="p-10 text-center text-sm text-gray-400">
+            Aucune modification archivée pour l'instant — l'historique se remplit au fil des changements.
+        </div>
+    {% else %}
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <tr>
+                    <th class="text-left px-4 py-3 w-52">Date</th>
+                    <th class="text-left px-4 py-3">Modification</th>
+                    <th class="text-right px-4 py-3 w-32">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for r in revisions %}
+                <tr class="border-t" style="border-color:var(--c-border)">
+                    <td class="px-4 py-3 text-gray-500 whitespace-nowrap">{{ r.createdAt|date('d/m/Y à H:i:s') }}</td>
+                    <td class="px-4 py-3">{{ r.label }}</td>
+                    <td class="px-4 py-3 text-right">
+                        <form method="post" action="{{ path('formation_history_restore', {id: formation.id, revisionId: r.id}) }}"
+                              data-turbo-frame="_top" data-controller="confirm"
+                              data-confirm-message-value="⚠️ Restaurer l'état du {{ r.createdAt|date('d/m/Y à H:i') }} ({{ r.label|lower }}) ? L'état actuel sera remplacé — il restera consultable et restaurable dans cet historique.">
+                            <button class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">↩ Restaurer</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <p class="px-4 py-3 text-xs text-gray-400 border-t" style="border-color:var(--c-border)">
+            {{ revisions|length }} modification(s) conservée(s) (les plus anciennes sont purgées au-delà de 50).
+        </p>
+    {% endif %}
+</div>
+{% endblock %}
