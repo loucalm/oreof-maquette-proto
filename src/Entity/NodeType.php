@@ -215,7 +215,12 @@ class NodeType
         return $this;
     }
 
-    public const NUMBER_STYLES = ['decimal' => 'Décimal (1, 2, 3…)', 'alpha' => 'Alphabétique (a, b, c…)', 'roman' => 'Romain (i, ii, iii…)'];
+    public const NUMBER_STYLES = [
+        'decimal' => 'Décimal (1, 2, 3…)',
+        'alpha' => 'Alphabétique (a, b, c…)',
+        'alpha_upper' => 'Alphabétique majuscule (A, B, C…)',
+        'roman' => 'Romain (i, ii, iii…)',
+    ];
 
     public function isNumbered(): bool
     {

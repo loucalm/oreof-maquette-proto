@@ -23,6 +23,7 @@ final class MaquetteExtension extends AbstractExtension
         private readonly AttributeCatalog $catalog,
         private readonly UrlGeneratorInterface $router,
         private readonly \App\Maquette\Completion $completion,
+        private readonly \App\Maquette\Numbering $numbering,
     ) {
     }
 
@@ -44,6 +45,7 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('maquette_roots', fn (Formation $f) => $this->maquette->open($f)->pedagogicalRoots()),
             new TwigFunction('node_path', $this->nodePath(...)),
             new TwigFunction('node_url', $this->nodeUrl(...)),
+            new TwigFunction('number_index', fn (int $n, string $style) => $this->numbering->format($n, $style)),
             new TwigFunction('param_nav', $this->paramNav(...)),
             new TwigFunction('capability_labels', $this->capabilityLabels(...)),
             new TwigFunction('node_tab_status', $this->nodeTabStatus(...)),

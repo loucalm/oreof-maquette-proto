@@ -37,7 +37,7 @@ final class NodeTypeFixtures extends Fixture
             ['bloc_choix',  'Bloc de choix', '🔀', NodeFamily::Structural, 60,       ['nature' => true, 'mutualisable' => true],                                                null,       ['nature'],      false,    'decimal'],
             // ─── référentiel de compétences (BCC) : arbre parallèle à la structure pédagogique ───
             ['bloc_competences', 'Bloc de compétences', '🎓', NodeFamily::Competence, 70, ['mutualisable' => true],                                          null,       [],              true,     'decimal'],
-            ['competence',       'Compétence',          '🎯', NodeFamily::Competence, 72, [],                                                                null,       [],              true,     'decimal'],
+            ['competence',       'Compétence',          '🎯', NodeFamily::Competence, 72, [],                                                                null,       [],              true,     'alpha_upper'],
         ];
 
         foreach ($defs as [$key, $label, $icon, $family, $position, $caps, $ectsTarget, $locked, $numbered, $numberStyle]) {

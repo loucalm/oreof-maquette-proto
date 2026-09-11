@@ -53,6 +53,7 @@ final class Numbering
     {
         return match ($style) {
             'alpha' => $this->alpha($n),
+            'alpha_upper' => strtoupper($this->alpha($n)),
             'roman' => $this->roman($n),
             default => (string) $n,
         };

@@ -289,7 +289,7 @@
             {% set bcNum = 0 %}
             {% for bloc in blocs %}
                 {% set bcRef = '' %}
-                {% if not bloc.transversalBloc and bloc.type.numbered %}{% set bcNum = bcNum + 1 %}{% set bcRef = bcNum %}{% endif %}
+                {% if not bloc.transversalBloc and bloc.type.numbered %}{% set bcNum = bcNum + 1 %}{% set bcRef = number_index(bcNum, bloc.type.numberStyle) %}{% endif %}
                 <div class="bcc-bloc {{ bloc.transversalBloc ? 'bcc-bloc--transversal' }}">
                     <div class="bcc-bloc-head">
                         <div class="min-w-0 flex-1">
@@ -301,7 +301,7 @@
                         {% set cNum = 0 %}
                         {% for c in bloc.children|filter(c => c.type.key == 'competence') %}
                             {% set cRef = '' %}
-                            {% if bcRef and c.type.numbered %}{% set cNum = cNum + 1 %}{% set cRef = bcRef ~ '.' ~ cNum %}{% endif %}
+                            {% if bcRef and c.type.numbered %}{% set cNum = cNum + 1 %}{% set cRef = bcRef ~ '.' ~ number_index(cNum, c.type.numberStyle) %}{% endif %}
                             <li class="bcc-comp"><div class="bcc-comp-row">
                                 <div class="min-w-0 flex-1">
                                     <div class="font-medium">{% if cRef %}<span class="text-xs font-bold" style="color:var(--c-primary)">{{ cRef }}</span> {% endif %}{{ c.label }}{% if c.code %} <span class="text-xs font-normal text-gray-400">{{ c.code }}</span>{% endif %}</div>
