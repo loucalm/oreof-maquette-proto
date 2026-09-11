@@ -81,7 +81,7 @@ final class FormationController extends AbstractController
             $applier->apply($doc, $template);
             $this->maquette->save($formation, $doc);
             $this->addFlash('success', sprintf(
-                'Formation « %s » créée. La structure imposée par le diplôme %s (« %s ») a été appliquée — ses nœuds verrouillés 🔒 ne peuvent pas être supprimés.',
+                'Formation « %s » créée. La structure imposée par le diplôme %s (« %s ») a été appliquée — ses nœuds verrouillés ne peuvent pas être supprimés.',
                 $name, $diplome, $template->getLabel(),
             ));
         } else {

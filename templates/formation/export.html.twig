@@ -7,7 +7,7 @@
         <div class="flex items-start justify-between gap-4">
             <div>
                 <div class="text-xs text-gray-400">
-                    🏠 <span class="fake-link">Accueil</span> ›
+                    {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">Accueil</span> ›
                     <a href="{{ path('formation_index') }}" class="hover:underline">Liste des formation</a> ›
                     <a href="{{ path('formation_editor', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
                     Export
@@ -16,7 +16,7 @@
                 <p class="text-sm text-gray-500">Structure de stockage de la maquette (aperçu).</p>
             </div>
             <a href="{{ path('formation_editor', {id: formation.id}) }}"
-               class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">← Éditeur</a>
+               class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} Éditeur</a>
         </div>
 
         <div class="mt-4 flex flex-wrap items-center gap-2">
@@ -37,9 +37,9 @@
 
             <div class="ml-auto flex items-center gap-2">
                 <button type="button" data-action="json#copy" data-json-target="btn"
-                        class="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">⧉ Copier</button>
+                        class="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:copy', {class: 'icon'}) }} Copier</button>
                 <a href="{{ path('formation_export_json', {id: formation.id, view: view}) }}"
-                   class="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">⬇ Télécharger .json</a>
+                   class="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:download-simple', {class: 'icon'}) }} Télécharger .json</a>
             </div>
         </div>
     </div>

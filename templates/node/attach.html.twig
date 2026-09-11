@@ -21,7 +21,7 @@
             {% for c in candidates %}
                 <li class="flex items-center justify-between gap-3 rounded-lg border p-3" style="border-color:var(--c-border)">
                     <div>
-                        <div class="font-medium">{{ c.type.icon }} [{{ c.type.label }}] {{ c.label ?: '—' }}</div>
+                        <div class="font-medium">{{ ux_icon(c.type.icon, {class: 'icon'}) }} [{{ c.type.label }}] {{ c.label ?: '—' }}</div>
                         <div class="text-xs text-gray-400">
                             depuis « {{ c.formation.name }} »
                             {% if c.children|length %} · {{ c.children|length }} enfant(s){% endif %}
@@ -35,7 +35,7 @@
         </ul>
     {% endif %}
 
-    <a href="{{ node_url(node) }}" data-turbo-frame="node-panel" class="text-sm text-gray-500 hover:underline">← Retour au nœud</a>
+    <a href="{{ node_url(node) }}" data-turbo-frame="node-panel" class="text-sm text-gray-500 hover:underline">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} Retour au nœud</a>
     </div>
     </div>
 </div>

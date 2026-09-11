@@ -51,7 +51,7 @@
         <div>
             {{ fld.label('Mention / spécialité', false) }}
             {{ fld.select('mention', data.mention ?? '', constant(R ~ '::MENTIONS')) }}
-            <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">＋ Ajouter une autre mention/spécialité</span></div>
+            <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter une autre mention/spécialité</span></div>
         </div>
         <div class="grid gap-5 md:grid-cols-2">
             <div>
@@ -87,12 +87,12 @@
             <div>
                 {{ fld.label('Responsable de la mention', true, 'Responsable principale de la mention') }}
                 {{ fld.select('respMention', data.respMention ?? '', constant(R ~ '::RESPONSABLES'), 'Choisir dans la liste ou "+ nouveau"') }}
-                <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">＋ Créer nouveau</span></div>
+                <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} Créer nouveau</span></div>
             </div>
             <div>
                 {{ fld.label('Co-responsable de la mention', false, 'Co-responsable de la mention') }}
                 {{ fld.select('coRespMention', data.coRespMention ?? '', constant(R ~ '::RESPONSABLES'), 'Choisir dans la liste ou "+ nouveau"') }}
-                <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">＋ Créer nouveau</span></div>
+                <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} Créer nouveau</span></div>
             </div>
         </div>
 

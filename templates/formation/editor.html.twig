@@ -21,12 +21,12 @@
             <p class="text-sm text-gray-500">Page de modification de la formation</p>
         </div>
         <div class="flex items-center gap-2">
-            <a href="{{ path('formation_view', {id: formation.id}) }}" class="fake-btn">👁 Voir la fiche descriptive</a>
-            <a href="{{ path('formation_index') }}" class="rounded-lg border px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-50" style="border-color:#bbf7d0">← Retour à la liste des formation</a>
+            <a href="{{ path('formation_view', {id: formation.id}) }}" class="fake-btn">{{ ux_icon('ph:eye', {class: 'icon'}) }} Voir la fiche descriptive</a>
+            <a href="{{ path('formation_index') }}" class="rounded-lg border px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-50" style="border-color:#bbf7d0">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} Retour à la liste des formation</a>
         </div>
     </div>
     <div class="mt-3 text-sm text-gray-400">
-        🏠 <span class="fake-link">Accueil</span> › <a href="{{ path('formation_index') }}" class="hover:underline">Liste des formation</a> ›
+        {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">Accueil</span> › <a href="{{ path('formation_index') }}" class="hover:underline">Liste des formation</a> ›
         <span class="rounded bg-gray-100 px-2 py-0.5 text-gray-600">{{ formation.name }}</span>
     </div>
 </div>
@@ -52,7 +52,7 @@
         <div class="flex items-center justify-between">
             {% for i in 1..5 %}
                 <div class="grid h-9 w-9 place-items-center rounded-full text-white text-xs
-                     {{ i <= 3 ? '' : 'opacity-40' }}" style="background:{{ i == 4 ? 'var(--st-ok)' : '#94a3b8' }}">●</div>
+                     {{ i <= 3 ? '' : 'opacity-40' }}" style="background:{{ i == 4 ? 'var(--st-ok)' : '#94a3b8' }}">{{ ux_icon('ph:check-bold', {class: 'icon'}) }}</div>
                 {% if not loop.last %}<div class="h-px flex-1 bg-gray-200 mx-1"></div>{% endif %}
             {% endfor %}
         </div>
@@ -67,39 +67,39 @@
     </div>
     <div class="ml-auto flex items-center gap-2">
         <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mr-1">Actions rapide</span>
-        <span class="fake-btn" style="color:#b45309;border-color:#fcd34d">⇄ Changer co/resp. formation</span>
-        <span class="fake-btn">⚙ Action complémentaire ⌄</span>
+        <span class="fake-btn" style="color:#b45309;border-color:#fcd34d">{{ ux_icon('ph:arrows-left-right', {class: 'icon'}) }} Changer co/resp. formation</span>
+        <span class="fake-btn">{{ ux_icon('ph:gear', {class: 'icon'}) }} Action complémentaire {{ ux_icon('ph:caret-down', {class: 'icon'}) }}</span>
         <form method="post" action="{{ path('formation_undo', {id: formation.id}) }}" data-turbo-frame="_top">
             <button type="submit" {{ canUndo ? '' : 'disabled' }} title="Annuler la dernière modification"
-                    class="quickbar-icon-btn">↶</button>
+                    class="quickbar-icon-btn">{{ ux_icon('ph:arrow-counter-clockwise', {class: 'icon'}) }}</button>
         </form>
         <form method="post" action="{{ path('formation_redo', {id: formation.id}) }}" data-turbo-frame="_top">
             <button type="submit" {{ canRedo ? '' : 'disabled' }} title="Rétablir la modification annulée"
-                    class="quickbar-icon-btn">↷</button>
+                    class="quickbar-icon-btn">{{ ux_icon('ph:arrow-clockwise', {class: 'icon'}) }}</button>
         </form>
         <a href="{{ path('formation_history', {id: formation.id}) }}"
            class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-           style="border-color:var(--c-border)">🕐 Historique</a>
+           style="border-color:var(--c-border)">{{ ux_icon('ph:clock-counter-clockwise', {class: 'icon'}) }} Historique</a>
         <a href="{{ path('formation_export', {id: formation.id}) }}"
            class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-           style="border-color:var(--c-border)">⬇ Export</a>
+           style="border-color:var(--c-border)">{{ ux_icon('ph:download-simple', {class: 'icon'}) }} Export</a>
         {% if is_admin() %}
         <div class="relative" data-controller="menu">
             <button type="button" data-action="menu#toggle"
                     class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                    style="border-color:var(--c-border)">≣ Gestion SES <span class="text-gray-400">⌄</span></button>
+                    style="border-color:var(--c-border)">{{ ux_icon('ph:list', {class: 'icon'}) }} Gestion SES <span class="text-gray-400">{{ ux_icon('ph:caret-down', {class: 'icon'}) }}</span></button>
             <div data-menu-target="menu" hidden
                  class="absolute right-0 z-30 mt-1 w-64 rounded-xl border bg-white py-1.5 text-sm shadow-lg"
                  style="border-color:var(--c-border)">
                 <div class="px-3 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Administration</div>
-                <a href="{{ path('admin_index') }}" class="block px-3 py-2 hover:bg-gray-50">⚙ Vue d’ensemble</a>
-                <a href="{{ path('node_type_index') }}" class="block px-3 py-2 hover:bg-gray-50">🧩 Types de nœud</a>
-                <a href="{{ path('field_index') }}" class="block px-3 py-2 hover:bg-gray-50">📝 Champs des formulaires</a>
-                <a href="{{ path('template_index') }}" class="block px-3 py-2 hover:bg-gray-50">🗂 Templates de structure</a>
-                <a href="{{ path('admin_referentiels') }}" class="block px-3 py-2 hover:bg-gray-50">📚 Référentiels</a>
+                <a href="{{ path('admin_index') }}" class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50">{{ ux_icon('ph:gear', {class: 'icon'}) }} Vue d’ensemble</a>
+                <a href="{{ path('node_type_index') }}" class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50">{{ ux_icon('ph:puzzle-piece', {class: 'icon'}) }} Types de nœud</a>
+                <a href="{{ path('field_index') }}" class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50">{{ ux_icon('ph:note-pencil', {class: 'icon'}) }} Champs des formulaires</a>
+                <a href="{{ path('template_index') }}" class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50">{{ ux_icon('ph:folders', {class: 'icon'}) }} Templates de structure</a>
+                <a href="{{ path('admin_referentiels') }}" class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50">{{ ux_icon('ph:books', {class: 'icon'}) }} Référentiels</a>
                 <div class="my-1 border-t" style="border-color:var(--c-border)"></div>
                 <a href="{{ path('formation_editor', {id: formation.id, param: 'structure'}) }}"
-                   class="block px-3 py-2 hover:bg-gray-50">↳ Configuration de la structure de cette formation</a>
+                   class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50">{{ ux_icon('ph:arrow-bend-down-right', {class: 'icon'}) }} Configuration de la structure de cette formation</a>
             </div>
         </div>
         {% endif %}
@@ -163,7 +163,7 @@
                     {% else %}
                         <a href="{{ path('formation_parcours_graph', {id: formation.id}) }}" data-turbo-frame="node-panel"
                            class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ (not param and not focus and not bcc) ? 'is-active' }}"
-                           style="color:var(--c-primary)">3 | 🗺 Arborescence des parcours</a>
+                           style="color:var(--c-primary)">3 | {{ ux_icon('ph:map-trifold', {class: 'icon'}) }} Arborescence des parcours</a>
                     {% endif %}
                     <a href="{{ path('formation_param', {id: formation.id, key: 'structure'}) }}" data-turbo-frame="node-panel"
                        class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ param == 'structure' ? 'is-active' }}">
@@ -180,7 +180,7 @@
                                class="mb-2 flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold hover:bg-gray-50"
                                style="border-color:var(--c-border)">
                                 <span class="min-w-0 truncate">{{ p.displayLabel }}</span>
-                                <span class="shrink-0 text-gray-300">›</span>
+                                <span class="shrink-0 text-gray-300">{{ ux_icon('ph:caret-right', {class: 'icon'}) }}</span>
                             </a>
                         {% else %}
                             <p class="text-xs text-gray-400 px-1 py-2">Aucun parcours. Ajoutez-en un ci-dessous.</p>
@@ -208,14 +208,14 @@
                         <input type="hidden" name="parentId" value="">
                         <input type="hidden" name="typeKey" value="parcours">
                         <input type="hidden" name="label" value="Nouveau parcours">
-                        <button class="tree-add-btn">＋ Ajouter 🧭 un parcours</button>
+                        <button class="tree-add-btn">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter {{ ux_icon('ph:compass', {class: 'icon'}) }} un parcours</button>
                     </form>
                 {% elseif rootType %}
                     <form method="post" action="{{ path('node_add', {fid: formation.id}) }}" data-turbo-frame="_top"
                           class="flex-1" data-tree-target="addForm">
                         <input type="hidden" name="parentId" value="" data-tree-target="addParent">
                         <input type="hidden" name="typeKey" value="{{ rootType.key }}" data-tree-target="addType">
-                        <button data-tree-target="addButton" class="tree-add-btn">＋ Ajouter {{ rootType.icon }} {{ rootType.label }}</button>
+                        <button data-tree-target="addButton" class="tree-add-btn">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter {{ ux_icon(rootType.icon, {class: 'icon'}) }} {{ rootType.label }}</button>
                     </form>
                 {% else %}
                     <span class="flex-1 text-xs text-gray-400">Aucune structure définie</span>
@@ -224,12 +224,12 @@
                 {% if not multi %}
                     <form method="post" data-turbo-frame="_top" data-tree-target="dupForm">
                         <button type="submit" data-tree-target="dupButton" disabled title="Dupliquer le nœud sélectionné"
-                                class="tree-act-btn">⧉</button>
+                                class="tree-act-btn">{{ ux_icon('ph:copy', {class: 'icon'}) }}</button>
                     </form>
                     <form method="post" data-turbo-frame="_top" data-tree-target="delForm"
                           data-controller="confirm" data-confirm-message-value="Supprimer ce nœud et tout ce qu'il contient ?">
                         <button type="submit" data-tree-target="delButton" disabled title="Supprimer le nœud sélectionné"
-                                class="tree-act-btn tree-act-btn-danger">🗑</button>
+                                class="tree-act-btn tree-act-btn-danger">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
                     </form>
                 {% endif %}
             </div>

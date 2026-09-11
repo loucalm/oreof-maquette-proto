@@ -12,7 +12,7 @@
     <div class="panel-head">
         {% if standalone %}
             <div class="mb-2 text-xs text-gray-400">
-                🏠 <span class="fake-link">Accueil</span> ›
+                {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">Accueil</span> ›
                 <a href="{{ path('formation_index') }}" class="hover:underline">Liste des formations</a> ›
                 <a href="{{ path('formation_view', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
                 Arborescence des parcours
@@ -24,7 +24,7 @@
                 <div class="text-sm text-gray-400">{{ formation.name }} · {{ g.parcours|length }} parcours</div>
             </div>
             <a href="{{ path('formation_editor', {id: formation.id, param: 'structure'}) }}" data-turbo-frame="node-panel"
-               class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">← Configuration de la structure</a>
+               class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} Configuration de la structure</a>
         </div>
         <p class="text-xs text-gray-400 mt-1">
             Axe : <strong>{{ g.unit|lower }}</strong> (dimension temporelle de la formation, réglable dans « Configuration de la structure »).
@@ -81,7 +81,7 @@
         <ul class="mt-4 space-y-1 text-sm">
             {% for r in g.rows %}
                 <li class="flex flex-wrap items-center gap-2">
-                    <span class="type-badge">🧭 Parcours</span>
+                    <span class="type-badge">{{ ux_icon('ph:compass', {class: 'icon'}) }} Parcours</span>
                     <a href="{{ path('parcours_editor', {fid: formation.id, nid: r.node.id}) }}" class="font-medium hover:underline">{{ r.node.label ?: '—' }}</a>
                     <span class="text-xs text-gray-400">{{ g.unit|lower }}s {{ r.colStart }}–{{ r.colEnd }}</span>
                     {% if r.node.parcoursParent %}<span class="text-xs text-gray-400">· enfant de « {{ r.node.parcoursParent.label ?: '—' }} »</span>{% endif %}

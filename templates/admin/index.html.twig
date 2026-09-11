@@ -13,13 +13,13 @@
            style="border-color:var(--c-border)">
             <div class="flex items-start justify-between gap-3">
                 <div class="flex items-center gap-2">
-                    <span class="grid h-9 w-9 place-items-center rounded-lg text-lg" style="background:var(--c-primary-soft)">{{ s.icon }}</span>
+                    <span class="grid h-9 w-9 place-items-center rounded-lg text-lg" style="background:var(--c-primary-soft);color:var(--c-primary)">{{ ux_icon(s.icon, {class: 'icon', style: 'width:1.15em;height:1.15em'}) }}</span>
                     <div>
                         <div class="font-semibold">{{ s.label }}</div>
                         <div class="text-xs text-gray-400">{{ card.count }} · {{ card.sub }}</div>
                     </div>
                 </div>
-                <span class="text-gray-300 group-hover:text-[var(--c-primary)]">→</span>
+                <span class="text-gray-300 group-hover:text-[var(--c-primary)]">{{ ux_icon('ph:arrow-right', {class: 'icon'}) }}</span>
             </div>
             <p class="mt-3 text-sm text-gray-500">{{ card.text }}</p>
         </a>

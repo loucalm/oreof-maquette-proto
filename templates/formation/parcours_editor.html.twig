@@ -20,17 +20,17 @@
         </div>
         <div class="flex items-center gap-2">
             <form method="post" action="{{ path('formation_undo', {id: formation.id}) }}" data-turbo-frame="_top">
-                <button type="submit" {{ canUndo ? '' : 'disabled' }} title="Annuler la dernière modification" class="quickbar-icon-btn">↶</button>
+                <button type="submit" {{ canUndo ? '' : 'disabled' }} title="Annuler la dernière modification" class="quickbar-icon-btn">{{ ux_icon('ph:arrow-counter-clockwise', {class: 'icon'}) }}</button>
             </form>
             <form method="post" action="{{ path('formation_redo', {id: formation.id}) }}" data-turbo-frame="_top">
-                <button type="submit" {{ canRedo ? '' : 'disabled' }} title="Rétablir la modification annulée" class="quickbar-icon-btn">↷</button>
+                <button type="submit" {{ canRedo ? '' : 'disabled' }} title="Rétablir la modification annulée" class="quickbar-icon-btn">{{ ux_icon('ph:arrow-clockwise', {class: 'icon'}) }}</button>
             </form>
-            <a href="{{ path('formation_view', {id: formation.id}) }}" class="fake-btn">👁 Voir la fiche descriptive</a>
-            <a href="{{ path('formation_index') }}" class="rounded-lg border px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-50" style="border-color:#bbf7d0">← Retour à la liste des formation</a>
+            <a href="{{ path('formation_view', {id: formation.id}) }}" class="fake-btn">{{ ux_icon('ph:eye', {class: 'icon'}) }} Voir la fiche descriptive</a>
+            <a href="{{ path('formation_index') }}" class="rounded-lg border px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-50" style="border-color:#bbf7d0">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} Retour à la liste des formation</a>
         </div>
     </div>
     <div class="mt-3 text-sm text-gray-400">
-        🏠 <span class="fake-link">Accueil</span> ›
+        {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">Accueil</span> ›
         <a href="{{ path('formation_index') }}" class="hover:underline">Liste des formation</a> ›
         <a href="{{ path('formation_editor', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
         <span class="rounded bg-gray-100 px-2 py-0.5 text-gray-600">{{ parcours.displayLabel }}</span>
@@ -110,7 +110,7 @@
 
                 <a href="{{ path('formation_editor', {id: formation.id}) }}"
                    class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white" style="background:var(--c-primary)">
-                    ← Revenir à la formation
+                    {{ ux_icon('ph:arrow-left', {class: 'icon'}) }} Revenir à la formation
                 </a>
 
                 <div class="p-2">
@@ -131,17 +131,17 @@
                       class="flex-1" data-tree-target="addForm">
                     <input type="hidden" name="parentId" value="{{ parcours.id }}" data-tree-target="addParent">
                     <input type="hidden" name="typeKey" value="{{ formation.getChildTypeKey('parcours') }}" data-tree-target="addType">
-                    <button data-tree-target="addButton" class="tree-add-btn">＋ Ajouter {{ bodyRoot ? bodyRoot.icon }} {{ bodyRoot ? bodyRoot.label }}</button>
+                    <button data-tree-target="addButton" class="tree-add-btn">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter {{ bodyRoot ? ux_icon(bodyRoot.icon, {class: 'icon'}) }} {{ bodyRoot ? bodyRoot.label }}</button>
                 </form>
 
                 <form method="post" data-turbo-frame="_top" data-tree-target="dupForm">
                     <button type="submit" data-tree-target="dupButton" disabled title="Dupliquer le nœud sélectionné"
-                            class="tree-act-btn">⧉</button>
+                            class="tree-act-btn">{{ ux_icon('ph:copy', {class: 'icon'}) }}</button>
                 </form>
                 <form method="post" data-turbo-frame="_top" data-tree-target="delForm"
                       data-controller="confirm" data-confirm-message-value="Supprimer ce nœud et tout ce qu'il contient ?">
                     <button type="submit" data-tree-target="delButton" disabled title="Supprimer le nœud sélectionné"
-                            class="tree-act-btn tree-act-btn-danger">🗑</button>
+                            class="tree-act-btn tree-act-btn-danger">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
                 </form>
             </div>
         </div>

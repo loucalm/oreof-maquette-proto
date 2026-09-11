@@ -6,7 +6,7 @@
     <div class="flex items-start justify-between gap-4">
         <div>
             <div class="text-xs text-gray-400">
-                🏠 <span class="fake-link">Accueil</span> ›
+                {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">Accueil</span> ›
                 <a href="{{ path('formation_index') }}" class="hover:underline">Liste des formation</a> ›
                 <a href="{{ path('formation_editor', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
                 Historique
@@ -18,7 +18,7 @@
             </p>
         </div>
         <a href="{{ path('formation_editor', {id: formation.id}) }}"
-           class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">← Éditeur</a>
+           class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} Éditeur</a>
     </div>
 </div>
 
@@ -45,7 +45,7 @@
                         <form method="post" action="{{ path('formation_history_restore', {id: formation.id, revisionId: r.id}) }}"
                               data-turbo-frame="_top" data-controller="confirm"
                               data-confirm-message-value="⚠️ Restaurer l'état du {{ r.createdAt|date('d/m/Y à H:i') }} ({{ r.label|lower }}) ? L'état actuel sera remplacé — il restera consultable et restaurable dans cet historique.">
-                            <button class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">↩ Restaurer</button>
+                            <button class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-u-up-left', {class: 'icon'}) }} Restaurer</button>
                         </form>
                     </td>
                 </tr>

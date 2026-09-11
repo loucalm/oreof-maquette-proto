@@ -8,12 +8,12 @@
         <h2 class="text-lg font-bold">Templates de structure</h2>
         <p class="text-sm mb-5" style="color:var(--c-muted)">
             L'arbre imposé d'un diplôme. Rattaché à un diplôme, il est appliqué automatiquement
-            à la création d'une formation ; ses nœuds verrouillés 🔒 figent la structure.
+            à la création d'une formation ; ses nœuds verrouillés {{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} figent la structure.
         </p>
     </div>
     <form method="post" action="{{ path('template_new') }}" class="shrink-0">
         <input type="hidden" name="label" value="Nouveau template">
-        <button class="rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">＋ Nouveau template</button>
+        <button class="rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} Nouveau template</button>
     </form>
 </div>
 

@@ -13,7 +13,7 @@
         <span class="fld-label">{{ text }}</span>
         {% if required %}<span class="text-[11px] font-semibold text-red-500 uppercase tracking-wide shrink-0">Champs requis</span>{% endif %}
     </div>
-    {% if help %}<div class="fld-help">ℹ {{ help }}</div>{% endif %}
+    {% if help %}<div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ help }}</div>{% endif %}
 {% endmacro %}
 
 {% macro text(name, value, placeholder, prefix) %}
@@ -38,7 +38,7 @@
             <option value="{{ opt }}" {{ value == opt ? 'selected' }}>{{ opt }}</option>
         {% endfor %}
     </select>
-    <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">＋ {{ addLabel }}</span></div>
+    <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ addLabel }}</span></div>
 {% endmacro %}
 
 {# groupe de cases à cocher. `current` = liste des valeurs cochées. #}
@@ -55,16 +55,16 @@
 {% macro textarea(name, value, help, prefix) %}
     <div class="mt-1 rounded-lg border overflow-hidden" style="border-color:var(--c-border)">
         <div class="flex items-center gap-1 border-b bg-gray-50 px-2 py-1.5" style="border-color:var(--c-border)">
-            {% for b in ['tx', '🔗', '<>', '≣', '🖼'] %}
-                <span class="grid h-7 min-w-7 place-items-center rounded border bg-white px-1.5 text-xs text-gray-500 cursor-default" style="border-color:var(--c-border)">{{ b }}</span>
+            {% for b in ['tx', 'ph:link', '<>', 'ph:list', 'ph:image'] %}
+                <span class="grid h-7 min-w-7 place-items-center rounded border bg-white px-1.5 text-xs text-gray-500 cursor-default" style="border-color:var(--c-border)">{{ b starts with 'ph:' ? ux_icon(b, {class: 'icon'}) : b }}</span>
             {% endfor %}
             <span class="ml-auto flex gap-1">
-                <span class="grid h-7 w-7 place-items-center rounded border bg-white text-gray-500 cursor-default" style="border-color:var(--c-border)">↶</span>
-                <span class="grid h-7 w-7 place-items-center rounded border bg-white text-gray-500 cursor-default" style="border-color:var(--c-border)">↷</span>
+                <span class="grid h-7 w-7 place-items-center rounded border bg-white text-gray-500 cursor-default" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-counter-clockwise', {class: 'icon'}) }}</span>
+                <span class="grid h-7 w-7 place-items-center rounded border bg-white text-gray-500 cursor-default" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-clockwise', {class: 'icon'}) }}</span>
             </span>
         </div>
         <textarea name="{{ prefix|default('p') }}[{{ name }}]" rows="4"
                   class="w-full resize-y px-3 py-2 text-sm outline-none" placeholder="…">{{ value }}</textarea>
     </div>
-    {% if help %}<div class="fld-help">ℹ {{ help }}</div>{% endif %}
+    {% if help %}<div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ help }}</div>{% endif %}
 {% endmacro %}

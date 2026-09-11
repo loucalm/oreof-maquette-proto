@@ -20,7 +20,7 @@
             <input type="hidden" name="domaine" value="{{ formation.domaine }}">
             <input type="hidden" name="composante" value="{{ formation.composante }}">
             {{ fld.label('La formation contient-elle des parcours ?', true, 'Oui → chaque parcours est un nœud racine. Non → le niveau parcours reste invisible, la formation le porte elle-même.') }}
-            <p class="fld-help">⚠️ Changement important : bascule l'organisation de l'arbre existant, confirmation demandée.</p>
+            <p class="fld-help">{{ ux_icon('ph:warning', {class: 'icon'}) }} Changement important : bascule l'organisation de l'arbre existant, confirmation demandée.</p>
             <div class="flex flex-wrap gap-8 mt-2 text-sm">
                 <label class="flex items-center gap-2">
                     <input type="radio" name="multiParcours" value="1" {{ formation.multiParcours ? 'checked' }}
@@ -71,7 +71,7 @@
         {% if formation.isMono %}
             {{ fld.divider('Propriétés formation mono-parcours') }}
             <p class="text-xs text-gray-500 -mt-2">
-                Ces propriétés seraient portées par un nœud <span class="type-badge">🧭 Parcours</span> ; en mono-parcours ce nœud
+                Ces propriétés seraient portées par un nœud <span class="type-badge">{{ ux_icon('ph:compass', {class: 'icon'}) }} Parcours</span> ; en mono-parcours ce nœud
                 est <strong>invisible et verrouillé</strong> : la formation les porte directement.
             </p>
             <form method="post" action="{{ path('formation_settings', {id: formation.id}) }}" data-turbo-frame="_top" class="space-y-4">
@@ -93,7 +93,7 @@
                     <div>
                         {{ fld.label("Composante d'inscription", true, "Composante(s) à laquelle les étudiants pourront s'inscrire") }}
                         <input name="composante" value="{{ formation.composante }}" class="fld mt-1">
-                        <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">＋ Ajouter une composante d'inscription</span></div>
+                        <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter une composante d'inscription</span></div>
                     </div>
                 </div>
 
@@ -117,7 +117,7 @@
                 <div>
                     {{ fld.label("Langue d'enseignement", true, "Langue dans laquelle sont dispensés les cours (à l'exception des cours de langue)") }}
                     {{ fld.select('langue', data.langue ?? '', constant(R ~ '::LANGUES')) }}
-                    <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">＋ Ajouter une langue</span></div>
+                    <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter une langue</span></div>
                 </div>
 
                 {{ fld.divider('Et après…') }}
@@ -133,7 +133,7 @@
                 <div>
                     {{ fld.label('Code(s) ROME', true, 'Ajoutez les codes ROME pour préciser les métiers accessibles aux diplômés.') }}
                     {{ fld.select('codesRome', data.codesRome ?? '', constant(R ~ '::CODES_ROME')) }}
-                    <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">＋ Ajouter un code ROME</span></div>
+                    <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter un code ROME</span></div>
                 </div>
 
                 <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">Enregistrer</button>
@@ -152,7 +152,7 @@
             <div class="flex flex-wrap items-center gap-1.5">
                 {% for row in structure_rows(formation) %}
                     {% if not loop.first %}<span class="text-gray-300">›</span>{% endif %}
-                    <span class="type-badge">{{ row.type ? row.type.icon }} [{{ row.type ? row.type.label : row.key }}]</span>
+                    <span class="type-badge">{{ row.type ? ux_icon(row.type.icon, {class: 'icon'}) }} [{{ row.type ? row.type.label : row.key }}]</span>
                     {%- if row.mono %}<span class="text-[11px] text-gray-400">(porté par la formation)</span>{% endif -%}
                 {% endfor %}
             </div>
@@ -181,11 +181,11 @@
                     <tr class="border-t" style="border-color:var(--c-border)"
                         {{ not row.fixed ? 'data-chain-key=' ~ row.key }}>
                         <td class="px-2 text-center text-gray-300">
-                            {% if not row.fixed %}<span class="drag-handle" title="Glisser pour réordonner">⠿</span>{% endif %}
+                            {% if not row.fixed %}<span class="drag-handle" title="Glisser pour réordonner">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>{% endif %}
                         </td>
                         <td class="px-3 py-2.5 text-gray-400">{{ loop.index0 }}</td>
                         <td class="px-3 py-2.5">
-                            <span class="type-badge">{{ row.type ? row.type.icon : '❓' }} [{{ row.type ? row.type.label : row.key }}]</span>
+                            <span class="type-badge">{{ row.type ? ux_icon(row.type.icon, {class: 'icon'}) : ux_icon('ph:question', {class: 'icon'}) }} [{{ row.type ? row.type.label : row.key }}]</span>
                             {% if row.mono %}<span class="pill ml-1">invisible · porté par la formation</span>
                             {% elseif row.fixed %}<span class="pill ml-1">racine · figé</span>{% endif %}
                             {% if loop.index0 > 0 %}
@@ -212,7 +212,7 @@
                 <tfoot>
                     <tr class="border-t" style="border-color:var(--c-border)">
                         <td colspan="4" class="px-4 py-3 text-center" style="background:#f0fdf4">
-                            <button type="button" data-action="modal#open" class="text-sm font-medium text-green-700 hover:underline">＋ Ajouter un nœud</button>
+                            <button type="button" data-action="modal#open" class="text-sm font-medium text-green-700 hover:underline">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter un nœud</button>
                         </td>
                     </tr>
                 </tfoot>
@@ -229,7 +229,7 @@
                     {{ fld.label('Nœud', true, 'Peut être changé plus tard') }}
                     <select name="chain[]" required class="fld mt-1">
                         <option value="">— Choisir —</option>
-                        {% for t in addable %}<option value="{{ t.key }}">{{ t.icon }} {{ t.label }}</option>{% endfor %}
+                        {% for t in addable %}<option value="{{ t.key }}">{{ t.label }}</option>{% endfor %}
                     </select>
                     {% if addable is empty %}
                         <p class="fld-help">Tous les types disponibles sont déjà dans le squelette. Créez-en de nouveaux dans <a href="{{ path('node_type_index') }}" target="_blank" class="underline">les types de nœud</a>.</p>
@@ -237,7 +237,7 @@
                 </div>
                 <div class="flex items-center justify-end gap-2 pt-1">
                     <button type="button" data-action="modal#close" class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">Annuler</button>
-                    <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--st-ok)">＋ Ajouter</button>
+                    <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--st-ok)">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter</button>
                 </div>
             </form>
         </dialog>
@@ -268,11 +268,11 @@
         <div class="flex flex-wrap items-center gap-3 pt-2 border-t" style="border-color:var(--c-border)">
             <form method="post" action="{{ path('template_from_formation', {id: formation.id}) }}" data-turbo-frame="_top" class="flex items-end gap-2">
                 <input name="label" placeholder="Nom du template" required class="fld w-52">
-                <button class="rounded-lg border px-3 py-2.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">💾 Enregistrer comme template</button>
+                <button class="rounded-lg border px-3 py-2.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:floppy-disk', {class: 'icon'}) }} Enregistrer comme template</button>
             </form>
             <form method="post" action="{{ path('formation_reset', {id: formation.id}) }}" data-turbo-frame="_top" class="ml-auto"
                   data-controller="confirm" data-confirm-message-value="Vider tous les nœuds de l'arbre ? (le squelette et les nœuds imposés sont conservés)">
-                <button class="rounded-lg border px-3 py-2.5 text-sm text-red-600 hover:bg-red-50" style="border-color:var(--c-border)">🗑 Vider les nœuds</button>
+                <button class="rounded-lg border px-3 py-2.5 text-sm text-red-600 hover:bg-red-50" style="border-color:var(--c-border)">{{ ux_icon('ph:trash', {class: 'icon'}) }} Vider les nœuds</button>
             </form>
         </div>
         {% endif %}

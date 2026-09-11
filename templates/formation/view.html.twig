@@ -129,12 +129,12 @@
             <li data-node-id="{{ n.id }}">
                 <div class="tree-row" data-action="click->rotree#select" data-rotree-id-param="{{ n.id }}">
                     <span class="status-dot" data-status="{{ view.status }}" title="{{ view.status }}"></span>
-                    <span class="type-badge"><span class="opacity-70">{{ n.type.icon }}</span> [{{ n.type.label }}]</span>
+                    <span class="type-badge"><span class="opacity-70">{{ ux_icon(n.type.icon, {class: 'icon'}) }}</span> [{{ n.type.label }}]</span>
                     {% if view.ref %}<span class="tree-ref">{{ view.ref }}</span>{% endif %}
                     <span class="tree-label">{{ n.label ?: '—' }}</span>
                     {% if view.ectsTarget %}<span class="tree-ects {{ view.ectsReached ? 'text-green-600' : 'text-gray-400' }}">{{ view.totalEcts|round }}/{{ view.ectsTarget }}</span>{% endif %}
                     {% if view.children %}
-                        <button type="button" class="tree-chevron" data-action="rotree#toggle" aria-label="Plier/déplier">›</button>
+                        <button type="button" class="tree-chevron" data-action="rotree#toggle" aria-label="Plier/déplier">{{ ux_icon('ph:caret-right', {class: 'icon'}) }}</button>
                     {% else %}<span class="tree-chevron-spacer"></span>{% endif %}
                 </div>
                 {% if view.children %}{{ m.rotree(view.children) }}{% endif %}
@@ -154,7 +154,7 @@
             </div>
             <div class="flex flex-wrap items-center gap-2">
                 <span class="status-dot" data-status="{{ view.status }}"></span>
-                <span class="type-badge">{{ n.type.icon }} [{{ n.type.label }}]</span>
+                <span class="type-badge">{{ ux_icon(n.type.icon, {class: 'icon'}) }} [{{ n.type.label }}]</span>
                 {% if view.ref %}<span class="tree-ref">{{ view.ref }}</span>{% endif %}
                 <h3 class="text-lg font-bold">{{ n.label ?: '—' }}</h3>
                 {% if n.code %}<code class="text-xs text-gray-400">{{ n.code }}</code>{% endif %}
@@ -187,7 +187,7 @@
             <li>
                 <div class="ro-subtree-row" data-action="click->rotree#select" data-rotree-id-param="{{ v.node.id }}">
                     <span class="status-dot" data-status="{{ v.status }}" title="{{ v.status }}"></span>
-                    <span class="type-badge"><span class="opacity-70">{{ v.node.type.icon }}</span> [{{ v.node.type.label }}]</span>
+                    <span class="type-badge"><span class="opacity-70">{{ ux_icon(v.node.type.icon, {class: 'icon'}) }}</span> [{{ v.node.type.label }}]</span>
                     {% if v.ref %}<span class="tree-ref">{{ v.ref }}</span>{% endif %}
                     <span class="text-sm font-medium">{{ v.node.label ?: '—' }}</span>
                     {% if v.node.code %}<code class="text-[11px] text-gray-400">{{ v.node.code }}</code>{% endif %}
@@ -236,7 +236,7 @@
                             {% for tk in formation.effectiveStructure %}
                                 {% set tm = type_meta()[tk] ?? null %}
                                 {% if not loop.first %}<span class="text-gray-300">›</span>{% endif %}
-                                <span class="type-badge">{{ tm ? tm.icon }} [{{ tm ? tm.label : tk }}]</span>
+                                <span class="type-badge">{{ tm ? ux_icon(tm.icon, {class: 'icon'}) }} [{{ tm ? tm.label : tk }}]</span>
                                 {%- if tk == 'parcours' and formation.isMono %}<span class="text-xs text-gray-400">implicite</span>{% endif -%}
                             {% endfor %}
                         </dd>
@@ -275,7 +275,7 @@
             {% endif %}
 
             <a href="{{ path('formation_editor', {id: formation.id, param: key}) }}"
-               class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">✎ Modifier cette section</a>
+               class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} Modifier cette section</a>
         </div>
     {% endfor %}
 {% endmacro %}
@@ -293,7 +293,7 @@
                 <div class="bcc-bloc {{ bloc.transversalBloc ? 'bcc-bloc--transversal' }}">
                     <div class="bcc-bloc-head">
                         <div class="min-w-0 flex-1">
-                            <div class="font-semibold">{% if bloc.transversalBloc %}🎓 {% endif %}{% if bcRef %}BC {{ bcRef }} · {% endif %}{{ bloc.label }}{% if bloc.code %} <span class="text-xs font-normal opacity-70">{{ bloc.code }}</span>{% endif %}</div>
+                            <div class="font-semibold">{% if bloc.transversalBloc %}{{ ux_icon('ph:graduation-cap', {class: 'icon'}) }} {% endif %}{% if bcRef %}BC {{ bcRef }} · {% endif %}{{ bloc.label }}{% if bloc.code %} <span class="text-xs font-normal opacity-70">{{ bloc.code }}</span>{% endif %}</div>
                             {% if bloc.description %}<div class="text-xs opacity-80">{{ bloc.description }}</div>{% endif %}
                         </div>
                     </div>
@@ -332,7 +332,7 @@
                 <div class="space-y-2">
                     <div class="flex items-center gap-2 text-sm font-semibold">
                         <span class="status-dot" data-status="{{ bcc_status(p) }}"></span>{{ p.displayLabel }}
-                        <a href="{{ path('parcours_editor', {fid: formation.id, nid: p.id, bcc: 1}) }}" class="text-xs font-normal hover:underline" style="color:var(--c-primary)">✎ modifier</a>
+                        <a href="{{ path('parcours_editor', {fid: formation.id, nid: p.id, bcc: 1}) }}" class="text-xs font-normal hover:underline" style="color:var(--c-primary)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} modifier</a>
                     </div>
                     {{ m.bloclist(p.bccBlocs) }}
                 </div>
@@ -344,7 +344,7 @@
             </div>
             {{ m.bloclist(mono_blocs(formation)) }}
             <a href="{{ path('formation_editor', {id: formation.id}) }}?bcc=1"
-               class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">✎ Modifier le référentiel</a>
+               class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} Modifier le référentiel</a>
         {% endif %}
     </div>
 {% endmacro %}
@@ -356,7 +356,7 @@
     <div class="flex items-start justify-between gap-4">
         <div>
             <div class="text-xs text-gray-400">
-                🏠 <span class="fake-link">Accueil</span> ›
+                {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">Accueil</span> ›
                 <a href="{{ path('formation_index') }}" class="hover:underline">Liste des formation</a> › {{ formation.name }}
             </div>
             <h1 class="text-3xl font-extrabold tracking-tight mt-1">{{ formation.name }}</h1>
@@ -364,10 +364,10 @@
         </div>
         <div class="flex items-center gap-2 shrink-0">
             <span class="pill" style="background:#eef2ff;color:var(--c-primary)">Lecture seule</span>
-            <a href="{{ path('formation_history', {id: formation.id}) }}" class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">🕐 Historique</a>
-            <a href="{{ path('formation_export', {id: formation.id}) }}" class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">⬇ Export JSON</a>
-            <a href="{{ path('formation_editor', {id: formation.id}) }}" class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">✎ Modifier</a>
-            <a href="{{ path('formation_index') }}" class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">← Liste</a>
+            <a href="{{ path('formation_history', {id: formation.id}) }}" class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:clock-counter-clockwise', {class: 'icon'}) }} Historique</a>
+            <a href="{{ path('formation_export', {id: formation.id}) }}" class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:download-simple', {class: 'icon'}) }} Export JSON</a>
+            <a href="{{ path('formation_editor', {id: formation.id}) }}" class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} Modifier</a>
+            <a href="{{ path('formation_index') }}" class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} Liste</a>
         </div>
     </div>
     <div class="mt-4 grid grid-cols-2 md:grid-cols-6 gap-4">
@@ -406,7 +406,7 @@
                     <span class="tree-label">Référentiel de compétences (BCC)</span>
                 </div>
                 {% if formation.multiParcours %}
-                    <a href="{{ path('formation_parcours_graph', {id: formation.id}) }}" class="block rounded-md px-2 py-1.5 text-sm hover:bg-gray-50" style="color:var(--c-primary)">🗺 Arborescence des parcours</a>
+                    <a href="{{ path('formation_parcours_graph', {id: formation.id}) }}" class="block rounded-md px-2 py-1.5 text-sm hover:bg-gray-50" style="color:var(--c-primary)">{{ ux_icon('ph:map-trifold', {class: 'icon'}) }} Arborescence des parcours</a>
                 {% endif %}
             </div>
 
@@ -421,7 +421,7 @@
         {# colonne droite : détail du nœud ou de la section sélectionnée #}
         <div class="overflow-y-auto p-7">
             <div data-rotree-target="empty" class="grid h-full place-items-center text-sm text-gray-400">
-                ← Choisissez une section ou un nœud pour voir son contenu
+                {{ ux_icon('ph:arrow-left', {class: 'icon'}) }} Choisissez une section ou un nœud pour voir son contenu
             </div>
             {{ m.paramdetails(formation) }}
             {{ m.bccdetail(formation) }}

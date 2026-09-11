@@ -11,14 +11,14 @@
             <h1 class="text-2xl font-extrabold tracking-tight mt-1">Vérifier la saisie</h1>
             <p class="text-sm text-gray-500">{{ formation.name }} — {{ progress }}% complété</p>
         </div>
-        <a href="{{ path('formation_editor', {id: formation.id}) }}" class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">✎ Modifier la structure</a>
+        <a href="{{ path('formation_editor', {id: formation.id}) }}" class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} Modifier la structure</a>
     </div>
 </div>
 
 <div class="rounded-2xl border bg-white px-7 py-6" style="border-color:var(--c-border)">
     {% if issues is empty %}
         <div class="rounded-xl border p-6 text-sm" style="border-color:#bbf7d0;background:#f0fdf4">
-            <span class="font-semibold text-green-800">✔ Aucune anomalie</span>
+            <span class="font-semibold text-green-800">{{ ux_icon('ph:check-bold', {class: 'icon'}) }} Aucune anomalie</span>
             <p class="text-green-700 mt-1">Tous les champs requis sont renseignés et chaque conteneur a au moins un enfant.</p>
         </div>
     {% else %}
@@ -30,7 +30,7 @@
                     <div>
                         <div class="flex items-center gap-2">
                             <span class="status-dot" data-status="empty"></span>
-                            <span class="type-badge">{{ n.type.icon }} [{{ n.type.label }}]</span>
+                            <span class="type-badge">{{ ux_icon(n.type.icon, {class: 'icon'}) }} [{{ n.type.label }}]</span>
                             <span class="text-sm font-medium">{{ n.label ?: '(sans libellé)' }}</span>
                         </div>
                         <div class="ml-6 mt-1 text-xs text-red-600">
@@ -38,7 +38,7 @@
                         </div>
                     </div>
                     <a href="{{ path('formation_editor', {id: formation.id, focus: n.id}) }}"
-                       class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">Corriger →</a>
+                       class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">Corriger {{ ux_icon('ph:arrow-right', {class: 'icon'}) }}</a>
                 </li>
             {% endfor %}
         </ul>

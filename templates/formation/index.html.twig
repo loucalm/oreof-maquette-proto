@@ -12,15 +12,15 @@
                 <p class="text-sm text-gray-500">Ici vous pouvez voir l'ensemble de vos formations créées</p>
             </div>
             <div class="flex items-center gap-2">
-                <span class="fake-btn" style="color:#15803d;border-color:#bbf7d0">✔ Vérifier Export LHEO</span>
+                <span class="fake-btn" style="color:#15803d;border-color:#bbf7d0">{{ ux_icon('ph:check-bold', {class: 'icon'}) }} Vérifier Export LHEO</span>
                 <button type="button" data-action="modal#open"
                         class="rounded-lg border px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50" style="border-color:#bbf7d0">
-                    ＋ Ajouter une formation
+                    {{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter une formation
                 </button>
             </div>
         </div>
         <div class="mt-3 text-sm text-gray-400">
-            🏠 <span class="fake-link">Accueil</span> › <span class="fake-link">Offre de formation</span> ›
+            {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">Accueil</span> › <span class="fake-link">Offre de formation</span> ›
             <span class="rounded bg-gray-100 px-2 py-0.5 text-gray-600">Détails des mentions/spécialités</span>
         </div>
     </div>
@@ -54,7 +54,7 @@
                                 <button type="button" data-action="disclosure#toggle"
                                         class="mt-1.5 inline-flex items-center gap-1 whitespace-nowrap rounded-md border px-2 py-1 text-[11px] font-medium hover:bg-gray-50"
                                         style="border-color:var(--c-border);color:var(--c-primary)">
-                                    › <span data-disclosure-target="label">Voir</span>&nbsp;les parcours
+                                    {{ ux_icon('ph:caret-right', {class: 'icon'}) }} <span data-disclosure-target="label">Voir</span>&nbsp;les parcours
                                 </button>
                             {% endif %}
                         </td>
@@ -64,7 +64,7 @@
                             <div class="flex items-center justify-center gap-1.5">
                                 {% for i in 1..5 %}
                                     <span class="grid h-7 w-7 place-items-center rounded-full text-white text-[11px]"
-                                          style="background:{{ i <= 4 ? '#64748b' : '#cbd5e1' }}">●</span>
+                                          style="background:{{ i <= 4 ? '#64748b' : '#cbd5e1' }}">{{ ux_icon('ph:check-bold', {class: 'icon'}) }}</span>
                                 {% endfor %}
                             </div>
                         </td>
@@ -77,20 +77,20 @@
                         <td class="px-4 py-4 align-top">
                             <div class="flex items-center justify-end gap-2">
                                 <a href="{{ path('formation_view', {id: f.id}) }}"
-                                   class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">ⓘ Voir</a>
+                                   class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:eye', {class: 'icon'}) }} Voir</a>
 
                                 <div class="relative" data-controller="menu">
                                     <button type="button" data-action="menu#toggle"
-                                            class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">••• Actions</button>
+                                            class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:dots-three-bold', {class: 'icon'}) }} Actions</button>
                                     <div data-menu-target="menu" hidden
                                          class="absolute right-0 top-full z-30 mt-1.5 w-56 overflow-hidden rounded-xl border bg-white py-1.5 shadow-xl" style="border-color:var(--c-border)">
                                         <a href="{{ path('formation_check', {id: f.id}) }}"
-                                           class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-700 hover:bg-green-50">✔ Vérifier la saisie</a>
+                                           class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-700 hover:bg-green-50">{{ ux_icon('ph:check-bold', {class: 'icon'}) }} Vérifier la saisie</a>
                                         <a href="{{ path('formation_editor', {id: f.id}) }}"
-                                           class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-amber-700 hover:bg-amber-50">✎ Modifier</a>
+                                           class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-amber-700 hover:bg-amber-50">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} Modifier</a>
                                         <form method="post" action="{{ path('formation_delete', {id: f.id}) }}"
                                               data-controller="confirm" data-confirm-message-value="Supprimer définitivement la formation « {{ f.name }} » ? Cette action est irréversible.">
-                                            <button class="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">🗑 Supprimer</button>
+                                            <button class="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">{{ ux_icon('ph:trash', {class: 'icon'}) }} Supprimer</button>
                                         </form>
                                     </div>
                                 </div>
@@ -136,8 +136,8 @@
                                                     </div>
                                                 </td>
                                                 <td class="px-4 py-2.5 text-right whitespace-nowrap">
-                                                    <a href="{{ path('formation_view', {id: f.id}) }}" class="text-xs hover:underline">ⓘ Voir</a>
-                                                    <a href="{{ path('parcours_editor', {fid: f.id, nid: p.nid}) }}" class="ml-2 text-xs font-medium text-amber-700 hover:underline">✎ Modifier</a>
+                                                    <a href="{{ path('formation_view', {id: f.id}) }}" class="text-xs hover:underline">{{ ux_icon('ph:eye', {class: 'icon'}) }} Voir</a>
+                                                    <a href="{{ path('parcours_editor', {fid: f.id, nid: p.nid}) }}" class="ml-2 text-xs font-medium text-amber-700 hover:underline">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} Modifier</a>
                                                 </td>
                                             </tr>
                                         {% endfor %}
@@ -167,7 +167,7 @@
                     <h3 class="text-xl font-bold">Ajouter une nouvelle formation</h3>
                     <p class="text-sm text-gray-500">Ajouter votre formation</p>
                 </div>
-                <button type="button" data-action="modal#close" class="rounded-lg border px-2.5 py-1.5 text-gray-500 hover:bg-gray-50" style="border-color:var(--c-border)">✕</button>
+                <button type="button" data-action="modal#close" class="rounded-lg border px-2.5 py-1.5 text-gray-500 hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:x', {class: 'icon'}) }}</button>
             </div>
 
             <div class="px-7 py-6 space-y-6">
@@ -177,7 +177,7 @@
                         <span class="text-[11px] font-semibold text-red-500 uppercase">Champs requis</span>
                     </div>
                     <input name="name" required placeholder="Formation exemple" class="fld mt-1">
-                    <div class="fld-help">ℹ Nommer votre formation</div>
+                    <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} Nommer votre formation</div>
                 </div>
 
                 <div class="grid gap-6 md:grid-cols-2">
@@ -191,7 +191,7 @@
                                 <option value="{{ d }}">{{ d }}</option>
                             {% endfor %}
                         </select>
-                        <div class="fld-help">ℹ La sélection de certains diplômes nécessite une demande</div>
+                        <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} La sélection de certains diplômes nécessite une demande</div>
                     </div>
                     <div>
                         <div class="flex items-center justify-between">
@@ -204,7 +204,7 @@
                                 <option value="{{ d }}">{{ d }}</option>
                             {% endfor %}
                         </select>
-                        <div class="fld-help">ℹ Domaine auquel appartient votre formation</div>
+                        <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} Domaine auquel appartient votre formation</div>
                     </div>
                 </div>
 
@@ -214,7 +214,7 @@
                         <span class="text-[11px] font-semibold text-red-500 uppercase">Champs requis</span>
                     </div>
                     <input name="composante" placeholder="Composante exemple" class="fld mt-1">
-                    <div class="fld-help">ℹ Indiquer la composante porteuse du projet, qui aura en charge le dépôt de la demande</div>
+                    <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} Indiquer la composante porteuse du projet, qui aura en charge le dépôt de la demande</div>
                 </div>
 
                 <label class="flex items-center gap-2 text-sm">

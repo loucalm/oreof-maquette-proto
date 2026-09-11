@@ -11,7 +11,7 @@
             Un type de nœud active ensuite les champs qui le concernent (via ses capacités).
         </p>
     </div>
-    <a href="{{ path('field_new') }}" class="rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">＋ Nouveau champ</a>
+    <a href="{{ path('field_new') }}" class="rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} Nouveau champ</a>
 </div>
 
 {% for tab, fields in byTab %}
@@ -39,7 +39,7 @@
                         </td>
                         <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ f.category ?? '—' }}</td>
                         <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ constant('App\\Entity\\FieldDef::TYPES')[f.type] ?? f.type }}</td>
-                        <td class="px-4 py-2.5">{{ f.required ? '✅' : '—' }}</td>
+                        <td class="px-4 py-2.5">{{ f.required ? ux_icon('ph:check-bold', {class: 'icon'}) : '—' }}</td>
                         <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ f.position }}</td>
                         <td class="px-4 py-2.5 text-right whitespace-nowrap">
                             <a href="{{ path('field_edit', {id: f.id}) }}" class="text-xs hover:underline">Modifier</a>

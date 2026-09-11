@@ -15,10 +15,10 @@
             <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'lock'}) }}" class="inline">
                 <button title="{{ locked ? 'Nœud imposé — cliquer pour libérer' : 'Rendre ce nœud imposé (non supprimable côté formation)' }}"
                         class="grid h-6 w-6 place-items-center rounded border text-xs"
-                        style="border-color:var(--c-border);{{ locked ? 'background:#fef3c7' }}">{{ locked ? '🔒' : '🔓' }}</button>
+                        style="border-color:var(--c-border);{{ locked ? 'background:#fef3c7' }}">{{ locked ? ux_icon('ph:lock-simple-fill', {class: 'icon'}) : ux_icon('ph:lock-simple-open', {class: 'icon'}) }}</button>
             </form>
 
-            <span class="type-badge">{{ meta ? meta.icon }} [{{ meta ? meta.label : n.type }}]</span>
+            <span class="type-badge">{{ meta ? ux_icon(meta.icon, {class: 'icon'}) }} [{{ meta ? meta.label : n.type }}]</span>
 
             <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'rename'}) }}" class="inline flex items-center gap-1">
                 <input name="label" value="{{ n.label ?? '' }}" placeholder="(libellé)"
@@ -29,14 +29,14 @@
             <span class="flex-1"></span>
 
             <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'up'}) }}" class="inline">
-                <button class="template-mini" title="Monter">↑</button>
+                <button class="template-mini" title="Monter">{{ ux_icon('ph:arrow-up', {class: 'icon'}) }}</button>
             </form>
             <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'down'}) }}" class="inline">
-                <button class="template-mini" title="Descendre">↓</button>
+                <button class="template-mini" title="Descendre">{{ ux_icon('ph:arrow-down', {class: 'icon'}) }}</button>
             </form>
             <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'delete'}) }}" class="inline"
                   data-controller="confirm" data-confirm-message-value="Supprimer « {{ n.label ?? n.type }} » et sa branche du template ?">
-                <button class="template-mini template-mini--danger" title="Supprimer">🗑</button>
+                <button class="template-mini template-mini--danger" title="Supprimer">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
             </form>
         </div>
 
@@ -53,10 +53,10 @@
               class="template-branch mt-1 flex flex-wrap items-center gap-1.5">
             <input type="hidden" name="parent" value="{{ p }}">
             <select name="type" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
-                {% for t in types %}<option value="{{ t.key }}">{{ t.icon }} {{ t.label }}</option>{% endfor %}
+                {% for t in types %}<option value="{{ t.key }}">{{ t.label }}</option>{% endfor %}
             </select>
             <input name="label" placeholder="libellé (optionnel)" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
-            <button class="rounded border px-2 py-1 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">＋ enfant</button>
+            <button class="rounded border px-2 py-1 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} enfant</button>
         </form>
     </li>
 {% endmacro %}
@@ -117,7 +117,7 @@
                     {{ m.node(n, loop.index0 ~ '', template, types) }}
                 {% endfor %}
             </ul>
-            <p class="mt-2 text-xs" style="color:var(--c-muted)">🔒 = nœud imposé : le responsable de formation ne pourra ni le supprimer ni le déplacer.</p>
+            <p class="mt-2 text-xs" style="color:var(--c-muted)">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} = nœud imposé : le responsable de formation ne pourra ni le supprimer ni le déplacer.</p>
         {% endif %}
 
         <form method="post" action="{{ path('template_node_add', {id: template.id}) }}"
@@ -125,10 +125,10 @@
             <input type="hidden" name="parent" value="">
             <span class="text-xs font-medium" style="color:var(--c-muted)">Ajouter un nœud racine :</span>
             <select name="type" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
-                {% for t in types %}<option value="{{ t.key }}">{{ t.icon }} {{ t.label }}</option>{% endfor %}
+                {% for t in types %}<option value="{{ t.key }}">{{ t.label }}</option>{% endfor %}
             </select>
             <input name="label" placeholder="libellé" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
-            <button class="rounded border px-2 py-1 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">＋ racine</button>
+            <button class="rounded border px-2 py-1 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} racine</button>
         </form>
     </div>
 </div>

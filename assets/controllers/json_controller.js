@@ -38,7 +38,7 @@ export default class extends Controller {
     async copy() {
         try {
             await navigator.clipboard.writeText(this.raw ?? this.srcTarget.textContent);
-            this.flash('✓ Copié');
+            this.flash('Copié');
         } catch {
             this.flash('Copie impossible');
         }

@@ -22,11 +22,11 @@ final class AdminController extends AbstractController
 {
     /** Sections de l'administration — libellé, route, icône, description. */
     public const SECTIONS = [
-        'overview' => ['label' => 'Vue d’ensemble', 'route' => 'admin_index', 'icon' => '⚙'],
-        'types' => ['label' => 'Types de nœud', 'route' => 'node_type_index', 'icon' => '🧩'],
-        'fields' => ['label' => 'Champs des formulaires', 'route' => 'field_index', 'icon' => '📝'],
-        'templates' => ['label' => 'Templates de structure', 'route' => 'template_index', 'icon' => '🗂'],
-        'referentiels' => ['label' => 'Référentiels', 'route' => 'admin_referentiels', 'icon' => '📚'],
+        'overview' => ['label' => 'Vue d’ensemble', 'route' => 'admin_index', 'icon' => 'ph:gear'],
+        'types' => ['label' => 'Types de nœud', 'route' => 'node_type_index', 'icon' => 'ph:puzzle-piece'],
+        'fields' => ['label' => 'Champs des formulaires', 'route' => 'field_index', 'icon' => 'ph:note-pencil'],
+        'templates' => ['label' => 'Templates de structure', 'route' => 'template_index', 'icon' => 'ph:folders'],
+        'referentiels' => ['label' => 'Référentiels', 'route' => 'admin_referentiels', 'icon' => 'ph:books'],
     ];
 
     #[Route('/administration', name: 'admin_index', methods: ['GET'])]

@@ -22,7 +22,7 @@
         <a href="{{ path(s.route) }}"
            class="-mb-px rounded-t-lg border-b-2 px-3.5 py-2 text-sm font-medium {{ active ? '' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}"
            style="border-color:{{ active ? 'var(--c-primary)' : 'transparent' }};{{ active ? 'color:var(--c-primary)' }}">
-            {{ s.icon }} {{ s.label }}
+            {{ ux_icon(s.icon, {class: 'icon'}) }} {{ s.label }}
         </a>
     {% endfor %}
 </nav>

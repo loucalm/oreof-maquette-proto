@@ -25,7 +25,7 @@
           data-bcc-target="edit" hidden class="bcc-edit -mt-1"
           data-controller="confirm"
           data-confirm-message-value="{{ kind == 'bloc' ? 'Supprimer ce bloc et toutes ses compétences ?' : 'Supprimer cette compétence ?' }}">
-        <button class="text-xs font-medium text-red-600 hover:underline">🗑 Supprimer {{ kind == 'bloc' ? 'le bloc' : 'la compétence' }}</button>
+        <button class="text-xs font-medium text-red-600 hover:underline">{{ ux_icon('ph:trash', {class: 'icon'}) }} Supprimer {{ kind == 'bloc' ? 'le bloc' : 'la compétence' }}</button>
     </form>
 {% endmacro %}
 
@@ -40,7 +40,7 @@
     <div class="panel-head">
         {% if standalone %}
             <div class="mb-2 text-xs text-gray-400">
-                🏠 <span class="fake-link">Accueil</span> ›
+                {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">Accueil</span> ›
                 <a href="{{ path('formation_index') }}" class="hover:underline">Liste des formations</a> ›
                 <a href="{{ path('formation_view', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
                 {% if parcours %}{{ parcours.displayLabel }} › {% endif %}Référentiel de compétences
@@ -67,13 +67,13 @@
         <form method="post" action="{{ addBlocUrl }}" data-turbo-frame="_top" class="mb-4">
             <input type="hidden" name="transversal" value="1">
             <button class="w-full rounded-xl border border-dashed px-4 py-2.5 text-sm font-medium text-green-700 hover:bg-green-50"
-                    style="border-color:#86efac;background:#f0fdf4">＋ Ajouter des compétences transversales (RNCP)</button>
+                    style="border-color:#86efac;background:#f0fdf4">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter des compétences transversales (RNCP)</button>
         </form>
     {% endif %}
 
     {% if blocs is empty %}
         <div class="rounded-xl border border-dashed p-8 text-center text-sm text-gray-500" style="border-color:var(--c-border)">
-            Aucun bloc de compétences. Commencez par « ＋ Ajouter un bloc ».
+            Aucun bloc de compétences. Commencez par « Ajouter un bloc ».
         </div>
     {% endif %}
 
@@ -82,15 +82,15 @@
             {% set n = b.node %}
             <div class="bcc-bloc {{ b.transversal ? 'bcc-bloc--transversal' }}" data-node-id="{{ n.id }}">
                 <div class="bcc-bloc-head">
-                    <span class="drag-handle" data-bcc-handle title="Glisser pour réordonner">⠿</span>
+                    <span class="drag-handle" data-bcc-handle title="Glisser pour réordonner">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>
                     <div class="min-w-0 flex-1">
                         <div class="font-semibold">
-                            {% if b.transversal %}<span class="opacity-80">🎓 </span>{% endif %}{% if b.ref %}<span class="opacity-80">BC {{ b.ref }} · </span>{% endif %}{{ n.label }}
+                            {% if b.transversal %}<span class="opacity-80">{{ ux_icon('ph:graduation-cap', {class: 'icon'}) }} </span>{% endif %}{% if b.ref %}<span class="opacity-80">BC {{ b.ref }} · </span>{% endif %}{{ n.label }}
                             {% if n.code %}<span class="ml-1 text-xs font-normal opacity-70">{{ n.code }}</span>{% endif %}
                         </div>
                         {% if n.description %}<div class="text-xs opacity-80">{{ n.description }}</div>{% endif %}
                     </div>
-                    <button type="button" class="bcc-edit-btn" data-action="bcc#toggle" data-bcc-id-param="{{ n.id }}" title="Modifier / supprimer">✎</button>
+                    <button type="button" class="bcc-edit-btn" data-action="bcc#toggle" data-bcc-id-param="{{ n.id }}" title="Modifier / supprimer">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }}</button>
                 </div>
 
                 <div class="bcc-bloc-body">
@@ -101,12 +101,12 @@
                             {% set c = row.node %}
                             <li class="bcc-comp" data-node-id="{{ c.id }}">
                                 <div class="bcc-comp-row">
-                                    <span class="drag-handle" data-bcc-handle title="Glisser">⠿</span>
+                                    <span class="drag-handle" data-bcc-handle title="Glisser">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>
                                     <div class="min-w-0 flex-1">
                                         <div class="font-medium">{% if row.ref %}<span class="text-xs font-bold" style="color:var(--c-primary)">{{ row.ref }}</span> {% endif %}{{ c.label }}{% if c.code %}<span class="ml-1 text-xs font-normal text-gray-400">{{ c.code }}</span>{% endif %}</div>
                                         {% if c.description %}<div class="text-xs text-gray-500">{{ c.description }}</div>{% endif %}
                                     </div>
-                                    <button type="button" class="bcc-edit-btn bcc-edit-btn--light" data-action="bcc#toggle" data-bcc-id-param="{{ c.id }}" title="Modifier / supprimer">✎</button>
+                                    <button type="button" class="bcc-edit-btn bcc-edit-btn--light" data-action="bcc#toggle" data-bcc-id-param="{{ c.id }}" title="Modifier / supprimer">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }}</button>
                                 </div>
                                 <div data-bcc-node="{{ c.id }}" class="px-3 pb-2">{{ bcc.editform(c, 'competence') }}</div>
                             </li>
@@ -115,7 +115,7 @@
 
                     <form method="post" action="{{ node_url(n, 'bcc_competence_add') }}" data-turbo-frame="_top" class="bcc-comp-add">
                         <button class="rounded-lg border border-dashed px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-50"
-                                style="border-color:#86efac;background:#f0fdf4">＋ Ajouter une compétence</button>
+                                style="border-color:#86efac;background:#f0fdf4">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter une compétence</button>
                     </form>
                 </div>
             </div>
@@ -123,7 +123,7 @@
     </div>
 
     <form method="post" action="{{ addBlocUrl }}" data-turbo-frame="_top" class="mt-4 flex justify-center">
-        <button class="rounded-lg border px-4 py-2 text-sm font-semibold" style="border-color:#c7d2fe;background:#eef2ff;color:var(--c-primary)">＋ Ajouter un bloc</button>
+        <button class="rounded-lg border px-4 py-2 text-sm font-semibold" style="border-color:#c7d2fe;background:#eef2ff;color:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter un bloc</button>
     </form>
     </div>
 </div>

@@ -203,8 +203,8 @@ export default class extends Controller {
             this.addTypeTarget.value = rootKey || 'auto';
             this.addButtonTarget.disabled = false;
             this.addButtonTarget.textContent = meta[rootKey]
-                ? `＋ Ajouter ${meta[rootKey].icon} ${meta[rootKey].label}`
-                : '＋ Ajouter un nœud';
+                ? `Ajouter ${meta[rootKey].label}`
+                : 'Ajouter un nœud';
             return;
         }
 
@@ -217,14 +217,14 @@ export default class extends Controller {
 
         if (idx >= 0 && !childKey) {
             this.addButtonTarget.disabled = true;
-            this.addButtonTarget.textContent = `＋ « ${name} » ne peut pas contenir d'enfant`;
+            this.addButtonTarget.textContent = `« ${name} » ne peut pas contenir d'enfant`;
             return;
         }
 
         this.addButtonTarget.disabled = false;
         this.addButtonTarget.textContent = childKey && meta[childKey]
-            ? `＋ Ajouter ${meta[childKey].icon} ${meta[childKey].label}`
-            : '＋ Ajouter un nœud';
+            ? `Ajouter ${meta[childKey].label}`
+            : 'Ajouter un nœud';
     }
 
     updateUrl(params) {

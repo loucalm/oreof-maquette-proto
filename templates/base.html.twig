@@ -25,9 +25,9 @@
                     <span class="fake-link cursor-default">Tableau de bord</span>
                     <a href="{{ path('formation_index') }}"
                        class="hover:text-gray-900 {{ _route matches '/^(formation_|node_|bcc_|parcours_)/' ? 'font-semibold text-gray-900' }}">Offre de formation</a>
-                    <span class="fake-link cursor-default">Pilotage <span class="text-gray-300">⌄</span></span>
-                    <span class="fake-link cursor-default">Conseils <span class="text-gray-300">⌄</span></span>
-                    <span class="fake-link cursor-default">Utilisateurs et droits <span class="text-gray-300">⌄</span></span>
+                    <span class="fake-link cursor-default">Pilotage {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>
+                    <span class="fake-link cursor-default">Conseils {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>
+                    <span class="fake-link cursor-default">Utilisateurs et droits {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>
                     {% if is_admin() %}
                         <a href="{{ path('admin_index') }}"
                            class="hover:text-gray-900 {{ _route matches '/^(admin_|node_type_|field_|template_)/' ? 'font-semibold text-gray-900' }}">Administration</a>
@@ -38,22 +38,22 @@
                     <div class="relative" data-controller="menu">
                         <button type="button" data-action="menu#toggle"
                                 class="rounded-lg border px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50" style="border-color:var(--c-border)">
-                            👁 {{ role_labels()[current_role()] }} <span class="text-gray-300">⌄</span>
+                            {{ ux_icon('ph:eye', {class: 'icon'}) }} {{ role_labels()[current_role()] }} {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}
                         </button>
                         <div data-menu-target="menu" hidden class="absolute right-0 z-40 mt-1 w-60 rounded-xl border bg-white py-1 text-sm shadow-lg" style="border-color:var(--c-border)">
                             <div class="px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Voir en tant que</div>
                             {% for r, label in role_labels() %}
                                 <form method="post" action="{{ path('role_switch', {role: r}) }}">
                                     <button class="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 {{ current_role() == r ? 'font-semibold' }}">
-                                        {{ current_role() == r ? '●' : '○' }} {{ label }}
+                                        {{ current_role() == r ? ux_icon('ph:check-circle-fill', {class: 'icon', style: 'color:var(--c-primary)'}) : ux_icon('ph:circle', {class: 'icon text-gray-300'}) }} {{ label }}
                                     </button>
                                 </form>
                             {% endfor %}
                             <div class="border-t px-3 py-1.5 text-[11px] text-gray-400" style="border-color:var(--c-border)">Le responsable ne voit pas le métamodèle ni la configuration de structure.</div>
                         </div>
                     </div>
-                    <span>🔍</span><span>💬</span><span>🌐</span><span>🔔</span>
-                    <span class="rounded-lg px-3 py-1 text-xs font-medium" style="background:var(--c-primary-soft);color:var(--c-primary)">2026-2027 ⌄</span>
+                    <span>{{ ux_icon('ph:magnifying-glass', {class: 'icon'}) }}</span><span>{{ ux_icon('ph:chat-circle', {class: 'icon'}) }}</span><span>{{ ux_icon('ph:globe', {class: 'icon'}) }}</span><span>{{ ux_icon('ph:bell', {class: 'icon'}) }}</span>
+                    <span class="rounded-lg px-3 py-1 text-xs font-medium" style="background:var(--c-primary-soft);color:var(--c-primary)">2026-2027 {{ ux_icon('ph:caret-down', {class: 'icon'}) }}</span>
                     <span class="grid h-8 w-8 place-items-center rounded-full text-xs font-bold text-white" style="background:var(--c-primary)">{{ is_admin() ? 'DA' : 'RF' }}</span>
                 </div>
             </div>
@@ -68,7 +68,7 @@
                     {% for message in messages %}
                         <div class="flash flash--{{ label ?: 'info' }}" data-controller="flash">
                             <span class="flash-msg">{{ message }}</span>
-                            <button type="button" class="flash-x" data-action="flash#dismiss" aria-label="Fermer">✕</button>
+                            <button type="button" class="flash-x" data-action="flash#dismiss" aria-label="Fermer">{{ ux_icon('ph:x', {class: 'icon'}) }}</button>
                         </div>
                     {% endfor %}
                 {% endfor %}
