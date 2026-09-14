@@ -56,7 +56,7 @@
 {# ═══ éditeur ═══ #}
 <div class="rounded-2xl border bg-white p-7" style="border-color:var(--c-border)">
     <h2 class="text-2xl font-extrabold tracking-tight">ÉDITEUR DE PARCOURS</h2>
-    <p class="text-sm text-gray-500 mb-5">Construisez la structure de ce parcours nœud par nœud.</p>
+    <p class="text-sm text-gray-500 mb-5">Construisez la structure de ce parcours ELP par ELP.</p>
 
     <div class="editor-shell grid lg:grid-cols-[380px_1fr] lg:h-[calc(100vh-9rem)] min-h-[560px]">
 
@@ -135,12 +135,12 @@
                 </form>
 
                 <form method="post" data-turbo-frame="_top" data-tree-target="dupForm">
-                    <button type="submit" data-tree-target="dupButton" disabled title="Dupliquer le nœud sélectionné"
+                    <button type="submit" data-tree-target="dupButton" disabled title="Dupliquer l’ELP sélectionné"
                             class="tree-act-btn">{{ ux_icon('ph:copy', {class: 'icon'}) }}</button>
                 </form>
                 <form method="post" data-turbo-frame="_top" data-tree-target="delForm"
-                      data-controller="confirm" data-confirm-message-value="Supprimer ce nœud et tout ce qu'il contient ?">
-                    <button type="submit" data-tree-target="delButton" disabled title="Supprimer le nœud sélectionné"
+                      data-controller="confirm" data-confirm-message-value="Supprimer cet ELP et tout ce qu'il contient ?">
+                    <button type="submit" data-tree-target="delButton" disabled title="Supprimer l’ELP sélectionné"
                             class="tree-act-btn tree-act-btn-danger">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
                 </form>
             </div>
@@ -150,7 +150,7 @@
         <turbo-frame id="node-panel" class="panel-frame"
                      {% if frameSrc %}src="{{ frameSrc }}"{% endif %}>
             {% if not frameSrc %}
-                <div class="panel-empty">Sélectionnez une section ou un nœud pour le modifier</div>
+                <div class="panel-empty">Sélectionnez une section ou un ELP pour le modifier</div>
             {% endif %}
         </turbo-frame>
     </div>

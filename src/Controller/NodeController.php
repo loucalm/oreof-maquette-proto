@@ -115,7 +115,7 @@ final class NodeController extends AbstractController
 
         $this->maquette->save($formation, $doc);
 
-        return $this->backToEditor($node, 'Nœud enregistré.');
+        return $this->backToEditor($node, 'ELP enregistré.');
     }
 
     #[Route('/formations/{fid}/nodes', name: 'node_add', methods: ['POST'])]
@@ -207,7 +207,7 @@ final class NodeController extends AbstractController
         $parcours = $this->parcoursAncestor($node);
         $doc->removeNode($node);
         $this->maquette->save($formation, $doc);
-        $this->addFlash('info', 'Nœud supprimé.');
+        $this->addFlash('info', 'ELP supprimé.');
 
         return $parcours !== null && $parcours !== $node
             ? $this->redirectToRoute('parcours_editor', ['fid' => $formation->getId(), 'nid' => $parcours->getId()])
@@ -222,7 +222,7 @@ final class NodeController extends AbstractController
         $node->setMutualized(!$node->isMutualized());
         $this->maquette->save($formation, $doc);
 
-        return $this->backToEditor($node, $node->isMutualized() ? 'Nœud mutualisé.' : 'Nœud retiré de la mutualisation.');
+        return $this->backToEditor($node, $node->isMutualized() ? 'ELP mutualisé.' : 'ELP retiré de la mutualisation.');
     }
 
     #[Route('/formations/{fid}/nodes/{nid}/params', name: 'node_params', methods: ['POST'])]
@@ -248,7 +248,7 @@ final class NodeController extends AbstractController
         $node->setCapabilityOverrides($overrides === [] ? null : $overrides);
         $this->maquette->save($formation, $doc);
 
-        return $this->backToEditor($node, 'Paramètre du nœud enregistré.');
+        return $this->backToEditor($node, 'Paramètre de l’ELP enregistré.');
     }
 
     #[Route('/formations/{fid}/nodes/{nid}/raccrocher', name: 'node_attach_index', methods: ['GET'])]

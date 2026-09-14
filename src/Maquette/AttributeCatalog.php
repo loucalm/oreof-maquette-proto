@@ -41,8 +41,8 @@ final class AttributeCatalog
 
     /** Capacités qui ne sont pas des champs du catalogue mais des drapeaux. */
     public const FLAGS = [
-        'mutualisable' => 'Nœud mutualisable / raccrochable',
-        'code' => 'Code du nœud',
+        'mutualisable' => 'ELP mutualisable / raccrochable',
+        'code' => 'Code de l’ELP',
     ];
 
     /** Libellés par défaut des onglets connus. */
@@ -143,7 +143,7 @@ final class AttributeCatalog
 
     /** Défauts pour amorcer les fixtures / restaurer le socle. */
     public const SEED = [
-        ['ects', 'ECTS', 'props', null, 'number', [], true, 'ECTS associés à ce nœud.'],
+        ['ects', 'ECTS', 'props', null, 'number', [], true, 'ECTS associés à cet ELP.'],
         ['ueType', "Type d'UE", 'props', null, 'choice', [
             'disciplinaire' => 'Disciplinaire', 'transversale' => 'Transversale',
             'langue' => 'Langue', 'projet' => 'Projet / stage', 'libre' => 'Ouverture / libre',

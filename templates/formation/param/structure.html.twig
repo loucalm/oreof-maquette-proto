@@ -19,21 +19,21 @@
             <input type="hidden" name="diplome" value="{{ formation.diplome }}">
             <input type="hidden" name="domaine" value="{{ formation.domaine }}">
             <input type="hidden" name="composante" value="{{ formation.composante }}">
-            {{ fld.label('La formation contient-elle des parcours ?', true, 'Oui → chaque parcours est un nœud racine. Non → le niveau parcours reste invisible, la formation le porte elle-même.') }}
+            {{ fld.label('La formation contient-elle des parcours ?', true, 'Oui → chaque parcours est un élément pédagogique racine. Non → le niveau parcours reste invisible, la formation le porte elle-même.') }}
             <p class="fld-help">{{ ux_icon('ph:warning', {class: 'icon'}) }} Changement important : bascule l'organisation de l'arbre existant, confirmation demandée.</p>
             <div class="flex flex-wrap gap-8 mt-2 text-sm">
                 <label class="flex items-center gap-2">
                     <input type="radio" name="multiParcours" value="1" {{ formation.multiParcours ? 'checked' }}
                            data-confirm-target="restore" data-confirm-checked="{{ formation.multiParcours ? '1' : '0' }}"
                            data-action="change->confirm#confirmChange"
-                           data-confirm-message-param="⚠️ Passer en multi-parcours va rassembler les nœuds actuels de la formation dans un nouveau parcours. Continuer ?">
+                           data-confirm-message-param="⚠️ Passer en multi-parcours va rassembler les éléments pédagogiques actuels de la formation dans un nouveau parcours. Continuer ?">
                     Oui (options)
                 </label>
                 <label class="flex items-center gap-2">
                     <input type="radio" name="multiParcours" value="0" {{ not formation.multiParcours ? 'checked' }}
                            data-confirm-target="restore" data-confirm-checked="{{ not formation.multiParcours ? '1' : '0' }}"
                            data-action="change->confirm#confirmChange"
-                           data-confirm-message-param="⚠️ Passer en mono-parcours va supprimer le(s) parcours et remonter leurs nœuds à la racine de la formation. Continuer ?">
+                           data-confirm-message-param="⚠️ Passer en mono-parcours va supprimer le(s) parcours et remonter leurs éléments pédagogiques à la racine de la formation. Continuer ?">
                     Non (mono-parcours)
                 </label>
             </div>
@@ -71,7 +71,7 @@
         {% if formation.isMono %}
             {{ fld.divider('Propriétés formation mono-parcours') }}
             <p class="text-xs text-gray-500 -mt-2">
-                Ces propriétés seraient portées par un nœud <span class="type-badge">{{ ux_icon('ph:compass', {class: 'icon'}) }} Parcours</span> ; en mono-parcours ce nœud
+                Ces propriétés seraient portées par un élément pédagogique <span class="type-badge">{{ ux_icon('ph:compass', {class: 'icon'}) }} Parcours</span> ; en mono-parcours cet élément pédagogique
                 est <strong>invisible et verrouillé</strong> : la formation les porte directement.
             </p>
             <form method="post" action="{{ path('formation_settings', {id: formation.id}) }}" data-turbo-frame="_top" class="space-y-4">
@@ -172,7 +172,7 @@
                     <tr>
                         <th class="w-8"></th>
                         <th class="text-left px-3 py-2.5">Ordre</th>
-                        <th class="text-left px-3 py-2.5">Type de nœud</th>
+                        <th class="text-left px-3 py-2.5">Type d’ELP</th>
                         <th class="text-right px-4 py-2.5">Actions</th>
                     </tr>
                 </thead>
@@ -200,7 +200,7 @@
                             {% endif %}
                             {% if not row.fixed %}
                                 <form method="post" action="{{ path('formation_structure_save', {id: formation.id}) }}" data-turbo-frame="_top" class="inline ml-3"
-                                      data-controller="confirm" data-confirm-message-value="Retirer « {{ row.type ? row.type.label : row.key }} » du squelette ? (les nœuds déjà créés ne sont pas supprimés)">
+                                      data-controller="confirm" data-confirm-message-value="Retirer « {{ row.type ? row.type.label : row.key }} » du squelette ? (les ELP déjà créés ne sont pas supprimés)">
                                     {% for k in body_keys|filter(k => k != row.key) %}<input type="hidden" name="chain[]" value="{{ k }}">{% endfor %}
                                     <button class="text-xs text-red-600 hover:underline">Retirer</button>
                                 </form>
@@ -212,7 +212,7 @@
                 <tfoot>
                     <tr class="border-t" style="border-color:var(--c-border)">
                         <td colspan="4" class="px-4 py-3 text-center" style="background:#f0fdf4">
-                            <button type="button" data-action="modal#open" class="text-sm font-medium text-green-700 hover:underline">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter un nœud</button>
+                            <button type="button" data-action="modal#open" class="text-sm font-medium text-green-700 hover:underline">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter un ELP</button>
                         </td>
                     </tr>
                 </tfoot>
@@ -224,15 +224,15 @@
                 class="rounded-2xl border-0 p-0 w-[min(440px,92vw)] backdrop:bg-black/40">
             <form method="post" action="{{ path('formation_structure_save', {id: formation.id}) }}" data-turbo-frame="_top" class="p-6 space-y-4">
                 {% for k in body_keys %}<input type="hidden" name="chain[]" value="{{ k }}">{% endfor %}
-                <h3 class="text-lg font-bold">Ajouter un nœud</h3>
+                <h3 class="text-lg font-bold">Ajouter un ELP</h3>
                 <div>
-                    {{ fld.label('Nœud', true, 'Peut être changé plus tard') }}
+                    {{ fld.label('ELP', true, 'Peut être changé plus tard') }}
                     <select name="chain[]" required class="fld mt-1">
                         <option value="">— Choisir —</option>
                         {% for t in addable %}<option value="{{ t.key }}">{{ t.label }}</option>{% endfor %}
                     </select>
                     {% if addable is empty %}
-                        <p class="fld-help">Tous les types disponibles sont déjà dans le squelette. Créez-en de nouveaux dans <a href="{{ path('node_type_index') }}" target="_blank" class="underline">les types de nœud</a>.</p>
+                        <p class="fld-help">Tous les types disponibles sont déjà dans le squelette. Créez-en de nouveaux dans <a href="{{ path('node_type_index') }}" target="_blank" class="underline">les types d’élément pédagogique</a>.</p>
                     {% endif %}
                 </div>
                 <div class="flex items-center justify-end gap-2 pt-1">
@@ -242,7 +242,7 @@
             </form>
         </dialog>
         <p class="text-xs text-gray-400">
-            {{ nodeCount }} nœud(s) déjà construit(s) dans l'arbre ·
+            {{ nodeCount }} ELP déjà construit(s) dans l'arbre ·
             les types sont gérés par les administrateurs —
             <a href="{{ path('node_type_index') }}" target="_blank" class="underline">voir / éditer les types</a>.
         </p>
@@ -250,7 +250,7 @@
         {# ── Charger un template ── #}
         {{ fld.divider('Charger un template') }}
         <form method="post" action="{{ path('formation_apply_template', {id: formation.id}) }}" data-turbo-frame="_top"
-              data-controller="confirm" data-confirm-message-value="⚠️ Charger ce template ÉCRASE le squelette ET les nœuds actuels. Continuer ?"
+              data-controller="confirm" data-confirm-message-value="⚠️ Charger ce template ÉCRASE le squelette ET les éléments pédagogiques actuels. Continuer ?"
               class="flex flex-wrap items-end gap-3">
             <div class="flex-1 min-w-[220px]">
                 <select name="template" class="fld">
@@ -271,8 +271,8 @@
                 <button class="rounded-lg border px-3 py-2.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:floppy-disk', {class: 'icon'}) }} Enregistrer comme template</button>
             </form>
             <form method="post" action="{{ path('formation_reset', {id: formation.id}) }}" data-turbo-frame="_top" class="ml-auto"
-                  data-controller="confirm" data-confirm-message-value="Vider tous les nœuds de l'arbre ? (le squelette et les nœuds imposés sont conservés)">
-                <button class="rounded-lg border px-3 py-2.5 text-sm text-red-600 hover:bg-red-50" style="border-color:var(--c-border)">{{ ux_icon('ph:trash', {class: 'icon'}) }} Vider les nœuds</button>
+                  data-controller="confirm" data-confirm-message-value="Vider tous les éléments pédagogiques de l'arbre ? (le squelette et les éléments pédagogiques imposés sont conservés)">
+                <button class="rounded-lg border px-3 py-2.5 text-sm text-red-600 hover:bg-red-50" style="border-color:var(--c-border)">{{ ux_icon('ph:trash', {class: 'icon'}) }} Vider les ELP</button>
             </form>
         </div>
         {% endif %}

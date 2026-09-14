@@ -81,7 +81,7 @@ final class TemplateController extends AbstractController
     {
         $type = $types->findOneByKey((string) $request->request->get('type'));
         if ($type === null) {
-            $this->addFlash('warning', 'Type de nœud inconnu.');
+            $this->addFlash('warning', 'Type d’ELP inconnu.');
 
             return $this->redirectToRoute('template_edit', ['id' => $template->getId()]);
         }

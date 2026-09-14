@@ -22,7 +22,7 @@
             <p class="text-green-700 mt-1">Tous les champs requis sont renseignés et chaque conteneur a au moins un enfant.</p>
         </div>
     {% else %}
-        <p class="text-sm text-gray-500 mb-4">{{ issues|length }} nœud(s) à compléter :</p>
+        <p class="text-sm text-gray-500 mb-4">{{ issues|length }} ELP à compléter :</p>
         <ul class="space-y-2">
             {% for issue in issues %}
                 {% set n = issue.node %}

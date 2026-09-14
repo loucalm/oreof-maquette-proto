@@ -81,7 +81,7 @@ final class FormationController extends AbstractController
             $applier->apply($doc, $template);
             $this->maquette->save($formation, $doc);
             $this->addFlash('success', sprintf(
-                'Formation « %s » créée. La structure imposée par le diplôme %s (« %s ») a été appliquée — ses nœuds verrouillés ne peuvent pas être supprimés.',
+                'Formation « %s » créée. La structure imposée par le diplôme %s (« %s ») a été appliquée — ses éléments pédagogiques verrouillés ne peuvent pas être supprimés.',
                 $name, $diplome, $template->getLabel(),
             ));
         } else {
@@ -427,8 +427,8 @@ final class FormationController extends AbstractController
             $moved = $this->reshapeParcoursLevel($formation, $doc, $willMulti);
             if ($moved) {
                 $this->addFlash('success', $willMulti
-                    ? 'Multi-parcours : les nœuds racine ont été rangés dans un nouveau parcours.'
-                    : 'Mono-parcours : le niveau parcours a été retiré, ses nœuds sont remontés à la racine.');
+                    ? 'Multi-parcours : les éléments pédagogiques racine ont été rangés dans un nouveau parcours.'
+                    : 'Mono-parcours : le niveau parcours a été retiré, ses éléments pédagogiques sont remontés à la racine.');
             }
         }
 

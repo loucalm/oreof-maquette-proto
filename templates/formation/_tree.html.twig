@@ -12,7 +12,7 @@
                 <span class="drag-handle" data-tree-target="handle" title="Glisser pour déplacer">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>
                 <span class="status-dot" data-status="{{ view.status }}"
                       title="{{ view.status == 'ok' ? 'Complet' : (view.status == 'incomplete' ? 'Incomplet' : 'Vide') }}"></span>
-                {% if lockedDel %}<span class="tree-lock" title="Nœud imposé par le diplôme">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }}</span>{% endif %}
+                {% if lockedDel %}<span class="tree-lock" title="ELP imposé par le diplôme">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }}</span>{% endif %}
                 <span class="type-badge"><span class="opacity-70">{{ ux_icon(node.type.icon, {class: 'icon'}) }}</span> [{{ node.type.label }}]</span>
                 {% if view.ref %}<span class="tree-ref" title="Référence calculée">{{ view.ref }}</span>{% endif %}
                 <a href="{{ node_url(node) }}" data-turbo-frame="node-panel"

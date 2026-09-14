@@ -334,16 +334,16 @@ final class Maquette
             $removed = array_diff($oldIds, $newIds);
 
             if ($removed !== [] && $added === []) {
-                return 1 === \count($removed) ? 'Suppression d’un nœud' : \sprintf('Suppression de %d nœuds', \count($removed));
+                return 1 === \count($removed) ? 'Suppression d’un ELP' : \sprintf('Suppression de %d ELP', \count($removed));
             }
             if ($added !== [] && $removed === []) {
-                return 1 === \count($added) ? 'Ajout d’un nœud' : \sprintf('Ajout de %d nœuds', \count($added));
+                return 1 === \count($added) ? 'Ajout d’un ELP' : \sprintf('Ajout de %d ELP', \count($added));
             }
             if ($added !== [] && $removed !== []) {
                 return 'Structure réorganisée';
             }
 
-            return 'Nœud(s) modifié(s) ou déplacé(s)';
+            return 'ELP modifié(s) ou déplacé(s)';
         }
         if ($before['parametres'] !== $after['parametres']) {
             return 'Paramètres de la formation modifiés';

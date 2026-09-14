@@ -116,7 +116,7 @@
             {% endfor %}
         {% endif %}
 
-        {% if not hasContent %}<div class="text-sm text-gray-400 italic">Aucun champ renseigné pour ce nœud.</div>{% endif %}
+        {% if not hasContent %}<div class="text-sm text-gray-400 italic">Aucun champ renseigné pour cet ELP.</div>{% endif %}
     </div>
 {% endmacro %}
 
@@ -170,7 +170,7 @@
 
             {% if view.children %}
                 <div class="border-t pt-3" style="border-color:var(--c-border)">
-                    <div class="fld-cat">Contenu de ce nœud</div>
+                    <div class="fld-cat">Contenu de cet ELP</div>
                     {{ m.subtree(view.children) }}
                 </div>
             {% endif %}
@@ -421,7 +421,7 @@
         {# colonne droite : détail du nœud ou de la section sélectionnée #}
         <div class="overflow-y-auto p-7">
             <div data-rotree-target="empty" class="grid h-full place-items-center text-sm text-gray-400">
-                {{ ux_icon('ph:arrow-left', {class: 'icon'}) }} Choisissez une section ou un nœud pour voir son contenu
+                {{ ux_icon('ph:arrow-left', {class: 'icon'}) }} Choisissez une section ou un ELP pour voir son contenu
             </div>
             {{ m.paramdetails(formation) }}
             {{ m.bccdetail(formation) }}

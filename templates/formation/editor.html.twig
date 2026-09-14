@@ -93,7 +93,7 @@
                  style="border-color:var(--c-border)">
                 <div class="px-3 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Administration</div>
                 <a href="{{ path('admin_index') }}" class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50">{{ ux_icon('ph:gear', {class: 'icon'}) }} Vue d’ensemble</a>
-                <a href="{{ path('node_type_index') }}" class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50">{{ ux_icon('ph:puzzle-piece', {class: 'icon'}) }} Types de nœud</a>
+                <a href="{{ path('node_type_index') }}" class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50">{{ ux_icon('ph:puzzle-piece', {class: 'icon'}) }} Types d’élément pédagogique</a>
                 <a href="{{ path('field_index') }}" class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50">{{ ux_icon('ph:note-pencil', {class: 'icon'}) }} Champs des formulaires</a>
                 <a href="{{ path('template_index') }}" class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50">{{ ux_icon('ph:folders', {class: 'icon'}) }} Templates de structure</a>
                 <a href="{{ path('admin_referentiels') }}" class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50">{{ ux_icon('ph:books', {class: 'icon'}) }} Référentiels</a>
@@ -111,7 +111,7 @@
     <h2 class="text-2xl font-extrabold tracking-tight">ÉDITEUR DE FORMATION</h2>
     <p class="text-sm text-gray-500 mb-5">
         {{ multi ? 'Gérez les paramètres de la formation et ouvrez chaque parcours pour construire sa structure.'
-                 : 'Construisez la structure de la formation nœud par nœud.' }}
+                 : 'Construisez la structure de la formation ELP par ELP.' }}
     </p>
 
     <div class="editor-shell grid lg:grid-cols-[380px_1fr] lg:h-[calc(100vh-9rem)] min-h-[560px]">
@@ -223,12 +223,12 @@
 
                 {% if not multi %}
                     <form method="post" data-turbo-frame="_top" data-tree-target="dupForm">
-                        <button type="submit" data-tree-target="dupButton" disabled title="Dupliquer le nœud sélectionné"
+                        <button type="submit" data-tree-target="dupButton" disabled title="Dupliquer l’ELP sélectionné"
                                 class="tree-act-btn">{{ ux_icon('ph:copy', {class: 'icon'}) }}</button>
                     </form>
                     <form method="post" data-turbo-frame="_top" data-tree-target="delForm"
-                          data-controller="confirm" data-confirm-message-value="Supprimer ce nœud et tout ce qu'il contient ?">
-                        <button type="submit" data-tree-target="delButton" disabled title="Supprimer le nœud sélectionné"
+                          data-controller="confirm" data-confirm-message-value="Supprimer cet ELP et tout ce qu'il contient ?">
+                        <button type="submit" data-tree-target="delButton" disabled title="Supprimer l’ELP sélectionné"
                                 class="tree-act-btn tree-act-btn-danger">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
                     </form>
                 {% endif %}
@@ -239,7 +239,7 @@
         <turbo-frame id="node-panel" class="panel-frame"
                      {% if frameSrc %}src="{{ frameSrc }}"{% endif %}>
             {% if not frameSrc %}
-                <div class="panel-empty">Sélectionnez une section ou un nœud pour le modifier</div>
+                <div class="panel-empty">Sélectionnez une section ou un ELP pour le modifier</div>
             {% endif %}
         </turbo-frame>
     </div>

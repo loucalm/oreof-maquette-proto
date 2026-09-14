@@ -4,9 +4,9 @@
 {% block body %}
 <div class="max-w-2xl">
     <div class="text-xs" style="color:var(--c-muted)">
-        <a href="{{ path('node_type_index') }}" class="hover:underline">Types de nœuds</a> › {{ isNew ? 'nouveau' : nodeType.label }}
+        <a href="{{ path('node_type_index') }}" class="hover:underline">Types d’éléments pédagogiques</a> › {{ isNew ? 'nouveau' : nodeType.label }}
     </div>
-    <h1 class="text-xl font-bold mt-1 mb-5">{{ isNew ? 'Nouveau type de nœud' : 'Modifier « ' ~ nodeType.label ~ ' »' }}</h1>
+    <h1 class="text-xl font-bold mt-1 mb-5">{{ isNew ? 'Nouveau type d’élément pédagogique' : 'Modifier « ' ~ nodeType.label ~ ' »' }}</h1>
 
     <form method="post" class="rounded-xl border bg-white p-5 space-y-4" style="border-color:var(--c-border)">
         <div class="grid grid-cols-3 gap-3">
@@ -70,8 +70,8 @@
         <fieldset>
             <legend class="text-xs font-medium mb-1">Capacités &amp; champs du type</legend>
             <p class="text-xs mb-2" style="color:var(--c-muted)">
-                <strong>Incluse</strong> : le champ existe pour ce type de nœud.
-                <strong>Réservée admin</strong> : imposé — le responsable de formation ne peut pas l'activer / désactiver par nœud.
+                <strong>Incluse</strong> : le champ existe pour ce type d’élément pédagogique.
+                <strong>Réservée admin</strong> : imposé — le responsable de formation ne peut pas l'activer / désactiver par élément pédagogique.
             </p>
             <table class="w-full text-sm">
                 <thead class="text-[11px] uppercase tracking-wide" style="color:var(--c-muted)">

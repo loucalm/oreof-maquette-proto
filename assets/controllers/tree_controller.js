@@ -100,7 +100,7 @@ export default class extends Controller {
             this.panel.removeAttribute('src');
             this.panel.innerHTML =
                 '<div class="grid h-full place-items-center p-16 text-sm text-gray-400">'
-                + 'Sélectionnez une section ou un nœud pour le modifier</div>';
+                + 'Sélectionnez une section ou un ELP pour le modifier</div>';
         }
         this.updateUrl({});
     }
@@ -181,12 +181,12 @@ export default class extends Controller {
         if (this.hasDelButtonTarget) {
             this.delButtonTarget.disabled = !activeId || lockedDel;
             this.delButtonTarget.title = lockedDel
-                ? 'Nœud imposé par le diplôme : suppression impossible'
-                : 'Supprimer le nœud sélectionné';
+                ? 'ELP imposé par le diplôme : suppression impossible'
+                : 'Supprimer l’ELP sélectionné';
             if (activeId && !lockedDel && this.hasDelUrlValue) {
                 this.delFormTarget.action = this.delUrlValue.replace('__ID__', activeId);
                 this.delFormTarget.dataset.confirmMessageValue =
-                    `Supprimer « ${name || 'ce nœud'} » et tout ce qu'il contient ?`;
+                    `Supprimer « ${name || 'cet ELP'} » et tout ce qu'il contient ?`;
             }
         }
 
@@ -204,7 +204,7 @@ export default class extends Controller {
             this.addButtonTarget.disabled = false;
             this.addButtonTarget.textContent = meta[rootKey]
                 ? `Ajouter ${meta[rootKey].label}`
-                : 'Ajouter un nœud';
+                : 'Ajouter un ELP';
             return;
         }
 
@@ -224,7 +224,7 @@ export default class extends Controller {
         this.addButtonTarget.disabled = false;
         this.addButtonTarget.textContent = childKey && meta[childKey]
             ? `Ajouter ${meta[childKey].label}`
-            : 'Ajouter un nœud';
+            : 'Ajouter un ELP';
     }
 
     updateUrl(params) {

@@ -84,7 +84,7 @@ final class NodeTypeController extends AbstractController
         $used = $maquette->countNodesOfType($nodeType->getKey());
         if ($used > 0) {
             $this->addFlash('warning', sprintf(
-                'Impossible de supprimer « %s » : %d nœud(s) l’utilisent encore.',
+                'Impossible de supprimer « %s » : %d ELP l’utilisent encore.',
                 $nodeType->getLabel(),
                 $used,
             ));

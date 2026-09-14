@@ -1,19 +1,19 @@
 <turbo-frame id="node-panel">
 <div class="panel-body" data-panel-active="node:{{ node.id }}">
     <div class="panel-head">
-        <h2 class="text-xl font-bold">Raccrocher un nœud mutualisé</h2>
+        <h2 class="text-xl font-bold">Raccrocher un élément pédagogique mutualisé</h2>
         <div class="text-sm text-gray-400">{{ node.formation.name }} › {{ node.label ?: node.type.label }}</div>
     </div>
     <div class="panel-scroll">
     <div class="panel-card space-y-4">
     <p class="text-sm text-gray-500">
-        Récupère une copie d'un nœud mis à disposition par une autre formation.
+        Récupère une copie d'un élément pédagogique mis à disposition par une autre formation.
         La copie est indépendante (le lien vers la source est conservé pour info).
     </p>
 
     {% if candidates is empty %}
         <div class="rounded-lg border border-dashed p-6 text-sm text-gray-500" style="border-color:var(--c-border)">
-            Aucun nœud mutualisé compatible pour l'instant. Mutualisez un nœud depuis une autre formation
+            Aucun élément pédagogique mutualisé compatible pour l'instant. Mutualisez un élément pédagogique depuis une autre formation
             (bouton « Mutualiser » sur son panneau) pour le voir apparaître ici.
         </div>
     {% else %}
@@ -35,7 +35,7 @@
         </ul>
     {% endif %}
 
-    <a href="{{ node_url(node) }}" data-turbo-frame="node-panel" class="text-sm text-gray-500 hover:underline">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} Retour au nœud</a>
+    <a href="{{ node_url(node) }}" data-turbo-frame="node-panel" class="text-sm text-gray-500 hover:underline">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} Retour à l’ELP</a>
     </div>
     </div>
 </div>

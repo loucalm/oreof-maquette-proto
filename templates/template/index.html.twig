@@ -8,7 +8,7 @@
         <h2 class="text-lg font-bold">Templates de structure</h2>
         <p class="text-sm mb-5" style="color:var(--c-muted)">
             L'arbre imposé d'un diplôme. Rattaché à un diplôme, il est appliqué automatiquement
-            à la création d'une formation ; ses nœuds verrouillés {{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} figent la structure.
+            à la création d'une formation ; ses éléments pédagogiques verrouillés {{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} figent la structure.
         </p>
     </div>
     <form method="post" action="{{ path('template_new') }}" class="shrink-0">
@@ -26,7 +26,7 @@
                 {% if tpl.diplome %}<span class="pill" style="background:var(--c-primary-soft);color:var(--c-primary)">diplôme : {{ tpl.diplome }}</span>{% endif %}
             </div>
             <div class="text-xs mb-2" style="color:var(--c-muted)">
-                <code>{{ tpl.key }}</code> · {{ tpl.multiParcours ? 'multi-parcours' : 'mono-parcours' }} · {{ tpl.tree|length }} nœud(s) racine
+                <code>{{ tpl.key }}</code> · {{ tpl.multiParcours ? 'multi-parcours' : 'mono-parcours' }} · {{ tpl.tree|length }} ELP racine(s)
             </div>
             <p class="text-sm" style="color:var(--c-muted)">{{ tpl.description }}</p>
         </a>

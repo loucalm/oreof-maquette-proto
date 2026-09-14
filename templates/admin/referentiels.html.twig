@@ -34,7 +34,7 @@
         <div class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">Métamodèle</div>
         {% set famMap = {} %}
         {% for f in families %}{% set famMap = famMap|merge({(f.value): f.label}) %}{% endfor %}
-        {{ ui.row('Familles de type de nœud', 'Déterminent le rendu et l’emplacement d’un type.', famMap) }}
+        {{ ui.row('Familles de type d’élément pédagogique', 'Déterminent le rendu et l’emplacement d’un type.', famMap) }}
         {{ ui.row('Types de saisie d’un champ', 'Choisis à la création d’un champ.', fieldTypes) }}
     </div>
 

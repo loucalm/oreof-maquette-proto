@@ -23,7 +23,7 @@ final class AdminController extends AbstractController
     /** Sections de l'administration — libellé, route, icône, description. */
     public const SECTIONS = [
         'overview' => ['label' => 'Vue d’ensemble', 'route' => 'admin_index', 'icon' => 'ph:gear'],
-        'types' => ['label' => 'Types de nœud', 'route' => 'node_type_index', 'icon' => 'ph:puzzle-piece'],
+        'types' => ['label' => 'Types d’élément pédagogique', 'route' => 'node_type_index', 'icon' => 'ph:puzzle-piece'],
         'fields' => ['label' => 'Champs des formulaires', 'route' => 'field_index', 'icon' => 'ph:note-pencil'],
         'templates' => ['label' => 'Templates de structure', 'route' => 'template_index', 'icon' => 'ph:folders'],
         'referentiels' => ['label' => 'Référentiels', 'route' => 'admin_referentiels', 'icon' => 'ph:books'],
@@ -50,7 +50,7 @@ final class AdminController extends AbstractController
                     'section' => 'fields',
                     'count' => \count($allFields),
                     'sub' => \count(array_filter($allFields, static fn ($f) => $f->isSystem())).' du socle',
-                    'text' => 'Les champs saisissables sur les nœuds : onglet, type de saisie, options, obligatoire.',
+                    'text' => 'Les champs saisissables sur les éléments pédagogiques : onglet, type de saisie, options, obligatoire.',
                 ],
                 [
                     'section' => 'templates',
