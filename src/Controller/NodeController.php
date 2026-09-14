@@ -147,6 +147,14 @@ final class NodeController extends AbstractController
         }
 
         $node = $doc->addNode($parent?->getId(), $typeKey, trim((string) $request->request->get('label')));
+
+        // une alternative d'un bloc de choix est par définition « à choix restreint » :
+        // posé par défaut pour que les deux notions restent cohérentes sans geste
+        // supplémentaire (reste modifiable si un cas particulier l'exige vraiment).
+        if (null !== $parent && $parent->isChoiceBloc() && $node->can('nature')) {
+            $node->setAttribute('nature', 'choix_restreint');
+        }
+
         $this->maquette->save($formation, $doc);
         $this->addFlash('success', sprintf('%s ajouté.', $type->getLabel()));
 
@@ -177,6 +185,12 @@ final class NodeController extends AbstractController
         }
 
         $doc->moveNode($node, $newParent, (int) ($payload['index'] ?? 0));
+
+        // même règle qu'à la création : entrer dans un bloc de choix = devenir « à choix restreint ».
+        if (null !== $newParent && $newParent->isChoiceBloc() && $node->can('nature')) {
+            $node->setAttribute('nature', 'choix_restreint');
+        }
+
         $this->maquette->save($formation, $doc);
 
         return new JsonResponse(['ok' => true]);
@@ -281,6 +295,11 @@ final class NodeController extends AbstractController
 
         $copy = $doc->importSubtree($source, $target);
         $copy->setMutualizedFrom($sourceFormation->getId().':'.$snid);
+
+        if ($target->isChoiceBloc() && $copy->can('nature')) {
+            $copy->setAttribute('nature', 'choix_restreint');
+        }
+
         $this->maquette->save($formation, $doc);
         $this->addFlash('success', sprintf('« %s » raccroché depuis « %s ».', $source->getDisplayLabel(), $sourceFormation->getName()));
 
