@@ -52,6 +52,16 @@
             <span class="text-gray-500">{% if view.ectsTarget %}/ {{ view.ectsTarget }} {% endif %}ECTS</span>
         </div>
         <div class="ml-auto flex flex-wrap gap-2">
+            {% if not node.isChoiceBloc() and node.getParent() %}
+            <form method="post" action="{{ path('node_convert_choice', {fid: formation.id, nid: node.id}) }}" data-turbo-frame="_top"
+                  data-controller="confirm"
+                  data-confirm-message-value="Transformer « {{ node.getDisplayLabel() }} » en bloc de choix ? Il deviendra la première alternative d'un nouveau bloc de choix, à sa place actuelle — vous pourrez ensuite y ajouter d'autres alternatives.">
+                <button class="rounded-lg border px-3 py-2 text-sm" style="border-color:#e9d5ff;background:#faf5ff;color:#9333ea"
+                        title="La nature « à choix » seule ne regroupe rien : ce bouton remplace cet ELP par un bloc de choix qui le contient comme première alternative.">
+                    {{ ux_icon('ph:shuffle', {class: 'icon'}) }} Transformer en bloc de choix
+                </button>
+            </form>
+            {% endif %}
             {% if caps.mutualisable ?? false %}
             <form method="post" action="{{ node_url(node, 'node_mutualize') }}" data-turbo-frame="_top">
                 <button class="rounded-lg border px-3 py-2 text-sm" style="border-color:#fcd34d;color:#b45309">
@@ -226,6 +236,12 @@
                 </label>
             {% endfor %}
         </div>
+        {% if key == 'nature' and not node.isChoiceBloc() and node.getParent() %}
+            <p class="mt-2 text-xs" style="color:#9333ea">
+                {{ ux_icon('ph:info', {class: 'icon'}) }} Cocher une case ici n'assemble aucune alternative —
+                utilisez « Transformer en bloc de choix » en haut de ce panneau pour regrouper cet ELP avec d'autres.
+            </p>
+        {% endif %}
     {% elseif def.field == 'competencies' %}
         {% set groups = bcc_competences(node) %}
         {% set cur = val ?? [] %}

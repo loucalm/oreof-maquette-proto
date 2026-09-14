@@ -147,14 +147,7 @@ final class NodeController extends AbstractController
         }
 
         $node = $doc->addNode($parent?->getId(), $typeKey, trim((string) $request->request->get('label')));
-
-        // une alternative d'un bloc de choix est par définition « à choix restreint » :
-        // posé par défaut pour que les deux notions restent cohérentes sans geste
-        // supplémentaire (reste modifiable si un cas particulier l'exige vraiment).
-        if (null !== $parent && $parent->isChoiceBloc() && $node->can('nature')) {
-            $node->setAttribute('nature', 'choix_restreint');
-        }
-
+        $this->applyChoiceNature($node, $parent);
         $this->maquette->save($formation, $doc);
         $this->addFlash('success', sprintf('%s ajouté.', $type->getLabel()));
 
@@ -185,12 +178,7 @@ final class NodeController extends AbstractController
         }
 
         $doc->moveNode($node, $newParent, (int) ($payload['index'] ?? 0));
-
-        // même règle qu'à la création : entrer dans un bloc de choix = devenir « à choix restreint ».
-        if (null !== $newParent && $newParent->isChoiceBloc() && $node->can('nature')) {
-            $node->setAttribute('nature', 'choix_restreint');
-        }
-
+        $this->applyChoiceNature($node, $newParent);
         $this->maquette->save($formation, $doc);
 
         return new JsonResponse(['ok' => true]);
@@ -295,15 +283,56 @@ final class NodeController extends AbstractController
 
         $copy = $doc->importSubtree($source, $target);
         $copy->setMutualizedFrom($sourceFormation->getId().':'.$snid);
-
-        if ($target->isChoiceBloc() && $copy->can('nature')) {
-            $copy->setAttribute('nature', 'choix_restreint');
-        }
-
+        $this->applyChoiceNature($copy, $target);
         $this->maquette->save($formation, $doc);
         $this->addFlash('success', sprintf('« %s » raccroché depuis « %s ».', $source->getDisplayLabel(), $sourceFormation->getName()));
 
         return $this->backToEditor($copy, '');
+    }
+
+    /**
+     * Transforme un ELP existant en bloc de choix : il devient la première
+     * alternative d'un nouveau bloc de choix créé à sa place exacte (même
+     * parent, même position). Répond à l'attente naturelle qu'a un
+     * responsable de formation en cochant « À choix restreint » sur un ELP
+     * déjà en place — la case seule ne crée aucune structure, ce geste le fait.
+     */
+    #[Route('/formations/{fid}/nodes/{nid}/convertir-choix', name: 'node_convert_choice', methods: ['POST'])]
+    public function convertToChoice(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid): Response
+    {
+        $doc = $this->maquette->open($formation);
+        $node = $this->pick($doc, $nid);
+        $parent = $node->getParent();
+
+        if ($parent === null || $node->isChoiceBloc() || !$parent->acceptsChildType('bloc_choix')) {
+            $this->addFlash('warning', sprintf('« %s » ne peut pas être transformé en bloc de choix ici.', $node->getDisplayLabel()));
+
+            return $this->editorRedirect($node);
+        }
+
+        // ECTS EFFECTIF de l'ELP avant tout déplacement — pas sa valeur brute,
+        // déjà ignorée s'il a des enfants (elle vaudrait alors la somme de ceux-ci,
+        // pas le champ « ects » stocké dessus). C'est cette valeur affichée
+        // jusqu'ici qu'il faut reporter sur le bloc, pour que la restructuration
+        // ne fasse pas à elle seule bouger les totaux déjà remontés plus haut.
+        $effectiveEcts = $this->builder->buildSubtree($node)->totalEcts;
+
+        $index = $node->getPosition();
+        $bloc = $doc->addNode($parent->getId(), 'bloc_choix', '');
+        if ($bloc->can('ects') && $effectiveEcts > 0) {
+            $bloc->setAttribute('ects', $effectiveEcts);
+        }
+        if ($bloc->can('choiceCount')) {
+            $bloc->setAttribute('choiceCount', 1);
+        }
+        $doc->moveNode($bloc, $parent, $index);
+        $doc->moveNode($node, $bloc, 0);
+        $this->applyChoiceNature($node, $bloc);
+
+        $this->maquette->save($formation, $doc);
+        $this->addFlash('success', sprintf('« %s » transformé en bloc de choix — ajoutez ses autres alternatives.', $node->getDisplayLabel()));
+
+        return $this->editorRedirect($bloc);
     }
 
     // ─── helpers ──────────────────────────────────────────────
@@ -365,6 +394,19 @@ final class NodeController extends AbstractController
         return $newParent === null
             ? $formation->canBeRootType($typeKey)
             : $newParent->acceptsChildType($typeKey);
+    }
+
+    /**
+     * Devenir enfant direct d'un bloc de choix, c'est devenir une alternative
+     * « à choix restreint » — posé par défaut à chaque fois qu'un ELP entre
+     * dans un bloc de choix (création, glisser-déposer, raccrochement),
+     * pour que les deux notions restent cohérentes sans geste supplémentaire.
+     */
+    private function applyChoiceNature(TreeNode $node, ?TreeNode $parent): void
+    {
+        if (null !== $parent && $parent->isChoiceBloc() && $node->can('nature')) {
+            $node->setAttribute('nature', 'choix_restreint');
+        }
     }
 
     private function applyParcoursParent(MaquetteDoc $doc, TreeNode $node, string $parentNid): void
