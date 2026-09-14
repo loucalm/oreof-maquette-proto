@@ -59,7 +59,12 @@ final class Maquette
         return $this->cache[$id] ??= $this->hydrate($formation);
     }
 
-    public function save(Formation $formation, MaquetteDoc $doc, ?string $label = null): void
+    /**
+     * @param FormationRevision|null $restoredFrom renseigné uniquement par restore() : la
+     *                                              révision-cible restaurée, pour que l'historique
+     *                                              puisse reconstituer le chemin actuel.
+     */
+    public function save(Formation $formation, MaquetteDoc $doc, ?string $label = null, ?FormationRevision $restoredFrom = null): void
     {
         $doc->reindex();
         $id = $formation->getId() ?? spl_object_id($formation);
@@ -74,7 +79,11 @@ final class Maquette
             $after = $this->snapshotOf($formation);
             $label ??= $this->describeChange($before, $after);
             if ($label !== null) {
-                $this->em->persist(new FormationRevision($formation, $label, $before));
+                $revision = new FormationRevision($formation, $label, $before);
+                if ($restoredFrom !== null) {
+                    $revision->setRestoredFrom($restoredFrom);
+                }
+                $this->em->persist($revision);
                 $this->revisions->pruneOlderThan($formation, self::MAX_REVISIONS);
             }
         }
@@ -100,7 +109,7 @@ final class Maquette
         $this->applySnapshotScalars($formation, $snap);
 
         $doc = $this->hydrateRaw($formation, $snap);
-        $this->save($formation, $doc, sprintf('Restauration de l’état du %s', $revision->getCreatedAt()->format('d/m/Y à H:i')));
+        $this->save($formation, $doc, sprintf('Restauration de l’état du %s', $revision->getCreatedAt()->format('d/m/Y à H:i')), $revision);
     }
 
     /** Y a-t-il une modification à annuler (bandeau d'actions) ? */
@@ -174,6 +183,56 @@ final class Maquette
     public function history(Formation $formation): array
     {
         return $this->revisions->findRecentFor($formation, self::MAX_REVISIONS);
+    }
+
+    /**
+     * Historique annoté du « chemin actuel » : quand une restauration a eu lieu,
+     * tout ce qui se trouve entre l'état courant et l'état restauré a été
+     * écarté (toujours consultable/restaurable, mais ce n'est plus l'ascendance
+     * de l'état actuel). Repère aussi la ligne qui EST l'état actuel, le cas
+     * échéant (uniquement juste après une restauration : sinon l'état courant
+     * a avancé au-delà de toute ligne de l'historique).
+     *
+     * Algorithme (le journal est linéaire, jamais arborescent — pas besoin de
+     * pile) : on descend la liste (la plus récente d'abord). Tant qu'aucune
+     * restauration n'a été rencontrée, chaque ligne est sur le chemin actuel.
+     * Dès qu'on croise une ligne « Restauration » on ouvre une plage écartée
+     * jusqu'à sa cible (`restoredFrom`) ; la cible referme la plage. Cette
+     * cible n'est l'état actuel que si la plage a été ouverte par la toute
+     * première ligne (la plus récente) — sinon une modification normale a eu
+     * lieu depuis cette restauration-là, et l'état actuel a avancé au-delà de
+     * toute ligne de l'historique (aucune ligne n'est alors « current »).
+     * Une cible qui est elle-même une restauration rouvre aussitôt une
+     * nouvelle plage : les restaurations en chaîne se résolvent sans
+     * complexité supplémentaire.
+     *
+     * @return list<array{revision: FormationRevision, status: 'current'|'path'|'superseded'}>
+     */
+    public function historyWithStatus(Formation $formation): array
+    {
+        $skipUntilId = null;
+        $skipOpenedByTop = false;
+        $rows = [];
+
+        foreach ($this->history($formation) as $index => $r) {
+            if ($skipUntilId !== null) {
+                if ($r->getId() !== $skipUntilId) {
+                    $rows[] = ['revision' => $r, 'status' => 'superseded'];
+                    continue;
+                }
+                $rows[] = ['revision' => $r, 'status' => $skipOpenedByTop ? 'current' : 'path'];
+                $skipUntilId = null;
+            } else {
+                $rows[] = ['revision' => $r, 'status' => 'path'];
+            }
+
+            if ($r->getRestoredFrom() !== null) {
+                $skipOpenedByTop = 0 === $index;
+                $skipUntilId = $r->getRestoredFrom()->getId();
+            }
+        }
+
+        return $rows;
     }
 
     /** Avant suppression définitive de la formation (sinon révisions orphelines). */

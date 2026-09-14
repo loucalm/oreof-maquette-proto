@@ -140,7 +140,7 @@ final class FormationController extends AbstractController
     {
         return $this->render('formation/history.html.twig', [
             'formation' => $formation,
-            'revisions' => $this->maquette->history($formation),
+            'rows' => $this->maquette->historyWithStatus($formation),
         ]);
     }
 

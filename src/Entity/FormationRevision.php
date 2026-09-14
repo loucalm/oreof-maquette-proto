@@ -45,6 +45,16 @@ class FormationRevision
     #[ORM\Column(type: Types::JSON)]
     private array $snapshot;
 
+    /**
+     * Renseigné uniquement quand cette révision a été créée par une
+     * restauration : pointe vers la révision-cible restaurée. Permet de
+     * reconstituer le « chemin actuel » dans l'historique (Maquette::historyWithStatus) —
+     * tout ce qui se trouve entre cette révision et sa cible a été écarté.
+     */
+    #[ORM\ManyToOne(targetEntity: self::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?self $restoredFrom = null;
+
     /** @param array<string, mixed> $snapshot */
     public function __construct(Formation $formation, string $label, array $snapshot)
     {
@@ -78,5 +88,15 @@ class FormationRevision
     public function getSnapshot(): array
     {
         return $this->snapshot;
+    }
+
+    public function getRestoredFrom(): ?self
+    {
+        return $this->restoredFrom;
+    }
+
+    public function setRestoredFrom(?self $restoredFrom): void
+    {
+        $this->restoredFrom = $restoredFrom;
     }
 }
