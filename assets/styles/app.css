@@ -401,3 +401,13 @@ li:not(.collapsed) > .tree-row > .tree-chevron { transform: rotate(90deg); }
 
 .bcc-edit { padding: 10px 14px; background: #f8f9fb; border-top: 1px solid var(--c-border); }
 .bcc-comp .bcc-edit { border-radius: 8px; border: 1px solid var(--c-border); margin: 0 0 6px; }
+
+/* Historique de formation : la plus récente en haut. Survoler le bouton
+   « Restaurer » d'une ligne teinte aussi toutes les lignes plus récentes
+   au-dessus d'elle, pour montrer d'un coup d'œil que ces changements-là
+   seraient eux aussi annulés par cette restauration. */
+.history-table tbody tr:hover,
+.history-table tbody tr:has(~ tr:hover) {
+    background: #fef2f2;
+    box-shadow: inset 3px 0 0 #ef4444;
+}
