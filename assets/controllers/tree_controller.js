@@ -14,7 +14,7 @@ import Sortable from 'sortablejs';
  */
 export default class extends Controller {
     static values = { moveUrl: String, dupUrl: String, delUrl: String, chain: Array, typeMeta: Object, rootKey: String, baseParent: String };
-    static targets = ['addForm', 'addParent', 'addType', 'addButton', 'dupForm', 'dupButton', 'delForm', 'delButton'];
+    static targets = ['addForm', 'addParent', 'addType', 'addButton', 'addChoiceButton', 'dupForm', 'dupButton', 'delForm', 'delButton'];
 
     connect() {
         this.storeKey = 'tree-collapsed';
@@ -195,6 +195,9 @@ export default class extends Controller {
 
         const meta = this.hasTypeMetaValue ? this.typeMetaValue : {};
         const chain = this.hasChainValue ? this.chainValue : [];
+        // un bloc de choix (imbricable à l'infini) est transparent pour le squelette :
+        // ce qu'on peut ajouter dessous dépend de l'hôte réel qu'il remplace, pas de lui-même.
+        this.updateChoiceButton(null);
 
         if (!activeLi) {
             const rootKey = this.hasRootKeyValue ? this.rootKeyValue : '';
@@ -208,8 +211,8 @@ export default class extends Controller {
             return;
         }
 
-        const nodeType = activeLi.dataset.nodeType;
-        const idx = chain.indexOf(nodeType);
+        const hostType = activeLi.dataset.nodeHostType || activeLi.dataset.nodeType;
+        const idx = chain.indexOf(hostType);
         const childKey = idx >= 0 ? chain[idx + 1] : null;
 
         this.addParentTarget.value = activeId;
@@ -225,6 +228,24 @@ export default class extends Controller {
         this.addButtonTarget.textContent = childKey && meta[childKey]
             ? `Ajouter ${meta[childKey].label}`
             : 'Ajouter un ELP';
+        // un bloc de choix est toujours une alternative possible, sauf si c'est déjà lui le type prévu
+        if (childKey && childKey !== 'bloc_choix') this.updateChoiceButton(activeId);
+    }
+
+    /** Affiche/masque le bouton « + Bloc de choix » à côté du bouton « Ajouter » principal. */
+    updateChoiceButton(parentId) {
+        if (!this.hasAddChoiceButtonTarget) return;
+        this.addChoiceButtonTarget.hidden = parentId === null;
+        this.addChoiceButtonTarget.dataset.parentId = parentId ?? '';
+    }
+
+    /** Ajoute un bloc de choix comme enfant du nœud sélectionné (bouton secondaire). */
+    addChoiceBloc(event) {
+        event.preventDefault();
+        if (!this.hasAddFormTarget) return;
+        this.addParentTarget.value = event.currentTarget.dataset.parentId || '';
+        this.addTypeTarget.value = 'bloc_choix';
+        this.addFormTarget.requestSubmit();
     }
 
     updateUrl(params) {
@@ -288,8 +309,12 @@ export default class extends Controller {
         if (!parentLi) {
             return draggedType === (this.hasRootKeyValue ? this.rootKeyValue : draggedType);
         }
-        const i = chain.indexOf(parentLi.dataset.nodeType);
-        return i >= 0 && chain[i + 1] === draggedType;
+        // un bloc de choix (cible ou déplacé) est transparent pour le squelette :
+        // on compare toujours par rapport à l'hôte réel, pas au type littéral.
+        const hostType = parentLi.dataset.nodeHostType || parentLi.dataset.nodeType;
+        const i = chain.indexOf(hostType);
+        const expected = i >= 0 ? chain[i + 1] : null;
+        return expected !== null && (draggedType === expected || draggedType === 'bloc_choix');
     }
 
     async onDrop(evt) {

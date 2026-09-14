@@ -61,20 +61,21 @@ final class MaquetteExtension extends AbstractExtension
     }
 
     /**
-     * Type ajoutable sous ce nœud : uniquement l'enfant prévu par le squelette
-     * de la formation (0 ou 1 type).
+     * Types ajoutables sous ce nœud : l'enfant prévu par le squelette de la
+     * formation (résolu via l'hôte effectif — cf. TreeNode::getEffectiveHostTypeKey),
+     * et « Bloc de choix » en plus quand applicable, pour permettre d'imbriquer
+     * des choix à l'infini.
      *
      * @return list<NodeType>
      */
     public function typesAllowedFor(TreeNode $node): array
     {
-        $childKey = $node->getFormation()?->getChildTypeKey($node->getType()->getKey());
-        if ($childKey === null) {
-            return [];
-        }
-        $type = $this->types->findAllIndexed()[$childKey] ?? null;
+        $byKey = $this->types->findAllIndexed();
 
-        return $type !== null ? [$type] : [];
+        return array_values(array_filter(array_map(
+            static fn (string $key) => $byKey[$key] ?? null,
+            $node->allowedChildTypeKeys(),
+        )));
     }
 
     /**

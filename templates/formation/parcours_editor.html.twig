@@ -115,7 +115,7 @@
 
                 <div class="p-2">
                     {% if roots is not empty %}
-                        {{ include('formation/_tree.html.twig', {views: roots, parentId: parcours.id, focus: focus}) }}
+                        {{ include('formation/_tree.html.twig', {views: roots, parentId: parcours.id, focus: focus, parentIsChoice: false}) }}
                     {% else %}
                         <p class="text-sm px-2 py-8 text-center text-gray-400">
                             Ce parcours n'a pas encore de {{ bodyRoot ? bodyRoot.label|lower : 'niveau' }}.
@@ -133,6 +133,10 @@
                     <input type="hidden" name="typeKey" value="{{ formation.getChildTypeKey('parcours') }}" data-tree-target="addType">
                     <button data-tree-target="addButton" class="tree-add-btn">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter {{ bodyRoot ? ux_icon(bodyRoot.icon, {class: 'icon'}) }} {{ bodyRoot ? bodyRoot.label }}</button>
                 </form>
+
+                <button type="button" data-tree-target="addChoiceButton" data-action="tree#addChoiceBloc" hidden
+                        class="tree-act-btn tree-act-btn--choice"
+                        title="Ajouter un bloc de choix sous l’ELP sélectionné">{{ ux_icon('ph:shuffle', {class: 'icon'}) }}</button>
 
                 <form method="post" data-turbo-frame="_top" data-tree-target="dupForm">
                     <button type="submit" data-tree-target="dupButton" disabled title="Dupliquer l’ELP sélectionné"

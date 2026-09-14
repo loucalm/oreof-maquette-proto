@@ -202,6 +202,64 @@ final class TreeNode
         return $depth;
     }
 
+    // ─── bloc de choix : imbrication à l'infini, transparente pour le squelette ───
+
+    public function isChoiceBloc(): bool
+    {
+        return $this->typeKey === 'bloc_choix';
+    }
+
+    /**
+     * Type que ce nœud représente pour le squelette de la formation : lui-même,
+     * ou — s'il s'agit d'un bloc de choix — celui du plus proche ancêtre qui
+     * n'en est pas un. Un bloc de choix est transparent : il hérite toujours de
+     * la position de son hôte réel (le UE/EC — ou tout autre niveau — qu'il
+     * remplace), ce qui permet de l'imbriquer en lui-même à l'infini sans que
+     * le squelette (une chaîne linéaire) ait besoin d'en avoir connaissance.
+     */
+    public function getEffectiveHostTypeKey(): string
+    {
+        $n = $this;
+        while ($n->isChoiceBloc() && $n->parent !== null) {
+            $n = $n->parent;
+        }
+
+        return $n->typeKey;
+    }
+
+    /**
+     * Clés de type qu'on peut ajouter comme enfant ici : le type prévu par le
+     * squelette à cet endroit (résolu via l'hôte effectif), plus « bloc_choix »
+     * lui-même — sauf s'il n'y a rien à substituer (feuille du squelette) ou
+     * si c'est déjà lui le type prévu.
+     *
+     * @return list<string>
+     */
+    public function allowedChildTypeKeys(): array
+    {
+        $formation = $this->getFormation();
+        if ($formation === null) {
+            return [];
+        }
+        $designated = $formation->getChildTypeKey($this->getEffectiveHostTypeKey());
+        if ($designated === null) {
+            return [];
+        }
+
+        return 'bloc_choix' === $designated ? [$designated] : [$designated, 'bloc_choix'];
+    }
+
+    public function acceptsChildType(string $typeKey): bool
+    {
+        return \in_array($typeKey, $this->allowedChildTypeKeys(), true);
+    }
+
+    /** Aucun type de nœud n'est prévu ici, pas même un bloc de choix. */
+    public function isLeaf(): bool
+    {
+        return [] === $this->allowedChildTypeKeys();
+    }
+
     // ─── nature ───
 
     public function isParcours(): bool

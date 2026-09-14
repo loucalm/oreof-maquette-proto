@@ -144,6 +144,7 @@ final class AttributeCatalog
     /** Défauts pour amorcer les fixtures / restaurer le socle. */
     public const SEED = [
         ['ects', 'ECTS', 'props', null, 'number', [], true, 'ECTS associés à cet ELP.'],
+        ['choiceCount', 'Nombre à choisir', 'props', null, 'number', [], true, 'Combien de ces éléments doivent être choisis parmi les options de ce bloc (ex. 1 parmi 3).'],
         ['ueType', "Type d'UE", 'props', null, 'choice', [
             'disciplinaire' => 'Disciplinaire', 'transversale' => 'Transversale',
             'langue' => 'Langue', 'projet' => 'Projet / stage', 'libre' => 'Ouverture / libre',

@@ -128,11 +128,14 @@ final class NodeController extends AbstractController
         $typeKey = trim((string) $request->request->get('typeKey'));
         if ('' === $typeKey || 'auto' === $typeKey) {
             $typeKey = null !== $parent
-                ? $formation->getChildTypeKey($parent->getType()->getKey())
+                ? ($parent->allowedChildTypeKeys()[0] ?? null)
                 : $formation->getVisibleRootTypeKey();
         }
 
-        $type = null !== $typeKey ? $types->findOneByKey($typeKey) : null;
+        // toujours revalidé (même quand typeKey vient explicitement du client, ex. « Bloc de choix ») :
+        // un nœud imbriqué dans des blocs de choix n'a pas forcément le même type prévu qu'à la racine.
+        $allowed = null !== $typeKey && (null !== $parent ? $parent->acceptsChildType($typeKey) : $formation->canBeRootType($typeKey));
+        $type = $allowed ? $types->findOneByKey($typeKey) : null;
         if ($type === null) {
             $this->addFlash('warning', null !== $parent
                 ? sprintf('« %s » ne peut pas contenir d’enfant.', $parent->getDisplayLabel())
@@ -255,7 +258,7 @@ final class NodeController extends AbstractController
     public function attachIndex(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid): Response
     {
         $node = $this->node($formation, $nid);
-        $childKey = $formation->getChildTypeKey($node->getType()->getKey());
+        $childKey = $formation->getChildTypeKey($node->getEffectiveHostTypeKey());
         $candidates = $childKey === null ? [] : $this->maquette->findMutualized($formation, $childKey);
 
         return $this->render('node/attach.html.twig', ['node' => $node, 'candidates' => $candidates]);
@@ -342,7 +345,7 @@ final class NodeController extends AbstractController
 
         return $newParent === null
             ? $formation->canBeRootType($typeKey)
-            : $formation->canParentTypes($newParent->getType()->getKey(), $typeKey);
+            : $newParent->acceptsChildType($typeKey);
     }
 
     private function applyParcoursParent(MaquetteDoc $doc, TreeNode $node, string $parentNid): void

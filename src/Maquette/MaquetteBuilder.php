@@ -84,11 +84,23 @@ final class MaquetteBuilder
         $ownHours = AttributeCatalog::sumHours($node->getAttribute('hours'));
         $ownEcts = (float) ($node->getAttribute('ects') ?? 0);
 
-        $childHours = array_sum(array_map(static fn (NodeView $c) => $c->totalHours, $children));
-        $childEcts = array_sum(array_map(static fn (NodeView $c) => $c->totalEcts, $children));
+        if ($node->isChoiceBloc()) {
+            // Les alternatives d'un bloc de choix sont mutuellement exclusives :
+            // pas question de sommer leurs ECTS/heures (on choisit UNE branche,
+            // pas toutes). Le bloc porte son propre ECTS (requis) ; à défaut,
+            // et pour les heures (qu'il ne porte pas lui-même), on retient
+            // l'alternative la plus lourde comme estimation prudente.
+            $childHoursList = array_map(static fn (NodeView $c) => $c->totalHours, $children);
+            $childEctsList = array_map(static fn (NodeView $c) => $c->totalEcts, $children);
+            $view->totalHours = $ownHours > 0 ? $ownHours : ($childHoursList === [] ? 0.0 : max($childHoursList));
+            $view->totalEcts = $ownEcts > 0 ? $ownEcts : ($childEctsList === [] ? 0.0 : max($childEctsList));
+        } else {
+            $childHours = array_sum(array_map(static fn (NodeView $c) => $c->totalHours, $children));
+            $childEcts = array_sum(array_map(static fn (NodeView $c) => $c->totalEcts, $children));
 
-        $view->totalHours = $children === [] ? $ownHours : $childHours + $ownHours;
-        $view->totalEcts = $children === [] ? $ownEcts : $childEcts;
+            $view->totalHours = $children === [] ? $ownHours : $childHours + $ownHours;
+            $view->totalEcts = $children === [] ? $ownEcts : $childEcts;
+        }
 
         // --- statut ---
         $s = $this->completion->node($node);
@@ -107,7 +119,7 @@ final class MaquetteBuilder
         $ownMissing = $view->missingCount;
         $hasAnyOwnData = $node->getAttributes() !== [] || trim($node->getLabel()) !== '';
 
-        $needsChildren = !$node->getFormation()->isLeafType($node->getType()->getKey());
+        $needsChildren = !$node->isLeaf();
         if ($needsChildren && $view->children === []) {
             return $hasAnyOwnData ? NodeView::STATUS_INCOMPLETE : NodeView::STATUS_EMPTY;
         }
@@ -137,7 +149,7 @@ final class MaquetteBuilder
             foreach ($views as $view) {
                 $missing = $this->missingFields($view->node);
                 $node = $view->node;
-                if (!$node->getFormation()->isLeafType($node->getType()->getKey()) && $view->children === []) {
+                if (!$node->isLeaf() && $view->children === []) {
                     $missing[] = 'aucun enfant';
                 }
                 if ($missing !== []) {

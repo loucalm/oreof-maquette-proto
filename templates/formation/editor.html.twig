@@ -190,7 +190,7 @@
                     {% set rootType = root_type(formation) %}
                     <div class="p-2">
                         {% if roots is not empty %}
-                            {{ include('formation/_tree.html.twig', {views: roots, parentId: null, focus: focus}) }}
+                            {{ include('formation/_tree.html.twig', {views: roots, parentId: null, focus: focus, parentIsChoice: false}) }}
                         {% elseif not rootType %}
                             <p class="text-sm px-2 py-8 text-center text-gray-400">
                                 Définissez d'abord le squelette dans
@@ -217,6 +217,9 @@
                         <input type="hidden" name="typeKey" value="{{ rootType.key }}" data-tree-target="addType">
                         <button data-tree-target="addButton" class="tree-add-btn">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter {{ ux_icon(rootType.icon, {class: 'icon'}) }} {{ rootType.label }}</button>
                     </form>
+                    <button type="button" data-tree-target="addChoiceButton" data-action="tree#addChoiceBloc" hidden
+                            class="tree-act-btn tree-act-btn--choice"
+                            title="Ajouter un bloc de choix sous l’ELP sélectionné">{{ ux_icon('ph:shuffle', {class: 'icon'}) }}</button>
                 {% else %}
                     <span class="flex-1 text-xs text-gray-400">Aucune structure définie</span>
                 {% endif %}
