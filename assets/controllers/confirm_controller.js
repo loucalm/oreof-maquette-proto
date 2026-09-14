@@ -1,7 +1,9 @@
 import { Controller } from '@hotwired/stimulus';
 
 /**
- * Confirmation avant une action importante / destructive.
+ * Confirmation avant une action importante / destructive — passe par la
+ * modale stylée `confirm-dialog` (cf. base.html.twig) plutôt que
+ * `window.confirm()`.
  *
  * Deux usages :
  *  - `data-controller="confirm" data-confirm-message-value="…"` sur un
@@ -26,30 +28,46 @@ export default class extends Controller {
     }
 
     check = (event) => {
-        // déjà confirmé via confirmChange() juste avant : ne pas re-demander
+        // déjà confirmé (on a nous-même redéclenché la soumission plus bas) : ne pas re-demander.
         if (this.skipNextCheck) {
             this.skipNextCheck = false;
             return;
         }
-        if (!window.confirm(this.messageValue)) {
-            event.preventDefault();
-            event.stopImmediatePropagation();
-            this.restore();
-        }
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        this.ask(this.messageValue).then((ok) => {
+            if (ok) {
+                this.skipNextCheck = true;
+                this.element.requestSubmit();
+            } else {
+                this.restore();
+            }
+        });
     };
 
     confirmChange(event) {
         const message = event.params.message || this.messageValue;
-        if (window.confirm(message)) {
-            this.skipNextCheck = true;
-            event.currentTarget.form.requestSubmit();
-        } else {
-            this.restore();
-        }
+        const form = event.currentTarget.form;
+
+        this.ask(message).then((ok) => {
+            if (ok) {
+                this.skipNextCheck = true;
+                form.requestSubmit();
+            } else {
+                this.restore();
+            }
+        });
     }
 
     /** Remet les entrées `restore` à l'état qu'elles avaient avant le changement. */
     restore() {
         this.restoreTargets.forEach((el) => { el.checked = el.dataset.confirmChecked === '1'; });
+    }
+
+    /** @return {Promise<boolean>} */
+    ask(message) {
+        // filet de sécurité si la modale globale n'est pas montée (ne devrait pas arriver).
+        return window.confirmDialog ? window.confirmDialog.ask(message) : Promise.resolve(window.confirm(message));
     }
 }

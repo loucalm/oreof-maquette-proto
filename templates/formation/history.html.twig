@@ -44,7 +44,7 @@
                     <td class="px-4 py-3 text-right">
                         <form method="post" action="{{ path('formation_history_restore', {id: formation.id, revisionId: r.id}) }}"
                               data-turbo-frame="_top" data-controller="confirm"
-                              data-confirm-message-value="⚠️ Restaurer l'état du {{ r.createdAt|date('d/m/Y à H:i') }} ({{ r.label|lower }}) ? L'état actuel sera remplacé — il restera consultable et restaurable dans cet historique.">
+                              data-confirm-message-value="Restaurer l'état du {{ r.createdAt|date('d/m/Y à H:i') }} ({{ r.label|lower }}) ? L'état actuel sera remplacé — il restera consultable et restaurable dans cet historique.">
                             <button class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-u-up-left', {class: 'icon'}) }} Restaurer</button>
                         </form>
                     </td>

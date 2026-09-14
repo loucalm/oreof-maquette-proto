@@ -96,5 +96,24 @@
         {# bouton d'aide flottant (fictif) #}
         <div class="fixed bottom-5 right-5 grid h-11 w-11 place-items-center rounded-full text-white text-lg shadow-lg cursor-default"
              style="background:var(--c-primary)" title="Aide (fictif)">?</div>
+
+        {# ─────────── modale de confirmation globale (remplace window.confirm) ─────────── #}
+        <dialog data-controller="confirm-dialog" data-confirm-dialog-target="dialog"
+                data-action="click->confirm-dialog#clickOutside"
+                class="w-[min(480px,92vw)] rounded-3xl border-0 p-0 shadow-2xl backdrop:bg-black/50">
+            <div class="p-8 sm:p-10">
+                <h2 class="text-3xl font-extrabold tracking-tight text-red-600">Attention !</h2>
+                <p data-confirm-dialog-target="message" class="mt-4 text-base leading-relaxed" style="color:var(--c-muted)"></p>
+                <div class="mt-7 h-px" style="background:var(--c-border)"></div>
+                <div class="mt-6 flex gap-3">
+                    <button type="button" data-action="confirm-dialog#confirm"
+                            class="flex-1 rounded-2xl border px-5 py-3.5 text-base font-medium hover:bg-red-100"
+                            style="background:#fef2f2;color:#b91c1c;border-color:#fecaca">Continuer</button>
+                    <button type="button" data-action="confirm-dialog#cancel" data-confirm-dialog-target="cancelBtn"
+                            class="flex-1 rounded-2xl border px-5 py-3.5 text-base font-medium hover:bg-indigo-100"
+                            style="background:var(--c-primary-soft);color:var(--c-primary);border-color:#c7d2fe">Annuler</button>
+                </div>
+            </div>
+        </dialog>
     </body>
 </html>

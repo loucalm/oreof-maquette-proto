@@ -26,14 +26,14 @@
                     <input type="radio" name="multiParcours" value="1" {{ formation.multiParcours ? 'checked' }}
                            data-confirm-target="restore" data-confirm-checked="{{ formation.multiParcours ? '1' : '0' }}"
                            data-action="change->confirm#confirmChange"
-                           data-confirm-message-param="⚠️ Passer en multi-parcours va rassembler les éléments pédagogiques actuels de la formation dans un nouveau parcours. Continuer ?">
+                           data-confirm-message-param="Passer en multi-parcours va rassembler les éléments pédagogiques actuels de la formation dans un nouveau parcours.">
                     Oui (options)
                 </label>
                 <label class="flex items-center gap-2">
                     <input type="radio" name="multiParcours" value="0" {{ not formation.multiParcours ? 'checked' }}
                            data-confirm-target="restore" data-confirm-checked="{{ not formation.multiParcours ? '1' : '0' }}"
                            data-action="change->confirm#confirmChange"
-                           data-confirm-message-param="⚠️ Passer en mono-parcours va supprimer le(s) parcours et remonter leurs éléments pédagogiques à la racine de la formation. Continuer ?">
+                           data-confirm-message-param="Passer en mono-parcours va supprimer le(s) parcours et remonter leurs éléments pédagogiques à la racine de la formation.">
                     Non (mono-parcours)
                 </label>
             </div>
@@ -250,7 +250,7 @@
         {# ── Charger un template ── #}
         {{ fld.divider('Charger un template') }}
         <form method="post" action="{{ path('formation_apply_template', {id: formation.id}) }}" data-turbo-frame="_top"
-              data-controller="confirm" data-confirm-message-value="⚠️ Charger ce template ÉCRASE le squelette ET les éléments pédagogiques actuels. Continuer ?"
+              data-controller="confirm" data-confirm-message-value="Charger ce template ÉCRASE le squelette ET les éléments pédagogiques actuels."
               class="flex flex-wrap items-end gap-3">
             <div class="flex-1 min-w-[220px]">
                 <select name="template" class="fld">
