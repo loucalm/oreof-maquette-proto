@@ -225,15 +225,22 @@ body {
 .tree-row.is-active { background: #eef1f4; border-left-color: var(--c-primary); }
 
 /* bloc de choix : conteneur transparent pour le squelette (imbricable à
-   l'infini) — distingué en violet des ELP pédagogiques qu'il contient, pour
-   que la lecture de l'arbre reste claire même sur plusieurs niveaux. */
-.tree-row--choice { background: #faf5ff; }
+   l'infini). Ses alternatives directes ne sont PAS indentées d'un cran de
+   plus : elles restent au même niveau que les autres ELP de leur famille
+   (choix ou non) — seules la barre violette (bordure gauche, déjà réservée
+   par .tree-row) et l'étiquette « ⇄ nom du bloc » signalent leur appartenance. */
+.tree-row--choice { background: #faf5ff; border-left-color: #9333ea; }
 .tree-row--choice:hover { background: #f3e8ff; }
-.tree-row--choice.is-active { background: #f3e8ff; border-left-color: #9333ea; }
-.tree-children--choice { border-left-color: #e9d5ff; border-left-style: dashed; }
+.tree-row--choice.is-active { background: #f3e8ff; }
+.tree-row--choice-alt { border-left-color: #d8b4fe; }
+.tree-children--choice { margin-left: 0; border-left: 0; padding-left: 0; }
 .choice-count {
     font-size: 11px; font-weight: 700; white-space: nowrap;
     color: #9333ea; background: #f3e8ff; padding: 1px 7px; border-radius: 9999px;
+}
+.choice-alt-tag {
+    font-size: 11px; font-weight: 600; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 3px; color: #a855f7;
 }
 
 /* liens « Paramètre de la formation » : même logique d'actif que l'arbre */

@@ -190,7 +190,7 @@
                     {% set rootType = root_type(formation) %}
                     <div class="p-2">
                         {% if roots is not empty %}
-                            {{ include('formation/_tree.html.twig', {views: roots, parentId: null, focus: focus, parentIsChoice: false}) }}
+                            {{ include('formation/_tree.html.twig', {views: roots, parentId: null, focus: focus, parentIsChoice: false, parentChoiceLabel: null}) }}
                         {% elseif not rootType %}
                             <p class="text-sm px-2 py-8 text-center text-gray-400">
                                 Définissez d'abord le squelette dans

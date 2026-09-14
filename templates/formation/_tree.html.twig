@@ -1,4 +1,7 @@
-{# Arbre récursif façon maquette Figma. Params : views (list<NodeView>), parentId, focus, parentIsChoice #}
+{# Arbre récursif façon maquette Figma. Params : views (list<NodeView>), parentId, focus,
+   parentIsChoice, parentChoiceLabel : les enfants directs d'un bloc de choix s'affichent
+   SANS indentation supplémentaire (au même niveau que les autres ELP de leur famille,
+   choix ou non) — seuls une barre violette et un renvoi textuel signalent leur bloc. #}
 <ul class="tree-list {{ parentId is not null ? 'tree-children' : '' }} {{ parentIsChoice ? 'tree-children--choice' }}"
     data-tree-target="list" data-parent-id="{{ parentId ?? '' }}">
     {% for view in views %}
@@ -9,7 +12,7 @@
         {% set lockedDel = node.isLocked('delete') %}
         <li data-node-id="{{ node.id }}" data-node-type="{{ node.type.key }}" data-node-host-type="{{ node.getEffectiveHostTypeKey() }}"
             {{ lockedDel ? 'data-locked="1"' }} {{ node.isLocked('move') ? 'data-locked-move="1"' }}>
-            <div class="tree-row {{ isChoice ? 'tree-row--choice' }} {{ focus and focus == node.id ~ '' ? 'is-active' }}">
+            <div class="tree-row {{ isChoice ? 'tree-row--choice' }} {{ parentIsChoice ? 'tree-row--choice-alt' }} {{ focus and focus == node.id ~ '' ? 'is-active' }}">
                 <span class="drag-handle" data-tree-target="handle" title="Glisser pour déplacer">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>
                 <span class="status-dot" data-status="{{ view.status }}"
                       title="{{ view.status == 'ok' ? 'Complet' : (view.status == 'incomplete' ? 'Incomplet' : 'Vide') }}"></span>
@@ -20,6 +23,8 @@
                    class="tree-label" data-tree-target="link">{{ node.label ?: '—' }}</a>
                 {% if isChoice %}
                     <span class="choice-count" title="Nombre à choisir parmi les options de ce bloc">{{ node.getAttribute('choiceCount') ?: '?' }} parmi {{ view.children|length }}</span>
+                {% elseif parentIsChoice %}
+                    <span class="choice-alt-tag" title="Cet ELP est une alternative du bloc de choix « {{ parentChoiceLabel }} »">{{ ux_icon('ph:shuffle', {class: 'icon'}) }} {{ parentChoiceLabel }}</span>
                 {% endif %}
 
                 {% if view.ectsTarget %}
@@ -33,7 +38,7 @@
                 {% endif %}
             </div>
             {% if hasChildren %}
-                {{ include('formation/_tree.html.twig', {views: view.children, parentId: node.id, focus: focus, parentIsChoice: isChoice}) }}
+                {{ include('formation/_tree.html.twig', {views: view.children, parentId: node.id, focus: focus, parentIsChoice: isChoice, parentChoiceLabel: isChoice ? node.getDisplayLabel() : null}) }}
             {% elseif canHaveChildren %}
                 {# nœud non-feuille encore vide : zone de dépôt pour le glisser-déposer #}
                 <ul class="tree-list tree-children tree-list--empty {{ isChoice ? 'tree-children--choice' }}"

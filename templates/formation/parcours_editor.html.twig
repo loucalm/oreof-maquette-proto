@@ -115,7 +115,7 @@
 
                 <div class="p-2">
                     {% if roots is not empty %}
-                        {{ include('formation/_tree.html.twig', {views: roots, parentId: parcours.id, focus: focus, parentIsChoice: false}) }}
+                        {{ include('formation/_tree.html.twig', {views: roots, parentId: parcours.id, focus: focus, parentIsChoice: false, parentChoiceLabel: null}) }}
                     {% else %}
                         <p class="text-sm px-2 py-8 text-center text-gray-400">
                             Ce parcours n'a pas encore de {{ bodyRoot ? bodyRoot.label|lower : 'niveau' }}.
