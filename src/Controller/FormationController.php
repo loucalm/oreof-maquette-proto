@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\Formation;
+use App\Enum\FormationPhase;
 use App\Maquette\Doc\TreeNode;
 use App\Maquette\Maquette;
 use App\Maquette\MaquetteBuilder;
@@ -27,10 +28,13 @@ final class FormationController extends AbstractController
     }
 
     #[Route('/', name: 'formation_index', methods: ['GET'])]
-    public function index(FormationRepository $formations, \App\Maquette\Completion $completion): Response
+    public function index(Request $request, FormationRepository $formations, \App\Maquette\Completion $completion): Response
     {
+        $phaseFilter = FormationPhase::tryFrom((string) $request->query->get('phase', ''));
+        $list = null !== $phaseFilter ? $formations->findByPhase($phaseFilter) : $formations->findAllRecent();
+
         $rows = [];
-        foreach ($formations->findAllRecent() as $formation) {
+        foreach ($list as $formation) {
             // cache de progression (Maquette::save) — pas de reconstruction d'arbre ici.
             // Amorçage : une formation jamais enregistrée (fixtures) est calculée à la volée.
             $stats = $formation->getStats();
@@ -45,7 +49,10 @@ final class FormationController extends AbstractController
             ];
         }
 
-        return $this->render('formation/index.html.twig', ['rows' => $rows]);
+        return $this->render('formation/index.html.twig', [
+            'rows' => $rows,
+            'consolidationTab' => $phaseFilter === FormationPhase::Consolidation,
+        ]);
     }
 
     #[Route('/formations', name: 'formation_create', methods: ['POST'])]
@@ -63,12 +70,15 @@ final class FormationController extends AbstractController
         }
 
         $diplome = trim((string) $request->request->get('diplome')) ?: null;
+        $phase = FormationPhase::tryFrom((string) $request->request->get('phase', '')) ?? FormationPhase::Construction;
 
         $formation = (new Formation($name))
             ->setDiplome($diplome)
             ->setDomaine(trim((string) $request->request->get('domaine')) ?: null)
             ->setComposante(trim((string) $request->request->get('composante')) ?: null)
             ->setMultiParcours($request->request->getBoolean('multiParcours'))
+            ->setPhase($phase)
+            ->setAnneeUniversitaire($request->request->get('anneeUniversitaire'))
             ->setStructure(['annee', 'semestre', 'ue', 'ec']);
 
         $em->persist($formation);
@@ -438,6 +448,22 @@ final class FormationController extends AbstractController
         $this->maquette->save($formation, $doc);
 
         return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);
+    }
+
+    /** Bascule la phase (consolidation ↔ construction) — « Basculer en construction » de l'éditeur. */
+    #[Route('/formations/{id}/phase', name: 'formation_phase_save', methods: ['POST'])]
+    public function phaseSave(Formation $formation, Request $request, EntityManagerInterface $em): Response
+    {
+        $phase = FormationPhase::tryFrom((string) $request->request->get('phase', ''));
+        if (null !== $phase) {
+            $formation->setPhase($phase);
+            $em->flush();
+            $this->addFlash('success', $phase === FormationPhase::Construction
+                ? 'Formation passée en construction.'
+                : 'Formation repassée en consolidation.');
+        }
+
+        return $this->redirectToRoute('formation_editor', ['id' => $formation->getId()]);
     }
 
     /**

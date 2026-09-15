@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Enum\FormationPhase;
 use App\Repository\FormationRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -28,6 +29,18 @@ class Formation
 
     #[ORM\Column(length: 160, nullable: true)]
     private ?string $composante = null;
+
+    /**
+     * Phase du cycle de vie : `Consolidation` = squelette préparé en avance
+     * par la composante pour l'année suivante, sans contenu à ce stade ;
+     * `Construction` = phase normale (comportement historique, défaut).
+     */
+    #[ORM\Column(length: 20, enumType: FormationPhase::class)]
+    private FormationPhase $phase = FormationPhase::Construction;
+
+    /** Année universitaire visée, libre (ex. « 2027-2028 ») — surtout utile en consolidation. */
+    #[ORM\Column(length: 20, nullable: true)]
+    private ?string $anneeUniversitaire = null;
 
     /** « La formation contient-elle des parcours ? » */
     #[ORM\Column]
@@ -175,6 +188,30 @@ class Formation
     public function setComposante(?string $composante): self
     {
         $this->composante = $composante;
+
+        return $this;
+    }
+
+    public function getPhase(): FormationPhase
+    {
+        return $this->phase;
+    }
+
+    public function setPhase(FormationPhase $phase): self
+    {
+        $this->phase = $phase;
+
+        return $this;
+    }
+
+    public function getAnneeUniversitaire(): ?string
+    {
+        return $this->anneeUniversitaire;
+    }
+
+    public function setAnneeUniversitaire(?string $anneeUniversitaire): self
+    {
+        $this->anneeUniversitaire = trim((string) $anneeUniversitaire) ?: null;
 
         return $this;
     }

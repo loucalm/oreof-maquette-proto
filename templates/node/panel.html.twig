@@ -131,32 +131,28 @@
             {% endfor %}
 
             {% if tk == 'props' and node.isParcours %}
-                {% set pcands = parcours_candidates(node) %}
                 {% set unit = period_unit(formation) %}
                 <div class="rounded-lg border p-3 space-y-3" style="border-color:var(--c-border);background:#f8f9fb">
-                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Arborescence des parcours · axe : {{ unit|lower }}</div>
-                    <div class="grid grid-cols-2 gap-2">
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Positionnement dans l’arborescence des parcours</div>
+                    <p class="fld-help">
+                        {{ ux_icon('ph:info', {class: 'icon'}) }} Les {{ unit|lower }}s et le parcours parent se modifient désormais depuis l’arborescence des parcours, au niveau de la formation.
+                    </p>
+                    <div class="grid grid-cols-2 gap-2 text-sm">
                         <div>
-                            {{ ui.label(unit ~ " de début", false) }}
-                            <input type="number" min="1" name="attr_periodeDebut" value="{{ node.getAttribute('periodeDebut') }}" placeholder="{{ node.periodeDebut }}" class="fld">
+                            <div class="text-[11px] uppercase tracking-wide text-gray-400">{{ unit }} de début</div>
+                            <div class="font-medium mt-0.5">{{ node.periodeDebut }}</div>
                         </div>
                         <div>
-                            {{ ui.label(unit ~ " de fin", false) }}
-                            <input type="number" min="1" name="attr_periodeFin" value="{{ node.getAttribute('periodeFin') }}" placeholder="{{ node.periodeFin }}" class="fld">
+                            <div class="text-[11px] uppercase tracking-wide text-gray-400">{{ unit }} de fin</div>
+                            <div class="font-medium mt-0.5">{{ node.periodeFin }}</div>
                         </div>
                     </div>
-                    {{ ui.label("Parcours parent", false, "Une spécialisation qui se sépare d’un autre parcours : elle commence après lui et se prolonge au moins jusqu’à sa fin.") }}
-                    <select name="parcoursParentId" class="fld">
-                        <option value="">— Aucun (parcours racine) —</option>
-                        {% for cand in pcands %}
-                            <option value="{{ cand.id }}" {{ node.parcoursParent and node.parcoursParent.id == cand.id ? 'selected' }}>{{ cand.label ?: '—' }} · {{ unit|lower }}s {{ cand.periodeDebut }}–{{ cand.periodeFin }}</option>
-                        {% endfor %}
-                    </select>
-                    {% if pcands is empty %}
-                        <p class="fld-help">Aucun parcours antérieur compatible. Renseignez les {{ unit|lower }}s ci-dessus puis enregistrez : les parcours qui se terminent avant deviendront sélectionnables.</p>
-                    {% endif %}
+                    <div class="text-sm">
+                        <div class="text-[11px] uppercase tracking-wide text-gray-400">Parcours parent</div>
+                        <div class="font-medium mt-0.5">{{ node.parcoursParent ? node.parcoursParent.displayLabel : '— Aucun (parcours racine) —' }}</div>
+                    </div>
                     <a href="{{ path('formation_parcours_graph', {id: formation.id, current: node.id}) }}" data-turbo-frame="node-panel"
-                       class="inline-block text-xs font-medium hover:underline" style="color:var(--c-primary)">{{ ux_icon('ph:map-trifold', {class: 'icon'}) }} Voir l'arborescence des parcours</a>
+                       class="inline-block text-xs font-medium hover:underline" style="color:var(--c-primary)">{{ ux_icon('ph:map-trifold', {class: 'icon'}) }} Voir / modifier dans l'arborescence des parcours</a>
                 </div>
             {% endif %}
         </div>

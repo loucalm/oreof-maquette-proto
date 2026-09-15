@@ -97,7 +97,12 @@ final class NodeController extends AbstractController
 
         if ($node->isParcours()) {
             unset($attrs['anneeDebut'], $attrs['anneeFin']);
+            // périodes éditées depuis l'arborescence des parcours (formation) : ce
+            // formulaire ne les soumet plus, ne pas les effacer si absentes.
             foreach (['periodeDebut', 'periodeFin'] as $k) {
+                if (!$request->request->has("attr_$k")) {
+                    continue;
+                }
                 $v = $request->request->get("attr_$k");
                 if ($v === null || $v === '') {
                     unset($attrs[$k]);
@@ -116,6 +121,45 @@ final class NodeController extends AbstractController
         $this->maquette->save($formation, $doc);
 
         return $this->backToEditor($node, 'ELP enregistré.');
+    }
+
+    /**
+     * Ramification centralisée : périodes + parcours parent de TOUS les
+     * parcours de la formation, en un seul enregistrement (tableau de
+     * l'arborescence des parcours, ou glisser-déposer sur son graphe — les
+     * deux ne font que remplir les mêmes champs de ce formulaire unique).
+     * Périodes d'abord (pour que la validation des parents s'appuie sur des
+     * périodes à jour), puis parents via applyParcoursParent() — mêmes règles,
+     * mêmes messages, qu'un enregistrement individuel d'avant.
+     */
+    #[Route('/formations/{fid}/parcours-ramification', name: 'node_ramification_save', methods: ['POST'])]
+    public function ramificationSave(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, Request $request): Response
+    {
+        $doc = $this->maquette->open($formation);
+        $periodesDebut = $request->request->all('periodeDebut');
+        $periodesFin = $request->request->all('periodeFin');
+        $parents = $request->request->all('parentId');
+
+        foreach ($doc->parcoursNodes() as $p) {
+            $nid = $p->getId();
+            $attrs = $p->getAttributes();
+            if (isset($periodesDebut[$nid]) && '' !== $periodesDebut[$nid]) {
+                $attrs['periodeDebut'] = max(1, (int) $periodesDebut[$nid]);
+            }
+            if (isset($periodesFin[$nid]) && '' !== $periodesFin[$nid]) {
+                $attrs['periodeFin'] = max(1, (int) $periodesFin[$nid]);
+            }
+            $p->setAttributes(array_filter($attrs, static fn ($v) => $v !== null && $v !== '' && $v !== []));
+        }
+
+        foreach ($doc->parcoursNodes() as $p) {
+            $this->applyParcoursParent($doc, $p, trim((string) ($parents[$p->getId()] ?? '')));
+        }
+
+        $this->maquette->save($formation, $doc);
+        $this->addFlash('success', 'Ramification des parcours enregistrée.');
+
+        return $this->redirectToRoute('formation_parcours_graph', ['id' => $formation->getId()]);
     }
 
     #[Route('/formations/{fid}/nodes', name: 'node_add', methods: ['POST'])]

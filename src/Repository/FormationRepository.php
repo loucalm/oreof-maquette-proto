@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\Formation;
+use App\Enum\FormationPhase;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -22,6 +23,17 @@ class FormationRepository extends ServiceEntityRepository
     public function findAllRecent(): array
     {
         return $this->createQueryBuilder('f')
+            ->orderBy('f.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /** @return list<Formation> */
+    public function findByPhase(FormationPhase $phase): array
+    {
+        return $this->createQueryBuilder('f')
+            ->where('f.phase = :phase')
+            ->setParameter('phase', $phase)
             ->orderBy('f.createdAt', 'DESC')
             ->getQuery()
             ->getResult();

@@ -59,12 +59,24 @@
     </div>
 </div>
 
-{# ─── bannière + actions rapides (fictif) ─── #}
+{# ─── bannière + actions rapides ─── #}
 <div class="flex flex-wrap items-center gap-3 mb-6">
-    <div class="rounded-xl border px-5 py-3 text-sm" style="border-color:#bbf7d0;background:#f0fdf4">
-        <div class="font-semibold text-green-800">Formation ouverte</div>
-        <div class="text-green-700">Vous pouvez modifiez la formation</div>
-    </div>
+    {% if formation.phase.value == 'consolidation' %}
+        <div class="rounded-xl border px-5 py-3 text-sm" style="border-color:#fcd34d;background:#fffbeb">
+            <div class="font-semibold text-amber-800">{{ ux_icon('ph:hourglass-medium', {class: 'icon'}) }} En consolidation{{ formation.anneeUniversitaire ? ' — ' ~ formation.anneeUniversitaire }}</div>
+            <div class="text-amber-700">Structure à préparer ; le contenu sera complété plus tard.</div>
+        </div>
+        <form method="post" action="{{ path('formation_phase_save', {id: formation.id}) }}" data-turbo-frame="_top"
+              data-controller="confirm" data-confirm-message-value="Passer « {{ formation.name }} » en construction ? Elle sortira de l'onglet « Consolidation de l'offre ».">
+            <input type="hidden" name="phase" value="construction">
+            <button class="rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-right', {class: 'icon'}) }} Basculer en construction</button>
+        </form>
+    {% else %}
+        <div class="rounded-xl border px-5 py-3 text-sm" style="border-color:#bbf7d0;background:#f0fdf4">
+            <div class="font-semibold text-green-800">Formation ouverte</div>
+            <div class="text-green-700">Vous pouvez modifiez la formation</div>
+        </div>
+    {% endif %}
     <div class="ml-auto flex items-center gap-2">
         <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mr-1">Actions rapide</span>
         <span class="fake-btn" style="color:#b45309;border-color:#fcd34d">{{ ux_icon('ph:arrows-left-right', {class: 'icon'}) }} Changer co/resp. formation</span>

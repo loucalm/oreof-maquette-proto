@@ -30,6 +30,17 @@
         <h2 class="text-2xl font-extrabold tracking-tight">DÉTAILS DES MENTIONS/SPÉCIALITÉS</h2>
         <p class="text-sm text-gray-500 mb-5">Consultez et administrez rapidement les mentions et spécialités de l'offre de formation.</p>
 
+        <div class="flex gap-1 border-b mb-4" style="border-color:var(--c-border)">
+            <a href="{{ path('formation_index') }}"
+               class="-mb-px rounded-t-lg border-b-2 px-3.5 py-2 text-sm font-medium {{ consolidationTab ? 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' : '' }}"
+               style="border-color:{{ consolidationTab ? 'transparent' : 'var(--c-primary)' }};{{ consolidationTab ? '' : 'color:var(--c-primary)' }}">Toutes les formations</a>
+            <a href="{{ path('formation_index', {phase: 'consolidation'}) }}"
+               class="-mb-px rounded-t-lg border-b-2 px-3.5 py-2 text-sm font-medium {{ consolidationTab ? '' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}"
+               style="border-color:{{ consolidationTab ? 'var(--c-primary)' : 'transparent' }};{{ consolidationTab ? 'color:var(--c-primary)' : '' }}">
+                {{ ux_icon('ph:hourglass-medium', {class: 'icon'}) }} Consolidation de l’offre
+            </a>
+        </div>
+
         <div class="rounded-xl border" style="border-color:var(--c-border)">
             <table class="w-full text-sm">
                 <thead>
@@ -59,14 +70,12 @@
                             {% endif %}
                         </td>
                         <td class="px-4 py-4 align-top text-gray-600">{{ f.composante ?: '—' }}</td>
-                        <td class="px-4 py-4 align-top">
-                            {# état = process fictif #}
-                            <div class="flex items-center justify-center gap-1.5">
-                                {% for i in 1..5 %}
-                                    <span class="grid h-7 w-7 place-items-center rounded-full text-white text-[11px]"
-                                          style="background:{{ i <= 4 ? '#64748b' : '#cbd5e1' }}">{{ ux_icon('ph:check-bold', {class: 'icon'}) }}</span>
-                                {% endfor %}
-                            </div>
+                        <td class="px-4 py-4 align-top text-center">
+                            {% if f.phase.value == 'consolidation' %}
+                                <span class="pill" style="background:#fef3c7;color:#b45309">{{ ux_icon('ph:hourglass-medium', {class: 'icon'}) }} Consolidation{{ f.anneeUniversitaire ? ' · ' ~ f.anneeUniversitaire }}</span>
+                            {% else %}
+                                <span class="pill" style="background:#dcfce7;color:#15803d">{{ ux_icon('ph:check-bold', {class: 'icon'}) }} Construction</span>
+                            {% endif %}
                         </td>
                         <td class="px-4 py-4 align-top">
                             <div class="flex justify-between text-[11px] text-gray-400"><span>Progression globale</span><span>{{ row.progress }}%</span></div>
@@ -220,6 +229,25 @@
                 <label class="flex items-center gap-2 text-sm">
                     <input type="checkbox" name="multiParcours" value="1"> La formation contient des parcours (multi-parcours)
                 </label>
+
+                <div class="rounded-lg border p-3 space-y-3" style="border-color:var(--c-border);background:#f8f9fb">
+                    <div class="fld-label">Type de création</div>
+                    <div class="flex flex-col gap-2 text-sm">
+                        <label class="flex items-start gap-2">
+                            <input type="radio" name="phase" value="construction" checked class="mt-0.5">
+                            <span>Formation classique <span class="block text-xs text-gray-400">Construction immédiate de l'offre.</span></span>
+                        </label>
+                        <label class="flex items-start gap-2">
+                            <input type="radio" name="phase" value="consolidation" class="mt-0.5">
+                            <span>Consolidation de l'offre <span class="block text-xs text-gray-400">Juste le squelette (nom, structure) — préparé en avance pour une année future, à compléter plus tard.</span></span>
+                        </label>
+                    </div>
+                    <div>
+                        <span class="fld-label">Année universitaire visée</span>
+                        <input name="anneeUniversitaire" placeholder="ex. 2027-2028" class="fld mt-1">
+                        <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} Surtout utile pour une consolidation.</div>
+                    </div>
+                </div>
             </div>
 
             <div class="flex items-center justify-end gap-2 border-t px-7 py-4" style="border-color:var(--c-border)">

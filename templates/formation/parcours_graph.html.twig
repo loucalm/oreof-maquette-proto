@@ -28,7 +28,11 @@
         </div>
         <p class="text-xs text-gray-400 mt-1">
             Axe : <strong>{{ g.unit|lower }}</strong> (dimension temporelle de la formation, réglable dans « Configuration de la structure »).
-            Le parent d'un parcours et ses {{ g.unit|lower }}s de début / fin se règlent dans le panneau du parcours.
+            {% if standalone %}
+                Le parent d'un parcours et ses {{ g.unit|lower }}s de début / fin se règlent depuis l'éditeur de la formation.
+            {% else %}
+                Glissez d'un parcours vers un autre sur le graphe pour le désigner comme parent, ou utilisez le tableau ci-dessous.
+            {% endif %}
         </p>
     </div>
 
@@ -38,8 +42,10 @@
             Aucun parcours. Ajoutez-en depuis « Configuration de la structure ».
         </div>
     {% else %}
+        <div {{ not standalone ? 'data-controller=ramification' }}>
         <div class="overflow-auto rounded-xl border bg-white" style="border-color:var(--c-border)">
-            <svg viewBox="0 0 {{ g.width }} {{ g.height }}" width="{{ g.width }}" height="{{ g.height }}" class="block" style="min-width:100%">
+            <svg viewBox="0 0 {{ g.width }} {{ g.height }}" width="{{ g.width }}" height="{{ g.height }}" class="block" style="min-width:100%"
+                 {{ not standalone ? 'data-ramification-target=svg' }}>
                 <defs>
                     <marker id="pg-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
                         <path d="M0 0 L10 5 L0 10 z" fill="#6366f1"/>
@@ -65,13 +71,28 @@
                 {% for e in g.edges %}
                     <path d="{{ e.path }}" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#pg-arrow)"/>
                 {% endfor %}
+                {% if not standalone %}
+                    {# survol/clic élargi (invisible) sur chaque connecteur, pour le retirer #}
+                    {% for e in g.edges %}
+                        <path d="{{ e.path }}" fill="none" stroke="transparent" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"
+                              data-ramification-target="edge" data-child="{{ e.to }}" data-action="click->ramification#clearEdge" style="cursor:pointer">
+                            <title>Retirer ce lien de ramification</title>
+                        </path>
+                    {% endfor %}
+                {% endif %}
 
                 {# boîtes parcours — lien SVG en xlink:href (Turbo ne sait pas lire
-                   le href des <a> SVG) : navigation pleine page vers l'éditeur du parcours #}
+                   le href des <a> SVG) : navigation pleine page vers l'éditeur du parcours,
+                   sauf si un glisser vient d'avoir lieu (ramification_controller#suppressIfDragged) #}
                 {% for r in g.rows %}
                     {% set b = g.boxes[r.node.id] %}
                     {% set isCurrent = current and r.node.id == current %}
-                    <a xlink:href="{{ path('parcours_editor', {fid: formation.id, nid: r.node.id}) }}" style="cursor:pointer">
+                    <a xlink:href="{{ path('parcours_editor', {fid: formation.id, nid: r.node.id}) }}" style="cursor:pointer"
+                       {% if not standalone %}
+                           data-ramification-target="box" data-nid="{{ r.node.id }}"
+                           data-candidates="{{ parcours_candidates(r.node)|map(c => c.id)|join(' ') }}"
+                           data-action="pointerdown->ramification#startDrag click->ramification#suppressIfDragged"
+                       {% endif %}>
                         {% if isCurrent %}
                             <text x="{{ b.cx }}" y="{{ b.y - 7 }}" text-anchor="middle" font-size="10" font-weight="700" fill="#4f46e5" letter-spacing="0.3">VOUS ÊTES ICI</text>
                         {% endif %}
@@ -80,22 +101,68 @@
                         <text x="{{ b.x + b.w / 2 }}" y="{{ b.cy + 4 }}" text-anchor="middle" font-size="13" font-weight="{{ isCurrent ? 700 : 600 }}" fill="#3730a3">{{ r.node.label ?: 'Parcours' }}</text>
                     </a>
                 {% endfor %}
+
+                {% if not standalone %}
+                    <line data-ramification-target="dragLine" x1="0" y1="0" x2="0" y2="0" stroke="#4f46e5" stroke-width="2.5" stroke-dasharray="6 4"
+                          marker-end="url(#pg-arrow)" pointer-events="none" hidden/>
+                {% endif %}
             </svg>
         </div>
 
-        <ul class="mt-4 space-y-1 text-sm">
-            {% for r in g.rows %}
-                {% set isCurrent = current and r.node.id == current %}
-                <li class="flex flex-wrap items-center gap-2 rounded-lg px-2 py-1 -mx-2"
-                    style="{{ isCurrent ? 'background:var(--c-primary-soft)' : '' }}">
-                    <span class="type-badge">{{ ux_icon('ph:compass', {class: 'icon'}) }} Parcours</span>
-                    <a href="{{ path('parcours_editor', {fid: formation.id, nid: r.node.id}) }}" class="font-medium hover:underline">{{ r.node.label ?: '—' }}</a>
-                    <span class="text-xs text-gray-400">{{ g.unit|lower }}s {{ r.colStart }}–{{ r.colEnd }}</span>
-                    {% if r.node.parcoursParent %}<span class="text-xs text-gray-400">· enfant de « {{ r.node.parcoursParent.label ?: '—' }} »</span>{% endif %}
-                    {% if isCurrent %}<span class="pill" style="background:var(--c-primary);color:#fff">{{ ux_icon('ph:map-pin', {class: 'icon'}) }} Vous êtes ici</span>{% endif %}
-                </li>
-            {% endfor %}
-        </ul>
+        {% if standalone %}
+            <ul class="mt-4 space-y-1 text-sm">
+                {% for r in g.rows %}
+                    {% set isCurrent = current and r.node.id == current %}
+                    <li class="flex flex-wrap items-center gap-2 rounded-lg px-2 py-1 -mx-2"
+                        style="{{ isCurrent ? 'background:var(--c-primary-soft)' : '' }}">
+                        <span class="type-badge">{{ ux_icon('ph:compass', {class: 'icon'}) }} Parcours</span>
+                        <a href="{{ path('parcours_editor', {fid: formation.id, nid: r.node.id}) }}" class="font-medium hover:underline">{{ r.node.label ?: '—' }}</a>
+                        <span class="text-xs text-gray-400">{{ g.unit|lower }}s {{ r.colStart }}–{{ r.colEnd }}</span>
+                        {% if r.node.parcoursParent %}<span class="text-xs text-gray-400">· enfant de « {{ r.node.parcoursParent.label ?: '—' }} »</span>{% endif %}
+                        {% if isCurrent %}<span class="pill" style="background:var(--c-primary);color:#fff">{{ ux_icon('ph:map-pin', {class: 'icon'}) }} Vous êtes ici</span>{% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <form method="post" action="{{ path('node_ramification_save', {fid: formation.id}) }}" data-turbo-frame="node-panel" class="mt-4">
+                <div class="overflow-auto rounded-xl border" style="border-color:var(--c-border)">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            <tr>
+                                <th class="text-left px-4 py-2.5">Parcours</th>
+                                <th class="text-left px-4 py-2.5">{{ g.unit }} de début</th>
+                                <th class="text-left px-4 py-2.5">{{ g.unit }} de fin</th>
+                                <th class="text-left px-4 py-2.5">Parcours parent</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for r in g.rows %}
+                            {% set isCurrent = current and r.node.id == current %}
+                            <tr class="border-t" style="border-color:var(--c-border);{{ isCurrent ? 'background:var(--c-primary-soft)' }}">
+                                <td class="px-4 py-2.5">
+                                    <span class="type-badge">{{ ux_icon('ph:compass', {class: 'icon'}) }} Parcours</span>
+                                    <a href="{{ path('parcours_editor', {fid: formation.id, nid: r.node.id}) }}" class="font-medium hover:underline ml-1">{{ r.node.label ?: '—' }}</a>
+                                    {% if isCurrent %}<span class="pill ml-1" style="background:var(--c-primary);color:#fff">{{ ux_icon('ph:map-pin', {class: 'icon'}) }} Vous êtes ici</span>{% endif %}
+                                </td>
+                                <td class="px-4 py-2.5"><input type="number" min="1" name="periodeDebut[{{ r.node.id }}]" value="{{ r.node.periodeDebut }}" class="fld w-24"></td>
+                                <td class="px-4 py-2.5"><input type="number" min="1" name="periodeFin[{{ r.node.id }}]" value="{{ r.node.periodeFin }}" class="fld w-24"></td>
+                                <td class="px-4 py-2.5">
+                                    <select name="parentId[{{ r.node.id }}]" class="fld" data-ramification-target="parentSelect" data-nid="{{ r.node.id }}">
+                                        <option value="">— Aucun (parcours racine) —</option>
+                                        {% for cand in parcours_candidates(r.node) %}
+                                            <option value="{{ cand.id }}" {{ r.node.parcoursParent and r.node.parcoursParent.id == cand.id ? 'selected' }}>{{ cand.label ?: '—' }} · {{ g.unit|lower }}s {{ cand.periodeDebut }}–{{ cand.periodeFin }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <button class="mt-3 rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ ux_icon('ph:floppy-disk', {class: 'icon'}) }} Enregistrer la ramification</button>
+            </form>
+        {% endif %}
+        </div>
     {% endif %}
     </div>
 </div>
