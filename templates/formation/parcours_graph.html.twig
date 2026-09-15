@@ -70,9 +70,14 @@
                    le href des <a> SVG) : navigation pleine page vers l'éditeur du parcours #}
                 {% for r in g.rows %}
                     {% set b = g.boxes[r.node.id] %}
+                    {% set isCurrent = current and r.node.id == current %}
                     <a xlink:href="{{ path('parcours_editor', {fid: formation.id, nid: r.node.id}) }}" style="cursor:pointer">
-                        <rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ g.boxH }}" rx="10" fill="#eef2ff" stroke="#c7d2fe" stroke-width="1.5"/>
-                        <text x="{{ b.x + b.w / 2 }}" y="{{ b.cy + 4 }}" text-anchor="middle" font-size="13" font-weight="600" fill="#3730a3">{{ r.node.label ?: 'Parcours' }}</text>
+                        {% if isCurrent %}
+                            <text x="{{ b.cx }}" y="{{ b.y - 7 }}" text-anchor="middle" font-size="10" font-weight="700" fill="#4f46e5" letter-spacing="0.3">VOUS ÊTES ICI</text>
+                        {% endif %}
+                        <rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ g.boxH }}" rx="10"
+                              fill="{{ isCurrent ? '#c7d2fe' : '#eef2ff' }}" stroke="{{ isCurrent ? '#4f46e5' : '#c7d2fe' }}" stroke-width="{{ isCurrent ? 2.5 : 1.5 }}"/>
+                        <text x="{{ b.x + b.w / 2 }}" y="{{ b.cy + 4 }}" text-anchor="middle" font-size="13" font-weight="{{ isCurrent ? 700 : 600 }}" fill="#3730a3">{{ r.node.label ?: 'Parcours' }}</text>
                     </a>
                 {% endfor %}
             </svg>
@@ -80,11 +85,14 @@
 
         <ul class="mt-4 space-y-1 text-sm">
             {% for r in g.rows %}
-                <li class="flex flex-wrap items-center gap-2">
+                {% set isCurrent = current and r.node.id == current %}
+                <li class="flex flex-wrap items-center gap-2 rounded-lg px-2 py-1 -mx-2"
+                    style="{{ isCurrent ? 'background:var(--c-primary-soft)' : '' }}">
                     <span class="type-badge">{{ ux_icon('ph:compass', {class: 'icon'}) }} Parcours</span>
                     <a href="{{ path('parcours_editor', {fid: formation.id, nid: r.node.id}) }}" class="font-medium hover:underline">{{ r.node.label ?: '—' }}</a>
                     <span class="text-xs text-gray-400">{{ g.unit|lower }}s {{ r.colStart }}–{{ r.colEnd }}</span>
                     {% if r.node.parcoursParent %}<span class="text-xs text-gray-400">· enfant de « {{ r.node.parcoursParent.label ?: '—' }} »</span>{% endif %}
+                    {% if isCurrent %}<span class="pill" style="background:var(--c-primary);color:#fff">{{ ux_icon('ph:map-pin', {class: 'icon'}) }} Vous êtes ici</span>{% endif %}
                 </li>
             {% endfor %}
         </ul>

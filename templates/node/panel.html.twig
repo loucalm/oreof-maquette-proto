@@ -155,7 +155,7 @@
                     {% if pcands is empty %}
                         <p class="fld-help">Aucun parcours antérieur compatible. Renseignez les {{ unit|lower }}s ci-dessus puis enregistrez : les parcours qui se terminent avant deviendront sélectionnables.</p>
                     {% endif %}
-                    <a href="{{ path('formation_parcours_graph', {id: formation.id}) }}" data-turbo-frame="node-panel"
+                    <a href="{{ path('formation_parcours_graph', {id: formation.id, current: node.id}) }}" data-turbo-frame="node-panel"
                        class="inline-block text-xs font-medium hover:underline" style="color:var(--c-primary)">{{ ux_icon('ph:map-trifold', {class: 'icon'}) }} Voir l'arborescence des parcours</a>
                 </div>
             {% endif %}

@@ -185,6 +185,9 @@ final class FormationController extends AbstractController
         return $this->render('formation/parcours_graph.html.twig', [
             'formation' => $formation,
             'graph' => $graph->build($formation),
+            // Parcours d'où l'on vient (lien depuis son propre panneau « Positionnement
+            // & ramification ») — mis en surbrillance dans l'arborescence.
+            'current' => $request->query->get('current'),
             // Chargé dans la frame « node-panel » de l'éditeur → fragment seul.
             // Ouvert directement (lien de la consultation, URL) → page complète.
             'standalone' => 'node-panel' !== $request->headers->get('Turbo-Frame'),
