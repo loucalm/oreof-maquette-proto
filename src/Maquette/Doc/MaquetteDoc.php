@@ -85,16 +85,6 @@ final class MaquetteDoc
         return $blocs;
     }
 
-    public function hasTransversalBloc(): bool
-    {
-        foreach ($this->competenceBlocs() as $b) {
-            if ($b->isTransversalBloc()) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 
     /** @return list<TreeNode> nœuds « parcours », dans l'ordre */
     public function parcoursNodes(): array

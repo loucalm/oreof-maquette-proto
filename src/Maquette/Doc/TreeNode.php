@@ -192,15 +192,6 @@ final class TreeNode
         return $i === false ? 0 : $i;
     }
 
-    public function getDepth(): int
-    {
-        $depth = 0;
-        for ($c = $this->parent; $c !== null; $c = $c->parent) {
-            ++$depth;
-        }
-
-        return $depth;
-    }
 
     // ─── bloc de choix : imbrication à l'infini, transparente pour le squelette ───
 
@@ -301,11 +292,6 @@ final class TreeNode
         return $this;
     }
 
-    public function getMutualizedFrom(): ?string
-    {
-        return $this->mutualizedFrom;
-    }
-
     public function setMutualizedFrom(?string $ref): self
     {
         $this->mutualizedFrom = $ref;
@@ -390,17 +376,6 @@ final class TreeNode
         usort($blocs, static fn (TreeNode $a, TreeNode $b): int => [!$a->isTransversalBloc(), $a->getPosition()] <=> [!$b->isTransversalBloc(), $b->getPosition()]);
 
         return $blocs;
-    }
-
-    public function hasTransversalBloc(): bool
-    {
-        foreach ($this->children as $c) {
-            if ($c->isTransversalBloc()) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     // ─── sections « Paramètre du parcours » (document JSON 2/3) ───

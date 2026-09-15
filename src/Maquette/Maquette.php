@@ -173,12 +173,6 @@ final class Maquette
         $this->em->flush();
     }
 
-    /** Vide le cache (après un reshape lourd, un import…). */
-    public function forget(Formation $formation): void
-    {
-        unset($this->cache[$formation->getId() ?? spl_object_id($formation)]);
-    }
-
     /** @return list<FormationRevision> les plus récentes d'abord */
     public function history(Formation $formation): array
     {

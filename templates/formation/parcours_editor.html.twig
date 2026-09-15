@@ -7,7 +7,8 @@
 {% set frameSrc = bcc ? path('bcc_parcours_editor', {fid: formation.id, nid: parcours.id})
     : (param ? path('parcours_param', {fid: formation.id, nid: parcours.id, key: param})
     : (focus ? path('node_panel', {fid: formation.id, nid: focus}) : null)) %}
-{% set bodyRoot = type_meta()[formation.getChildTypeKey('parcours')] ?? null %}
+{% set typeMeta = type_meta() %}
+{% set bodyRoot = typeMeta[formation.getChildTypeKey('parcours')] ?? null %}
 
 {% block body %}
 
@@ -67,7 +68,7 @@
              data-tree-dup-url-value="{{ path('node_duplicate', {fid: formation.id, nid: '__ID__'}) }}"
              data-tree-del-url-value="{{ path('node_delete', {fid: formation.id, nid: '__ID__'}) }}"
              data-tree-chain-value="{{ formation.effectiveStructure|json_encode|e('html_attr') }}"
-             data-tree-type-meta-value="{{ type_meta()|json_encode|e('html_attr') }}"
+             data-tree-type-meta-value="{{ typeMeta|json_encode|e('html_attr') }}"
              data-tree-root-key-value="{{ formation.getChildTypeKey('parcours') }}"
              data-tree-base-parent-value="{{ parcours.id }}">
 

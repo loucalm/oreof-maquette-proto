@@ -81,6 +81,12 @@ final class NodeTypeController extends AbstractController
     #[Route('/node-types/{id}/delete', name: 'node_type_delete', methods: ['POST'])]
     public function delete(NodeType $nodeType, EntityManagerInterface $em, Maquette $maquette): Response
     {
+        if ($nodeType->isSystem()) {
+            $this->addFlash('warning', sprintf('« %s » est un type du socle : il ne peut pas être supprimé.', $nodeType->getLabel()));
+
+            return $this->redirectToRoute('node_type_index');
+        }
+
         $used = $maquette->countNodesOfType($nodeType->getKey());
         if ($used > 0) {
             $this->addFlash('warning', sprintf(

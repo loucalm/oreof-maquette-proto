@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Maquette;
 
-use App\Entity\FieldDef;
 use App\Repository\FieldDefRepository;
 
 /**
@@ -19,10 +18,6 @@ use App\Repository\FieldDefRepository;
  */
 final class AttributeCatalog
 {
-    public const DOMAIN_PROPS = 'props';
-    public const DOMAIN_HOURS = 'volume_horaire';
-    public const DOMAIN_MCCC = 'mccc';
-
     /**
      * Volume horaire : deux lieux (présentiel / distanciel) déclinés en CM/TD/TP,
      * plus un volume de travail étudiant (TE) global. Stockage :

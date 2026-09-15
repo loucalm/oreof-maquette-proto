@@ -41,6 +41,7 @@ final class AdminController extends AbstractController
     ): Response {
         $allTypes = $types->findAllOrdered();
         $allFields = $fields->allOrdered();
+        $allMccTypes = $mcctypes->allOrdered();
 
         return $this->render('admin/index.html.twig', [
             'cards' => [
@@ -70,8 +71,8 @@ final class AdminController extends AbstractController
                 ],
                 [
                     'section' => 'mcctypes',
-                    'count' => \count($mcctypes->allOrdered()),
-                    'sub' => \count(array_filter($mcctypes->allOrdered(), static fn ($t) => $t->isSystem())).' du socle',
+                    'count' => \count($allMccTypes),
+                    'sub' => \count(array_filter($allMccTypes, static fn ($t) => $t->isSystem())).' du socle',
                     'text' => 'Les types de MCCC (CCI, CT…), leurs diplômes concernés et leurs règles de validation (nombre d’épreuves, coefficients…).',
                 ],
             ],

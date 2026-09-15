@@ -19,8 +19,6 @@ use Doctrine\Persistence\ObjectManager;
  */
 final class NodeTypeFixtures extends Fixture
 {
-    public const REF_PREFIX = 'nodetype-';
-
     public function load(ObjectManager $manager): void
     {
         $defs = [
@@ -55,7 +53,6 @@ final class NodeTypeFixtures extends Fixture
                 ->setSystem(true);
 
             $manager->persist($type);
-            $this->addReference(self::REF_PREFIX.$key, $type);
         }
 
         $manager->flush();

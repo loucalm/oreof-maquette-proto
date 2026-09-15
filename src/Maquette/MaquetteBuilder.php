@@ -104,6 +104,8 @@ final class MaquetteBuilder
 
         // --- statut ---
         $s = $this->completion->node($node);
+        $view->reqCount = $s['req'];
+        $view->filledCount = $s['filled'];
         $view->missingCount = $s['req'] - $s['filled'];
         $view->status = $this->resolveStatus($node, $view);
 
@@ -192,7 +194,8 @@ final class MaquetteBuilder
 
     /**
      * Progression globale : % de champs requis remplis sur l'ensemble des nœuds.
-     * Même formule que le cache Formation::stats (Completion).
+     * Même formule que le cache Formation::stats (Completion). Réutilise les
+     * req/filled déjà calculés par view() — pas de second parcours de l'arbre.
      *
      * @param list<NodeView> $roots
      */
@@ -201,9 +204,8 @@ final class MaquetteBuilder
         $acc = ['req' => 0, 'filled' => 0];
         $walk = function (array $views) use (&$walk, &$acc): void {
             foreach ($views as $v) {
-                $s = $this->completion->node($v->node);
-                $acc['req'] += $s['req'];
-                $acc['filled'] += $s['filled'];
+                $acc['req'] += $v->reqCount;
+                $acc['filled'] += $v->filledCount;
                 $walk($v->children);
             }
         };

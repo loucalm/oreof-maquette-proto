@@ -6,6 +6,13 @@
 
 {% block body %}
 {% set g = graph %}
+{# candidats de parenté calculés une fois par parcours, réutilisés par la boîte SVG (data-candidates) et par le <select> du tableau #}
+{% set candidatesByNode = {} %}
+{% if not standalone %}
+    {% for r in g.rows %}
+        {% set candidatesByNode = candidatesByNode|merge({(r.node.id): parcours_candidates(r.node)}) %}
+    {% endfor %}
+{% endif %}
 
 <turbo-frame id="node-panel">
 <div class="panel-body" data-panel-active="parcours">
@@ -90,7 +97,7 @@
                     <a xlink:href="{{ path('parcours_editor', {fid: formation.id, nid: r.node.id}) }}" style="cursor:pointer"
                        {% if not standalone %}
                            data-ramification-target="box" data-nid="{{ r.node.id }}"
-                           data-candidates="{{ parcours_candidates(r.node)|map(c => c.id)|join(' ') }}"
+                           data-candidates="{{ candidatesByNode[r.node.id]|map(c => c.id)|join(' ') }}"
                            data-action="pointerdown->ramification#startDrag click->ramification#suppressIfDragged"
                        {% endif %}>
                         {% if isCurrent %}
@@ -149,7 +156,7 @@
                                 <td class="px-4 py-2.5">
                                     <select name="parentId[{{ r.node.id }}]" class="fld" data-ramification-target="parentSelect" data-nid="{{ r.node.id }}">
                                         <option value="">— Aucun (parcours racine) —</option>
-                                        {% for cand in parcours_candidates(r.node) %}
+                                        {% for cand in candidatesByNode[r.node.id] %}
                                             <option value="{{ cand.id }}" {{ r.node.parcoursParent and r.node.parcoursParent.id == cand.id ? 'selected' }}>{{ cand.label ?: '—' }} · {{ g.unit|lower }}s {{ cand.periodeDebut }}–{{ cand.periodeFin }}</option>
                                         {% endfor %}
                                     </select>

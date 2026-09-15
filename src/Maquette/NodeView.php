@@ -25,14 +25,12 @@ final class NodeView
         public float $totalEcts = 0.0,
         /** Nombre d'attributs requis manquants sur ce nœud seul. */
         public int $missingCount = 0,
+        /** Champs requis de ce nœud seul (total / remplis) — pour cumuler la progression sans reparcourir l'arbre. */
+        public int $reqCount = 0,
+        public int $filledCount = 0,
         /** Référence hiérarchique calculée (« UE 1.1 ») — Phase 3, vide avant. */
         public string $ref = '',
     ) {
-    }
-
-    public function id(): ?string
-    {
-        return $this->node->getId();
     }
 
     public function hasChildren(): bool
