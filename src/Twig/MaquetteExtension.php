@@ -11,6 +11,7 @@ use App\Maquette\AttributeCatalog;
 use App\Maquette\Doc\TreeNode;
 use App\Maquette\Maquette;
 use App\Repository\NodeTypeRepository;
+use App\Repository\ReferentielRepository;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
@@ -24,6 +25,7 @@ final class MaquetteExtension extends AbstractExtension
         private readonly UrlGeneratorInterface $router,
         private readonly \App\Maquette\Completion $completion,
         private readonly \App\Maquette\Numbering $numbering,
+        private readonly ReferentielRepository $referentiels,
     ) {
     }
 
@@ -57,6 +59,7 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('bcc_status', $this->bccStatus(...)),
             new TwigFunction('parcours_param_sections', static fn () => FormationController::PARCOURS_PARAM_SECTIONS),
             new TwigFunction('parcours_param_status', static fn (TreeNode $p, string $k) => FormationController::parcoursParamStatus($p, $k)),
+            new TwigFunction('referentiel', fn (string $key) => $this->referentiels->values($key)),
         ];
     }
 

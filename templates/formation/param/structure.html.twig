@@ -1,6 +1,5 @@
 {% import 'formation/param/_fields.html.twig' as fld %}
-{% set R = 'App\\Maquette\\Referentiels' %}
-{% set regimeChoices = constant(R ~ '::REGIMES_INSCRIPTION') %}
+{% set regimeChoices = referentiel('regimes_inscription') %}
 <turbo-frame id="node-panel">
 <div class="panel-body" data-panel-active="param:{{ key }}" data-controller="modal">
     <div class="panel-head">
@@ -116,7 +115,7 @@
 
                 <div>
                     {{ fld.label("Langue d'enseignement", true, "Langue dans laquelle sont dispensés les cours (à l'exception des cours de langue)") }}
-                    {{ fld.select('langue', data.langue ?? '', constant(R ~ '::LANGUES')) }}
+                    {{ fld.select('langue', data.langue ?? '', referentiel('langues')) }}
                     <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter une langue</span></div>
                 </div>
 
@@ -132,7 +131,7 @@
                 </div>
                 <div>
                     {{ fld.label('Code(s) ROME', true, 'Ajoutez les codes ROME pour préciser les métiers accessibles aux diplômés.') }}
-                    {{ fld.select('codesRome', data.codesRome ?? '', constant(R ~ '::CODES_ROME')) }}
+                    {{ fld.select('codesRome', data.codesRome ?? '', referentiel('codes_rome')) }}
                     <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter un code ROME</span></div>
                 </div>
 

@@ -6,9 +6,9 @@ namespace App\Controller;
 
 use App\Enum\NodeFamily;
 use App\Maquette\AttributeCatalog;
-use App\Maquette\Referentiels;
 use App\Repository\FieldDefRepository;
 use App\Repository\NodeTypeRepository;
+use App\Repository\ReferentielRepository;
 use App\Repository\StructureTemplateRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -34,6 +34,7 @@ final class AdminController extends AbstractController
         NodeTypeRepository $types,
         FieldDefRepository $fields,
         StructureTemplateRepository $templates,
+        ReferentielRepository $referentiels,
     ): Response {
         $allTypes = $types->findAllOrdered();
         $allFields = $fields->allOrdered();
@@ -60,7 +61,7 @@ final class AdminController extends AbstractController
                 ],
                 [
                     'section' => 'referentiels',
-                    'count' => \count(Referentiels::all()),
+                    'count' => \count($referentiels->allOrdered()),
                     'sub' => 'nomenclatures',
                     'text' => 'Les listes de valeurs des formulaires : diplômes, domaines, régimes, langues, codes ROME, types de MCCC…',
                 ],
@@ -69,7 +70,7 @@ final class AdminController extends AbstractController
     }
 
     #[Route('/administration/referentiels', name: 'admin_referentiels', methods: ['GET'])]
-    public function referentiels(FieldDefRepository $fields, AttributeCatalog $catalog): Response
+    public function referentiels(FieldDefRepository $fields, AttributeCatalog $catalog, ReferentielRepository $referentiels): Response
     {
         // options des champs « liste » / « radio » (nature, type d'UE, type d'EC…)
         $choiceFields = [];
@@ -80,7 +81,7 @@ final class AdminController extends AbstractController
         }
 
         return $this->render('admin/referentiels.html.twig', [
-            'referentiels' => Referentiels::all(),
+            'referentiels' => $referentiels->allOrdered(),
             'mcccTypes' => AttributeCatalog::MCCC_TYPES,
             'hourModalities' => AttributeCatalog::HOUR_MODALITIES,
             'hourPlaces' => AttributeCatalog::HOUR_PLACES,

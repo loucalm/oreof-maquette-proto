@@ -2,7 +2,6 @@
    data = Node.parametres['organisation'] ; le nom + l'ECTS + le parent de
    ramification sont portés par le nœud parcours lui-même. #}
 {% import 'formation/param/_fields.html.twig' as fld %}
-{% set R = 'App\\Maquette\\Referentiels' %}
 {% set unit = period_unit(formation) %}
 <turbo-frame id="node-panel">
 <div class="panel-body" data-panel-active="param:{{ key }}">
@@ -27,7 +26,7 @@
         </div>
         <div>
             {{ fld.label("Modalités d'enseignement de la formation", true) }}
-            {{ fld.select('modalitesEnseignement', data.modalitesEnseignement ?? '', constant(R ~ '::MODALITES_ENSEIGNEMENT')) }}
+            {{ fld.select('modalitesEnseignement', data.modalitesEnseignement ?? '', referentiel('modalites_enseignement')) }}
         </div>
         <div>
             {{ fld.label("Composante d'inscription", true, "Composante(s) à laquelle les étudiants pourront s'inscrire") }}
@@ -35,7 +34,7 @@
         </div>
         <div>
             {{ fld.label("Régime(s) d'inscription", true, "Choix multiples") }}
-            {{ fld.checkgroup('regimes', data.regimes ?? [], constant(R ~ '::REGIMES_INSCRIPTION')) }}
+            {{ fld.checkgroup('regimes', data.regimes ?? [], referentiel('regimes_inscription')) }}
         </div>
         <div>
             {{ fld.label("Précisez les modalités de l'alternance", true) }}
@@ -46,7 +45,7 @@
 
         <div>
             {{ fld.label('Localisation du parcours', true) }}
-            {{ fld.selectAdd('lieu', data.lieu ?? '', constant(R ~ '::LOCALISATIONS'), 'Ajouter une autre localisation') }}
+            {{ fld.selectAdd('lieu', data.lieu ?? '', referentiel('localisations'), 'Ajouter une autre localisation') }}
         </div>
         <div>
             {{ fld.label('Code Apogée de la mention', false, 'Code de la mention dans Apogée') }}
@@ -58,11 +57,11 @@
         <div class="grid gap-5 md:grid-cols-2">
             <div>
                 {{ fld.label('Responsable du parcours', true, 'Responsable principale du parcours') }}
-                {{ fld.selectAdd('respParcours', data.respParcours ?? '', constant(R ~ '::RESPONSABLES'), 'Créer nouveau', 'Choisir dans la liste ou choisir "+ nouveau"') }}
+                {{ fld.selectAdd('respParcours', data.respParcours ?? '', referentiel('responsables'), 'Créer nouveau', 'Choisir dans la liste ou choisir "+ nouveau"') }}
             </div>
             <div>
                 {{ fld.label('Co-responsable du parcours', false, 'Co-Responsable du parcours') }}
-                {{ fld.selectAdd('coRespParcours', data.coRespParcours ?? '', constant(R ~ '::RESPONSABLES'), 'Créer nouveau', 'Choisir dans la liste ou choisir "+ nouveau"') }}
+                {{ fld.selectAdd('coRespParcours', data.coRespParcours ?? '', referentiel('responsables'), 'Créer nouveau', 'Choisir dans la liste ou choisir "+ nouveau"') }}
             </div>
         </div>
 

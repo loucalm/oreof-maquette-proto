@@ -2,7 +2,6 @@
 {% set adminSection = 'templates' %}
 {% block title %}{{ template.label }} · template{% endblock %}
 
-{% set R = 'App\\Maquette\\Referentiels' %}
 {% set tid = template.id %}
 
 {# ─── un nœud du template + sa branche ─── #}
@@ -81,7 +80,7 @@
             <div class="text-xs font-medium">Diplôme imposé</div>
             <select name="diplome" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
                 <option value="">— aucun (template libre) —</option>
-                {% for d in constant(R ~ '::DIPLOMES') %}
+                {% for d in referentiel('diplomes') %}
                     <option value="{{ d }}" {{ template.diplome == d ? 'selected' }}>{{ d }}</option>
                 {% endfor %}
             </select>
