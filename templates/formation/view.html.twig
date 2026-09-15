@@ -49,11 +49,21 @@
             {% elseif tab == 'mccc' and n.getAttribute('mccc') %}
                 {% set hasContent = true %}
                 {% set mccc = n.getAttribute('mccc') %}
-                {% set mtypes = constant('App\\Maquette\\AttributeCatalog::MCCC_TYPES') %}
-                {% set mt = (mccc.type is defined) ? (mtypes[mccc.type] ?? null) : null %}
                 <div>
                     <div class="fld-cat">{{ domains[tab] ?? tab }}</div>
-                    <div class="text-sm text-gray-600 mt-2">{{ mt ? mt.short ~ ' — ' ~ mt.label : (mccc.type ?? '—') }}</div>
+                    <div class="text-sm text-gray-600 mt-2">{{ mccc.type is defined ? (mccc_type_label(mccc.type) ?? mccc.type) : '—' }}</div>
+                    {% if mccc.evaluations ?? false %}
+                        <div class="mt-1.5 space-y-0.5 text-sm text-gray-600">
+                            {% for e in mccc.evaluations %}
+                                <div>{{ referentiel('types_epreuve')[e.type] ?? e.type }} — {{ e.weight }} %</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    {% for r in mccc_results(n) %}
+                        <div class="text-xs mt-1" style="color:{{ r.valid ? '#166534' : '#b91c1c' }}">
+                            {{ ux_icon(r.valid ? 'ph:check' : 'ph:x', {class: 'icon'}) }} {{ r.message }}
+                        </div>
+                    {% endfor %}
                 </div>
             {% else %}
                 {% set curCat = '__init__' %}

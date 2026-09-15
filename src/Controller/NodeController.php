@@ -87,7 +87,7 @@ final class NodeController extends AbstractController
             $attrs[$key] = match ($def['field']) {
                 'number' => $this->numOrNull($request->request->get("attr_$key")),
                 'hours' => $this->readHours($request),
-                'mccc' => $this->cleanArray($request->request->all('attr_mccc')),
+                'mccc' => $this->readMccc($request),
                 'competencies' => array_values(array_filter(
                     array_map(static fn ($v) => trim((string) $v), $request->request->all('attr_competencies')),
                 )),
@@ -494,12 +494,35 @@ final class NodeController extends AbstractController
         return $out;
     }
 
-    /** @param array<mixed> $arr */
-    private function cleanArray(array $arr): array
+    /**
+     * MCCC : le type choisi, et si ce type comporte des épreuves à pondérer,
+     * la liste des épreuves saisies (`attr_mccc[evaluations][][type|weight]`).
+     * Les lignes vides (ni type, ni coefficient) sont ignorées.
+     *
+     * @return array<string, mixed>
+     */
+    private function readMccc(Request $request): array
     {
-        return array_filter(
-            array_map(static fn ($v) => \is_string($v) ? trim($v) : $v, $arr),
-            static fn ($v) => $v !== '' && $v !== null,
-        );
+        $raw = $request->request->all('attr_mccc');
+        $type = trim((string) ($raw['type'] ?? ''));
+        if ('' === $type) {
+            return [];
+        }
+
+        $out = ['type' => $type];
+        $evaluations = [];
+        foreach ((array) ($raw['evaluations'] ?? []) as $row) {
+            $etype = \is_array($row) ? trim((string) ($row['type'] ?? '')) : '';
+            $weight = \is_array($row) ? (float) str_replace(',', '.', (string) ($row['weight'] ?? '')) : 0.0;
+            if ('' === $etype && $weight <= 0) {
+                continue;
+            }
+            $evaluations[] = ['type' => $etype, 'weight' => $weight];
+        }
+        if ([] !== $evaluations) {
+            $out['evaluations'] = $evaluations;
+        }
+
+        return $out;
     }
 }

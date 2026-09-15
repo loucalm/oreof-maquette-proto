@@ -77,6 +77,10 @@ final class ReferentielFixtures extends Fixture
             'Fiche — Bases de données' => 'Fiche — Bases de données',
             'Fiche — Mathématiques' => 'Fiche — Mathématiques',
         ]],
+        ['types_epreuve', 'Types d’épreuve (MCCC)', 'Proposés dans les collections d’évaluations d’un type de MCCC.', [
+            'cc' => 'Contrôle continu', 'ct' => 'Contrôle terminal', 'oral' => 'Oral',
+            'rapport' => 'Rapport / dossier', 'projet' => 'Projet',
+        ]],
     ];
 
     public function load(ObjectManager $manager): void

@@ -10,6 +10,8 @@ use App\Entity\NodeType;
 use App\Maquette\AttributeCatalog;
 use App\Maquette\Doc\TreeNode;
 use App\Maquette\Maquette;
+use App\Maquette\McccValidator;
+use App\Repository\MccTypeRepository;
 use App\Repository\NodeTypeRepository;
 use App\Repository\ReferentielRepository;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -26,6 +28,8 @@ final class MaquetteExtension extends AbstractExtension
         private readonly \App\Maquette\Completion $completion,
         private readonly \App\Maquette\Numbering $numbering,
         private readonly ReferentielRepository $referentiels,
+        private readonly MccTypeRepository $mcctypes,
+        private readonly McccValidator $mcccValidator,
     ) {
     }
 
@@ -60,6 +64,13 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('parcours_param_sections', static fn () => FormationController::PARCOURS_PARAM_SECTIONS),
             new TwigFunction('parcours_param_status', static fn (TreeNode $p, string $k) => FormationController::parcoursParamStatus($p, $k)),
             new TwigFunction('referentiel', fn (string $key) => $this->referentiels->values($key)),
+            new TwigFunction('mccc_types_for', fn (Formation $f) => $this->mcctypes->availableFor($f->getDiplome())),
+            new TwigFunction('mccc_results', fn (TreeNode $n) => $this->mcccValidator->forNode($n)),
+            new TwigFunction('mccc_type_label', function (string $key): ?string {
+                $t = $this->mcctypes->findOneByKey($key);
+
+                return null !== $t ? $t->getShortLabel().' — '.$t->getLabel() : null;
+            }),
         ];
     }
 

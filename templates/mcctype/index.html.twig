@@ -1,0 +1,58 @@
+{% extends 'admin/_layout.html.twig' %}
+{% set adminSection = 'mcctypes' %}
+{% block title %}Types de MCCC{% endblock %}
+
+{% block admin_body %}
+<div class="flex items-start justify-between mb-5">
+    <div>
+        <h2 class="text-lg font-bold">Types de MCCC</h2>
+        <p class="text-sm" style="color:var(--c-muted)">
+            Les modalités de contrôle des connaissances proposées sur un EC (CCI, CT…), leurs diplômes
+            concernés et leurs règles de validation (nombre d’épreuves, coefficients…).
+        </p>
+    </div>
+    <a href="{{ path('mcctype_new') }}" class="rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} Nouveau type</a>
+</div>
+
+<div class="rounded-xl border bg-white overflow-hidden" style="border-color:var(--c-border)">
+    <table class="w-full text-sm">
+        <thead class="text-xs uppercase tracking-wide" style="color:var(--c-muted)">
+            <tr class="border-b" style="border-color:var(--c-border)">
+                <th class="text-left px-4 py-2.5">Type</th>
+                <th class="text-left px-4 py-2.5">Diplômes concernés</th>
+                <th class="text-left px-4 py-2.5">Épreuves pondérées</th>
+                <th class="text-left px-4 py-2.5">Règles</th>
+                <th class="px-4 py-2.5"></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for t in types %}
+            <tr class="border-b last:border-0" style="border-color:var(--c-border)">
+                <td class="px-4 py-2.5">
+                    <span class="font-medium">{{ t.shortLabel }}</span> — {{ t.label }}
+                    {% if t.system %}<span class="pill ml-1">socle</span>{% endif %}
+                    {% if t.description %}<div class="fld-help mt-0.5">{{ t.description }}</div>{% endif %}
+                </td>
+                <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ t.diplomes is empty ? 'Tous' : t.diplomes|join(', ') }}</td>
+                <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ t.hasEvaluations ? t.evaluationsLabel : '—' }}</td>
+                <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ t.rules|length }}</td>
+                <td class="px-4 py-2.5 text-right whitespace-nowrap">
+                    <a href="{{ path('mcctype_edit', {id: t.id}) }}" class="text-xs hover:underline">Modifier</a>
+                    {% if not t.system %}
+                        <form method="post" action="{{ path('mcctype_delete', {id: t.id}) }}" class="inline"
+                              data-controller="confirm" data-confirm-message-value="Supprimer le type de MCCC « {{ t.label }} » ? Les EC déjà réglés sur ce type conservent leur saisie mais ce type ne sera plus proposé.">
+                            <button class="text-xs text-red-600 hover:underline ml-2">Suppr.</button>
+                        </form>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<p class="text-xs mt-3" style="color:var(--c-muted)">
+    Un type sans diplôme sélectionné est proposé pour toutes les formations. Une même modalité qui varie
+    selon le diplôme (ex. CCI en Licence vs en Master) se déclare comme deux types distincts, clairement nommés.
+</p>
+{% endblock %}

@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Enum\NodeFamily;
 use App\Maquette\AttributeCatalog;
 use App\Repository\FieldDefRepository;
+use App\Repository\MccTypeRepository;
 use App\Repository\NodeTypeRepository;
 use App\Repository\ReferentielRepository;
 use App\Repository\StructureTemplateRepository;
@@ -27,6 +28,7 @@ final class AdminController extends AbstractController
         'fields' => ['label' => 'Champs des formulaires', 'route' => 'field_index', 'icon' => 'ph:note-pencil'],
         'templates' => ['label' => 'Templates de structure', 'route' => 'template_index', 'icon' => 'ph:folders'],
         'referentiels' => ['label' => 'Référentiels', 'route' => 'admin_referentiels', 'icon' => 'ph:books'],
+        'mcctypes' => ['label' => 'Types de MCCC', 'route' => 'admin_mcctypes', 'icon' => 'ph:list-checks'],
     ];
 
     #[Route('/administration', name: 'admin_index', methods: ['GET'])]
@@ -35,6 +37,7 @@ final class AdminController extends AbstractController
         FieldDefRepository $fields,
         StructureTemplateRepository $templates,
         ReferentielRepository $referentiels,
+        MccTypeRepository $mcctypes,
     ): Response {
         $allTypes = $types->findAllOrdered();
         $allFields = $fields->allOrdered();
@@ -63,7 +66,13 @@ final class AdminController extends AbstractController
                     'section' => 'referentiels',
                     'count' => \count($referentiels->allOrdered()),
                     'sub' => 'nomenclatures',
-                    'text' => 'Les listes de valeurs des formulaires : diplômes, domaines, régimes, langues, codes ROME, types de MCCC…',
+                    'text' => 'Les listes de valeurs des formulaires : diplômes, domaines, régimes, langues, codes ROME…',
+                ],
+                [
+                    'section' => 'mcctypes',
+                    'count' => \count($mcctypes->allOrdered()),
+                    'sub' => \count(array_filter($mcctypes->allOrdered(), static fn ($t) => $t->isSystem())).' du socle',
+                    'text' => 'Les types de MCCC (CCI, CT…), leurs diplômes concernés et leurs règles de validation (nombre d’épreuves, coefficients…).',
                 ],
             ],
         ]);
@@ -82,12 +91,19 @@ final class AdminController extends AbstractController
 
         return $this->render('admin/referentiels.html.twig', [
             'referentiels' => $referentiels->allOrdered(),
-            'mcccTypes' => AttributeCatalog::MCCC_TYPES,
             'hourModalities' => AttributeCatalog::HOUR_MODALITIES,
             'hourPlaces' => AttributeCatalog::HOUR_PLACES,
             'families' => NodeFamily::cases(),
             'fieldTypes' => \App\Entity\FieldDef::TYPES,
             'choiceFields' => $choiceFields,
+        ]);
+    }
+
+    #[Route('/administration/mcc-types', name: 'admin_mcctypes', methods: ['GET'])]
+    public function mcctypes(MccTypeRepository $mcctypes): Response
+    {
+        return $this->render('mcctype/index.html.twig', [
+            'types' => $mcctypes->allOrdered(),
         ]);
     }
 }

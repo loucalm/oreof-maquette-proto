@@ -50,12 +50,13 @@
     {% endif %}
 
     <div class="rounded-xl border bg-white p-5 space-y-4" style="border-color:var(--c-border)">
-        <div class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">Évaluation &amp; volume horaire</div>
-        {% set mccc = {} %}
-        {% for k, v in mcccTypes %}{% set mccc = mccc|merge({(k): v.short ~ ' — ' ~ v.label}) %}{% endfor %}
-        {{ ui.row('Types de MCCC', 'Contrôle continu intégral, mixte, terminal…', mccc) }}
+        <div class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">Volume horaire</div>
         {{ ui.row('Modalités d’heures', null, hourModalities) }}
         {{ ui.row('Lieux', 'Le volume « travail étudiant (TE) » est un total global à part.', hourPlaces) }}
+        <p class="text-xs" style="color:var(--c-muted)">
+            Les types de MCCC (CCI, CT…) ont leur propre page —
+            <a href="{{ path('admin_mcctypes') }}" class="underline">Types de MCCC</a>.
+        </p>
     </div>
 
     <div class="rounded-xl border bg-white p-5 space-y-4" style="border-color:var(--c-border)">

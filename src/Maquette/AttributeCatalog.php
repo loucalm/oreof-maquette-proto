@@ -31,14 +31,6 @@ final class AttributeCatalog
     public const HOUR_MODALITIES = ['cm' => 'CM', 'td' => 'TD', 'tp' => 'TP'];
     public const HOUR_PLACES = ['pres' => 'Présentiel', 'dist' => 'Distanciel'];
 
-    /** Types de MCCC d'un EC (clé => libellé court + intitulé). */
-    public const MCCC_TYPES = [
-        'CCI' => ['short' => 'CCI', 'label' => 'Contrôle continu intégral'],
-        'CC_CT' => ['short' => 'CC + CT', 'label' => 'Contrôle continu & contrôle terminal'],
-        'CT' => ['short' => 'CT', 'label' => 'Contrôle terminal'],
-        'CC' => ['short' => 'CC', 'label' => 'Contrôle continu'],
-    ];
-
     /** Capacités qui ne sont pas des champs du catalogue mais des drapeaux. */
     public const FLAGS = [
         'mutualisable' => 'ELP mutualisable / raccrochable',
