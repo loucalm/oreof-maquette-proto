@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Enum\NodeFamily;
 use App\Maquette\AttributeCatalog;
+use App\Repository\DerogationRequestRepository;
 use App\Repository\FieldDefRepository;
 use App\Repository\MccTypeRepository;
 use App\Repository\NodeTypeRepository;
@@ -29,6 +30,7 @@ final class AdminController extends AbstractController
         'templates' => ['label' => 'Templates de structure', 'route' => 'template_index', 'icon' => 'ph:folders'],
         'referentiels' => ['label' => 'Référentiels', 'route' => 'admin_referentiels', 'icon' => 'ph:books'],
         'mcctypes' => ['label' => 'Types de MCCC', 'route' => 'admin_mcctypes', 'icon' => 'ph:list-checks'],
+        'derogations' => ['label' => 'Dérogations', 'route' => 'admin_derogations', 'icon' => 'ph:flag'],
     ];
 
     #[Route('/administration', name: 'admin_index', methods: ['GET'])]
@@ -38,10 +40,12 @@ final class AdminController extends AbstractController
         StructureTemplateRepository $templates,
         ReferentielRepository $referentiels,
         MccTypeRepository $mcctypes,
+        DerogationRequestRepository $derogations,
     ): Response {
         $allTypes = $types->findAllOrdered();
         $allFields = $fields->allOrdered();
         $allMccTypes = $mcctypes->allOrdered();
+        $pendingDerogations = $derogations->countPending();
 
         return $this->render('admin/index.html.twig', [
             'cards' => [
@@ -74,6 +78,12 @@ final class AdminController extends AbstractController
                     'count' => \count($allMccTypes),
                     'sub' => \count(array_filter($allMccTypes, static fn ($t) => $t->isSystem())).' du socle',
                     'text' => 'Les types de MCCC (CCI, CT…), leurs diplômes concernés et leurs règles de validation (nombre d’épreuves, coefficients…).',
+                ],
+                [
+                    'section' => 'derogations',
+                    'count' => $pendingDerogations,
+                    'sub' => 'en attente',
+                    'text' => 'Les demandes des responsables de formation pour ajouter/déplacer/supprimer quelque chose que le template du diplôme ne prévoit pas.',
                 ],
             ],
         ]);

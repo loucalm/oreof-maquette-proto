@@ -130,7 +130,7 @@
 
         {# ─── panneau gauche ─── #}
         <div class="editor-aside flex flex-col overflow-hidden"
-             data-controller="tree"
+             data-controller="tree modal"
              {% if not multi %}
              data-tree-move-url-value="{{ path('node_move', {fid: formation.id, nid: '__ID__'}) }}"
              data-tree-dup-url-value="{{ path('node_duplicate', {fid: formation.id, nid: '__ID__'}) }}"
@@ -247,7 +247,29 @@
                                 class="tree-act-btn tree-act-btn-danger">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
                     </form>
                 {% endif %}
+                <button type="button" data-action="modal#open"
+                        class="tree-act-btn" title="Demander une dérogation" style="border-color:#fde68a;background:#fffbeb;color:#b45309">
+                    {{ ux_icon('ph:flag', {class: 'icon'}) }}
+                </button>
             </div>
+
+            {# ─── modale : demander une dérogation ─── #}
+            <dialog data-modal-target="dialog" data-action="click->modal#clickOutside"
+                    class="rounded-2xl border-0 p-0 w-[min(480px,92vw)] backdrop:bg-black/40">
+                <form method="post" action="{{ path('formation_derogation_create', {fid: formation.id}) }}" data-turbo-frame="_top" class="p-6 space-y-4">
+                    <h3 class="text-lg font-bold">{{ ux_icon('ph:flag', {class: 'icon'}) }} Demander une dérogation</h3>
+                    <p class="text-sm text-gray-500" data-tree-target="derogContext">Décrivez ce que vous voudriez ajouter, déplacer ou supprimer, et pourquoi.</p>
+                    <input type="hidden" name="nodeId" data-tree-target="derogNodeId" value="">
+                    <div>
+                        <label class="text-xs font-medium">Votre demande</label>
+                        <textarea name="message" rows="4" required class="fld mt-1" placeholder="Ex. : je voudrais ajouter une UE optionnelle supplémentaire au semestre 3…"></textarea>
+                    </div>
+                    <div class="flex items-center justify-end gap-2 pt-1">
+                        <button type="button" data-action="modal#close" class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">Annuler</button>
+                        <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">Envoyer la demande</button>
+                    </div>
+                </form>
+            </dialog>
         </div>
 
         {# ─── panneau d'édition ─── #}

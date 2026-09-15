@@ -275,6 +275,32 @@
             </form>
         </div>
         {% endif %}
+
+        {# ── Demandes de dérogation ── #}
+        {{ fld.divider('Demandes de dérogation') }}
+        <p class="text-xs text-gray-500 -mt-2">
+            Pour ajouter, déplacer ou supprimer quelque chose que le template du diplôme ne prévoit pas
+            (typiquement un ELP imposé) — bouton {{ ux_icon('ph:flag', {class: 'icon'}) }} dans la barre d'actions de l'arborescence.
+        </p>
+        {% if derogations is empty %}
+            <p class="text-sm" style="color:var(--c-muted)">Aucune demande envoyée pour cette formation.</p>
+        {% else %}
+            <div class="space-y-2">
+                {% for d in derogations %}
+                    <div class="rounded-lg border p-3 text-sm" style="border-color:var(--c-border)">
+                        <div class="flex flex-wrap items-center gap-2">
+                            {% if d.nodeLabel %}<span class="type-badge">{{ d.nodeLabel }}</span>{% endif %}
+                            <span class="pill" style="{{ d.status.value == 'pending' ? 'background:#fef3c7;color:#b45309' : (d.status.value == 'approved' ? 'background:#dcfce7;color:#15803d' : 'background:#fee2e2;color:#b91c1c') }}">{{ d.status.label }}</span>
+                            <span class="text-xs" style="color:var(--c-muted)">{{ d.createdAt|date('d/m/Y') }}</span>
+                        </div>
+                        <p class="mt-1.5 whitespace-pre-line">{{ d.message }}</p>
+                        {% if not d.isPending and d.adminNote %}
+                            <p class="mt-1.5 rounded-md p-2 text-xs" style="background:#f8f9fb">{{ d.adminNote }}</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
     </div>
     </div>
 </div>

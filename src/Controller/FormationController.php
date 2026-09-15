@@ -630,6 +630,7 @@ final class FormationController extends AbstractController
         Formation $formation,
         string $key,
         StructureTemplateRepository $templates,
+        \App\Repository\DerogationRequestRepository $derogations,
     ): Response {
         if (!isset(self::PARAM_SECTIONS[$key])) {
             throw $this->createNotFoundException();
@@ -643,6 +644,7 @@ final class FormationController extends AbstractController
             // seulement pour "structure"
             'nodeCount' => $key === 'structure' ? \count($this->maquette->open($formation)->allNodes()) : 0,
             'templates' => $templates->findAllOrdered(),
+            'derogations' => $key === 'structure' ? $derogations->findByFormation($formation) : [],
         ]);
     }
 

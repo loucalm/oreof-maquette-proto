@@ -14,7 +14,7 @@ import Sortable from 'sortablejs';
  */
 export default class extends Controller {
     static values = { moveUrl: String, dupUrl: String, delUrl: String, chain: Array, typeMeta: Object, rootKey: String, baseParent: String };
-    static targets = ['addForm', 'addParent', 'addType', 'addButton', 'addChoiceButton', 'dupForm', 'dupButton', 'delForm', 'delButton'];
+    static targets = ['addForm', 'addParent', 'addType', 'addButton', 'addChoiceButton', 'dupForm', 'dupButton', 'delForm', 'delButton', 'derogNodeId', 'derogContext'];
 
     connect() {
         this.storeKey = 'tree-collapsed';
@@ -188,6 +188,19 @@ export default class extends Controller {
                 this.delFormTarget.dataset.confirmMessageValue =
                     `Supprimer « ${name || 'cet ELP'} » et tout ce qu'il contient ?`;
             }
+        }
+
+        // ── demander une dérogation (contextuelle au nœud sélectionné, sinon générale) ──
+        if (this.hasDerogNodeIdTarget) {
+            this.derogNodeIdTarget.value = activeId || '';
+        }
+        if (this.hasDerogContextTarget) {
+            const lockedMove = activeLi?.dataset.lockedMove === '1';
+            this.derogContextTarget.textContent = !activeId
+                ? 'Décrivez ce que vous voudriez ajouter, déplacer ou supprimer, et pourquoi.'
+                : (lockedDel || lockedMove)
+                    ? `« ${name} » fait partie de la structure imposée par le diplôme. Expliquez ce que vous voudriez faire (le supprimer, le déplacer…) et pourquoi.`
+                    : `À propos de « ${name} ». Décrivez ce que vous voudriez ajouter, déplacer ou supprimer, et pourquoi.`;
         }
 
         // ── bouton « Ajouter » ──

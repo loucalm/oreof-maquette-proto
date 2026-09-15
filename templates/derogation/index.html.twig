@@ -1,0 +1,60 @@
+{% extends 'admin/_layout.html.twig' %}
+{% set adminSection = 'derogations' %}
+{% block title %}Dérogations{% endblock %}
+
+{% block admin_body %}
+<div class="mb-5">
+    <h2 class="text-lg font-bold">Demandes de dérogation</h2>
+    <p class="text-sm" style="color:var(--c-muted)">
+        Un responsable de formation a demandé, par texte, d’ajouter/déplacer/supprimer quelque chose que le
+        template du diplôme ne prévoit pas (typiquement un ELP imposé). Traitez la demande en appliquant
+        vous-même la modification nécessaire dans la formation, puis marquez-la ci-dessous.
+    </p>
+</div>
+
+{% if derogations is empty %}
+    <div class="rounded-xl border border-dashed p-8 text-center text-sm" style="border-color:var(--c-border);color:var(--c-muted)">
+        Aucune demande de dérogation pour l’instant.
+    </div>
+{% else %}
+    <div class="space-y-3">
+        {% for d in derogations %}
+            <div class="rounded-xl border bg-white p-4" style="border-color:var(--c-border)">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <a href="{{ path('formation_editor', {id: d.formation.id}) }}" target="_blank" class="font-medium hover:underline">{{ d.formation.name }}</a>
+                            {% if d.nodeLabel %}<span class="type-badge">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ d.nodeLabel }}</span>
+                            {% else %}<span class="text-xs" style="color:var(--c-muted)">Demande générale</span>{% endif %}
+                            <span class="pill" style="{{ d.status.value == 'pending' ? 'background:#fef3c7;color:#b45309' : (d.status.value == 'approved' ? 'background:#dcfce7;color:#15803d' : 'background:#fee2e2;color:#b91c1c') }}">{{ d.status.label }}</span>
+                        </div>
+                        <p class="text-sm mt-2 whitespace-pre-line">{{ d.message }}</p>
+                        <div class="text-xs mt-1" style="color:var(--c-muted)">Envoyée le {{ d.createdAt|date('d/m/Y à H:i') }}</div>
+                        {% if not d.isPending %}
+                            <div class="mt-2 rounded-lg p-2.5 text-sm" style="background:#f8f9fb">
+                                {% if d.adminNote %}<div>{{ d.adminNote }}</div>{% endif %}
+                                <div class="text-xs mt-1" style="color:var(--c-muted)">{{ d.status.label }} le {{ d.resolvedAt|date('d/m/Y à H:i') }}</div>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {% if d.isPending %}
+                        <div class="flex flex-col gap-2 shrink-0 w-full sm:w-64">
+                            <form method="post" action="{{ path('admin_derogation_resolve', {id: d.id}) }}" class="space-y-1.5">
+                                <input type="hidden" name="status" value="approved">
+                                <input name="adminNote" placeholder="Note (facultative)" class="fld text-xs">
+                                <button class="w-full rounded-lg px-3 py-1.5 text-xs font-semibold text-white" style="background:var(--st-ok)">{{ ux_icon('ph:check-bold', {class: 'icon'}) }} Approuver</button>
+                            </form>
+                            <form method="post" action="{{ path('admin_derogation_resolve', {id: d.id}) }}" class="space-y-1.5">
+                                <input type="hidden" name="status" value="rejected">
+                                <input name="adminNote" placeholder="Motif du refus (facultatif)" class="fld text-xs">
+                                <button class="w-full rounded-lg border px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50" style="border-color:var(--c-border)">{{ ux_icon('ph:x', {class: 'icon'}) }} Refuser</button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+{% endblock %}
