@@ -1,0 +1,44 @@
+admin:
+  layout:
+    kicker: Administration
+    title: Paramétrage de l’offre de formation
+    description: >-
+      Le métamodèle (types d’élément pédagogique, champs), les squelettes réutilisables et les
+      nomenclatures. « Rien n’est figé » : tout se configure ici.
+  index:
+    title: Administration
+    where_title: 'Où se configure quoi ?'
+    where_hierarchy: >-
+      La <strong>hiérarchie</strong> des niveaux (qui contient qui) est propre à chaque formation :
+      « Configuration de la structure » dans son éditeur.
+    where_params: >-
+      Les <strong>paramètres d’une formation / d’un parcours</strong> (organisation, présentation…) se
+      saisissent dans l’éditeur concerné.
+    where_common: >-
+      Ici on définit ce qui est <strong>commun</strong> : les types, les champs, les squelettes et les
+      listes de valeurs.
+  referentiels:
+    title: Référentiels
+    heading: Référentiels & nomenclatures
+    description: Les listes de valeurs (select, choix) proposées dans les formulaires.
+    metamodel_title: Métamodèle
+    families_row_title: Familles de type d’élément pédagogique
+    families_row_help: Déterminent le rendu et l’emplacement d’un type.
+    field_types_row_title: Types de saisie d’un champ
+    field_types_row_help: Choisis à la création d’un champ.
+    choice_fields_title: 'Options des champs « liste » / « radio »'
+    choice_fields_link: modifier dans Champs
+    hours_title: Volume horaire
+    hour_modalities_row_title: Modalités d’heures
+    hour_places_row_title: Lieux
+    hour_places_row_help: Le volume « travail étudiant (TE) » est un total global à part.
+    mcc_note: 'Les types de MCCC (CCI, CT…) ont leur propre page — %link_open%Types de MCCC%link_close%.'
+    nomenclatures_title: Nomenclatures de l’offre de formation
+    nomenclatures_description: >-
+      Diplômes, domaines, régimes, langues, codes ROME… Réutilisées telles quelles dans les formulaires
+      de formation et de parcours.
+    new_button: Nouveau référentiel
+    delete_confirm: >-
+      Supprimer le référentiel « %label% » ? Les valeurs déjà saisies dans les formulaires restent en
+      base mais la liste ne sera plus proposée.
+    no_value: Aucune valeur.

@@ -1,28 +1,28 @@
 {% extends 'base.html.twig' %}
-{% block title %}Vérifier la saisie · {{ formation.name }}{% endblock %}
+{% block title %}{{ 'formation.check.title_prefix'|trans({}, 'formation') }} · {{ formation.name }}{% endblock %}
 
 {% block body %}
 <div class="rounded-2xl border bg-white px-7 py-6 mb-4" style="border-color:var(--c-border)">
     <div class="flex items-start justify-between">
         <div>
             <div class="text-xs text-gray-400">
-                <a href="{{ path('formation_index') }}" class="hover:underline">Liste des formation</a> › {{ formation.name }} › Vérifier la saisie
+                <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.editor.breadcrumb_list'|trans({}, 'formation') }}</a> › {{ formation.name }} › {{ 'formation.check.title_prefix'|trans({}, 'formation') }}
             </div>
-            <h1 class="text-2xl font-extrabold tracking-tight mt-1">Vérifier la saisie</h1>
-            <p class="text-sm text-gray-500">{{ formation.name }} — {{ progress }}% complété</p>
+            <h1 class="text-2xl font-extrabold tracking-tight mt-1">{{ 'formation.check.title_prefix'|trans({}, 'formation') }}</h1>
+            <p class="text-sm text-gray-500">{{ 'formation.check.subtitle'|trans({'%name%': formation.name, '%progress%': progress}, 'formation') }}</p>
         </div>
-        <a href="{{ path('formation_editor', {id: formation.id}) }}" class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} Modifier la structure</a>
+        <a href="{{ path('formation_editor', {id: formation.id}) }}" class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'formation.check.edit_structure_button'|trans({}, 'formation') }}</a>
     </div>
 </div>
 
 <div class="rounded-2xl border bg-white px-7 py-6" style="border-color:var(--c-border)">
     {% if issues is empty %}
         <div class="rounded-xl border p-6 text-sm" style="border-color:#bbf7d0;background:#f0fdf4">
-            <span class="font-semibold text-green-800">{{ ux_icon('ph:check-bold', {class: 'icon'}) }} Aucune anomalie</span>
-            <p class="text-green-700 mt-1">Tous les champs requis sont renseignés et chaque conteneur a au moins un enfant.</p>
+            <span class="font-semibold text-green-800">{{ ux_icon('ph:check-bold', {class: 'icon'}) }} {{ 'formation.check.no_issue_title'|trans({}, 'formation') }}</span>
+            <p class="text-green-700 mt-1">{{ 'formation.check.no_issue_text'|trans({}, 'formation') }}</p>
         </div>
     {% else %}
-        <p class="text-sm text-gray-500 mb-4">{{ issues|length }} ELP à compléter :</p>
+        <p class="text-sm text-gray-500 mb-4">{{ 'formation.check.issues_count'|trans({'%count%': issues|length}, 'formation') }}</p>
         <ul class="space-y-2">
             {% for issue in issues %}
                 {% set n = issue.node %}
@@ -31,14 +31,14 @@
                         <div class="flex items-center gap-2">
                             <span class="status-dot" data-status="empty"></span>
                             <span class="type-badge">{{ ux_icon(n.type.icon, {class: 'icon'}) }} [{{ n.type.label }}]</span>
-                            <span class="text-sm font-medium">{{ n.label ?: '(sans libellé)' }}</span>
+                            <span class="text-sm font-medium">{{ n.label ?: 'formation.check.no_label'|trans({}, 'formation') }}</span>
                         </div>
                         <div class="ml-6 mt-1 text-xs text-red-600">
-                            Manquant : {{ issue.missing|join(', ') }}
+                            {{ 'formation.check.missing_label'|trans({'%fields%': issue.missing|join(', ')}, 'formation') }}
                         </div>
                     </div>
                     <a href="{{ path('formation_editor', {id: formation.id, focus: n.id}) }}"
-                       class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">Corriger {{ ux_icon('ph:arrow-right', {class: 'icon'}) }}</a>
+                       class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">{{ 'formation.check.fix_button'|trans({}, 'formation') }} {{ ux_icon('ph:arrow-right', {class: 'icon'}) }}</a>
                 </li>
             {% endfor %}
         </ul>

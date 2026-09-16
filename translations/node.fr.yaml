@@ -1,0 +1,99 @@
+node:
+  panel:
+    title: Gestion de la structure
+    locked_title: Cet ELP fait partie de la structure imposée par le diplôme
+    locked_badge: imposé
+    total_hours_label: 'Total heures :'
+    ects_target: '/ %target%'
+    ects_unit: ECTS
+    convert_choice_confirm: >-
+      Transformer « %label% » en bloc de choix ? Il deviendra la première alternative d'un nouveau bloc
+      de choix, à sa place actuelle — vous pourrez ensuite y ajouter d'autres alternatives.
+    convert_choice_title: >-
+      La nature « à choix » seule ne regroupe rien : ce bouton remplace cet ELP par un bloc de choix qui
+      le contient comme première alternative.
+    convert_choice_button: Transformer en bloc de choix
+    unmutualize: Ne plus mutualiser
+    mutualize: Mutualiser
+    reattach_button: Raccrocher
+    node_params_button: 'Paramètre ELP [%type%]'
+    parent_label: ELP parent
+    parent_help: Emplacement autorisé par le squelette de la formation
+    root_option: — Racine de la formation —
+    parent_locked_help: Emplacement imposé par le diplôme — non modifiable.
+    no_location_help: >-
+      Aucun emplacement : le squelette ne prévoit pas ce type sous un autre élément pédagogique.
+    label_field: Libellé
+    label_help: Max 200 caractères
+    ec_code_label: Précisez le code de l'EC
+    code_label: Code
+    ec_code_help: Code de l'EC
+    code_help: Code de l'ELP (ex. code de l'EC)
+    ramification_title: Positionnement dans l’arborescence des parcours
+    ramification_note: >-
+      Les %unit%s et le parcours parent se modifient désormais depuis l’arborescence des parcours, au
+      niveau de la formation.
+    period_start: '%unit% de début'
+    period_end: '%unit% de fin'
+    parcours_parent_label: Parcours parent
+    parcours_parent_none: — Aucun (parcours racine) —
+    view_ramification_link: Voir / modifier dans l'arborescence des parcours
+    duplicate_delete_hint: "Dupliquer / supprimer : bas de l'arborescence"
+    add_child_label: Ajouter un enfant
+    ects_label: ECTS de l'%type%
+    ects_help: ECTS associés à l'%type%.
+    choice_ue_type: Choisir un type d'UE
+    choice_ec_type: Choisir un type d'EC
+    choice_default: — Choisir —
+    nature_choice_note: >-
+      Cocher une case ici n'assemble aucune alternative — utilisez « Transformer en bloc de choix » en
+      haut de ce panneau pour regrouper cet ELP avec d'autres.
+    no_competencies: >-
+      Aucune compétence dans le référentiel (BCC). Ajoutez-en dans « Référentiel de compétences (BCC) ».
+    filter_competencies_placeholder: Filtrer les compétences…
+    no_competency_match: Aucune compétence ne correspond.
+    add_competency_fake: Ajouter une compétence
+    fiche_choice_placeholder: Choisir dans la liste ou « Créer une nouvelle »…
+    create_fiche_fake: Créer une nouvelle fiche
+    hours_none_label: EC sans volume horaire
+    place_pres: présentiel
+    place_dist: distanciel
+    hours_volume_label: Volume horaire en %place%
+    hours_unit_label: Heure(s) %mod%
+    hours_place_help: Précisez le volume horaire en %place%
+    hours_te_label: Volume horaire de travail étudiant (TE)
+    hours_te_help: Précisez le volume horaire en TE (stage, projet, autonomie, …)
+    mccc_type_label: Type de MCCC
+    no_mccc_types: >-
+      Aucun type de MCCC proposé pour ce diplôme — configurez-en dans « Administration › Types de MCCC ».
+    default_evaluations_label: Épreuves
+    mccc_total_label: 'Total :'
+    add_evaluation_button: Ajouter une épreuve
+    evaluation_type_placeholder: — Type d'épreuve —
+    delete_title: Supprimer
+  attach:
+    title: Raccrocher un élément pédagogique mutualisé
+    description: >-
+      Récupère une copie d'un élément pédagogique mis à disposition par une autre formation. La copie
+      est indépendante (le lien vers la source est conservé pour info).
+    empty: >-
+      Aucun élément pédagogique mutualisé compatible pour l'instant. Mutualisez un élément pédagogique
+      depuis une autre formation (bouton « Mutualiser » sur son panneau) pour le voir apparaître ici.
+    source_formation: 'depuis « %formation% »'
+    children_count: '%count% enfant(s)'
+    back_link: Retour à l’ELP
+  params:
+    title: Paramètre de l’élément pédagogique
+    jump_to_label: Aller aux paramètres de…
+    current_node_suffix: (cet ELP)
+    jump_to_help: Passe rapidement d'un niveau de la structure à un autre.
+    fields_title: Champs affichés sur cet ELP
+    fields_note: >-
+      Cochez les champs à faire apparaître. Les champs %admin_badge% sont imposés par l'administrateur
+      du type.
+    mutualisable_label: ELP mutualisable / accrochable
+    admin_badge: admin
+    core_badge: cœur
+    no_field: Ce type ne porte aucun champ. Ajoutez-en depuis la gestion du type.
+    manage_type_link: 'Gérer le type « %type% »'
+    manage_fields_link: Gérer les champs

@@ -12,10 +12,10 @@
 <div class="panel-body" data-controller="tabs modal" data-panel-active="node:{{ node.id }}">
 
     <div class="panel-head">
-        <h2 class="text-xl font-bold">Gestion de la structure</h2>
+        <h2 class="text-xl font-bold">{{ 'node.panel.title'|trans({}, 'node') }}</h2>
         <div class="text-sm text-gray-400">
             {{ T }}{% if view.ref %} <span class="font-bold" style="color:var(--c-primary)">{{ view.ref }}</span>{% endif %}
-            {%- if node.isLocked('delete') %} · <span title="Cet ELP fait partie de la structure imposée par le diplôme">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} imposé</span>{% endif -%}
+            {%- if node.isLocked('delete') %} · <span title="{{ 'node.panel.locked_title'|trans({}, 'node') }}">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ 'node.panel.locked_badge'|trans({}, 'node') }}</span>{% endif -%}
         </div>
         <div class="text-sm text-gray-400 mt-1">
             {{ formation.name }}
@@ -45,36 +45,36 @@
     {# tuiles + actions #}
     <div class="flex flex-wrap items-stretch gap-2">
         <div class="rounded-xl border px-4 py-2.5 text-sm" style="border-color:#fcd34d;background:#fffbeb">
-            <span class="text-gray-500">Total heures :</span> <span class="font-semibold">{{ view.totalHours|round }}</span>
+            <span class="text-gray-500">{{ 'node.panel.total_hours_label'|trans({}, 'node') }}</span> <span class="font-semibold">{{ view.totalHours|round }}</span>
         </div>
         <div class="rounded-xl border px-4 py-2.5 text-sm" style="border-color:#fcd34d;background:#fffbeb">
             <span class="font-semibold">{{ view.totalEcts|round }}</span>
-            <span class="text-gray-500">{% if view.ectsTarget %}/ {{ view.ectsTarget }} {% endif %}ECTS</span>
+            <span class="text-gray-500">{% if view.ectsTarget %}{{ 'node.panel.ects_target'|trans({'%target%': view.ectsTarget}, 'node') }} {% endif %}{{ 'node.panel.ects_unit'|trans({}, 'node') }}</span>
         </div>
         <div class="ml-auto flex flex-wrap gap-2">
             {% if not node.isChoiceBloc() and node.getParent() %}
             <form method="post" action="{{ path('node_convert_choice', {fid: formation.id, nid: node.id}) }}" data-turbo-frame="_top"
                   data-controller="confirm"
-                  data-confirm-message-value="Transformer « {{ node.getDisplayLabel() }} » en bloc de choix ? Il deviendra la première alternative d'un nouveau bloc de choix, à sa place actuelle — vous pourrez ensuite y ajouter d'autres alternatives.">
+                  data-confirm-message-value="{{ 'node.panel.convert_choice_confirm'|trans({'%label%': node.getDisplayLabel()}, 'node') }}">
                 <button class="rounded-lg border px-3 py-2 text-sm" style="border-color:#e9d5ff;background:#faf5ff;color:#9333ea"
-                        title="La nature « à choix » seule ne regroupe rien : ce bouton remplace cet ELP par un bloc de choix qui le contient comme première alternative.">
-                    {{ ux_icon('ph:shuffle', {class: 'icon'}) }} Transformer en bloc de choix
+                        title="{{ 'node.panel.convert_choice_title'|trans({}, 'node') }}">
+                    {{ ux_icon('ph:shuffle', {class: 'icon'}) }} {{ 'node.panel.convert_choice_button'|trans({}, 'node') }}
                 </button>
             </form>
             {% endif %}
             {% if caps.mutualisable ?? false %}
             <form method="post" action="{{ node_url(node, 'node_mutualize') }}" data-turbo-frame="_top">
                 <button class="rounded-lg border px-3 py-2 text-sm" style="border-color:#fcd34d;color:#b45309">
-                    {{ ux_icon('ph:share-network', {class: 'icon'}) }} {{ node.mutualized ? 'Ne plus mutualiser' : 'Mutualiser' }} [{{ T }}]
+                    {{ ux_icon('ph:share-network', {class: 'icon'}) }} {{ node.mutualized ? 'node.panel.unmutualize'|trans({}, 'node') : 'node.panel.mutualize'|trans({}, 'node') }} [{{ T }}]
                 </button>
             </form>
             {% endif %}
             {% if childTypes is not empty %}
             <a href="{{ node_url(node, 'node_attach_index') }}" data-turbo-frame="node-panel"
-               class="rounded-lg border px-3 py-2 text-sm text-green-700" style="border-color:#bbf7d0">{{ ux_icon('ph:arrow-bend-down-right', {class: 'icon'}) }} Raccrocher</a>
+               class="rounded-lg border px-3 py-2 text-sm text-green-700" style="border-color:#bbf7d0">{{ ux_icon('ph:arrow-bend-down-right', {class: 'icon'}) }} {{ 'node.panel.reattach_button'|trans({}, 'node') }}</a>
             {% endif %}
             {% if is_admin() %}
-            <button type="button" data-action="modal#open" class="rounded-lg border px-3 py-2 text-sm text-gray-600" style="border-color:var(--c-border)">{{ ux_icon('ph:gear', {class: 'icon'}) }} Paramètre ELP [{{ T }}]</button>
+            <button type="button" data-action="modal#open" class="rounded-lg border px-3 py-2 text-sm text-gray-600" style="border-color:var(--c-border)">{{ ux_icon('ph:gear', {class: 'icon'}) }} {{ 'node.panel.node_params_button'|trans({'%type%': T}, 'node') }}</button>
             {% endif %}
         </div>
     </div>
@@ -93,9 +93,9 @@
             {% if tk == 'props' %}
                 {% set parents = valid_parents(node) %}
                 {% set lockedMove = node.isLocked('move') %}
-                {{ ui.label("ELP parent", true, "Emplacement autorisé par le squelette de la formation") }}
+                {{ ui.label('node.panel.parent_label'|trans({}, 'node'), true, 'node.panel.parent_help'|trans({}, 'node')) }}
                 <select name="parentId" class="fld" {{ lockedMove ? 'disabled' }}>
-                    {% if can_be_root(node) %}<option value="">— Racine de la formation —</option>{% endif %}
+                    {% if can_be_root(node) %}<option value="">{{ 'node.panel.root_option'|trans({}, 'node') }}</option>{% endif %}
                     {% for cand in parents %}
                         <option value="{{ cand.id }}" {{ node.parent and node.parent.id == cand.id ? 'selected' }}>
                             [{{ cand.type.label }}] {{ cand.label ?: '—' }}
@@ -103,17 +103,17 @@
                     {% endfor %}
                 </select>
                 {% if lockedMove %}
-                    <div class="fld-help">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} Emplacement imposé par le diplôme — non modifiable.</div>
+                    <div class="fld-help">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ 'node.panel.parent_locked_help'|trans({}, 'node') }}</div>
                 {% elseif parents is empty and not can_be_root(node) %}
-                    <div class="fld-help text-amber-600">Aucun emplacement : le squelette ne prévoit pas ce type sous un autre élément pédagogique.</div>
+                    <div class="fld-help text-amber-600">{{ 'node.panel.no_location_help'|trans({}, 'node') }}</div>
                 {% endif %}
 
-                {{ ui.label("Libellé", true, "Max 200 caractères") }}
+                {{ ui.label('node.panel.label_field'|trans({}, 'node'), true, 'node.panel.label_help'|trans({}, 'node')) }}
                 <input name="label" value="{{ node.label }}" maxlength="200" class="fld">
 
                 {% if caps.code ?? false %}
                     {% set isEc = node.type.key == 'ec' %}
-                    {{ ui.label(isEc ? "Précisez le code de l'EC" : 'Code', isEc, isEc ? "Code de l'EC" : "Code de l'ELP (ex. code de l'EC)") }}
+                    {{ ui.label(isEc ? 'node.panel.ec_code_label'|trans({}, 'node') : 'node.panel.code_label'|trans({}, 'node'), isEc, isEc ? 'node.panel.ec_code_help'|trans({}, 'node') : 'node.panel.code_help'|trans({}, 'node')) }}
                     <input name="code" value="{{ node.code }}" class="fld">
                 {% endif %}
             {% endif %}
@@ -133,34 +133,34 @@
             {% if tk == 'props' and node.isParcours %}
                 {% set unit = period_unit(formation) %}
                 <div class="rounded-lg border p-3 space-y-3" style="border-color:var(--c-border);background:#f8f9fb">
-                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Positionnement dans l’arborescence des parcours</div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ 'node.panel.ramification_title'|trans({}, 'node') }}</div>
                     <p class="fld-help">
-                        {{ ux_icon('ph:info', {class: 'icon'}) }} Les {{ unit|lower }}s et le parcours parent se modifient désormais depuis l’arborescence des parcours, au niveau de la formation.
+                        {{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'node.panel.ramification_note'|trans({'%unit%': unit|lower}, 'node') }}
                     </p>
                     <div class="grid grid-cols-2 gap-2 text-sm">
                         <div>
-                            <div class="text-[11px] uppercase tracking-wide text-gray-400">{{ unit }} de début</div>
+                            <div class="text-[11px] uppercase tracking-wide text-gray-400">{{ 'node.panel.period_start'|trans({'%unit%': unit}, 'node') }}</div>
                             <div class="font-medium mt-0.5">{{ node.periodeDebut }}</div>
                         </div>
                         <div>
-                            <div class="text-[11px] uppercase tracking-wide text-gray-400">{{ unit }} de fin</div>
+                            <div class="text-[11px] uppercase tracking-wide text-gray-400">{{ 'node.panel.period_end'|trans({'%unit%': unit}, 'node') }}</div>
                             <div class="font-medium mt-0.5">{{ node.periodeFin }}</div>
                         </div>
                     </div>
                     <div class="text-sm">
-                        <div class="text-[11px] uppercase tracking-wide text-gray-400">Parcours parent</div>
-                        <div class="font-medium mt-0.5">{{ node.parcoursParent ? node.parcoursParent.displayLabel : '— Aucun (parcours racine) —' }}</div>
+                        <div class="text-[11px] uppercase tracking-wide text-gray-400">{{ 'node.panel.parcours_parent_label'|trans({}, 'node') }}</div>
+                        <div class="font-medium mt-0.5">{{ node.parcoursParent ? node.parcoursParent.displayLabel : 'node.panel.parcours_parent_none'|trans({}, 'node') }}</div>
                     </div>
                     <a href="{{ path('formation_parcours_graph', {id: formation.id, current: node.id}) }}" data-turbo-frame="node-panel"
-                       class="inline-block text-xs font-medium hover:underline" style="color:var(--c-primary)">{{ ux_icon('ph:map-trifold', {class: 'icon'}) }} Voir / modifier dans l'arborescence des parcours</a>
+                       class="inline-block text-xs font-medium hover:underline" style="color:var(--c-primary)">{{ ux_icon('ph:map-trifold', {class: 'icon'}) }} {{ 'node.panel.view_ramification_link'|trans({}, 'node') }}</a>
                 </div>
             {% endif %}
         </div>
         {% endfor %}
 
         <div class="flex items-center gap-2 pt-2 border-t" style="border-color:var(--c-border)">
-            <button class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">Enregistrer</button>
-            <span class="text-xs text-gray-400">Dupliquer / supprimer : bas de l'arborescence</span>
+            <button class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
+            <span class="text-xs text-gray-400">{{ 'node.panel.duplicate_delete_hint'|trans({}, 'node') }}</span>
         </div>
     </form>
 
@@ -168,7 +168,7 @@
     <dialog data-modal-target="dialog" data-action="click->modal#clickOutside"
             class="rounded-2xl border-0 p-0 w-[min(600px,94vw)] backdrop:bg-black/40">
         <turbo-frame id="node-params-frame" src="{{ node_url(node, 'node_params_form') }}" loading="lazy" class="block">
-            <div class="p-10 text-center text-sm text-gray-400">Chargement…</div>
+            <div class="p-10 text-center text-sm text-gray-400">{{ 'common.loading'|trans({}, 'common') }}</div>
         </turbo-frame>
     </dialog>
 
@@ -178,13 +178,13 @@
           class="rounded-xl border p-3 flex flex-wrap items-end gap-2" style="border-color:var(--c-border)">
         <input type="hidden" name="parentId" value="{{ node.id }}">
         <div class="flex-1 min-w-[180px]">
-            <div class="fld-label">Ajouter un enfant</div>
+            <div class="fld-label">{{ 'node.panel.add_child_label'|trans({}, 'node') }}</div>
             <select name="typeKey" class="fld mt-1">
                 {% for t in childTypes %}<option value="{{ t.key }}">{{ t.label }}</option>{% endfor %}
             </select>
         </div>
-        <input name="label" placeholder="Libellé" class="fld w-40">
-        <button class="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter</button>
+        <input name="label" placeholder="{{ 'node.panel.label_field'|trans({}, 'node') }}" class="fld w-40">
+        <button class="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'common.add'|trans({}, 'common') }}</button>
     </form>
     {% endif %}
 
@@ -199,7 +199,7 @@
     <div>
         <div class="flex items-center justify-between">
             <span class="fld-label">{{ text }}</span>
-            {% if required %}<span class="text-[11px] font-semibold text-red-500 uppercase tracking-wide">Champs requis</span>{% endif %}
+            {% if required %}<span class="text-[11px] font-semibold text-red-500 uppercase tracking-wide">{{ 'common.required_badge'|trans({}, 'common') }}</span>{% endif %}
         </div>
         {% if help %}<div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ help }}</div>{% endif %}
     </div>
@@ -210,8 +210,8 @@
     {% set val = node.getAttribute(key) %}
     {% if def.field not in ['hours', 'mccc'] %}
         {% set ectsTyped = key == 'ects' and node.type.key in ['ue', 'ec'] %}
-        {% set flabel = ectsTyped ? "ECTS de l'" ~ node.type.label : def.label %}
-        {% set fhelp = ectsTyped ? "ECTS associés à l'" ~ node.type.label ~ '.' : (def.help ?? null) %}
+        {% set flabel = ectsTyped ? 'node.panel.ects_label'|trans({'%type%': node.type.label}, 'node') : def.label %}
+        {% set fhelp = ectsTyped ? 'node.panel.ects_help'|trans({'%type%': node.type.label}, 'node') : (def.help ?? null) %}
         {{ ui.label(flabel, def.required ?? false, fhelp) }}
     {% endif %}
     {% if def.field == 'number' %}
@@ -219,7 +219,7 @@
     {% elseif def.field == 'textarea' %}
         <textarea name="attr_{{ key }}" rows="3" class="fld">{{ val }}</textarea>
     {% elseif def.field == 'choice' %}
-        {% set ph = key == 'ueType' ? "Choisir un type d'UE" : (key == 'ecType' ? "Choisir un type d'EC" : '— Choisir —') %}
+        {% set ph = key == 'ueType' ? 'node.panel.choice_ue_type'|trans({}, 'node') : (key == 'ecType' ? 'node.panel.choice_ec_type'|trans({}, 'node') : 'node.panel.choice_default'|trans({}, 'node')) %}
         <select name="attr_{{ key }}" class="fld">
             <option value="">{{ ph }}</option>
             {% for ov, ol in def.options %}<option value="{{ ov }}" {{ val == ov ? 'selected' }}>{{ ol }}</option>{% endfor %}
@@ -234,20 +234,19 @@
         </div>
         {% if key == 'nature' and not node.isChoiceBloc() and node.getParent() %}
             <p class="mt-2 text-xs" style="color:#9333ea">
-                {{ ux_icon('ph:info', {class: 'icon'}) }} Cocher une case ici n'assemble aucune alternative —
-                utilisez « Transformer en bloc de choix » en haut de ce panneau pour regrouper cet ELP avec d'autres.
+                {{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'node.panel.nature_choice_note'|trans({}, 'node') }}
             </p>
         {% endif %}
     {% elseif def.field == 'competencies' %}
         {% set groups = bcc_competences(node) %}
         {% set cur = val ?? [] %}
         {% if groups is empty %}
-            <p class="fld-help">Aucune compétence dans le référentiel (BCC). Ajoutez-en dans « Référentiel de compétences (BCC) ».</p>
+            <p class="fld-help">{{ 'node.panel.no_competencies'|trans({}, 'node') }}</p>
         {% else %}
             <div data-controller="cbxfilter" class="mt-1">
                 <div class="rounded-lg border overflow-hidden" style="border-color:var(--c-border)">
                     <div class="border-b bg-gray-50 px-2 py-1.5" style="border-color:var(--c-border)">
-                        <input type="search" placeholder="Filtrer les compétences…" data-cbxfilter-target="input"
+                        <input type="search" placeholder="{{ 'node.panel.filter_competencies_placeholder'|trans({}, 'node') }}" data-cbxfilter-target="input"
                                data-action="input->cbxfilter#filter"
                                class="w-full rounded-md border px-2 py-1 text-sm" style="border-color:var(--c-border)">
                     </div>
@@ -269,38 +268,39 @@
                                 </div>
                             </div>
                         {% endfor %}
-                        <p data-cbxfilter-target="empty" hidden class="px-1 py-3 text-center text-sm text-gray-400">Aucune compétence ne correspond.</p>
+                        <p data-cbxfilter-target="empty" hidden class="px-1 py-3 text-center text-sm text-gray-400">{{ 'node.panel.no_competency_match'|trans({}, 'node') }}</p>
                     </div>
                 </div>
                 <div class="mt-1 flex items-center justify-between">
                     <span class="text-xs text-gray-400" data-cbxfilter-target="count"></span>
-                    <span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter une compétence</span>
+                    <span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'node.panel.add_competency_fake'|trans({}, 'node') }}</span>
                 </div>
             </div>
         {% endif %}
     {% elseif key == 'ficheMatiere' %}
         {% set fiches = referentiel('fiches_matiere') %}
         <select name="attr_ficheMatiere" class="fld">
-            <option value="">Choisir dans la liste ou « Créer une nouvelle »…</option>
+            <option value="">{{ 'node.panel.fiche_choice_placeholder'|trans({}, 'node') }}</option>
             {% for f in fiches %}<option value="{{ f }}" {{ val == f ? 'selected' }}>{{ f }}</option>{% endfor %}
             {% if val and val not in fiches %}<option value="{{ val }}" selected>{{ val }}</option>{% endif %}
         </select>
-        <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} Créer une nouvelle fiche</span></div>
+        <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'node.panel.create_fiche_fake'|trans({}, 'node') }}</span></div>
     {% elseif def.field == 'hours' %}
         {% set mods = {'cm': 'CM', 'td': 'TD', 'tp': 'TP'} %}
         <div data-controller="hours" class="space-y-4">
             <label class="flex items-center gap-3 text-sm">
                 <input type="checkbox" class="switch" name="attr_hours[none]" value="1" {{ (val.none ?? false) ? 'checked' }}
                        data-hours-target="none" data-action="change->hours#sync">
-                <span class="font-medium">EC sans volume horaire</span>
+                <span class="font-medium">{{ 'node.panel.hours_none_label'|trans({}, 'node') }}</span>
             </label>
 
             <div data-hours-target="fields" class="space-y-4">
-                {% for place, plabel in {'pres': 'présentiel', 'dist': 'distanciel'} %}
+                {% set places = {'pres': 'node.panel.place_pres'|trans({}, 'node'), 'dist': 'node.panel.place_dist'|trans({}, 'node')} %}
+                {% for place, plabel in places %}
                     <div class="rounded-xl border p-4" style="border-color:var(--c-border)">
                         <div class="flex items-center justify-between gap-2">
-                            <div class="fld-label">Volume horaire en {{ plabel }}</div>
-                            <span class="text-[11px] font-semibold text-red-500 uppercase tracking-wide shrink-0">Champs requis</span>
+                            <div class="fld-label">{{ 'node.panel.hours_volume_label'|trans({'%place%': plabel}, 'node') }}</div>
+                            <span class="text-[11px] font-semibold text-red-500 uppercase tracking-wide shrink-0">{{ 'common.required_badge'|trans({}, 'common') }}</span>
                         </div>
                         <div class="mt-2 grid gap-3 sm:grid-cols-3">
                             {% for m, mlabel in mods %}
@@ -308,26 +308,26 @@
                                     <input type="number" min="0" step="0.5" placeholder="0"
                                            name="attr_hours[{{ place }}][{{ m }}]" value="{{ val[place][m] ?? '' }}"
                                            data-hours-target="input" class="fld pr-24">
-                                    <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-gray-400">Heure(s) {{ mlabel }}</span>
+                                    <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-gray-400">{{ 'node.panel.hours_unit_label'|trans({'%mod%': mlabel}, 'node') }}</span>
                                 </div>
                             {% endfor %}
                         </div>
-                        <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} Précisez le volume horaire en {{ plabel }}</div>
+                        <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'node.panel.hours_place_help'|trans({'%place%': plabel}, 'node') }}</div>
                     </div>
                 {% endfor %}
 
                 <div class="rounded-xl border p-4" style="border-color:var(--c-border)">
                     <div class="flex items-center justify-between gap-2">
-                        <div class="fld-label">Volume horaire de travail étudiant (TE)</div>
-                        <span class="text-[11px] font-semibold text-red-500 uppercase tracking-wide shrink-0">Champs requis</span>
+                        <div class="fld-label">{{ 'node.panel.hours_te_label'|trans({}, 'node') }}</div>
+                        <span class="text-[11px] font-semibold text-red-500 uppercase tracking-wide shrink-0">{{ 'common.required_badge'|trans({}, 'common') }}</span>
                     </div>
                     <div class="relative mt-2">
                         <input type="number" min="0" step="0.5" placeholder="0"
                                name="attr_hours[te]" value="{{ val.te ?? '' }}"
                                data-hours-target="input" class="fld pr-24">
-                        <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-gray-400">Heure(s) TE</span>
+                        <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-gray-400">{{ 'node.panel.hours_unit_label'|trans({'%mod%': 'TE'}, 'node') }}</span>
                     </div>
-                    <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} Précisez le volume horaire en TE (stage, projet, autonomie, …)</div>
+                    <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'node.panel.hours_te_help'|trans({}, 'node') }}</div>
                 </div>
             </div>
         </div>
@@ -338,11 +338,11 @@
         {% set evals = val.evaluations ?? [] %}
         <div data-controller="mccc">
             <div class="flex items-center gap-2">
-                <span class="fld-label">Type de MCCC</span>
-                <span class="text-[11px] font-semibold text-red-500 uppercase tracking-wide">Champs requis</span>
+                <span class="fld-label">{{ 'node.panel.mccc_type_label'|trans({}, 'node') }}</span>
+                <span class="text-[11px] font-semibold text-red-500 uppercase tracking-wide">{{ 'common.required_badge'|trans({}, 'common') }}</span>
             </div>
             {% if mtypes is empty %}
-                <p class="fld-help mt-1">Aucun type de MCCC proposé pour ce diplôme — configurez-en dans « Administration › Types de MCCC ».</p>
+                <p class="fld-help mt-1">{{ 'node.panel.no_mccc_types'|trans({}, 'node') }}</p>
             {% endif %}
             <div class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {% for mt in mtypes %}
@@ -361,15 +361,15 @@
             <div data-mccc-target="collection" {{ (selectedMt and selectedMt.hasEvaluations) ? '' : 'hidden' }}
                  class="mt-4 rounded-xl border p-4" style="border-color:var(--c-border)">
                 <div class="flex items-center justify-between gap-2">
-                    <div class="fld-label" data-mccc-target="collectionLabel">{{ selectedMt ? selectedMt.evaluationsLabel : 'Épreuves' }}</div>
-                    <div class="text-sm text-gray-500">Total : <span class="font-semibold" data-mccc-target="sum">0</span> %</div>
+                    <div class="fld-label" data-mccc-target="collectionLabel">{{ selectedMt ? selectedMt.evaluationsLabel : 'node.panel.default_evaluations_label'|trans({}, 'node') }}</div>
+                    <div class="text-sm text-gray-500">{{ 'node.panel.mccc_total_label'|trans({}, 'node') }} <span class="font-semibold" data-mccc-target="sum">0</span> %</div>
                 </div>
                 <div data-mccc-target="rows" class="mt-2 space-y-2">
                     {% for e in evals %}{{ ui.mcccRow(loop.index0, e.type ?? '', e.weight ?? '') }}{% endfor %}
                 </div>
                 <button type="button" data-action="mccc#addRow"
                         class="mt-2 inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">
-                    {{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter une épreuve
+                    {{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'node.panel.add_evaluation_button'|trans({}, 'node') }}
                 </button>
                 <template data-mccc-target="rowTemplate">{{ ui.mcccRow('__INDEX__', '', '') }}</template>
             </div>
@@ -397,7 +397,7 @@
 {% macro mcccRow(index, type, weight) %}
     <div class="flex items-center gap-2" data-mccc-target="row">
         <select name="attr_mccc[evaluations][{{ index }}][type]" class="fld flex-1">
-            <option value="">— Type d'épreuve —</option>
+            <option value="">{{ 'node.panel.evaluation_type_placeholder'|trans({}, 'node') }}</option>
             {% for k, l in referentiel('types_epreuve') %}<option value="{{ k }}" {{ type == k ? 'selected' }}>{{ l }}</option>{% endfor %}
         </select>
         <div class="relative w-28 shrink-0">
@@ -406,7 +406,7 @@
             <span class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-xs text-gray-400">%</span>
         </div>
         <button type="button" data-action="mccc#removeRow"
-                class="shrink-0 rounded-lg border px-2 py-2 text-gray-400 hover:bg-gray-50 hover:text-red-600" style="border-color:var(--c-border)" title="Supprimer">
+                class="shrink-0 rounded-lg border px-2 py-2 text-gray-400 hover:bg-gray-50 hover:text-red-600" style="border-color:var(--c-border)" title="{{ 'node.panel.delete_title'|trans({}, 'node') }}">
             {{ ux_icon('ph:trash', {class: 'icon'}) }}
         </button>
     </div>

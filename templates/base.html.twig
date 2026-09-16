@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>{% block title %}Prototype maquette{% endblock %}</title>
+        <title>{% block title %}{{ 'layout.default_title'|trans({}, 'layout') }}{% endblock %}</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.1em%22 font-size=%22104%22>🧩</text></svg>">
         {# Tailwind au runtime (prototype). Le build standalone ne scannait pas les templates dans ce conteneur. #}
         <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
@@ -22,15 +22,15 @@
                 </a>
                 {% set _route = app.request.attributes.get('_route') ?? '' %}
                 <nav class="hidden lg:flex items-center gap-6 text-sm text-gray-600">
-                    <span class="fake-link cursor-default">Tableau de bord</span>
+                    <span class="fake-link cursor-default">{{ 'layout.nav.dashboard'|trans({}, 'layout') }}</span>
                     <a href="{{ path('formation_index') }}"
-                       class="hover:text-gray-900 {{ _route matches '/^(formation_|node_|bcc_|parcours_)/' ? 'font-semibold text-gray-900' }}">Offre de formation</a>
-                    <span class="fake-link cursor-default">Pilotage {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>
-                    <span class="fake-link cursor-default">Conseils {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>
-                    <span class="fake-link cursor-default">Utilisateurs et droits {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>
+                       class="hover:text-gray-900 {{ _route matches '/^(formation_|node_|bcc_|parcours_)/' ? 'font-semibold text-gray-900' }}">{{ 'layout.nav.offer'|trans({}, 'layout') }}</a>
+                    <span class="fake-link cursor-default">{{ 'layout.nav.steering'|trans({}, 'layout') }} {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>
+                    <span class="fake-link cursor-default">{{ 'layout.nav.councils'|trans({}, 'layout') }} {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>
+                    <span class="fake-link cursor-default">{{ 'layout.nav.users_rights'|trans({}, 'layout') }} {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>
                     {% if is_admin() %}
                         <a href="{{ path('admin_index') }}"
-                           class="hover:text-gray-900 {{ _route matches '/^(admin_|node_type_|field_|template_)/' ? 'font-semibold text-gray-900' }}">Administration</a>
+                           class="hover:text-gray-900 {{ _route matches '/^(admin_|node_type_|field_|template_)/' ? 'font-semibold text-gray-900' }}">{{ 'layout.nav.administration'|trans({}, 'layout') }}</a>
                     {% endif %}
                 </nav>
                 <div class="ml-auto flex items-center gap-3 text-gray-400">
@@ -41,7 +41,7 @@
                             {{ ux_icon('ph:eye', {class: 'icon'}) }} {{ role_labels()[current_role()] }} {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}
                         </button>
                         <div data-menu-target="menu" hidden class="absolute right-0 z-40 mt-1 w-60 rounded-xl border bg-white py-1 text-sm shadow-lg" style="border-color:var(--c-border)">
-                            <div class="px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Voir en tant que</div>
+                            <div class="px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">{{ 'layout.role_switch.title'|trans({}, 'layout') }}</div>
                             {% for r, label in role_labels() %}
                                 <form method="post" action="{{ path('role_switch', {role: r}) }}">
                                     <button class="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 {{ current_role() == r ? 'font-semibold' }}">
@@ -49,7 +49,7 @@
                                     </button>
                                 </form>
                             {% endfor %}
-                            <div class="border-t px-3 py-1.5 text-[11px] text-gray-400" style="border-color:var(--c-border)">Le responsable ne voit pas le métamodèle ni la configuration de structure.</div>
+                            <div class="border-t px-3 py-1.5 text-[11px] text-gray-400" style="border-color:var(--c-border)">{{ 'layout.role_switch.help'|trans({}, 'layout') }}</div>
                         </div>
                     </div>
                     <span>{{ ux_icon('ph:magnifying-glass', {class: 'icon'}) }}</span><span>{{ ux_icon('ph:chat-circle', {class: 'icon'}) }}</span><span>{{ ux_icon('ph:globe', {class: 'icon'}) }}</span><span>{{ ux_icon('ph:bell', {class: 'icon'}) }}</span>
@@ -68,7 +68,7 @@
                     {% for message in messages %}
                         <div class="flash flash--{{ label ?: 'info' }}" data-controller="flash">
                             <span class="flash-msg">{{ message }}</span>
-                            <button type="button" class="flash-x" data-action="flash#dismiss" aria-label="Fermer">{{ ux_icon('ph:x', {class: 'icon'}) }}</button>
+                            <button type="button" class="flash-x" data-action="flash#dismiss" aria-label="{{ 'layout.close'|trans({}, 'layout') }}">{{ ux_icon('ph:x', {class: 'icon'}) }}</button>
                         </div>
                     {% endfor %}
                 {% endfor %}
@@ -84,34 +84,34 @@
             <div class="mx-auto max-w-[1600px] px-6 py-5 flex flex-wrap items-center gap-x-6 gap-y-2">
                 <div>
                     <span class="font-semibold text-gray-700">ORéOF</span> ·
-                    prototype maquette par éléments pédagogiques
-                    {% if is_admin() %} · <a href="{{ path('admin_index') }}" class="hover:underline">Administration</a>{% endif %}
+                    {{ 'layout.footer.tagline'|trans({}, 'layout') }}
+                    {% if is_admin() %} · <a href="{{ path('admin_index') }}" class="hover:underline">{{ 'layout.nav.administration'|trans({}, 'layout') }}</a>{% endif %}
                 </div>
                 <div class="ml-auto flex items-center gap-3 text-gray-400">
-                    {% for item in ['Documents', 'Aide', 'FAQ', 'Contact', 'GitHub'] %}<span class="fake-link cursor-default">{{ item }}</span>{% endfor %}
+                    {% for item in ['layout.footer.documents', 'layout.footer.help', 'layout.footer.faq', 'layout.footer.contact', 'layout.footer.github'] %}<span class="fake-link cursor-default">{{ item|trans({}, 'layout') }}</span>{% endfor %}
                 </div>
             </div>
         </footer>
 
         {# bouton d'aide flottant (fictif) #}
         <div class="fixed bottom-5 right-5 grid h-11 w-11 place-items-center rounded-full text-white text-lg shadow-lg cursor-default"
-             style="background:var(--c-primary)" title="Aide (fictif)">?</div>
+             style="background:var(--c-primary)" title="{{ 'layout.help_fake'|trans({}, 'layout') }}">?</div>
 
         {# ─────────── modale de confirmation globale (remplace window.confirm) ─────────── #}
         <dialog data-controller="confirm-dialog" data-confirm-dialog-target="dialog"
                 data-action="click->confirm-dialog#clickOutside"
                 class="w-[min(480px,92vw)] rounded-3xl border-0 p-0 shadow-2xl backdrop:bg-black/50">
             <div class="p-8 sm:p-10">
-                <h2 class="text-3xl font-extrabold tracking-tight text-red-600">Attention !</h2>
+                <h2 class="text-3xl font-extrabold tracking-tight text-red-600">{{ 'layout.confirm_dialog.title'|trans({}, 'layout') }}</h2>
                 <p data-confirm-dialog-target="message" class="mt-4 text-base leading-relaxed" style="color:var(--c-muted)"></p>
                 <div class="mt-7 h-px" style="background:var(--c-border)"></div>
                 <div class="mt-6 flex gap-3">
                     <button type="button" data-action="confirm-dialog#confirm"
                             class="flex-1 rounded-2xl border px-5 py-3.5 text-base font-medium hover:bg-red-100"
-                            style="background:#fef2f2;color:#b91c1c;border-color:#fecaca">Continuer</button>
+                            style="background:#fef2f2;color:#b91c1c;border-color:#fecaca">{{ 'layout.confirm_dialog.continue'|trans({}, 'layout') }}</button>
                     <button type="button" data-action="confirm-dialog#cancel" data-confirm-dialog-target="cancelBtn"
                             class="flex-1 rounded-2xl border px-5 py-3.5 text-base font-medium hover:bg-indigo-100"
-                            style="background:var(--c-primary-soft);color:var(--c-primary);border-color:#c7d2fe">Annuler</button>
+                            style="background:var(--c-primary-soft);color:var(--c-primary);border-color:#c7d2fe">{{ 'common.cancel'|trans({}, 'common') }}</button>
                 </div>
             </div>
         </dialog>

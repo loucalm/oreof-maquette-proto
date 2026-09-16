@@ -1,0 +1,24 @@
+layout:
+  default_title: Prototype maquette
+  close: Fermer
+  help_fake: Aide (fictif)
+  nav:
+    dashboard: Tableau de bord
+    offer: Offre de formation
+    steering: Pilotage
+    councils: Conseils
+    users_rights: Utilisateurs et droits
+    administration: Administration
+  role_switch:
+    title: Voir en tant que
+    help: Le responsable ne voit pas le métamodèle ni la configuration de structure.
+  confirm_dialog:
+    title: Attention !
+    continue: Continuer
+  footer:
+    tagline: prototype maquette par éléments pédagogiques
+    documents: Documents
+    help: Aide
+    faq: FAQ
+    contact: Contact
+    github: GitHub

@@ -1,47 +1,47 @@
 {% extends 'base.html.twig' %}
-{% block title %}{{ isNew ? 'Nouveau référentiel' : referentiel.label }}{% endblock %}
+{% block title %}{{ isNew ? 'referentiel.edit.new_title'|trans({}, 'referentiel') : referentiel.label }}{% endblock %}
 
 {% block body %}
 <div class="max-w-2xl">
     <div class="text-xs" style="color:var(--c-muted)">
-        <a href="{{ path('admin_referentiels') }}" class="hover:underline">Référentiels</a> › {{ isNew ? 'nouveau' : referentiel.label }}
+        <a href="{{ path('admin_referentiels') }}" class="hover:underline">{{ 'referentiel.edit.breadcrumb_root'|trans({}, 'referentiel') }}</a> › {{ isNew ? 'referentiel.edit.breadcrumb_new'|trans({}, 'referentiel') : referentiel.label }}
     </div>
-    <h1 class="text-xl font-bold mt-1 mb-5">{{ isNew ? 'Nouveau référentiel' : 'Modifier « ' ~ referentiel.label ~ ' »' }}</h1>
+    <h1 class="text-xl font-bold mt-1 mb-5">{{ isNew ? 'referentiel.edit.new_heading'|trans({}, 'referentiel') : 'referentiel.edit.edit_heading'|trans({'%label%': referentiel.label}, 'referentiel') }}</h1>
 
     <form method="post" class="rounded-xl border bg-white p-5 space-y-4" style="border-color:var(--c-border)">
         <div class="grid grid-cols-3 gap-3">
             <label class="block col-span-2">
-                <span class="text-xs font-medium">Libellé</span>
+                <span class="text-xs font-medium">{{ 'referentiel.edit.label_field'|trans({}, 'referentiel') }}</span>
                 <input name="label" required value="{{ referentiel.label ?? '' }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
             </label>
             <label class="block">
-                <span class="text-xs font-medium">Clé</span>
-                <input name="key" value="{{ referentiel.key ?? '' }}" placeholder="auto" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                <span class="text-xs font-medium">{{ 'referentiel.edit.key_field'|trans({}, 'referentiel') }}</span>
+                <input name="key" value="{{ referentiel.key ?? '' }}" placeholder="{{ 'referentiel.edit.key_placeholder'|trans({}, 'referentiel') }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
             </label>
         </div>
 
         <div class="grid grid-cols-3 gap-3">
             <label class="block col-span-2">
-                <span class="text-xs font-medium">Description (affichée dans cette page)</span>
+                <span class="text-xs font-medium">{{ 'referentiel.edit.description_field'|trans({}, 'referentiel') }}</span>
                 <input name="description" value="{{ referentiel.description ?? '' }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
             </label>
             <label class="block">
-                <span class="text-xs font-medium">Ordre</span>
+                <span class="text-xs font-medium">{{ 'referentiel.edit.order_field'|trans({}, 'referentiel') }}</span>
                 <input type="number" name="position" value="{{ referentiel.position ?? 100 }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
             </label>
         </div>
 
         <label class="block">
-            <span class="text-xs font-medium">Valeurs de la liste (une par ligne : <code>valeur|Libellé</code> — ou juste <code>valeur</code> si identique au libellé)</span>
+            <span class="text-xs font-medium">{{ 'referentiel.edit.values_label'|trans({}, 'referentiel')|raw }}</span>
             <textarea name="values" rows="8" class="mt-1 w-full rounded-md border px-3 py-2 text-sm font-mono" style="border-color:var(--c-border)"
                 >{% for v, l in (referentiel.values ?? {}) %}{{ v }}{{ l != v ? '|' ~ l : '' }}
 {% endfor %}</textarea>
-            <span class="text-[11px]" style="color:var(--c-muted)">L'ordre des lignes est l'ordre proposé dans les select.</span>
+            <span class="text-[11px]" style="color:var(--c-muted)">{{ 'referentiel.edit.values_help'|trans({}, 'referentiel') }}</span>
         </label>
 
         <div class="flex gap-2 pt-1">
-            <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">Enregistrer</button>
-            <a href="{{ path('admin_referentiels') }}" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">Annuler</a>
+            <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
+            <a href="{{ path('admin_referentiels') }}" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</a>
         </div>
     </form>
 </div>

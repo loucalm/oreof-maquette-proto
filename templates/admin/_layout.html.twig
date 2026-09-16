@@ -8,11 +8,10 @@
 
 {% block body %}
 <div class="mb-4">
-    <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Administration</div>
-    <h1 class="text-2xl font-extrabold tracking-tight">Paramétrage de l’offre de formation</h1>
+    <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{{ 'admin.layout.kicker'|trans({}, 'admin') }}</div>
+    <h1 class="text-2xl font-extrabold tracking-tight">{{ 'admin.layout.title'|trans({}, 'admin') }}</h1>
     <p class="text-sm text-gray-500">
-        Le métamodèle (types d’élément pédagogique, champs), les squelettes réutilisables et les nomenclatures.
-        « Rien n’est figé » : tout se configure ici.
+        {{ 'admin.layout.description'|trans({}, 'admin') }}
     </p>
 </div>
 

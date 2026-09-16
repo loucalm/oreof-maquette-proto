@@ -12,7 +12,7 @@
     <li class="template-node">
         <div class="flex flex-wrap items-center gap-1.5 py-1">
             <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'lock'}) }}" class="inline">
-                <button title="{{ locked ? 'ELP imposé — cliquer pour libérer' : 'Rendre cet ELP imposé (non supprimable côté formation)' }}"
+                <button title="{{ locked ? 'template.edit.unlock_title'|trans({}, 'template') : 'template.edit.lock_title'|trans({}, 'template') }}"
                         class="grid h-6 w-6 place-items-center rounded border text-xs"
                         style="border-color:var(--c-border);{{ locked ? 'background:#fef3c7' }}">{{ locked ? ux_icon('ph:lock-simple-fill', {class: 'icon'}) : ux_icon('ph:lock-simple-open', {class: 'icon'}) }}</button>
             </form>
@@ -20,22 +20,22 @@
             <span class="type-badge">{{ meta ? ux_icon(meta.icon, {class: 'icon'}) }} [{{ meta ? meta.label : n.type }}]</span>
 
             <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'rename'}) }}" class="inline flex items-center gap-1">
-                <input name="label" value="{{ n.label ?? '' }}" placeholder="(libellé)"
+                <input name="label" value="{{ n.label ?? '' }}" placeholder="{{ 'template.edit.label_placeholder'|trans({}, 'template') }}"
                        class="rounded border px-2 py-0.5 text-sm" style="border-color:var(--c-border);width:220px">
-                <button class="text-xs hover:underline" style="color:var(--c-muted)">renommer</button>
+                <button class="text-xs hover:underline" style="color:var(--c-muted)">{{ 'template.edit.rename_button'|trans({}, 'template') }}</button>
             </form>
 
             <span class="flex-1"></span>
 
             <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'up'}) }}" class="inline">
-                <button class="template-mini" title="Monter">{{ ux_icon('ph:arrow-up', {class: 'icon'}) }}</button>
+                <button class="template-mini" title="{{ 'template.edit.move_up'|trans({}, 'template') }}">{{ ux_icon('ph:arrow-up', {class: 'icon'}) }}</button>
             </form>
             <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'down'}) }}" class="inline">
-                <button class="template-mini" title="Descendre">{{ ux_icon('ph:arrow-down', {class: 'icon'}) }}</button>
+                <button class="template-mini" title="{{ 'template.edit.move_down'|trans({}, 'template') }}">{{ ux_icon('ph:arrow-down', {class: 'icon'}) }}</button>
             </form>
             <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'delete'}) }}" class="inline"
-                  data-controller="confirm" data-confirm-message-value="Supprimer « {{ n.label ?? n.type }} » et sa branche du template ?">
-                <button class="template-mini template-mini--danger" title="Supprimer">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
+                  data-controller="confirm" data-confirm-message-value="{{ 'template.edit.delete_node_confirm'|trans({'%label%': n.label ?? n.type}, 'template') }}">
+                <button class="template-mini template-mini--danger" title="{{ 'common.delete'|trans({}, 'common') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
             </form>
         </div>
 
@@ -54,8 +54,8 @@
             <select name="type" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
                 {% for t in types %}<option value="{{ t.key }}">{{ t.label }}</option>{% endfor %}
             </select>
-            <input name="label" placeholder="libellé (optionnel)" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
-            <button class="rounded border px-2 py-1 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} enfant</button>
+            <input name="label" placeholder="{{ 'template.edit.child_label_placeholder'|trans({}, 'template') }}" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
+            <button class="rounded border px-2 py-1 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'template.edit.add_child_button'|trans({}, 'template') }}</button>
         </form>
     </li>
 {% endmacro %}
@@ -64,7 +64,7 @@
 {% import _self as m %}
 
 <div class="text-xs mb-1" style="color:var(--c-muted)">
-    <a href="{{ path('template_index') }}" class="hover:underline">Templates</a> › {{ template.label }}
+    <a href="{{ path('template_index') }}" class="hover:underline">{{ 'template.index.heading'|trans({}, 'template') }}</a> › {{ template.label }}
 </div>
 
 <div class="grid gap-5 lg:grid-cols-[320px_1fr]">
@@ -73,32 +73,31 @@
     <form method="post" action="{{ path('template_meta', {id: template.id}) }}"
           class="rounded-xl border bg-white p-4 space-y-3 self-start" style="border-color:var(--c-border)">
         <div>
-            <div class="text-xs font-medium">Libellé</div>
+            <div class="text-xs font-medium">{{ 'template.edit.label_field'|trans({}, 'template') }}</div>
             <input name="label" value="{{ template.label }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
         </div>
         <div>
-            <div class="text-xs font-medium">Diplôme imposé</div>
+            <div class="text-xs font-medium">{{ 'template.edit.diplome_field'|trans({}, 'template') }}</div>
             <select name="diplome" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
-                <option value="">— aucun (template libre) —</option>
+                <option value="">{{ 'template.edit.diplome_none'|trans({}, 'template') }}</option>
                 {% for d in referentiel('diplomes') %}
                     <option value="{{ d }}" {{ template.diplome == d ? 'selected' }}>{{ d }}</option>
                 {% endfor %}
             </select>
-            <div class="fld-help">Un seul template par diplôme. Appliqué automatiquement à la création d'une formation.</div>
+            <div class="fld-help">{{ 'template.edit.diplome_help'|trans({}, 'template') }}</div>
         </div>
         <label class="flex items-center gap-2 text-sm">
-            <input type="checkbox" name="multiParcours" value="1" {{ template.multiParcours ? 'checked' }}> Multi-parcours
+            <input type="checkbox" name="multiParcours" value="1" {{ template.multiParcours ? 'checked' }}> {{ 'template.edit.multi_parcours_label'|trans({}, 'template') }}
         </label>
         <div>
-            <div class="text-xs font-medium">Description</div>
+            <div class="text-xs font-medium">{{ 'template.edit.description_field'|trans({}, 'template') }}</div>
             <textarea name="description" rows="3" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">{{ template.description }}</textarea>
         </div>
-        <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">Enregistrer</button>
+        <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
 
         {% if template.diplome %}
             <p class="mt-3 text-xs" style="color:var(--c-muted)">
-                Les règles MCCC (CCI, CT…) de ce diplôme se configurent par type, pas par template —
-                <a href="{{ path('admin_mcctypes') }}" target="_blank" class="underline">Types de MCCC</a>.
+                {{ 'template.edit.mccc_note'|trans({'%link_open%': '<a href="' ~ path('admin_mcctypes') ~ '" target="_blank" class="underline">', '%link_close%': '</a>'}, 'template')|raw }}
             </p>
         {% endif %}
     </form>
@@ -106,35 +105,35 @@
     {# ─── arbre ─── #}
     <div class="rounded-xl border bg-white p-4" style="border-color:var(--c-border)">
         <div class="flex items-center gap-2 text-xs uppercase tracking-wide mb-3" style="color:var(--c-muted)">
-            <span class="h-px flex-1 bg-gray-200"></span>Arbre du template<span class="h-px flex-1 bg-gray-200"></span>
+            <span class="h-px flex-1 bg-gray-200"></span>{{ 'template.edit.tree_title'|trans({}, 'template') }}<span class="h-px flex-1 bg-gray-200"></span>
         </div>
 
         {% if template.tree is empty %}
-            <p class="text-sm mb-3" style="color:var(--c-muted)">Aucun ELP. Ajoutez le premier niveau ci-dessous.</p>
+            <p class="text-sm mb-3" style="color:var(--c-muted)">{{ 'template.edit.tree_empty'|trans({}, 'template') }}</p>
         {% else %}
             <ul class="template-branch template-branch--root">
                 {% for n in template.tree %}
                     {{ m.node(n, loop.index0 ~ '', template, types) }}
                 {% endfor %}
             </ul>
-            <p class="mt-2 text-xs" style="color:var(--c-muted)">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} = élément pédagogique imposé : le responsable de formation ne pourra ni le supprimer ni le déplacer.</p>
+            <p class="mt-2 text-xs" style="color:var(--c-muted)">{{ 'template.edit.lock_legend'|trans({'%lock_icon%': ux_icon('ph:lock-simple-fill', {class: 'icon'})}, 'template')|raw }}</p>
         {% endif %}
 
         <form method="post" action="{{ path('template_node_add', {id: template.id}) }}"
               class="mt-3 flex flex-wrap items-center gap-1.5 border-t pt-3" style="border-color:var(--c-border)">
             <input type="hidden" name="parent" value="">
-            <span class="text-xs font-medium" style="color:var(--c-muted)">Ajouter un ELP racine :</span>
+            <span class="text-xs font-medium" style="color:var(--c-muted)">{{ 'template.edit.add_root_label'|trans({}, 'template') }}</span>
             <select name="type" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
                 {% for t in types %}<option value="{{ t.key }}">{{ t.label }}</option>{% endfor %}
             </select>
-            <input name="label" placeholder="libellé" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
-            <button class="rounded border px-2 py-1 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} racine</button>
+            <input name="label" placeholder="{{ 'template.edit.label_placeholder'|trans({}, 'template') }}" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
+            <button class="rounded border px-2 py-1 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'template.edit.add_root_button'|trans({}, 'template') }}</button>
         </form>
     </div>
 </div>
 
 <form method="post" action="{{ path('template_delete', {id: template.id}) }}" class="mt-4"
-      data-controller="confirm" data-confirm-message-value="Supprimer définitivement le template « {{ template.label }} » ?">
-    <button class="text-xs text-red-600 hover:underline">Supprimer ce template</button>
+      data-controller="confirm" data-confirm-message-value="{{ 'template.edit.delete_confirm'|trans({'%label%': template.label}, 'template') }}">
+    <button class="text-xs text-red-600 hover:underline">{{ 'template.edit.delete_button'|trans({}, 'template') }}</button>
 </form>
 {% endblock %}

@@ -1,19 +1,18 @@
 {% extends 'admin/_layout.html.twig' %}
 {% set adminSection = 'templates' %}
-{% block title %}Templates de structure{% endblock %}
+{% block title %}{{ 'template.index.title'|trans({}, 'template') }}{% endblock %}
 
 {% block admin_body %}
 <div class="flex items-start justify-between gap-4">
     <div>
-        <h2 class="text-lg font-bold">Templates de structure</h2>
+        <h2 class="text-lg font-bold">{{ 'template.index.heading'|trans({}, 'template') }}</h2>
         <p class="text-sm mb-5" style="color:var(--c-muted)">
-            L'arbre imposé d'un diplôme. Rattaché à un diplôme, il est appliqué automatiquement
-            à la création d'une formation ; ses éléments pédagogiques verrouillés {{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} figent la structure.
+            {{ 'template.index.description'|trans({'%lock_icon%': ux_icon('ph:lock-simple-fill', {class: 'icon'})}, 'template')|raw }}
         </p>
     </div>
     <form method="post" action="{{ path('template_new') }}" class="shrink-0">
-        <input type="hidden" name="label" value="Nouveau template">
-        <button class="rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} Nouveau template</button>
+        <input type="hidden" name="label" value="{{ 'template.index.new_label'|trans({}, 'template') }}">
+        <button class="rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'template.index.new_button'|trans({}, 'template') }}</button>
     </form>
 </div>
 
@@ -23,10 +22,10 @@
            class="block rounded-xl border bg-white p-4 hover:shadow-sm" style="border-color:var(--c-border)">
             <div class="flex items-center gap-2">
                 <span class="font-semibold">{{ tpl.label }}</span>
-                {% if tpl.diplome %}<span class="pill" style="background:var(--c-primary-soft);color:var(--c-primary)">diplôme : {{ tpl.diplome }}</span>{% endif %}
+                {% if tpl.diplome %}<span class="pill" style="background:var(--c-primary-soft);color:var(--c-primary)">{{ 'template.index.diplome_badge'|trans({'%diplome%': tpl.diplome}, 'template') }}</span>{% endif %}
             </div>
             <div class="text-xs mb-2" style="color:var(--c-muted)">
-                <code>{{ tpl.key }}</code> · {{ tpl.multiParcours ? 'multi-parcours' : 'mono-parcours' }} · {{ tpl.tree|length }} ELP racine(s)
+                <code>{{ tpl.key }}</code> · {{ tpl.multiParcours ? 'template.index.multi_parcours'|trans({}, 'template') : 'template.index.mono_parcours'|trans({}, 'template') }} · {{ 'template.index.root_count'|trans({'%count%': tpl.tree|length}, 'template') }}
             </div>
             <p class="text-sm" style="color:var(--c-muted)">{{ tpl.description }}</p>
         </a>

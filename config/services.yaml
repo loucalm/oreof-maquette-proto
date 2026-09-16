@@ -19,5 +19,10 @@ services:
     App\:
         resource: '../src/'
 
+    App\Service\TranslationFileManager:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+            $cacheDir: '%kernel.cache_dir%'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

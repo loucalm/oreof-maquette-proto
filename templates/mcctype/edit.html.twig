@@ -1,38 +1,38 @@
 {% extends 'base.html.twig' %}
-{% block title %}{{ isNew ? 'Nouveau type de MCCC' : type.label }}{% endblock %}
+{% block title %}{{ isNew ? 'mcctype.edit.new_title'|trans({}, 'mcctype') : type.label }}{% endblock %}
 
 {% block body %}
 <div class="max-w-3xl">
     <div class="text-xs" style="color:var(--c-muted)">
-        <a href="{{ path('admin_mcctypes') }}" class="hover:underline">Types de MCCC</a> › {{ isNew ? 'nouveau' : type.label }}
+        <a href="{{ path('admin_mcctypes') }}" class="hover:underline">{{ 'mcctype.index.heading'|trans({}, 'mcctype') }}</a> › {{ isNew ? 'mcctype.edit.breadcrumb_new'|trans({}, 'mcctype') : type.label }}
     </div>
-    <h1 class="text-xl font-bold mt-1 mb-5">{{ isNew ? 'Nouveau type de MCCC' : 'Modifier « ' ~ type.label ~ ' »' }}</h1>
+    <h1 class="text-xl font-bold mt-1 mb-5">{{ isNew ? 'mcctype.edit.new_heading'|trans({}, 'mcctype') : 'mcctype.edit.edit_heading'|trans({'%label%': type.label}, 'mcctype') }}</h1>
 
     <form method="post" class="rounded-xl border bg-white p-5 space-y-4" style="border-color:var(--c-border)">
         <div class="grid grid-cols-3 gap-3">
             <label class="block">
-                <span class="text-xs font-medium">Libellé court (chip)</span>
+                <span class="text-xs font-medium">{{ 'mcctype.edit.short_label_field'|trans({}, 'mcctype') }}</span>
                 <input name="shortLabel" required value="{{ type.shortLabel ?? '' }}" placeholder="CCI" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
             </label>
             <label class="block col-span-2">
-                <span class="text-xs font-medium">Libellé</span>
+                <span class="text-xs font-medium">{{ 'mcctype.edit.label_field'|trans({}, 'mcctype') }}</span>
                 <input name="label" required value="{{ type.label ?? '' }}" placeholder="Contrôle continu intégral" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
             </label>
         </div>
 
         <div class="grid grid-cols-3 gap-3">
             <label class="block">
-                <span class="text-xs font-medium">Clé</span>
-                <input name="key" value="{{ type.key ?? '' }}" placeholder="auto" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                <span class="text-xs font-medium">{{ 'mcctype.edit.key_field'|trans({}, 'mcctype') }}</span>
+                <input name="key" value="{{ type.key ?? '' }}" placeholder="{{ 'mcctype.edit.key_placeholder'|trans({}, 'mcctype') }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
             </label>
             <label class="block col-span-2">
-                <span class="text-xs font-medium">Description (aide admin)</span>
+                <span class="text-xs font-medium">{{ 'mcctype.edit.description_field'|trans({}, 'mcctype') }}</span>
                 <input name="description" value="{{ type.description ?? '' }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
             </label>
         </div>
 
         <label class="block">
-            <span class="text-xs font-medium">Diplômes concernés (aucun coché = proposé pour tous)</span>
+            <span class="text-xs font-medium">{{ 'mcctype.edit.diplomes_field'|trans({}, 'mcctype') }}</span>
             <div class="mt-1.5 grid gap-2 sm:grid-cols-3">
                 {% set current = type.diplomes ?? [] %}
                 {% for d in referentiel('diplomes') %}
@@ -46,31 +46,31 @@
         <div class="rounded-lg border p-3" style="border-color:var(--c-border)">
             <label class="flex items-center gap-2 text-sm font-medium">
                 <input type="checkbox" name="hasEvaluations" value="1" {{ (type.hasEvaluations ?? false) ? 'checked' }}>
-                Ce type comporte des épreuves à pondérer (nombre d’épreuves + coefficient de chacune)
+                {{ 'mcctype.edit.has_evaluations_label'|trans({}, 'mcctype') }}
             </label>
             <label class="block mt-2">
-                <span class="text-xs font-medium">Libellé de la collection d’épreuves</span>
+                <span class="text-xs font-medium">{{ 'mcctype.edit.evaluations_label_field'|trans({}, 'mcctype') }}</span>
                 <input name="evaluationsLabel" value="{{ type.evaluationsLabel ?? 'Épreuves' }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
             </label>
         </div>
 
         <label class="block max-w-[140px]">
-            <span class="text-xs font-medium">Ordre</span>
+            <span class="text-xs font-medium">{{ 'mcctype.edit.order_field'|trans({}, 'mcctype') }}</span>
             <input type="number" name="position" value="{{ type.position ?? 100 }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
         </label>
 
         <div class="flex gap-2 pt-1">
-            <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">Enregistrer</button>
-            <a href="{{ path('admin_mcctypes') }}" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">Annuler</a>
+            <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
+            <a href="{{ path('admin_mcctypes') }}" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</a>
         </div>
     </form>
 
     {% if not isNew %}
         <div class="rounded-xl border bg-white p-5 mt-4" style="border-color:var(--c-border)">
-            <div class="text-xs font-bold uppercase tracking-wide mb-3" style="color:var(--c-primary)">Règles de validation</div>
+            <div class="text-xs font-bold uppercase tracking-wide mb-3" style="color:var(--c-primary)">{{ 'mcctype.edit.rules_title'|trans({}, 'mcctype') }}</div>
 
             {% if type.rules is empty %}
-                <p class="text-sm mb-3" style="color:var(--c-muted)">Aucune règle — ce type n’est validé que par sa simple sélection.</p>
+                <p class="text-sm mb-3" style="color:var(--c-muted)">{{ 'mcctype.edit.rules_empty'|trans({}, 'mcctype') }}</p>
             {% else %}
                 <div class="space-y-2 mb-4">
                     {% for r in type.rules %}
@@ -81,8 +81,8 @@
                                 <span>{{ r.label }}</span>
                             </div>
                             <form method="post" action="{{ path('mcctype_rule_delete', {id: type.id, key: r.key}) }}"
-                                  data-controller="confirm" data-confirm-message-value="Supprimer la règle « {{ r.label }} » ?">
-                                <button class="text-xs text-red-600 hover:underline">Suppr.</button>
+                                  data-controller="confirm" data-confirm-message-value="{{ 'mcctype.edit.delete_rule_confirm'|trans({'%label%': r.label}, 'mcctype') }}">
+                                <button class="text-xs text-red-600 hover:underline">{{ 'common.delete'|trans({}, 'common') }}</button>
                             </form>
                         </div>
                     {% endfor %}
@@ -90,40 +90,39 @@
             {% endif %}
 
             <form method="post" action="{{ path('mcctype_rule_add', {id: type.id}) }}" class="rounded-lg border p-3 space-y-3" style="border-color:var(--c-border);background:#f8f9fb">
-                <div class="text-xs font-medium" style="color:var(--c-muted)">Ajouter une règle</div>
+                <div class="text-xs font-medium" style="color:var(--c-muted)">{{ 'mcctype.edit.add_rule_title'|trans({}, 'mcctype') }}</div>
                 <div class="grid gap-3 sm:grid-cols-4">
                     <label class="block">
-                        <span class="text-xs">Gabarit</span>
+                        <span class="text-xs">{{ 'mcctype.edit.rule_kind_field'|trans({}, 'mcctype') }}</span>
                         <select name="kind" required class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
                             {% for k, l in ruleKinds %}<option value="{{ k }}">{{ l }}</option>{% endfor %}
                         </select>
                     </label>
                     <label class="block">
-                        <span class="text-xs">Opérateur</span>
+                        <span class="text-xs">{{ 'mcctype.edit.rule_op_field'|trans({}, 'mcctype') }}</span>
                         <select name="op" required class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
                             {% for k, l in ruleOps %}<option value="{{ k }}">{{ l }}</option>{% endfor %}
                         </select>
                     </label>
                     <label class="block">
-                        <span class="text-xs">Valeur</span>
+                        <span class="text-xs">{{ 'mcctype.edit.rule_value_field'|trans({}, 'mcctype') }}</span>
                         <input type="number" step="0.1" name="value" required class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
                     </label>
                     <label class="block">
-                        <span class="text-xs">Gravité</span>
+                        <span class="text-xs">{{ 'mcctype.edit.rule_severity_field'|trans({}, 'mcctype') }}</span>
                         <select name="severity" required class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
                             {% for k, l in severities %}<option value="{{ k }}" {{ k == 'error' ? 'selected' }}>{{ l }}</option>{% endfor %}
                         </select>
                     </label>
                 </div>
                 <label class="block">
-                    <span class="text-xs">Message affiché (facultatif — sinon généré automatiquement)</span>
+                    <span class="text-xs">{{ 'mcctype.edit.rule_message_field'|trans({}, 'mcctype') }}</span>
                     <input name="label" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
                 </label>
-                <button class="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter</button>
+                <button class="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'mcctype.edit.add_rule_button'|trans({}, 'mcctype') }}</button>
             </form>
             <p class="text-xs mt-2" style="color:var(--c-muted)">
-                « Nombre d’épreuves » et « Somme des coefficients » portent sur l’ensemble des épreuves ;
-                « Chaque coefficient » s’applique individuellement à chacune.
+                {{ 'mcctype.edit.rules_help'|trans({}, 'mcctype') }}
             </p>
         </div>
     {% endif %}

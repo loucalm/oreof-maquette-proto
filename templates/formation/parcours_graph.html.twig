@@ -2,7 +2,7 @@
    - dans l'éditeur : fragment <turbo-frame id="node-panel"> (standalone = false)
    - ouvert directement : page complète avec en-tête + Tailwind (standalone = true) #}
 {% extends standalone ? 'base.html.twig' : '_frame.html.twig' %}
-{% block title %}{{ formation.name }} · arborescence des parcours{% endblock %}
+{% block title %}{{ formation.name }} · {{ 'formation.graph.title_suffix'|trans({}, 'formation') }}{% endblock %}
 
 {% block body %}
 {% set g = graph %}
@@ -19,26 +19,26 @@
     <div class="panel-head">
         {% if standalone %}
             <div class="mb-2 text-xs text-gray-400">
-                {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">Accueil</span> ›
-                <a href="{{ path('formation_index') }}" class="hover:underline">Liste des formations</a> ›
+                {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">{{ 'formation.index.breadcrumb_home'|trans({}, 'formation') }}</span> ›
+                <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.graph.breadcrumb_list'|trans({}, 'formation') }}</a> ›
                 <a href="{{ path('formation_view', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
-                Arborescence des parcours
+                {{ 'formation.graph.heading'|trans({}, 'formation') }}
             </div>
         {% endif %}
         <div class="flex items-center justify-between gap-3">
             <div>
-                <h2 class="text-xl font-bold">Arborescence des parcours</h2>
-                <div class="text-sm text-gray-400">{{ formation.name }} · {{ g.parcours|length }} parcours</div>
+                <h2 class="text-xl font-bold">{{ 'formation.graph.heading'|trans({}, 'formation') }}</h2>
+                <div class="text-sm text-gray-400">{{ formation.name }} · {{ 'formation.index.parcours_count'|trans({'%count%': g.parcours|length}, 'formation') }}</div>
             </div>
             <a href="{{ path('formation_editor', {id: formation.id, param: 'structure'}) }}" data-turbo-frame="node-panel"
-               class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} Configuration de la structure</a>
+               class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'formation.editor.structure_config_link'|trans({}, 'formation') }}</a>
         </div>
         <p class="text-xs text-gray-400 mt-1">
-            Axe : <strong>{{ g.unit|lower }}</strong> (dimension temporelle de la formation, réglable dans « Configuration de la structure »).
+            {{ 'formation.graph.axis_note'|trans({'%unit%': g.unit|lower}, 'formation')|raw }}
             {% if standalone %}
-                Le parent d'un parcours et ses {{ g.unit|lower }}s de début / fin se règlent depuis l'éditeur de la formation.
+                {{ 'formation.graph.standalone_note'|trans({'%unit%': g.unit|lower}, 'formation') }}
             {% else %}
-                Glissez d'un parcours vers un autre sur le graphe pour le désigner comme parent, ou utilisez le tableau ci-dessous.
+                {{ 'formation.graph.editable_note'|trans({}, 'formation') }}
             {% endif %}
         </p>
     </div>
@@ -46,7 +46,7 @@
     <div class="panel-scroll">
     {% if g.parcours is empty %}
         <div class="rounded-xl border border-dashed p-8 text-center text-sm text-gray-500" style="border-color:var(--c-border)">
-            Aucun parcours. Ajoutez-en depuis « Configuration de la structure ».
+            {{ 'formation.graph.empty'|trans({}, 'formation') }}
         </div>
     {% else %}
         <div {{ not standalone ? 'data-controller=ramification' }}>
@@ -64,7 +64,7 @@
                     {% set cx = g.pad + (a - 1) * g.colW %}
                     {% if a > 1 %}<line x1="{{ cx }}" y1="{{ g.headerH - 6 }}" x2="{{ cx }}" y2="{{ g.height - 8 }}" stroke="#eef1f4" stroke-dasharray="2 5"/>{% endif %}
                     <text x="{{ cx + 12 }}" y="{{ g.headerH - 16 }}" font-size="13" font-weight="600" fill="#374151">
-                        {%- if g.unit|lower == 'année' %}{{ a == 1 ? '1ère' : a ~ 'ème' }} année{% else %}{{ g.unit }} {{ a }}{% endif -%}
+                        {%- if g.unit|lower == 'année' %}{{ 'formation.graph.year_ordinal'|trans({'%n%': a, '%suffix%': a == 1 ? 'ère' : 'ème'}, 'formation') }}{% else %}{{ g.unit }} {{ a }}{% endif -%}
                     </text>
                 {% endfor %}
                 <line x1="{{ g.pad }}" y1="{{ g.headerH - 4 }}" x2="{{ g.width - g.pad }}" y2="{{ g.headerH - 4 }}" stroke="#e5e7eb"/>
@@ -83,7 +83,7 @@
                     {% for e in g.edges %}
                         <path d="{{ e.path }}" fill="none" stroke="transparent" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"
                               data-ramification-target="edge" data-child="{{ e.to }}" data-action="click->ramification#clearEdge" style="cursor:pointer">
-                            <title>Retirer ce lien de ramification</title>
+                            <title>{{ 'formation.graph.remove_link_title'|trans({}, 'formation') }}</title>
                         </path>
                     {% endfor %}
                 {% endif %}
@@ -101,11 +101,11 @@
                            data-action="pointerdown->ramification#startDrag click->ramification#suppressIfDragged"
                        {% endif %}>
                         {% if isCurrent %}
-                            <text x="{{ b.cx }}" y="{{ b.y - 7 }}" text-anchor="middle" font-size="10" font-weight="700" fill="#4f46e5" letter-spacing="0.3">VOUS ÊTES ICI</text>
+                            <text x="{{ b.cx }}" y="{{ b.y - 7 }}" text-anchor="middle" font-size="10" font-weight="700" fill="#4f46e5" letter-spacing="0.3">{{ 'formation.graph.you_are_here_badge'|trans({}, 'formation') }}</text>
                         {% endif %}
                         <rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ g.boxH }}" rx="10"
                               fill="{{ isCurrent ? '#c7d2fe' : '#eef2ff' }}" stroke="{{ isCurrent ? '#4f46e5' : '#c7d2fe' }}" stroke-width="{{ isCurrent ? 2.5 : 1.5 }}"/>
-                        <text x="{{ b.x + b.w / 2 }}" y="{{ b.cy + 4 }}" text-anchor="middle" font-size="13" font-weight="{{ isCurrent ? 700 : 600 }}" fill="#3730a3">{{ r.node.label ?: 'Parcours' }}</text>
+                        <text x="{{ b.x + b.w / 2 }}" y="{{ b.cy + 4 }}" text-anchor="middle" font-size="13" font-weight="{{ isCurrent ? 700 : 600 }}" fill="#3730a3">{{ r.node.label ?: 'formation.graph.parcours_fallback'|trans({}, 'formation') }}</text>
                     </a>
                 {% endfor %}
 
@@ -122,11 +122,11 @@
                     {% set isCurrent = current and r.node.id == current %}
                     <li class="flex flex-wrap items-center gap-2 rounded-lg px-2 py-1 -mx-2"
                         style="{{ isCurrent ? 'background:var(--c-primary-soft)' : '' }}">
-                        <span class="type-badge">{{ ux_icon('ph:compass', {class: 'icon'}) }} Parcours</span>
+                        <span class="type-badge">{{ ux_icon('ph:compass', {class: 'icon'}) }} {{ 'formation.graph.parcours_fallback'|trans({}, 'formation') }}</span>
                         <a href="{{ path('parcours_editor', {fid: formation.id, nid: r.node.id}) }}" class="font-medium hover:underline">{{ r.node.label ?: '—' }}</a>
-                        <span class="text-xs text-gray-400">{{ g.unit|lower }}s {{ r.colStart }}–{{ r.colEnd }}</span>
-                        {% if r.node.parcoursParent %}<span class="text-xs text-gray-400">· enfant de « {{ r.node.parcoursParent.label ?: '—' }} »</span>{% endif %}
-                        {% if isCurrent %}<span class="pill" style="background:var(--c-primary);color:#fff">{{ ux_icon('ph:map-pin', {class: 'icon'}) }} Vous êtes ici</span>{% endif %}
+                        <span class="text-xs text-gray-400">{{ 'formation.graph.period_range'|trans({'%unit%': g.unit|lower, '%start%': r.colStart, '%end%': r.colEnd}, 'formation') }}</span>
+                        {% if r.node.parcoursParent %}<span class="text-xs text-gray-400">{{ 'formation.graph.child_of'|trans({'%parent%': r.node.parcoursParent.label ?: '—'}, 'formation') }}</span>{% endif %}
+                        {% if isCurrent %}<span class="pill" style="background:var(--c-primary);color:#fff">{{ ux_icon('ph:map-pin', {class: 'icon'}) }} {{ 'formation.graph.you_are_here_pill'|trans({}, 'formation') }}</span>{% endif %}
                     </li>
                 {% endfor %}
             </ul>
@@ -136,10 +136,10 @@
                     <table class="w-full text-sm">
                         <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
                             <tr>
-                                <th class="text-left px-4 py-2.5">Parcours</th>
-                                <th class="text-left px-4 py-2.5">{{ g.unit }} de début</th>
-                                <th class="text-left px-4 py-2.5">{{ g.unit }} de fin</th>
-                                <th class="text-left px-4 py-2.5">Parcours parent</th>
+                                <th class="text-left px-4 py-2.5">{{ 'formation.graph.parcours_fallback'|trans({}, 'formation') }}</th>
+                                <th class="text-left px-4 py-2.5">{{ 'node.panel.period_start'|trans({'%unit%': g.unit}, 'node') }}</th>
+                                <th class="text-left px-4 py-2.5">{{ 'node.panel.period_end'|trans({'%unit%': g.unit}, 'node') }}</th>
+                                <th class="text-left px-4 py-2.5">{{ 'node.panel.parcours_parent_label'|trans({}, 'node') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -147,17 +147,17 @@
                             {% set isCurrent = current and r.node.id == current %}
                             <tr class="border-t" style="border-color:var(--c-border);{{ isCurrent ? 'background:var(--c-primary-soft)' }}">
                                 <td class="px-4 py-2.5">
-                                    <span class="type-badge">{{ ux_icon('ph:compass', {class: 'icon'}) }} Parcours</span>
+                                    <span class="type-badge">{{ ux_icon('ph:compass', {class: 'icon'}) }} {{ 'formation.graph.parcours_fallback'|trans({}, 'formation') }}</span>
                                     <a href="{{ path('parcours_editor', {fid: formation.id, nid: r.node.id}) }}" class="font-medium hover:underline ml-1">{{ r.node.label ?: '—' }}</a>
-                                    {% if isCurrent %}<span class="pill ml-1" style="background:var(--c-primary);color:#fff">{{ ux_icon('ph:map-pin', {class: 'icon'}) }} Vous êtes ici</span>{% endif %}
+                                    {% if isCurrent %}<span class="pill ml-1" style="background:var(--c-primary);color:#fff">{{ ux_icon('ph:map-pin', {class: 'icon'}) }} {{ 'formation.graph.you_are_here_pill'|trans({}, 'formation') }}</span>{% endif %}
                                 </td>
                                 <td class="px-4 py-2.5"><input type="number" min="1" name="periodeDebut[{{ r.node.id }}]" value="{{ r.node.periodeDebut }}" class="fld w-24"></td>
                                 <td class="px-4 py-2.5"><input type="number" min="1" name="periodeFin[{{ r.node.id }}]" value="{{ r.node.periodeFin }}" class="fld w-24"></td>
                                 <td class="px-4 py-2.5">
                                     <select name="parentId[{{ r.node.id }}]" class="fld" data-ramification-target="parentSelect" data-nid="{{ r.node.id }}">
-                                        <option value="">— Aucun (parcours racine) —</option>
+                                        <option value="">{{ 'node.panel.parcours_parent_none'|trans({}, 'node') }}</option>
                                         {% for cand in candidatesByNode[r.node.id] %}
-                                            <option value="{{ cand.id }}" {{ r.node.parcoursParent and r.node.parcoursParent.id == cand.id ? 'selected' }}>{{ cand.label ?: '—' }} · {{ g.unit|lower }}s {{ cand.periodeDebut }}–{{ cand.periodeFin }}</option>
+                                            <option value="{{ cand.id }}" {{ r.node.parcoursParent and r.node.parcoursParent.id == cand.id ? 'selected' }}>{{ 'formation.graph.candidate_option'|trans({'%label%': cand.label ?: '—', '%unit%': g.unit|lower, '%start%': cand.periodeDebut, '%end%': cand.periodeFin}, 'formation') }}</option>
                                         {% endfor %}
                                     </select>
                                 </td>
@@ -166,7 +166,7 @@
                         </tbody>
                     </table>
                 </div>
-                <button class="mt-3 rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ ux_icon('ph:floppy-disk', {class: 'icon'}) }} Enregistrer la ramification</button>
+                <button class="mt-3 rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ ux_icon('ph:floppy-disk', {class: 'icon'}) }} {{ 'formation.graph.save_button'|trans({}, 'formation') }}</button>
             </form>
         {% endif %}
         </div>

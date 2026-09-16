@@ -1,49 +1,46 @@
 {% extends 'base.html.twig' %}
-{% block title %}Historique · {{ formation.name }}{% endblock %}
+{% block title %}{{ 'formation.history.title_prefix'|trans({}, 'formation') }} · {{ formation.name }}{% endblock %}
 
 {% block body %}
 <div class="rounded-2xl border bg-white px-7 py-6 mb-4" style="border-color:var(--c-border)">
     <div class="flex items-start justify-between gap-4">
         <div>
             <div class="text-xs text-gray-400">
-                {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">Accueil</span> ›
-                <a href="{{ path('formation_index') }}" class="hover:underline">Liste des formation</a> ›
+                {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">{{ 'formation.index.breadcrumb_home'|trans({}, 'formation') }}</span> ›
+                <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.editor.breadcrumb_list'|trans({}, 'formation') }}</a> ›
                 <a href="{{ path('formation_editor', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
-                Historique
+                {{ 'formation.history.title_prefix'|trans({}, 'formation') }}
             </div>
-            <h1 class="text-2xl font-extrabold tracking-tight mt-1">Historique — {{ formation.name }}</h1>
+            <h1 class="text-2xl font-extrabold tracking-tight mt-1">{{ 'formation.history.heading'|trans({'%name%': formation.name}, 'formation') }}</h1>
             <p class="text-sm text-gray-500 max-w-2xl">
-                Chaque modification importante est archivée automatiquement, la plus récente en haut.
-                <strong class="text-gray-700">Restaurer une ligne annule aussi tous les changements plus récents qu'elle</strong> —
-                pas seulement le sien. Rien n'est perdu : l'état actuel est lui-même archivé avant chaque
-                restauration, et reste consultable et restaurable ci-dessous.
+                {{ 'formation.history.intro'|trans({}, 'formation')|raw }}
             </p>
             <div class="mt-3 flex flex-wrap items-center gap-4 text-xs text-gray-500">
                 <span class="inline-flex items-center gap-1.5">
-                    <span class="h-2.5 w-2.5 rounded-full" style="background:var(--st-ok)"></span> État actuel — c'est exactement là où vous êtes, suite à la dernière restauration
+                    <span class="h-2.5 w-2.5 rounded-full" style="background:var(--st-ok)"></span> {{ 'formation.history.legend_current'|trans({}, 'formation') }}
                 </span>
                 <span class="inline-flex items-center gap-1.5">
-                    <span class="h-2.5 w-2.5 rounded-full bg-gray-300"></span> Écarté par cette restauration — hors du chemin actuel, mais toujours restaurable
+                    <span class="h-2.5 w-2.5 rounded-full bg-gray-300"></span> {{ 'formation.history.legend_superseded'|trans({}, 'formation') }}
                 </span>
             </div>
         </div>
         <a href="{{ path('formation_editor', {id: formation.id}) }}"
-           class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} Éditeur</a>
+           class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'formation.history.editor_link'|trans({}, 'formation') }}</a>
     </div>
 </div>
 
 <div class="rounded-2xl border bg-white overflow-hidden" style="border-color:var(--c-border)">
     {% if rows is empty %}
         <div class="p-10 text-center text-sm text-gray-400">
-            Aucune modification archivée pour l'instant — l'historique se remplit au fil des changements.
+            {{ 'formation.history.empty'|trans({}, 'formation') }}
         </div>
     {% else %}
         <table class="w-full text-sm history-table">
             <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
                 <tr>
-                    <th class="text-left px-4 py-3 w-52">Date</th>
-                    <th class="text-left px-4 py-3">Modification</th>
-                    <th class="text-right px-4 py-3 w-40">Action</th>
+                    <th class="text-left px-4 py-3 w-52">{{ 'formation.history.col_date'|trans({}, 'formation') }}</th>
+                    <th class="text-left px-4 py-3">{{ 'formation.history.col_change'|trans({}, 'formation') }}</th>
+                    <th class="text-right px-4 py-3 w-40">{{ 'formation.history.col_action'|trans({}, 'formation') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -59,34 +56,34 @@
                         <div class="flex flex-wrap items-center gap-2">
                             <span class="{{ status == 'superseded' ? 'text-gray-400' }}">{{ r.label }}</span>
                             {% if status == 'current' %}
-                                <span class="pill" style="background:#dcfce7;color:#15803d">{{ ux_icon('ph:check-circle-fill', {class: 'icon'}) }} État actuel</span>
+                                <span class="pill" style="background:#dcfce7;color:#15803d">{{ ux_icon('ph:check-circle-fill', {class: 'icon'}) }} {{ 'formation.history.current_state_pill'|trans({}, 'formation') }}</span>
                             {% elseif status == 'superseded' %}
-                                <span class="pill" style="background:#f3f4f6;color:#6b7280" title="Une restauration plus récente est passée par-dessus ce changement.">Écarté</span>
+                                <span class="pill" style="background:#f3f4f6;color:#6b7280" title="{{ 'formation.history.superseded_title'|trans({}, 'formation') }}">{{ 'formation.history.superseded_pill'|trans({}, 'formation') }}</span>
                             {% endif %}
                         </div>
                         {% if status == 'current' %}
-                            <div class="mt-1 text-xs" style="color:#15803d">c'est l'état restauré le plus récemment — le restaurer à nouveau n'aurait aucun effet</div>
+                            <div class="mt-1 text-xs" style="color:#15803d">{{ 'formation.history.current_state_note'|trans({}, 'formation') }}</div>
                         {% elseif extra > 0 %}
                             <div class="mt-1 flex items-center gap-1 text-xs" style="color:#b45309">
-                                {{ ux_icon('ph:warning', {class: 'icon'}) }} restaurer annule aussi {{ extra }} changement(s) plus récent(s)
+                                {{ ux_icon('ph:warning', {class: 'icon'}) }} {{ 'formation.history.cascade_note'|trans({'%count%': extra}, 'formation') }}
                             </div>
                         {% else %}
-                            <div class="mt-1 text-xs text-gray-400">changement le plus récent — rien d'autre à annuler</div>
+                            <div class="mt-1 text-xs text-gray-400">{{ 'formation.history.most_recent_note'|trans({}, 'formation') }}</div>
                         {% endif %}
                     </td>
                     <td class="px-4 py-3 text-right align-top">
                         {% if status == 'current' %}
-                            <button disabled title="Vous êtes déjà à cet état"
-                                    class="rounded-lg border px-3 py-1.5 text-xs font-medium opacity-50 cursor-not-allowed" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-u-up-left', {class: 'icon'}) }} Restaurer</button>
+                            <button disabled title="{{ 'formation.history.already_here_title'|trans({}, 'formation') }}"
+                                    class="rounded-lg border px-3 py-1.5 text-xs font-medium opacity-50 cursor-not-allowed" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-u-up-left', {class: 'icon'}) }} {{ 'formation.history.restore_button'|trans({}, 'formation') }}</button>
                         {% else %}
                             <form method="post" action="{{ path('formation_history_restore', {id: formation.id, revisionId: r.id}) }}"
                                   data-turbo-frame="_top" data-controller="confirm"
                                   data-confirm-message-value="{{ extra > 0
-                                      ? "Restaurer l'état du " ~ dateShort ~ " (" ~ r.label|lower ~ ") ? Cela annule aussi " ~ extra ~ " changement(s) plus récent(s) effectué(s) depuis — pas seulement celui-ci. Rien n'est perdu : l'état actuel restera consultable et restaurable dans l'historique."
-                                      : "Restaurer l'état du " ~ dateShort ~ " (" ~ r.label|lower ~ ") ? C'est le changement le plus récent : lui seul sera annulé. L'état actuel restera consultable et restaurable dans l'historique."
+                                      ? 'formation.history.restore_confirm_cascade'|trans({'%date%': dateShort, '%label%': r.label|lower, '%count%': extra}, 'formation')
+                                      : 'formation.history.restore_confirm_single'|trans({'%date%': dateShort, '%label%': r.label|lower}, 'formation')
                                   }}">
-                                <button title="Annule {{ extra + 1 }} changement(s)"
-                                        class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-u-up-left', {class: 'icon'}) }} Restaurer</button>
+                                <button title="{{ 'formation.history.restore_title'|trans({'%count%': extra + 1}, 'formation') }}"
+                                        class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-u-up-left', {class: 'icon'}) }} {{ 'formation.history.restore_button'|trans({}, 'formation') }}</button>
                             </form>
                         {% endif %}
                     </td>
@@ -95,7 +92,7 @@
             </tbody>
         </table>
         <p class="px-4 py-3 text-xs text-gray-400 border-t" style="border-color:var(--c-border)">
-            {{ rows|length }} modification(s) conservée(s) (les plus anciennes sont purgées au-delà de 50).
+            {{ 'formation.history.footer_count'|trans({'%count%': rows|length}, 'formation') }}
         </p>
     {% endif %}
 </div>

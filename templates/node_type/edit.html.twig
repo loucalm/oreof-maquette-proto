@@ -1,61 +1,60 @@
 {% extends 'base.html.twig' %}
-{% block title %}{{ isNew ? 'Nouveau type' : nodeType.label }}{% endblock %}
+{% block title %}{{ isNew ? 'node_type.edit.new_title'|trans({}, 'node_type') : nodeType.label }}{% endblock %}
 
 {% block body %}
 <div class="max-w-2xl">
     <div class="text-xs" style="color:var(--c-muted)">
-        <a href="{{ path('node_type_index') }}" class="hover:underline">Types d’éléments pédagogiques</a> › {{ isNew ? 'nouveau' : nodeType.label }}
+        <a href="{{ path('node_type_index') }}" class="hover:underline">{{ 'node_type.index.heading'|trans({}, 'node_type') }}</a> › {{ isNew ? 'node_type.edit.breadcrumb_new'|trans({}, 'node_type') : nodeType.label }}
     </div>
-    <h1 class="text-xl font-bold mt-1 mb-5">{{ isNew ? 'Nouveau type d’élément pédagogique' : 'Modifier « ' ~ nodeType.label ~ ' »' }}</h1>
+    <h1 class="text-xl font-bold mt-1 mb-5">{{ isNew ? 'node_type.edit.new_heading'|trans({}, 'node_type') : 'node_type.edit.edit_heading'|trans({'%label%': nodeType.label}, 'node_type') }}</h1>
 
     <form method="post" class="rounded-xl border bg-white p-5 space-y-4" style="border-color:var(--c-border)">
         <div class="grid grid-cols-3 gap-3">
             <label class="block col-span-2">
-                <span class="text-xs font-medium">Libellé</span>
+                <span class="text-xs font-medium">{{ 'node_type.edit.label_field'|trans({}, 'node_type') }}</span>
                 <input name="label" required value="{{ nodeType.label ?? '' }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
             </label>
             <label class="block">
-                <span class="text-xs font-medium">Icône</span>
+                <span class="text-xs font-medium">{{ 'node_type.edit.icon_field'|trans({}, 'node_type') }}</span>
                 <input name="icon" value="{{ nodeType.icon ?? '' }}" placeholder="ph:puzzle-piece" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
-                <span class="text-[11px]" style="color:var(--c-muted)">Nom d'icône <a href="https://icones.js.org/collection/ph" target="_blank" class="underline">Phosphor</a> (ex. <code>ph:calendar</code>)</span>
+                <span class="text-[11px]" style="color:var(--c-muted)">{{ 'node_type.edit.icon_help'|trans({'%link%': '<a href="https://icones.js.org/collection/ph" target="_blank" class="underline">Phosphor</a>', '%example%': '<code>ph:calendar</code>'}, 'node_type')|raw }}</span>
             </label>
         </div>
         <div class="grid grid-cols-3 gap-3">
             <label class="block">
-                <span class="text-xs font-medium">Clé</span>
-                <input name="key" value="{{ nodeType.key ?? '' }}" placeholder="auto depuis le libellé" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                <span class="text-xs font-medium">{{ 'node_type.edit.key_field'|trans({}, 'node_type') }}</span>
+                <input name="key" value="{{ nodeType.key ?? '' }}" placeholder="{{ 'node_type.edit.key_placeholder'|trans({}, 'node_type') }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
             </label>
             <label class="block">
-                <span class="text-xs font-medium">Famille</span>
+                <span class="text-xs font-medium">{{ 'node_type.edit.family_field'|trans({}, 'node_type') }}</span>
                 <select name="family" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
                     {% for fam in families %}<option value="{{ fam.value }}" {{ (nodeType.family ?? null) == fam ? 'selected' }}>{{ fam.label }}</option>{% endfor %}
                 </select>
             </label>
             <div class="grid grid-cols-2 gap-2">
                 <label class="block">
-                    <span class="text-xs font-medium">Position</span>
+                    <span class="text-xs font-medium">{{ 'node_type.edit.position_field'|trans({}, 'node_type') }}</span>
                     <input type="number" name="position" value="{{ nodeType.position ?? 0 }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
                 </label>
                 <label class="block">
-                    <span class="text-xs font-medium">ECTS cible</span>
+                    <span class="text-xs font-medium">{{ 'node_type.edit.ects_target_field'|trans({}, 'node_type') }}</span>
                     <input type="number" name="ectsTarget" value="{{ nodeType.ectsTarget ?? '' }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
                 </label>
             </div>
         </div>
 
         <p class="text-xs rounded-md px-3 py-2" style="background:var(--c-primary-soft);color:var(--c-primary)">
-            La hiérarchie (quel type peut être enfant de quel type) n'est PAS définie ici : elle est propre à
-            chaque formation, dans « Configuration de la structure ».
+            {{ 'node_type.edit.hierarchy_note'|trans({}, 'node_type') }}
         </p>
 
         <fieldset class="rounded-md border p-3" style="border-color:var(--c-border)">
-            <legend class="text-xs font-medium px-1">Numérotation automatique</legend>
+            <legend class="text-xs font-medium px-1">{{ 'node_type.edit.numbering_legend'|trans({}, 'node_type') }}</legend>
             <label class="flex items-center gap-2 text-sm">
                 <input type="checkbox" name="numbered" value="1" {{ (nodeType.numbered ?? false) ? 'checked' }}>
-                Ce type porte une référence calculée (« Année 1 », « UE 1.1 »…)
+                {{ 'node_type.edit.numbered_label'|trans({}, 'node_type') }}
             </label>
             <label class="mt-2 flex items-center gap-2 text-sm">
-                <span class="text-xs" style="color:var(--c-muted)">Style de l'indice</span>
+                <span class="text-xs" style="color:var(--c-muted)">{{ 'node_type.edit.number_style_label'|trans({}, 'node_type') }}</span>
                 <select name="numberStyle" class="rounded-md border px-2 py-1 text-sm" style="border-color:var(--c-border)">
                     {% for v, l in constant('App\\Entity\\NodeType::NUMBER_STYLES') %}
                         <option value="{{ v }}" {{ (nodeType.numberStyle ?? 'decimal') == v ? 'selected' }}>{{ l }}</option>
@@ -63,22 +62,21 @@
                 </select>
             </label>
             <p class="mt-2 text-xs" style="color:var(--c-muted)">
-                Un type non numéroté (ex. Semestre) est « transparent » : ses enfants héritent du contexte du parent numéroté.
+                {{ 'node_type.edit.numbering_help'|trans({}, 'node_type') }}
             </p>
         </fieldset>
 
         <fieldset>
-            <legend class="text-xs font-medium mb-1">Capacités &amp; champs du type</legend>
+            <legend class="text-xs font-medium mb-1">{{ 'node_type.edit.capabilities_legend'|trans({}, 'node_type') }}</legend>
             <p class="text-xs mb-2" style="color:var(--c-muted)">
-                <strong>Incluse</strong> : le champ existe pour ce type d’élément pédagogique.
-                <strong>Réservée admin</strong> : imposé — le responsable de formation ne peut pas l'activer / désactiver par élément pédagogique.
+                {{ 'node_type.edit.capabilities_help'|trans({}, 'node_type')|raw }}
             </p>
             <table class="w-full text-sm">
                 <thead class="text-[11px] uppercase tracking-wide" style="color:var(--c-muted)">
                     <tr class="border-b" style="border-color:var(--c-border)">
-                        <th class="text-left py-1.5">Capacité</th>
-                        <th class="w-20 text-center">Incluse</th>
-                        <th class="w-28 text-center">Réservée admin</th>
+                        <th class="text-left py-1.5">{{ 'node_type.edit.col_capability'|trans({}, 'node_type') }}</th>
+                        <th class="w-20 text-center">{{ 'node_type.edit.col_included'|trans({}, 'node_type') }}</th>
+                        <th class="w-28 text-center">{{ 'node_type.edit.col_reserved_admin'|trans({}, 'node_type') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -100,8 +98,8 @@
         </fieldset>
 
         <div class="flex gap-2 pt-1">
-            <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">Enregistrer</button>
-            <a href="{{ path('node_type_index') }}" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">Annuler</a>
+            <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
+            <a href="{{ path('node_type_index') }}" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</a>
         </div>
     </form>
 </div>

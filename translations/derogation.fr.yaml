@@ -1,0 +1,16 @@
+derogation:
+  index:
+    title: Dérogations
+    heading: Demandes de dérogation
+    description: >-
+      Un responsable de formation a demandé, par texte, d’ajouter/déplacer/supprimer quelque chose que
+      le template du diplôme ne prévoit pas (typiquement un ELP imposé). Traitez la demande en appliquant
+      vous-même la modification nécessaire dans la formation, puis marquez-la ci-dessous.
+    empty: Aucune demande de dérogation pour l’instant.
+    general_request: Demande générale
+    sent_on: 'Envoyée le %date%'
+    resolved_on: '%status% le %date%'
+    approve_note_placeholder: Note (facultative)
+    approve_button: Approuver
+    reject_note_placeholder: Motif du refus (facultatif)
+    reject_button: Refuser

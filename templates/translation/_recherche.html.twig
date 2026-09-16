@@ -1,0 +1,36 @@
+{% if results is empty %}
+    <p class="text-sm" style="color:var(--c-muted)">Aucun résultat pour « {{ search }} ».</p>
+{% else %}
+    <div class="rounded-lg border overflow-hidden" style="border-color:var(--c-border)" data-controller="translation">
+        <table class="w-full text-sm">
+            <tbody>
+            {% for filename, translations in results %}
+                <tr class="border-b" style="border-color:var(--c-border);background:var(--c-primary-soft)">
+                    <td colspan="3" class="px-4 py-1.5 text-xs font-semibold uppercase tracking-wide" style="color:var(--c-primary)">{{ filename }}</td>
+                </tr>
+                {% for key, value in translations %}
+                    <tr class="border-b last:border-0" style="border-color:var(--c-border)"
+                        data-translation-key="{{ key }}" data-original-value="{{ value|e('html_attr') }}" data-is-new="false"
+                        data-save-url="{{ path('admin_traductions_save_one', {filename: filename}) }}">
+                        <td class="px-4 py-2 align-top font-mono text-xs" style="color:var(--c-muted)">{{ key }}</td>
+                        <td class="px-4 py-2 align-top">
+                            <span data-role="value-display" class="text-sm">{{ value }}</span>
+                            <input data-role="value-input" type="text" value="{{ value|e('html_attr') }}" hidden class="fld text-sm" />
+                            <p data-role="error" hidden class="text-xs text-red-600 mt-1"></p>
+                        </td>
+                        <td class="px-4 py-2 align-top text-right whitespace-nowrap">
+                            <div data-role="view-actions">
+                                <button type="button" data-action="translation#edit" class="text-xs hover:underline">Modifier</button>
+                            </div>
+                            <div data-role="edit-actions" hidden>
+                                <button type="button" data-role="save-btn" data-action="translation#save" class="text-xs text-green-700 hover:underline">Enregistrer</button>
+                                <button type="button" data-action="translation#cancel" class="text-xs hover:underline ml-2" style="color:var(--c-muted)">Annuler</button>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}

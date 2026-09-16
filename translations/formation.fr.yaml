@@ -1,0 +1,457 @@
+formation:
+  index:
+    page_title: Détails des mentions/spécialités · Prototype maquette
+    heading: Détails des mentions/spécialités
+    subheading: Ici vous pouvez voir l'ensemble de vos formations créées
+    check_lheo: Vérifier Export LHEO
+    add_button: Ajouter une formation
+    breadcrumb_home: Accueil
+    breadcrumb_offer: Offre de formation
+    table_description: Consultez et administrez rapidement les mentions et spécialités de l'offre de formation.
+    tab_all: Toutes les formations
+    tab_consolidation: Consolidation de l’offre
+    col_formation: Formation
+    col_composante: Composante
+    col_state: État
+    col_progress: Remplissage
+    col_actions: Actions
+    col_parcours: Parcours
+    col_periods: Périodes
+    col_bcc: BCC
+    parcours_count: '%count% parcours'
+    mono_parcours: mono-parcours
+    toggle_show: Voir
+    toggle_parcours_suffix: les parcours
+    phase_consolidation: Consolidation
+    phase_construction: Construction
+    global_progress: Progression globale
+    view_button: Voir
+    actions_button: Actions
+    check_input_action: Vérifier la saisie
+    delete_confirm: 'Supprimer définitivement la formation « %name% » ? Cette action est irréversible.'
+    parcours_of: Parcours de
+    parcours_specialization_of: 'spécialisation de « %parent% »'
+    periods_range: '%unit%s %start%–%end%'
+    bcc_complete: Complet
+    bcc_incomplete: Incomplet
+    bcc_empty: Vide
+    empty: 'Aucune formation. Cliquez sur « Ajouter une formation ».'
+    modal_title: Ajouter une nouvelle formation
+    modal_subtitle: Ajouter votre formation
+    name_field: Nom de la formation
+    name_placeholder: Formation exemple
+    name_help: Nommer votre formation
+    diplome_field: Type de diplôme
+    diplome_help: La sélection de certains diplômes nécessite une demande
+    domaine_field: Domaine de formation
+    domaine_help: Domaine auquel appartient votre formation
+    composante_field: Composante porteuse de la formation
+    composante_placeholder: Composante exemple
+    composante_help: >-
+      Indiquer la composante porteuse du projet, qui aura en charge le dépôt de la demande
+    multi_parcours_label: La formation contient des parcours (multi-parcours)
+    creation_type_label: Type de création
+    phase_classic_label: Formation classique
+    phase_classic_help: Construction immédiate de l'offre.
+    phase_consolidation_label: Consolidation de l'offre
+    phase_consolidation_help: >-
+      Juste le squelette (nom, structure) — préparé en avance pour une année future, à compléter plus tard.
+    annee_field: Année universitaire visée
+    annee_placeholder: ex. 2027-2028
+    annee_help: Surtout utile pour une consolidation.
+    create_button: Créer
+  tree:
+    drag_title: Glisser pour déplacer
+    locked_title: ELP imposé par le diplôme
+    ref_title: Référence calculée
+    choice_count_title: Nombre à choisir parmi les options de ce bloc
+    choice_count: '%chosen% parmi %total%'
+    choice_alt_title: 'Cet ELP est une alternative du bloc de choix « %label% »'
+    toggle_aria: Plier/déplier
+  editor:
+    title_suffix: éditeur
+    page_subtitle: Page de modification de la formation
+    view_sheet: Voir la fiche descriptive
+    back_to_list: Retour à la liste des formation
+    breadcrumb_list: Liste des formation
+    meta_domaine: Domaine
+    meta_domaine_default: Non défini
+    meta_diplome: Type diplôme
+    meta_composante: Composante
+    meta_composante_default: Composante exemple
+    meta_mention: Mention
+    meta_parcours: Parcours
+    meta_mono_parcours: Mono-parcours
+    process_progress: Avancement du process
+    consolidation_banner_title: En consolidation
+    consolidation_banner_text: Structure à préparer ; le contenu sera complété plus tard.
+    switch_to_construction_confirm: >-
+      Passer « %name% » en construction ? Elle sortira de l'onglet « Consolidation de l'offre ».
+    switch_to_construction_button: Basculer en construction
+    open_banner_title: Formation ouverte
+    open_banner_text: Vous pouvez modifiez la formation
+    quick_actions_label: Actions rapide
+    change_manager_fake: Changer co/resp. formation
+    extra_action_fake: Action complémentaire
+    undo_title: Annuler la dernière modification
+    redo_title: Rétablir la modification annulée
+    history_link: Historique
+    export_link: Export
+    ses_menu_button: Gestion SES
+    structure_config_link: Configuration de la structure de cette formation
+    heading: Éditeur de formation
+    description_multi: Gérez les paramètres de la formation et ouvrez chaque parcours pour construire sa structure.
+    description_mono: Construisez la structure de la formation ELP par ELP.
+    structure_label: Structure de la formation
+    param_section_label: Paramètre de la formation
+    bcc_section_label: Référentiel de compétences (BCC)
+    ramification_section_label: Arborescence des parcours
+    parcours_list_label: Parcours
+    no_parcours: Aucun parcours. Ajoutez-en un ci-dessous.
+    no_skeleton_note: >-
+      Définissez d'abord le squelette dans %link_open%Configuration de la structure%link_close%.
+    new_parcours_label: Nouveau parcours
+    add_parcours_suffix: un parcours
+    add_choice_title: Ajouter un bloc de choix sous l’ELP sélectionné
+    no_structure_defined: Aucune structure définie
+    duplicate_title: Dupliquer l’ELP sélectionné
+    delete_node_confirm: Supprimer cet ELP et tout ce qu'il contient ?
+    delete_title: Supprimer l’ELP sélectionné
+    request_derogation_title: Demander une dérogation
+    derogation_modal_title: Demander une dérogation
+    derogation_modal_default_context: Décrivez ce que vous voudriez ajouter, déplacer ou supprimer, et pourquoi.
+    derogation_message_label: Votre demande
+    derogation_message_placeholder: 'Ex. : je voudrais ajouter une UE optionnelle supplémentaire au semestre 3…'
+    derogation_submit_button: Envoyer la demande
+    select_prompt: Sélectionnez une section ou un ELP pour le modifier
+  parcours_editor:
+    title_suffix: éditeur de parcours
+    page_subtitle: Page de modification du parcours
+    meta_formation: Formation
+    meta_periods: Périodes
+    meta_parent: Parcours parent
+    heading: Éditeur de parcours
+    description: Construisez la structure de ce parcours ELP par ELP.
+    structure_label: Structure du parcours
+    param_section_label: Paramètre du parcours
+    ramification_section_label: Positionnement & ramification
+    back_to_formation: Revenir à la formation
+    no_root_note: "Ce parcours n'a pas encore de %type%. Ajoutez-en une ci-dessous."
+    generic_level: niveau
+  graph:
+    title_suffix: arborescence des parcours
+    breadcrumb_list: Liste des formations
+    heading: Arborescence des parcours
+    axis_note: >-
+      Axe : <strong>%unit%</strong> (dimension temporelle de la formation, réglable dans « Configuration
+      de la structure »).
+    standalone_note: "Le parent d'un parcours et ses %unit%s de début / fin se règlent depuis l'éditeur de la formation."
+    editable_note: Glissez d'un parcours vers un autre sur le graphe pour le désigner comme parent, ou utilisez le tableau ci-dessous.
+    empty: 'Aucun parcours. Ajoutez-en depuis « Configuration de la structure ».'
+    remove_link_title: Retirer ce lien de ramification
+    year_ordinal: '%n%%suffix% année'
+    you_are_here_badge: VOUS ÊTES ICI
+    you_are_here_pill: Vous êtes ici
+    parcours_fallback: Parcours
+    period_range: '%unit%s %start%–%end%'
+    child_of: 'enfant de « %parent% »'
+    candidate_option: '%label% · %unit%s %start%–%end%'
+    save_button: Enregistrer la ramification
+  view:
+    title_suffix: consultation
+    hours_line: '%mod% %place% : %hours% h'
+    te_line: 'Travail étudiant : %hours% h'
+    plabel:
+      modalites_enseignement: Modalités d'enseignement
+      composante_inscription: Composante d'inscription
+      modalites_alternance: Modalités de l'alternance
+      lieu: Localisation
+      code_apogee: Code Apogée
+      resp_parcours: Responsable
+      co_resp_parcours: Co-responsable
+      objectif: Objectif
+      mots_cles: Mots clés
+      resultats: Résultats attendus
+      contenu: Contenu
+      langue: Langue d'enseignement
+      niveau_langue: Niveau de langue requis
+      rythme: Rythme
+      rythme_precision: Précision du rythme
+      contacts: Contacts
+      poursuite_etudes: Poursuite d'études envisageables
+      debouches: Débouchés
+      codes_rome: Code(s) ROME
+      regimes: Régime(s) d'inscription
+      org_parcours: Organisation en parcours
+      temporal_dimension: Dimension temporelle
+      ects_total: ECTS total visé
+      hierarchy: Hiérarchie des niveaux
+      intitule_mono: Intitulé mono-parcours
+    section_organisation: Organisation et localisation
+    section_presentation: Présentation
+    no_field: Aucun champ renseigné pour cet ELP.
+    mutualized_badge: mutualisé
+    node_content_title: Contenu de cet ELP
+    formation_params_breadcrumb: Paramètres de la formation
+    multi_parcours_value: Multi-parcours
+    temporal_dimension_deduced: déduite de la structure (%unit%)
+    implicit_badge: implicite
+    section_empty: Section non renseignée.
+    edit_section_button: Modifier cette section
+    no_bloc: Aucun bloc de compétences.
+    no_competency: Aucune compétence.
+    bcc_per_parcours_note: En multi-parcours, le référentiel est défini par parcours.
+    edit_lowercase: modifier
+    bloc_count: '%count% bloc(s)'
+    edit_referentiel_button: Modifier le référentiel
+    readonly_subtitle: Consultation — lecture seule
+    readonly_pill: Lecture seule
+    export_json_button: Export JSON
+    list_button: Liste
+    multi_short: Multi
+    mono_short: Mono
+    duree_label: Durée
+    structure_label: Structure
+    no_structure: Aucune structure définie.
+    select_prompt: Choisissez une section ou un ELP pour voir son contenu
+  history:
+    title_prefix: Historique
+    heading: 'Historique — %name%'
+    intro: >-
+      Chaque modification importante est archivée automatiquement, la plus récente en haut.
+      <strong>Restaurer une ligne annule aussi tous les changements plus récents qu'elle</strong> — pas
+      seulement le sien. Rien n'est perdu : l'état actuel est lui-même archivé avant chaque restauration,
+      et reste consultable et restaurable ci-dessous.
+    legend_current: État actuel — c'est exactement là où vous êtes, suite à la dernière restauration
+    legend_superseded: Écarté par cette restauration — hors du chemin actuel, mais toujours restaurable
+    editor_link: Éditeur
+    empty: Aucune modification archivée pour l'instant — l'historique se remplit au fil des changements.
+    col_date: Date
+    col_change: Modification
+    col_action: Action
+    current_state_pill: État actuel
+    superseded_title: Une restauration plus récente est passée par-dessus ce changement.
+    superseded_pill: Écarté
+    current_state_note: c'est l'état restauré le plus récemment — le restaurer à nouveau n'aurait aucun effet
+    cascade_note: 'restaurer annule aussi %count% changement(s) plus récent(s)'
+    most_recent_note: changement le plus récent — rien d'autre à annuler
+    already_here_title: Vous êtes déjà à cet état
+    restore_button: Restaurer
+    restore_title: 'Annule %count% changement(s)'
+    restore_confirm_cascade: >-
+      Restaurer l'état du %date% (%label%) ? Cela annule aussi %count% changement(s) plus récent(s)
+      effectué(s) depuis — pas seulement celui-ci. Rien n'est perdu : l'état actuel restera consultable
+      et restaurable dans l'historique.
+    restore_confirm_single: >-
+      Restaurer l'état du %date% (%label%) ? C'est le changement le plus récent : lui seul sera annulé.
+      L'état actuel restera consultable et restaurable dans l'historique.
+    footer_count: '%count% modification(s) conservée(s) (les plus anciennes sont purgées au-delà de 50).'
+  export:
+    title_prefix: Export
+    heading: 'Export JSON — %name%'
+    subtitle: Structure de stockage de la maquette (aperçu).
+    tab_raw: 'Brut · 3 documents stockés'
+    tab_enriched: 'Enrichi · arbre calculé'
+    raw_note: 'parametres (props formation) · dataParcours (props parcours) · arbre (structure + BCC + données des éléments pédagogiques)'
+    enriched_note: 'libellés de type résolus, référence hiérarchique, agrégats heures / ECTS, statut'
+    copy_button: Copier
+    download_button: Télécharger .json
+  check:
+    title_prefix: Vérifier la saisie
+    subtitle: '%name% — %progress%% complété'
+    edit_structure_button: Modifier la structure
+    no_issue_title: Aucune anomalie
+    no_issue_text: Tous les champs requis sont renseignés et chaque conteneur a au moins un enfant.
+    issues_count: '%count% ELP à compléter :'
+    no_label: (sans libellé)
+    missing_label: 'Manquant : %fields%'
+    fix_button: Corriger
+  bcc:
+    bloc_label_field: Libellé du bloc
+    label_field: Libellé
+    code_field: Code
+    description_field: Description
+    description_placeholder: Intitulé complet / précision
+    delete_bloc_confirm: Supprimer ce bloc et toutes ses compétences ?
+    delete_competency_confirm: Supprimer cette compétence ?
+    delete_bloc_button: le bloc
+    delete_competency_button: la compétence
+    heading: Référentiel de compétences
+    intro: >-
+      Blocs de connaissances et de compétences. Chaque bloc regroupe des compétences ; le bloc
+      « transversales (RNCP) » porte les compétences communes %scope%.
+    scope_parcours: à ce parcours
+    scope_mention: à la mention
+    structure_title: Structure BCC
+    add_transversal_button: Ajouter des compétences transversales (RNCP)
+    empty: 'Aucun bloc de compétences. Commencez par « Ajouter un bloc ».'
+    reorder_title: Glisser pour réordonner
+    edit_delete_title: Modifier / supprimer
+    drag_title: Glisser
+    add_competency_button: Ajouter une compétence
+    add_bloc_button: Ajouter un bloc
+  fields:
+    default_placeholder: -Choisir-
+  param:
+    panel_title: Gestion de la formation
+    parcours_panel_title: Gestion du parcours
+    organisation:
+      divider_global: Informations globale
+      diplome_help: 'Licence, Master, BUT, DU, Ingénieur, etc.'
+      composante_help: >-
+        Indiquer la composante porteuse du projet, qui aura en charge le dépôt de la demande de création
+        de la formation
+      contacts_label: Contacts de la formation
+      divider_specific: Informations spécifiques
+      mention_label: Mention / spécialité
+      add_mention_fake: Ajouter une autre mention/spécialité
+      niveau_entree_label: Niveau d'entrée en formation
+      niveau_sortie_label: Niveau de sortie de la formation
+      rncp_label: La formation est-elle inscrite au RNCP ?
+      yes: Oui
+      no: Non
+      code_rncp_label: Code RNCP
+      code_rncp_help: Indiquez le code RNCP (cf. www.francecompetences.fr).
+      code_rncp_placeholder: Code RNCP
+      code_apogee_label: Code Apogée de la mention
+      code_apogee_help: Code de la mention dans Apogée
+      code_apogee_placeholder: Code Apogée
+      divider_responsables: Responsable(s)
+      resp_mention_label: Responsable de la mention
+      resp_mention_help: Responsable principale de la mention
+      resp_select_placeholder: 'Choisir dans la liste ou "+ nouveau"'
+      create_new_fake: Créer nouveau
+      co_resp_mention_label: Co-responsable de la mention
+      co_resp_mention_help: Co-responsable de la mention
+    presentation:
+      divider_info: Informations de la formation
+      objectif_help: Expliquez brièvement les objectifs de la formation
+      resultats_help: Expliquez brièvement les résultats attendus de la formation
+      contenu_help: Expliquez brièvement le contenu de la formation
+      divider_rythme: Rythme de formation
+      rythme_help: Choisissez un rythme de formation ou complétez le champ ci-dessous
+      rythme_precision_label: Si besoin, précisez le rythme de formation
+    parcours_organisation:
+      nom_label: Nom du parcours
+      nom_help: Nommer votre parcours
+      ects_label: Volume d'ECTS total
+      ects_help: Cela servira à vérifier le total d'ECTS de votre parcours
+      modalites_enseignement_label: Modalités d'enseignement de la formation
+      composante_help: Composante(s) à laquelle les étudiants pourront s'inscrire
+      other_composante: Autre composante
+      add_composante_fake: Ajouter une composante d'inscription
+      multi_choice: Choix multiples
+      modalites_alternance_label: Précisez les modalités de l'alternance
+      modalites_alternance_help: >-
+        Indiquez en 3000 caractères maximum les périodes et leurs durées en centre ou en entreprise.
+      divider_localisation: Localisation
+      localisation_label: Localisation du parcours
+      add_localisation_fake: Ajouter une autre localisation
+      resp_label: Responsable du parcours
+      resp_help: Responsable principale du parcours
+      resp_select_placeholder: 'Choisir dans la liste ou choisir "+ nouveau"'
+      co_resp_label: Co-responsable du parcours
+      co_resp_help: Co-Responsable du parcours
+      divider_relations: Relation inter-parcours
+      duree_label: Durée du parcours
+      positionnement_label: Positionnement
+      specialisations_label: Spécialisations (parcours enfants)
+      edit_in_ramification: 'Modifier dans « Positionnement & ramification »'
+    parcours_presentation:
+      divider_info: Informations du parcours
+      objectif_label: Objectif du parcours
+      objectif_help: Expliquez brièvement les objectifs du parcours
+      mots_cles_help: Mots clés caractérisant le parcours
+      resultats_label: Résultats attendus du parcours
+      resultats_help: >-
+        Indiquez en 3000 caractères maximum les compétences acquises via la formation (compétences à
+        acquérir, à améliorer ou à entretenir).
+      contenu_label: Contenu du parcours
+      contenu_help: Expliquez brièvement le contenu du parcours
+      langue_help: "Langue dans laquelle sont dispensés les cours (à l'exception des cours de langue)"
+      add_langue_fake: Ajouter une langue
+      niveau_langue_help: Indiquez le niveau de langue souhaité pour intégrer le parcours
+      rythme_label: Rythme de formation du parcours
+      divider_contacts: Contacts
+      contacts_label: Contacts du parcours
+      divider_after: Et après…
+      poursuite_etudes_help: >-
+        Indiquez en 3000 caractères maximum quelles sont les poursuites d'études envisageables.
+      debouches_help: "Indiquez les principaux débouchés professionnels accessibles à l'issue de cette formation."
+      codes_rome_label: Code(s) ROME
+      codes_rome_help: Ajoutez les codes ROME pour préciser les métiers accessibles aux diplômés.
+      add_rome_fake: Ajouter un code ROME
+    structure:
+      divider_parcours_count: Nombre de parcours
+      has_parcours_label: La formation contient-elle des parcours ?
+      has_parcours_help: >-
+        Oui → chaque parcours est un élément pédagogique racine. Non → le niveau parcours reste
+        invisible, la formation le porte elle-même.
+      important_change_note: >-
+        Changement important : bascule l'organisation de l'arbre existant, confirmation demandée.
+      to_multi_confirm: >-
+        Passer en multi-parcours va rassembler les éléments pédagogiques actuels de la formation dans un
+        nouveau parcours.
+      yes_options: Oui (options)
+      to_mono_confirm: >-
+        Passer en mono-parcours va supprimer le(s) parcours et remonter leurs éléments pédagogiques à la
+        racine de la formation.
+      no_mono: Non (mono-parcours)
+      divider_temporal: Dimension temporelle
+      temporal_note: >-
+        Sur combien de temps la formation se déroule : 3 ans, 6 mois, 12 semaines… Par défaut l'unité
+        suit le type du 1er niveau du squelette (actuellement <strong>%unit%</strong>) ; renseigne un
+        libellé pour le forcer.
+      calendar_unit_label: Unité de temps
+      calendar_unit_help: 'Vide = %unit%'
+      calendar_span_label: 'Durée (nombre de %unit%s)'
+      calendar_span_help: Vide = déduit de l'arbre / des parcours
+      divider_mono_props: Propriétés formation mono-parcours
+      mono_props_note: >-
+        Ces propriétés seraient portées par un élément pédagogique %badge% ; en mono-parcours cet élément
+        pédagogique est <strong>invisible et verrouillé</strong> : la formation les porte directement.
+      intitule_mono_label: Intitulé de mono parcours
+      intitule_mono_help: Si laissé vide, celui de la formation servira d'intitulé
+      ects_total_label: Volume d'ECTS total
+      ects_total_help: Cela servira à vérifier le total d'ECTS de votre formation mono-parcours
+      divider_structure: Structure
+      readonly_note: >-
+        La hiérarchie des niveaux est définie par le diplôme (administrateur SES). Vous construisez
+        l'arbre à l'intérieur de ce cadre depuis l'éditeur.
+      mono_carried_badge: (porté par la formation)
+      admin_note: >-
+        Définissez la hiérarchie : chaque ligne est le type des enfants de la ligne du dessus. L'éditeur
+        ne proposera que ces types lors de la construction de l'arbre.
+      col_order: Ordre
+      col_type: Type d'ELP
+      invisible_mono_pill: 'invisible · porté par la formation'
+      root_fixed_pill: 'racine · figé'
+      visible_root_note: racine visible de l'arbre
+      child_of_note: enfant de %parent%
+      remove_confirm: 'Retirer « %label% » du squelette ? (les ELP déjà créés ne sont pas supprimés)'
+      remove_button: Retirer
+      add_elp_button: Ajouter un ELP
+      elp_field: ELP
+      elp_help: Peut être changé plus tard
+      all_types_used: >-
+        Tous les types disponibles sont déjà dans le squelette. Créez-en de nouveaux dans %link_open%les
+        types d’élément pédagogique%link_close%.
+      node_count_note: >-
+        %count% ELP déjà construit(s) dans l'arbre · les types sont gérés par les administrateurs —
+        %link_open%voir / éditer les types%link_close%.
+      divider_load_template: Charger un template
+      load_template_confirm: Charger ce template ÉCRASE le squelette ET les éléments pédagogiques actuels.
+      load_button: Charger
+      template_note: >-
+        Un template fixe le squelette et pré-remplit un arbre de départ, ensuite librement modifiable —
+        %link_open%liste des templates%link_close%.
+      template_name_placeholder: Nom du template
+      save_as_template_button: Enregistrer comme template
+      reset_confirm: >-
+        Vider tous les éléments pédagogiques de l'arbre ? (le squelette et les éléments pédagogiques
+        imposés sont conservés)
+      reset_button: Vider les ELP
+      derogation_note: >-
+        Pour ajouter, déplacer ou supprimer quelque chose que le template du diplôme ne prévoit pas
+        (typiquement un ELP imposé) — bouton %flag_icon% dans la barre d'actions de l'arborescence.
+      no_derogation: Aucune demande envoyée pour cette formation.

@@ -13,18 +13,18 @@
         <li data-node-id="{{ node.id }}" data-node-type="{{ node.type.key }}" data-node-host-type="{{ node.getEffectiveHostTypeKey() }}"
             {{ lockedDel ? 'data-locked="1"' }} {{ node.isLocked('move') ? 'data-locked-move="1"' }}>
             <div class="tree-row {{ isChoice ? 'tree-row--choice' }} {{ parentIsChoice ? 'tree-row--choice-alt' }} {{ focus and focus == node.id ~ '' ? 'is-active' }}">
-                <span class="drag-handle" title="Glisser pour déplacer">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>
+                <span class="drag-handle" title="{{ 'formation.tree.drag_title'|trans({}, 'formation') }}">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>
                 <span class="status-dot" data-status="{{ view.status }}"
-                      title="{{ view.status == 'ok' ? 'Complet' : (view.status == 'incomplete' ? 'Incomplet' : 'Vide') }}"></span>
-                {% if lockedDel %}<span class="tree-lock" title="ELP imposé par le diplôme">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }}</span>{% endif %}
+                      title="{{ view.status == 'ok' ? 'formation.index.bcc_complete'|trans({}, 'formation') : (view.status == 'incomplete' ? 'formation.index.bcc_incomplete'|trans({}, 'formation') : 'formation.index.bcc_empty'|trans({}, 'formation')) }}"></span>
+                {% if lockedDel %}<span class="tree-lock" title="{{ 'formation.tree.locked_title'|trans({}, 'formation') }}">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }}</span>{% endif %}
                 <span class="type-badge"><span class="opacity-70">{{ ux_icon(node.type.icon, {class: 'icon'}) }}</span> [{{ node.type.label }}]</span>
-                {% if view.ref %}<span class="tree-ref" title="Référence calculée">{{ view.ref }}</span>{% endif %}
+                {% if view.ref %}<span class="tree-ref" title="{{ 'formation.tree.ref_title'|trans({}, 'formation') }}">{{ view.ref }}</span>{% endif %}
                 <a href="{{ node_url(node) }}" data-turbo-frame="node-panel"
                    class="tree-label">{{ node.label ?: '—' }}</a>
                 {% if isChoice %}
-                    <span class="choice-count" title="Nombre à choisir parmi les options de ce bloc">{{ node.getAttribute('choiceCount') ?: '?' }} parmi {{ view.children|length }}</span>
+                    <span class="choice-count" title="{{ 'formation.tree.choice_count_title'|trans({}, 'formation') }}">{{ 'formation.tree.choice_count'|trans({'%chosen%': node.getAttribute('choiceCount') ?: '?', '%total%': view.children|length}, 'formation') }}</span>
                 {% elseif parentIsChoice %}
-                    <span class="choice-alt-tag" title="Cet ELP est une alternative du bloc de choix « {{ parentChoiceLabel }} »">{{ ux_icon('ph:shuffle', {class: 'icon'}) }} {{ parentChoiceLabel }}</span>
+                    <span class="choice-alt-tag" title="{{ 'formation.tree.choice_alt_title'|trans({'%label%': parentChoiceLabel}, 'formation') }}">{{ ux_icon('ph:shuffle', {class: 'icon'}) }} {{ parentChoiceLabel }}</span>
                 {% endif %}
 
                 {% if view.ectsTarget %}
@@ -32,7 +32,7 @@
                 {% endif %}
 
                 {% if hasChildren %}
-                    <button type="button" class="tree-chevron" data-action="tree#toggle" aria-label="Plier/déplier">{{ ux_icon('ph:caret-right', {class: 'icon'}) }}</button>
+                    <button type="button" class="tree-chevron" data-action="tree#toggle" aria-label="{{ 'formation.tree.toggle_aria'|trans({}, 'formation') }}">{{ ux_icon('ph:caret-right', {class: 'icon'}) }}</button>
                 {% else %}
                     <span class="tree-chevron-spacer"></span>
                 {% endif %}

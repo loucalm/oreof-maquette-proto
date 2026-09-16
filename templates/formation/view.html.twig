@@ -1,5 +1,5 @@
 {% extends 'base.html.twig' %}
-{% block title %}{{ formation.name }} · consultation{% endblock %}
+{% block title %}{{ formation.name }} · {{ 'formation.view.title_suffix'|trans({}, 'formation') }}{% endblock %}
 
 {# ─────────── macros ─────────── #}
 
@@ -35,14 +35,14 @@
                     <div class="fld-cat">{{ domains[tab] ?? tab }}</div>
                     <div class="flex flex-wrap gap-x-5 gap-y-1 text-sm text-gray-600 mt-2">
                         {% if hours.none ?? false %}
-                            <span class="italic text-gray-400">EC sans volume horaire</span>
+                            <span class="italic text-gray-400">{{ 'node.panel.hours_none_label'|trans({}, 'node') }}</span>
                         {% else %}
                             {% for hp, pl in HP %}{% for hm, ml in HM %}
                                 {% if hours[hp][hm] ?? false %}
-                                    <span>{{ ml }} {{ pl|lower }} : <strong>{{ hours[hp][hm] }} h</strong></span>
+                                    <span>{{ 'formation.view.hours_line'|trans({'%mod%': ml, '%place%': pl|lower, '%hours%': hours[hp][hm]}, 'formation') }}</span>
                                 {% endif %}
                             {% endfor %}{% endfor %}
-                            {% if hours.te ?? false %}<span>Travail étudiant : <strong>{{ hours.te }} h</strong></span>{% endif %}
+                            {% if hours.te ?? false %}<span>{{ 'formation.view.te_line'|trans({'%hours%': hours.te}, 'formation') }}</span>{% endif %}
                         {% endif %}
                     </div>
                 </div>
@@ -93,26 +93,38 @@
             {% set hasContent = true %}
             {% set unit = period_unit(n.formation)|lower %}
             <div class="text-sm text-gray-500">
-                {{ unit }}s <strong>{{ n.periodeDebut }}–{{ n.periodeFin }}</strong>
-                {%- if n.parcoursParent %} · spécialisation de « {{ n.parcoursParent.label ?: '—' }} »{% endif -%}
+                {{ 'formation.graph.period_range'|trans({'%unit%': unit, '%start%': n.periodeDebut, '%end%': n.periodeFin}, 'formation') }}
+                {%- if n.parcoursParent %} · {{ 'formation.index.parcours_specialization_of'|trans({'%parent%': n.parcoursParent.label ?: '—'}, 'formation') }}{% endif -%}
             </div>
             {% set plabels = {
-                'modalitesEnseignement': "Modalités d'enseignement", 'composante': "Composante d'inscription",
-                'modalitesAlternance': "Modalités de l'alternance", 'lieu': 'Localisation', 'codeApogee': 'Code Apogée',
-                'respParcours': 'Responsable', 'coRespParcours': 'Co-responsable',
-                'objectif': 'Objectif', 'motsCles': 'Mots clés', 'resultats': 'Résultats attendus',
-                'contenu': 'Contenu', 'langue': "Langue d'enseignement", 'niveauLangue': 'Niveau de langue requis',
-                'rythme': 'Rythme', 'rythmePrecision': 'Précision du rythme', 'contacts': 'Contacts',
-                'poursuiteEtudes': "Poursuite d'études envisageables", 'debouches': 'Débouchés', 'codesRome': 'Code(s) ROME'
+                'modalitesEnseignement': "formation.view.plabel.modalites_enseignement"|trans({}, 'formation'),
+                'composante': "formation.view.plabel.composante_inscription"|trans({}, 'formation'),
+                'modalitesAlternance': "formation.view.plabel.modalites_alternance"|trans({}, 'formation'),
+                'lieu': "formation.view.plabel.lieu"|trans({}, 'formation'),
+                'codeApogee': "formation.view.plabel.code_apogee"|trans({}, 'formation'),
+                'respParcours': "formation.view.plabel.resp_parcours"|trans({}, 'formation'),
+                'coRespParcours': "formation.view.plabel.co_resp_parcours"|trans({}, 'formation'),
+                'objectif': "formation.view.plabel.objectif"|trans({}, 'formation'),
+                'motsCles': "formation.view.plabel.mots_cles"|trans({}, 'formation'),
+                'resultats': "formation.view.plabel.resultats"|trans({}, 'formation'),
+                'contenu': "formation.view.plabel.contenu"|trans({}, 'formation'),
+                'langue': "formation.view.plabel.langue"|trans({}, 'formation'),
+                'niveauLangue': "formation.view.plabel.niveau_langue"|trans({}, 'formation'),
+                'rythme': "formation.view.plabel.rythme"|trans({}, 'formation'),
+                'rythmePrecision': "formation.view.plabel.rythme_precision"|trans({}, 'formation'),
+                'contacts': "formation.view.plabel.contacts"|trans({}, 'formation'),
+                'poursuiteEtudes': "formation.view.plabel.poursuite_etudes"|trans({}, 'formation'),
+                'debouches': "formation.view.plabel.debouches"|trans({}, 'formation'),
+                'codesRome': "formation.view.plabel.codes_rome"|trans({}, 'formation')
             } %}
-            {% for sect, slabel in {'organisation': 'Organisation et localisation', 'presentation': 'Présentation'} %}
+            {% for sect, slabel in {'organisation': 'formation.view.section_organisation'|trans({}, 'formation'), 'presentation': 'formation.view.section_presentation'|trans({}, 'formation')} %}
                 {% set pd = n.getParametre(sect) %}
                 {% set shown = pd|filter((v, k) => v is not empty and k != 'regimes') %}
                 {% if shown is not empty or (pd.regimes ?? []) %}
                     <div class="fld-cat">{{ slabel }}</div>
                     {% if pd.regimes ?? [] %}
                         <div class="flex flex-wrap gap-x-2 text-sm py-0.5">
-                            <span class="text-gray-400">Régime(s) d'inscription :</span>
+                            <span class="text-gray-400">{{ 'formation.view.plabel.regimes'|trans({}, 'formation') }} :</span>
                             <span class="text-gray-800">{{ pd.regimes|join(', ') }}</span>
                         </div>
                     {% endif %}
@@ -126,7 +138,7 @@
             {% endfor %}
         {% endif %}
 
-        {% if not hasContent %}<div class="text-sm text-gray-400 italic">Aucun champ renseigné pour cet ELP.</div>{% endif %}
+        {% if not hasContent %}<div class="text-sm text-gray-400 italic">{{ 'formation.view.no_field'|trans({}, 'formation') }}</div>{% endif %}
     </div>
 {% endmacro %}
 
@@ -144,7 +156,7 @@
                     <span class="tree-label">{{ n.label ?: '—' }}</span>
                     {% if view.ectsTarget %}<span class="tree-ects {{ view.ectsReached ? 'text-green-600' : 'text-gray-400' }}">{{ view.totalEcts|round }}/{{ view.ectsTarget }}</span>{% endif %}
                     {% if view.children %}
-                        <button type="button" class="tree-chevron" data-action="rotree#toggle" aria-label="Plier/déplier">{{ ux_icon('ph:caret-right', {class: 'icon'}) }}</button>
+                        <button type="button" class="tree-chevron" data-action="rotree#toggle" aria-label="{{ 'formation.tree.toggle_aria'|trans({}, 'formation') }}">{{ ux_icon('ph:caret-right', {class: 'icon'}) }}</button>
                     {% else %}<span class="tree-chevron-spacer"></span>{% endif %}
                 </div>
                 {% if view.children %}{{ m.rotree(view.children) }}{% endif %}
@@ -170,9 +182,9 @@
                 {% if n.code %}<code class="text-xs text-gray-400">{{ n.code }}</code>{% endif %}
             </div>
             <div class="flex flex-wrap gap-2">
-                {% if view.totalHours %}<span class="rounded-lg border px-3 py-1.5 text-xs" style="border-color:#fcd34d;background:#fffbeb">Total heures : <strong>{{ view.totalHours|round }}</strong></span>{% endif %}
-                <span class="rounded-lg border px-3 py-1.5 text-xs" style="border-color:#fcd34d;background:#fffbeb"><strong>{{ view.totalEcts|round }}</strong>{% if view.ectsTarget %} / {{ view.ectsTarget }}{% endif %} ECTS</span>
-                {% if n.mutualized %}<span class="pill" style="background:#fef3c7;color:#b45309">mutualisé</span>{% endif %}
+                {% if view.totalHours %}<span class="rounded-lg border px-3 py-1.5 text-xs" style="border-color:#fcd34d;background:#fffbeb">{{ 'node.panel.total_hours_label'|trans({}, 'node') }} <strong>{{ view.totalHours|round }}</strong></span>{% endif %}
+                <span class="rounded-lg border px-3 py-1.5 text-xs" style="border-color:#fcd34d;background:#fffbeb"><strong>{{ view.totalEcts|round }}</strong>{% if view.ectsTarget %} / {{ view.ectsTarget }}{% endif %} {{ 'node.panel.ects_unit'|trans({}, 'node') }}</span>
+                {% if n.mutualized %}<span class="pill" style="background:#fef3c7;color:#b45309">{{ 'formation.view.mutualized_badge'|trans({}, 'formation') }}</span>{% endif %}
             </div>
             <div class="border-t pt-3" style="border-color:var(--c-border)">
                 {{ m.nodefields(n, catalog, domains) }}
@@ -180,7 +192,7 @@
 
             {% if view.children %}
                 <div class="border-t pt-3" style="border-color:var(--c-border)">
-                    <div class="fld-cat">Contenu de cet ELP</div>
+                    <div class="fld-cat">{{ 'formation.view.node_content_title'|trans({}, 'formation') }}</div>
                     {{ m.subtree(view.children) }}
                 </div>
             {% endif %}
@@ -203,7 +215,7 @@
                     {% if v.node.code %}<code class="text-[11px] text-gray-400">{{ v.node.code }}</code>{% endif %}
                     <span class="ml-auto shrink-0 text-[11px] text-gray-400 tabular-nums">
                         {%- if v.totalHours %}{{ v.totalHours|round }} h · {% endif -%}
-                        {{ v.totalEcts|round }}{% if v.ectsTarget %}/{{ v.ectsTarget }}{% endif %} ECTS
+                        {{ v.totalEcts|round }}{% if v.ectsTarget %}/{{ v.ectsTarget }}{% endif %} {{ 'node.panel.ects_unit'|trans({}, 'node') }}
                     </span>
                 </div>
                 {% if v.children %}{{ m.subtree(v.children) }}{% endif %}
@@ -226,7 +238,7 @@
     {% for key, section in param_sections() %}
         {% set data = formation.getParametre(key) %}
         <div data-rotree-target="detail" data-node="param:{{ key }}" hidden class="space-y-4">
-            <div class="text-sm text-gray-400">{{ formation.name }} › Paramètres de la formation</div>
+            <div class="text-sm text-gray-400">{{ formation.name }} › {{ 'formation.view.formation_params_breadcrumb'|trans({}, 'formation') }}</div>
             <div class="flex flex-wrap items-center gap-2">
                 <span class="status-dot" data-status="{{ param_status(formation, key) }}"></span>
                 <h3 class="text-lg font-bold">{{ section.label }}</h3>
@@ -234,33 +246,33 @@
 
             {% if key == 'structure' %}
                 <dl class="divide-y" style="border-color:var(--c-border)">
-                    {{ m.prow('Organisation en parcours', formation.multiParcours ? 'Multi-parcours' : 'Mono-parcours') }}
-                    {{ m.prow('Dimension temporelle',
+                    {{ m.prow('formation.view.plabel.org_parcours'|trans({}, 'formation'), formation.multiParcours ? 'formation.view.multi_parcours_value'|trans({}, 'formation') : 'formation.editor.meta_mono_parcours'|trans({}, 'formation')) }}
+                    {{ m.prow('formation.view.plabel.temporal_dimension'|trans({}, 'formation'),
                         formation.calendarSpan
                             ? formation.calendarSpan ~ ' ' ~ period_unit(formation)|lower ~ (formation.calendarSpan > 1 ? 's' : '')
-                            : 'déduite de la structure (' ~ period_unit(formation)|lower ~ ')') }}
-                    {% if formation.ectsTotal %}{{ m.prow('ECTS total visé', formation.ectsTotal) }}{% endif %}
+                            : 'formation.view.temporal_dimension_deduced'|trans({'%unit%': period_unit(formation)|lower}, 'formation')) }}
+                    {% if formation.ectsTotal %}{{ m.prow('formation.view.plabel.ects_total'|trans({}, 'formation'), formation.ectsTotal) }}{% endif %}
                     <div class="grid gap-1 py-2 sm:grid-cols-[240px_1fr]">
-                        <dt class="text-sm text-gray-400">Hiérarchie des niveaux</dt>
+                        <dt class="text-sm text-gray-400">{{ 'formation.view.plabel.hierarchy'|trans({}, 'formation') }}</dt>
                         <dd class="flex flex-wrap items-center gap-1.5 text-sm text-gray-800">
                             {% for tk in formation.effectiveStructure %}
                                 {% set tm = type_meta()[tk] ?? null %}
                                 {% if not loop.first %}<span class="text-gray-300">›</span>{% endif %}
                                 <span class="type-badge">{{ tm ? ux_icon(tm.icon, {class: 'icon'}) }} [{{ tm ? tm.label : tk }}]</span>
-                                {%- if tk == 'parcours' and formation.isMono %}<span class="text-xs text-gray-400">implicite</span>{% endif -%}
+                                {%- if tk == 'parcours' and formation.isMono %}<span class="text-xs text-gray-400">{{ 'formation.view.implicit_badge'|trans({}, 'formation') }}</span>{% endif -%}
                             {% endfor %}
                         </dd>
                     </div>
                     {% set regimes = data.regimes ?? [] %}
-                    {% if regimes %}{{ m.prow("Régimes d'inscription", regimes|join(', ')) }}{% endif %}
+                    {% if regimes %}{{ m.prow('formation.view.plabel.regimes'|trans({}, 'formation'), regimes|join(', ')) }}{% endif %}
                     {% if formation.isMono %}
                         {% for f in [
-                            {k: 'intituleMono', l: 'Intitulé mono-parcours'},
-                            {k: 'langue', l: "Langue d'enseignement"},
-                            {k: 'modalitesAlternance', l: "Modalités de l'alternance"},
-                            {k: 'poursuiteEtudes', l: "Poursuite d'études envisageables"},
-                            {k: 'debouches', l: 'Débouchés'},
-                            {k: 'codesRome', l: 'Code(s) ROME'}
+                            {k: 'intituleMono', l: 'formation.view.plabel.intitule_mono'|trans({}, 'formation')},
+                            {k: 'langue', l: 'formation.view.plabel.langue'|trans({}, 'formation')},
+                            {k: 'modalitesAlternance', l: 'formation.view.plabel.modalites_alternance'|trans({}, 'formation')},
+                            {k: 'poursuiteEtudes', l: 'formation.view.plabel.poursuite_etudes'|trans({}, 'formation')},
+                            {k: 'debouches', l: 'formation.view.plabel.debouches'|trans({}, 'formation')},
+                            {k: 'codesRome', l: 'formation.view.plabel.codes_rome'|trans({}, 'formation')}
                         ] %}
                             {% if data[f.k] ?? null %}{{ m.prow(f.l, data[f.k]) }}{% endif %}
                         {% endfor %}
@@ -269,7 +281,7 @@
             {% else %}
                 {% set present = param_fields(key)|filter(f => ((f.entity ?? false) ? attribute(formation, f.key) : (data[f.key] ?? null)) is not empty) %}
                 {% if present is empty %}
-                    <p class="text-sm text-gray-400 italic">Section non renseignée.</p>
+                    <p class="text-sm text-gray-400 italic">{{ 'formation.view.section_empty'|trans({}, 'formation') }}</p>
                 {% else %}
                     <dl class="divide-y" style="border-color:var(--c-border)">
                         {% for f in present %}
@@ -285,7 +297,7 @@
             {% endif %}
 
             <a href="{{ path('formation_editor', {id: formation.id, param: key}) }}"
-               class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} Modifier cette section</a>
+               class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'formation.view.edit_section_button'|trans({}, 'formation') }}</a>
         </div>
     {% endfor %}
 {% endmacro %}
@@ -293,7 +305,7 @@
 {# liste lecture seule de blocs de compétences #}
 {% macro bloclist(blocs) %}
     {% if blocs is empty %}
-        <p class="text-sm text-gray-400 italic">Aucun bloc de compétences.</p>
+        <p class="text-sm text-gray-400 italic">{{ 'formation.view.no_bloc'|trans({}, 'formation') }}</p>
     {% else %}
         <div class="space-y-3">
             {% set bcNum = 0 %}
@@ -319,7 +331,7 @@
                                 </div>
                             </div></li>
                         {% else %}
-                            <li class="px-4 py-2 text-xs text-gray-400 italic">Aucune compétence.</li>
+                            <li class="px-4 py-2 text-xs text-gray-400 italic">{{ 'formation.view.no_competency'|trans({}, 'formation') }}</li>
                         {% endfor %}
                     </ul>
                 </div>
@@ -332,17 +344,17 @@
 {% macro bccdetail(formation) %}
     {% import _self as m %}
     <div data-rotree-target="detail" data-node="bcc" hidden class="space-y-4">
-        <div class="text-sm text-gray-400">{{ formation.name }} › Référentiel de compétences</div>
+        <div class="text-sm text-gray-400">{{ formation.name }} › {{ 'formation.bcc.heading'|trans({}, 'formation') }}</div>
         <div class="flex flex-wrap items-center gap-2">
-            <h3 class="text-lg font-bold">Référentiel de compétences (BCC)</h3>
+            <h3 class="text-lg font-bold">{{ 'formation.editor.bcc_section_label'|trans({}, 'formation') }}</h3>
         </div>
         {% if formation.multiParcours %}
-            <p class="text-sm text-gray-500">En multi-parcours, le référentiel est défini par parcours.</p>
+            <p class="text-sm text-gray-500">{{ 'formation.view.bcc_per_parcours_note'|trans({}, 'formation') }}</p>
             {% for p in parcours_nodes(formation) %}
                 <div class="space-y-2">
                     <div class="flex items-center gap-2 text-sm font-semibold">
                         <span class="status-dot" data-status="{{ bcc_status(p) }}"></span>{{ p.displayLabel }}
-                        <a href="{{ path('parcours_editor', {fid: formation.id, nid: p.id, bcc: 1}) }}" class="text-xs font-normal hover:underline" style="color:var(--c-primary)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} modifier</a>
+                        <a href="{{ path('parcours_editor', {fid: formation.id, nid: p.id, bcc: 1}) }}" class="text-xs font-normal hover:underline" style="color:var(--c-primary)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'formation.view.edit_lowercase'|trans({}, 'formation') }}</a>
                     </div>
                     {{ m.bloclist(p.bccBlocs) }}
                 </div>
@@ -350,11 +362,11 @@
         {% else %}
             <div class="flex items-center gap-2">
                 <span class="status-dot" data-status="{{ bcc_status(formation) }}"></span>
-                <span class="text-sm text-gray-500">{{ mono_blocs(formation)|length }} bloc(s)</span>
+                <span class="text-sm text-gray-500">{{ 'formation.view.bloc_count'|trans({'%count%': mono_blocs(formation)|length}, 'formation') }}</span>
             </div>
             {{ m.bloclist(mono_blocs(formation)) }}
             <a href="{{ path('formation_editor', {id: formation.id}) }}?bcc=1"
-               class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} Modifier le référentiel</a>
+               class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'formation.view.edit_referentiel_button'|trans({}, 'formation') }}</a>
         {% endif %}
     </div>
 {% endmacro %}
@@ -366,35 +378,35 @@
     <div class="flex items-start justify-between gap-4">
         <div>
             <div class="text-xs text-gray-400">
-                {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">Accueil</span> ›
-                <a href="{{ path('formation_index') }}" class="hover:underline">Liste des formation</a> › {{ formation.name }}
+                {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">{{ 'formation.index.breadcrumb_home'|trans({}, 'formation') }}</span> ›
+                <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.editor.breadcrumb_list'|trans({}, 'formation') }}</a> › {{ formation.name }}
             </div>
             <h1 class="text-3xl font-extrabold tracking-tight mt-1">{{ formation.name }}</h1>
-            <p class="text-sm text-gray-500">Consultation — lecture seule</p>
+            <p class="text-sm text-gray-500">{{ 'formation.view.readonly_subtitle'|trans({}, 'formation') }}</p>
         </div>
         <div class="flex items-center gap-2 shrink-0">
-            <span class="pill" style="background:#eef2ff;color:var(--c-primary)">Lecture seule</span>
-            <a href="{{ path('formation_history', {id: formation.id}) }}" class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:clock-counter-clockwise', {class: 'icon'}) }} Historique</a>
-            <a href="{{ path('formation_export', {id: formation.id}) }}" class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:download-simple', {class: 'icon'}) }} Export JSON</a>
-            <a href="{{ path('formation_editor', {id: formation.id}) }}" class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} Modifier</a>
-            <a href="{{ path('formation_index') }}" class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} Liste</a>
+            <span class="pill" style="background:#eef2ff;color:var(--c-primary)">{{ 'formation.view.readonly_pill'|trans({}, 'formation') }}</span>
+            <a href="{{ path('formation_history', {id: formation.id}) }}" class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:clock-counter-clockwise', {class: 'icon'}) }} {{ 'formation.editor.history_link'|trans({}, 'formation') }}</a>
+            <a href="{{ path('formation_export', {id: formation.id}) }}" class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:download-simple', {class: 'icon'}) }} {{ 'formation.view.export_json_button'|trans({}, 'formation') }}</a>
+            <a href="{{ path('formation_editor', {id: formation.id}) }}" class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'common.edit'|trans({}, 'common') }}</a>
+            <a href="{{ path('formation_index') }}" class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'formation.view.list_button'|trans({}, 'formation') }}</a>
         </div>
     </div>
     <div class="mt-4 grid grid-cols-2 md:grid-cols-6 gap-4">
         {% for k, v in {
-            'Domaine': formation.domaine ?: 'Non défini',
-            'Type diplôme': formation.diplome ?: '—',
-            'Composante': formation.composante ?: '—',
-            'Parcours': formation.multiParcours ? 'Multi' : 'Mono',
-            'Durée': (formation.calendarSpan ? formation.calendarSpan ~ ' ' ~ period_unit(formation)|lower ~ (formation.calendarSpan > 1 ? 's' : '') : '—'),
-            'Progression': progress ~ '%'
+            (('formation.editor.meta_domaine'|trans({}, 'formation'))): formation.domaine ?: 'formation.editor.meta_domaine_default'|trans({}, 'formation'),
+            (('formation.editor.meta_diplome'|trans({}, 'formation'))): formation.diplome ?: '—',
+            (('formation.editor.meta_composante'|trans({}, 'formation'))): formation.composante ?: '—',
+            (('formation.editor.meta_parcours'|trans({}, 'formation'))): formation.multiParcours ? 'formation.view.multi_short'|trans({}, 'formation') : 'formation.view.mono_short'|trans({}, 'formation'),
+            (('formation.view.duree_label'|trans({}, 'formation'))): (formation.calendarSpan ? formation.calendarSpan ~ ' ' ~ period_unit(formation)|lower ~ (formation.calendarSpan > 1 ? 's' : '') : '—'),
+            (('formation.index.global_progress'|trans({}, 'formation'))): progress ~ '%'
         } %}
             <div><div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{{ k }}</div><div class="text-sm mt-1">{{ v }}</div></div>
         {% endfor %}
     </div>
     {% if formation.isMono and (formation.getParametre('structure').regimes ?? []) %}
         <div class="mt-3 pt-3 border-t text-xs text-gray-500" style="border-color:var(--c-border)">
-            Régimes d'inscription : <strong class="text-gray-700">{{ formation.getParametre('structure').regimes|join(', ') }}</strong>
+            {{ 'formation.view.plabel.regimes'|trans({}, 'formation') }} : <strong class="text-gray-700">{{ formation.getParametre('structure').regimes|join(', ') }}</strong>
         </div>
     {% endif %}
 </div>
@@ -403,7 +415,7 @@
     <div class="grid lg:grid-cols-[360px_1fr] lg:h-[calc(100vh-15rem)] min-h-[480px]">
         {# colonne gauche : paramètres de la formation + arbre de structure #}
         <div class="border-b lg:border-b-0 lg:border-r overflow-y-auto p-3" style="border-color:var(--c-border)">
-            <div class="px-2 pb-2 text-[11px] font-bold uppercase tracking-wide" style="color:var(--c-primary)">Paramètres de la formation</div>
+            <div class="px-2 pb-2 text-[11px] font-bold uppercase tracking-wide" style="color:var(--c-primary)">{{ 'formation.view.formation_params_breadcrumb'|trans({}, 'formation') }}</div>
             <div class="mb-4 space-y-0.5">
                 {% for key, section in param_sections() %}
                     <div class="tree-row" data-action="click->rotree#select" data-rotree-id-param="param:{{ key }}">
@@ -413,16 +425,16 @@
                 {% endfor %}
                 <div class="tree-row" data-action="click->rotree#select" data-rotree-id-param="bcc">
                     <span class="status-dot" data-status="{{ bcc_status(formation) }}"></span>
-                    <span class="tree-label">Référentiel de compétences (BCC)</span>
+                    <span class="tree-label">{{ 'formation.editor.bcc_section_label'|trans({}, 'formation') }}</span>
                 </div>
                 {% if formation.multiParcours %}
-                    <a href="{{ path('formation_parcours_graph', {id: formation.id}) }}" class="block rounded-md px-2 py-1.5 text-sm hover:bg-gray-50" style="color:var(--c-primary)">{{ ux_icon('ph:map-trifold', {class: 'icon'}) }} Arborescence des parcours</a>
+                    <a href="{{ path('formation_parcours_graph', {id: formation.id}) }}" class="block rounded-md px-2 py-1.5 text-sm hover:bg-gray-50" style="color:var(--c-primary)">{{ ux_icon('ph:map-trifold', {class: 'icon'}) }} {{ 'formation.editor.ramification_section_label'|trans({}, 'formation') }}</a>
                 {% endif %}
             </div>
 
-            <div class="px-2 pb-2 text-[11px] font-bold uppercase tracking-wide" style="color:var(--c-primary)">Structure</div>
+            <div class="px-2 pb-2 text-[11px] font-bold uppercase tracking-wide" style="color:var(--c-primary)">{{ 'formation.view.structure_label'|trans({}, 'formation') }}</div>
             {% if roots is empty %}
-                <p class="px-2 py-6 text-sm text-gray-400 italic">Aucune structure définie.</p>
+                <p class="px-2 py-6 text-sm text-gray-400 italic">{{ 'formation.view.no_structure'|trans({}, 'formation') }}</p>
             {% else %}
                 {{ m.rotree(roots) }}
             {% endif %}
@@ -431,7 +443,7 @@
         {# colonne droite : détail du nœud ou de la section sélectionnée #}
         <div class="overflow-y-auto p-7">
             <div data-rotree-target="empty" class="grid h-full place-items-center text-sm text-gray-400">
-                {{ ux_icon('ph:arrow-left', {class: 'icon'}) }} Choisissez une section ou un ELP pour voir son contenu
+                {{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'formation.view.select_prompt'|trans({}, 'formation') }}
             </div>
             {{ m.paramdetails(formation) }}
             {{ m.bccdetail(formation) }}

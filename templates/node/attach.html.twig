@@ -1,20 +1,18 @@
 <turbo-frame id="node-panel">
 <div class="panel-body" data-panel-active="node:{{ node.id }}">
     <div class="panel-head">
-        <h2 class="text-xl font-bold">Raccrocher un élément pédagogique mutualisé</h2>
+        <h2 class="text-xl font-bold">{{ 'node.attach.title'|trans({}, 'node') }}</h2>
         <div class="text-sm text-gray-400">{{ node.formation.name }} › {{ node.label ?: node.type.label }}</div>
     </div>
     <div class="panel-scroll">
     <div class="panel-card space-y-4">
     <p class="text-sm text-gray-500">
-        Récupère une copie d'un élément pédagogique mis à disposition par une autre formation.
-        La copie est indépendante (le lien vers la source est conservé pour info).
+        {{ 'node.attach.description'|trans({}, 'node') }}
     </p>
 
     {% if candidates is empty %}
         <div class="rounded-lg border border-dashed p-6 text-sm text-gray-500" style="border-color:var(--c-border)">
-            Aucun élément pédagogique mutualisé compatible pour l'instant. Mutualisez un élément pédagogique depuis une autre formation
-            (bouton « Mutualiser » sur son panneau) pour le voir apparaître ici.
+            {{ 'node.attach.empty'|trans({}, 'node') }}
         </div>
     {% else %}
         <ul class="space-y-2">
@@ -23,19 +21,19 @@
                     <div>
                         <div class="font-medium">{{ ux_icon(c.type.icon, {class: 'icon'}) }} [{{ c.type.label }}] {{ c.label ?: '—' }}</div>
                         <div class="text-xs text-gray-400">
-                            depuis « {{ c.formation.name }} »
-                            {% if c.children|length %} · {{ c.children|length }} enfant(s){% endif %}
+                            {{ 'node.attach.source_formation'|trans({'%formation%': c.formation.name}, 'node') }}
+                            {% if c.children|length %} · {{ 'node.attach.children_count'|trans({'%count%': c.children|length}, 'node') }}{% endif %}
                         </div>
                     </div>
                     <form method="post" action="{{ path('node_attach', {fid: node.formation.id, nid: node.id, sfid: c.formation.id, snid: c.id}) }}" data-turbo-frame="_top">
-                        <button class="rounded-lg border px-3 py-1.5 text-sm text-green-700 hover:bg-green-50" style="border-color:#bbf7d0">Raccrocher</button>
+                        <button class="rounded-lg border px-3 py-1.5 text-sm text-green-700 hover:bg-green-50" style="border-color:#bbf7d0">{{ 'node.panel.reattach_button'|trans({}, 'node') }}</button>
                     </form>
                 </li>
             {% endfor %}
         </ul>
     {% endif %}
 
-    <a href="{{ node_url(node) }}" data-turbo-frame="node-panel" class="text-sm text-gray-500 hover:underline">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} Retour à l’ELP</a>
+    <a href="{{ node_url(node) }}" data-turbo-frame="node-panel" class="text-sm text-gray-500 hover:underline">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'node.attach.back_link'|trans({}, 'node') }}</a>
     </div>
     </div>
 </div>

@@ -2,7 +2,7 @@
 <turbo-frame id="node-panel">
 <div class="panel-body" data-panel-active="param:{{ key }}">
     <div class="panel-head">
-        <h2 class="text-xl font-bold">Gestion de la formation</h2>
+        <h2 class="text-xl font-bold">{{ 'formation.param.panel_title'|trans({}, 'formation') }}</h2>
         <div class="text-sm text-gray-400">{{ label }}</div>
         <div class="text-sm text-gray-400 mt-1">{{ formation.name }} › {{ label }}</div>
     </div>
@@ -11,15 +11,15 @@
     <form method="post" action="{{ path('formation_param_save', {id: formation.id, key: key}) }}" data-turbo-frame="_top"
           class="panel-card space-y-5">
 
-        {{ fld.divider('Informations globale') }}
+        {{ fld.divider('formation.param.organisation.divider_global'|trans({}, 'formation')) }}
 
         <div>
-            {{ fld.label('Nom de la formation', true, 'Nommer votre formation') }}
+            {{ fld.label('formation.index.name_field'|trans({}, 'formation'), true, 'formation.index.name_help'|trans({}, 'formation')) }}
             <input name="name" value="{{ formation.name }}" class="fld mt-1">
         </div>
         <div class="grid gap-5 md:grid-cols-2">
             <div>
-                {{ fld.label('Type de diplôme', true, 'Licence, Master, BUT, DU, Ingénieur, etc.') }}
+                {{ fld.label('formation.index.diplome_field'|trans({}, 'formation'), true, 'formation.param.organisation.diplome_help'|trans({}, 'formation')) }}
                 <select name="diplome" class="fld mt-1">
                     {% for d in referentiel('diplomes') %}
                         <option value="{{ d }}" {{ formation.diplome == d ? 'selected' }}>{{ d }}</option>
@@ -27,9 +27,9 @@
                 </select>
             </div>
             <div>
-                {{ fld.label('Domaine de formation', true, 'Domaine auquel appartient votre formation') }}
+                {{ fld.label('formation.index.domaine_field'|trans({}, 'formation'), true, 'formation.index.domaine_help'|trans({}, 'formation')) }}
                 <select name="domaine" class="fld mt-1">
-                    <option value="">-Choisir-</option>
+                    <option value="">{{ 'formation.fields.default_placeholder'|trans({}, 'formation') }}</option>
                     {% for d in referentiel('domaines') %}
                         <option value="{{ d }}" {{ formation.domaine == d ? 'selected' }}>{{ d }}</option>
                     {% endfor %}
@@ -37,66 +37,66 @@
             </div>
         </div>
         <div>
-            {{ fld.label('Composante porteuse de la formation', true, 'Indiquer la composante porteuse du projet, qui aura en charge le dépôt de la demande de création de la formation') }}
+            {{ fld.label('formation.index.composante_field'|trans({}, 'formation'), true, 'formation.param.organisation.composante_help'|trans({}, 'formation')) }}
             <input name="composante" value="{{ formation.composante }}" class="fld mt-1">
         </div>
         <div>
-            {{ fld.label('Contacts de la formation', false) }}
+            {{ fld.label('formation.param.organisation.contacts_label'|trans({}, 'formation'), false) }}
             {{ fld.textarea('contacts', data.contacts ?? '') }}
         </div>
 
-        {{ fld.divider('Informations spécifiques') }}
+        {{ fld.divider('formation.param.organisation.divider_specific'|trans({}, 'formation')) }}
 
         <div>
-            {{ fld.label('Mention / spécialité', false) }}
+            {{ fld.label('formation.param.organisation.mention_label'|trans({}, 'formation'), false) }}
             {{ fld.select('mention', data.mention ?? '', referentiel('mentions')) }}
-            <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter une autre mention/spécialité</span></div>
+            <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.param.organisation.add_mention_fake'|trans({}, 'formation') }}</span></div>
         </div>
         <div class="grid gap-5 md:grid-cols-2">
             <div>
-                {{ fld.label("Niveau d'entrée en formation", true) }}
+                {{ fld.label('formation.param.organisation.niveau_entree_label'|trans({}, 'formation'), true) }}
                 {{ fld.select('niveauEntree', data.niveauEntree ?? '', referentiel('niveaux_entree')) }}
             </div>
             <div>
-                {{ fld.label('Niveau de sortie de la formation', true) }}
+                {{ fld.label('formation.param.organisation.niveau_sortie_label'|trans({}, 'formation'), true) }}
                 {{ fld.select('niveauSortie', data.niveauSortie ?? '', referentiel('niveaux_sortie')) }}
             </div>
         </div>
         <div class="grid gap-5 md:grid-cols-2">
             <div>
-                {{ fld.label('La formation est-elle inscrite au RNCP ?', true) }}
+                {{ fld.label('formation.param.organisation.rncp_label'|trans({}, 'formation'), true) }}
                 <div class="flex gap-6 mt-2 text-sm">
-                    <label class="flex items-center gap-2"><input type="radio" name="p[rncp]" value="oui" {{ (data.rncp ?? '') == 'oui' ? 'checked' }}> Oui</label>
-                    <label class="flex items-center gap-2"><input type="radio" name="p[rncp]" value="non" {{ (data.rncp ?? '') == 'non' ? 'checked' }}> Non</label>
+                    <label class="flex items-center gap-2"><input type="radio" name="p[rncp]" value="oui" {{ (data.rncp ?? '') == 'oui' ? 'checked' }}> {{ 'formation.param.organisation.yes'|trans({}, 'formation') }}</label>
+                    <label class="flex items-center gap-2"><input type="radio" name="p[rncp]" value="non" {{ (data.rncp ?? '') == 'non' ? 'checked' }}> {{ 'formation.param.organisation.no'|trans({}, 'formation') }}</label>
                 </div>
             </div>
             <div>
-                {{ fld.label('Code RNCP', true, 'Indiquez le code RNCP (cf. www.francecompetences.fr).') }}
-                {{ fld.text('codeRncp', data.codeRncp ?? '', 'Code RNCP') }}
+                {{ fld.label('formation.param.organisation.code_rncp_label'|trans({}, 'formation'), true, 'formation.param.organisation.code_rncp_help'|trans({}, 'formation')) }}
+                {{ fld.text('codeRncp', data.codeRncp ?? '', 'formation.param.organisation.code_rncp_placeholder'|trans({}, 'formation')) }}
             </div>
         </div>
         <div>
-            {{ fld.label('Code Apogée de la mention', false, 'Code de la mention dans Apogée') }}
-            {{ fld.text('codeApogee', data.codeApogee ?? '', 'Code Apogée') }}
+            {{ fld.label('formation.param.organisation.code_apogee_label'|trans({}, 'formation'), false, 'formation.param.organisation.code_apogee_help'|trans({}, 'formation')) }}
+            {{ fld.text('codeApogee', data.codeApogee ?? '', 'formation.param.organisation.code_apogee_placeholder'|trans({}, 'formation')) }}
         </div>
 
-        {{ fld.divider('Responsable(s)') }}
+        {{ fld.divider('formation.param.organisation.divider_responsables'|trans({}, 'formation')) }}
 
         <div class="grid gap-5 md:grid-cols-2">
             <div>
-                {{ fld.label('Responsable de la mention', true, 'Responsable principale de la mention') }}
-                {{ fld.select('respMention', data.respMention ?? '', referentiel('responsables'), 'Choisir dans la liste ou "+ nouveau"') }}
-                <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} Créer nouveau</span></div>
+                {{ fld.label('formation.param.organisation.resp_mention_label'|trans({}, 'formation'), true, 'formation.param.organisation.resp_mention_help'|trans({}, 'formation')) }}
+                {{ fld.select('respMention', data.respMention ?? '', referentiel('responsables'), 'formation.param.organisation.resp_select_placeholder'|trans({}, 'formation')) }}
+                <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.param.organisation.create_new_fake'|trans({}, 'formation') }}</span></div>
             </div>
             <div>
-                {{ fld.label('Co-responsable de la mention', false, 'Co-responsable de la mention') }}
-                {{ fld.select('coRespMention', data.coRespMention ?? '', referentiel('responsables'), 'Choisir dans la liste ou "+ nouveau"') }}
-                <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} Créer nouveau</span></div>
+                {{ fld.label('formation.param.organisation.co_resp_mention_label'|trans({}, 'formation'), false, 'formation.param.organisation.co_resp_mention_help'|trans({}, 'formation')) }}
+                {{ fld.select('coRespMention', data.coRespMention ?? '', referentiel('responsables'), 'formation.param.organisation.resp_select_placeholder'|trans({}, 'formation')) }}
+                <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.param.organisation.create_new_fake'|trans({}, 'formation') }}</span></div>
             </div>
         </div>
 
         <div class="pt-2 border-t" style="border-color:var(--c-border)">
-            <button class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">Enregistrer</button>
+            <button class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
         </div>
     </form>
     </div>

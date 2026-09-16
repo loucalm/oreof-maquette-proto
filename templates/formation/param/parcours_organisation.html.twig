@@ -6,7 +6,7 @@
 <turbo-frame id="node-panel">
 <div class="panel-body" data-panel-active="param:{{ key }}">
     <div class="panel-head">
-        <h2 class="text-xl font-bold">Gestion du parcours</h2>
+        <h2 class="text-xl font-bold">{{ 'formation.param.parcours_panel_title'|trans({}, 'formation') }}</h2>
         <div class="text-sm text-gray-400">{{ label }}</div>
         <div class="text-sm text-gray-400 mt-1">{{ formation.name }} › {{ parcours.displayLabel }} › {{ label }}</div>
     </div>
@@ -14,58 +14,58 @@
     <div class="panel-scroll">
     <form method="post" action="{{ saveUrl }}" data-turbo-frame="_top" class="panel-card space-y-5">
 
-        {{ fld.divider('Informations globale') }}
+        {{ fld.divider('formation.param.organisation.divider_global'|trans({}, 'formation')) }}
 
         <div>
-            {{ fld.label('Nom du parcours', true, 'Nommer votre parcours') }}
+            {{ fld.label('formation.param.parcours_organisation.nom_label'|trans({}, 'formation'), true, 'formation.param.parcours_organisation.nom_help'|trans({}, 'formation')) }}
             <input name="nom" value="{{ parcours.label }}" class="fld mt-1">
         </div>
         <div>
-            {{ fld.label("Volume d'ECTS total", true, "Cela servira à vérifier le total d'ECTS de votre parcours") }}
+            {{ fld.label('formation.param.parcours_organisation.ects_label'|trans({}, 'formation'), true, 'formation.param.parcours_organisation.ects_help'|trans({}, 'formation')) }}
             <input type="number" name="ects" value="{{ parcours.getAttribute('ects') }}" class="fld mt-1">
         </div>
         <div>
-            {{ fld.label("Modalités d'enseignement de la formation", true) }}
+            {{ fld.label('formation.param.parcours_organisation.modalites_enseignement_label'|trans({}, 'formation'), true) }}
             {{ fld.select('modalitesEnseignement', data.modalitesEnseignement ?? '', referentiel('modalites_enseignement')) }}
         </div>
         <div>
-            {{ fld.label("Composante d'inscription", true, "Composante(s) à laquelle les étudiants pourront s'inscrire") }}
-            {{ fld.selectAdd('composante', data.composante ?? '', [formation.composante ?: 'Composante exemple', 'Autre composante'], "Ajouter une composante d'inscription") }}
+            {{ fld.label('formation.view.plabel.composante_inscription'|trans({}, 'formation'), true, 'formation.param.parcours_organisation.composante_help'|trans({}, 'formation')) }}
+            {{ fld.selectAdd('composante', data.composante ?? '', [formation.composante ?: 'formation.editor.meta_composante_default'|trans({}, 'formation'), 'formation.param.parcours_organisation.other_composante'|trans({}, 'formation')], 'formation.param.parcours_organisation.add_composante_fake'|trans({}, 'formation')) }}
         </div>
         <div>
-            {{ fld.label("Régime(s) d'inscription", true, "Choix multiples") }}
+            {{ fld.label('formation.view.plabel.regimes'|trans({}, 'formation'), true, 'formation.param.parcours_organisation.multi_choice'|trans({}, 'formation')) }}
             {{ fld.checkgroup('regimes', data.regimes ?? [], referentiel('regimes_inscription')) }}
         </div>
         <div>
-            {{ fld.label("Précisez les modalités de l'alternance", true) }}
-            {{ fld.textarea('modalitesAlternance', data.modalitesAlternance ?? '', 'Indiquez en 3000 caractères maximum les périodes et leurs durées en centre ou en entreprise.') }}
+            {{ fld.label('formation.param.parcours_organisation.modalites_alternance_label'|trans({}, 'formation'), true) }}
+            {{ fld.textarea('modalitesAlternance', data.modalitesAlternance ?? '', 'formation.param.parcours_organisation.modalites_alternance_help'|trans({}, 'formation')) }}
         </div>
 
-        {{ fld.divider('Localisation') }}
+        {{ fld.divider('formation.param.parcours_organisation.divider_localisation'|trans({}, 'formation')) }}
 
         <div>
-            {{ fld.label('Localisation du parcours', true) }}
-            {{ fld.selectAdd('lieu', data.lieu ?? '', referentiel('localisations'), 'Ajouter une autre localisation') }}
+            {{ fld.label('formation.param.parcours_organisation.localisation_label'|trans({}, 'formation'), true) }}
+            {{ fld.selectAdd('lieu', data.lieu ?? '', referentiel('localisations'), 'formation.param.parcours_organisation.add_localisation_fake'|trans({}, 'formation')) }}
         </div>
         <div>
-            {{ fld.label('Code Apogée de la mention', false, 'Code de la mention dans Apogée') }}
-            {{ fld.text('codeApogee', data.codeApogee ?? '', 'Code Apogée') }}
+            {{ fld.label('formation.param.organisation.code_apogee_label'|trans({}, 'formation'), false, 'formation.param.organisation.code_apogee_help'|trans({}, 'formation')) }}
+            {{ fld.text('codeApogee', data.codeApogee ?? '', 'formation.param.organisation.code_apogee_placeholder'|trans({}, 'formation')) }}
         </div>
 
-        {{ fld.divider('Responsable(s)') }}
+        {{ fld.divider('formation.param.organisation.divider_responsables'|trans({}, 'formation')) }}
 
         <div class="grid gap-5 md:grid-cols-2">
             <div>
-                {{ fld.label('Responsable du parcours', true, 'Responsable principale du parcours') }}
-                {{ fld.selectAdd('respParcours', data.respParcours ?? '', referentiel('responsables'), 'Créer nouveau', 'Choisir dans la liste ou choisir "+ nouveau"') }}
+                {{ fld.label('formation.param.parcours_organisation.resp_label'|trans({}, 'formation'), true, 'formation.param.parcours_organisation.resp_help'|trans({}, 'formation')) }}
+                {{ fld.selectAdd('respParcours', data.respParcours ?? '', referentiel('responsables'), 'formation.param.organisation.create_new_fake'|trans({}, 'formation'), 'formation.param.parcours_organisation.resp_select_placeholder'|trans({}, 'formation')) }}
             </div>
             <div>
-                {{ fld.label('Co-responsable du parcours', false, 'Co-Responsable du parcours') }}
-                {{ fld.selectAdd('coRespParcours', data.coRespParcours ?? '', referentiel('responsables'), 'Créer nouveau', 'Choisir dans la liste ou choisir "+ nouveau"') }}
+                {{ fld.label('formation.param.parcours_organisation.co_resp_label'|trans({}, 'formation'), false, 'formation.param.parcours_organisation.co_resp_help'|trans({}, 'formation')) }}
+                {{ fld.selectAdd('coRespParcours', data.coRespParcours ?? '', referentiel('responsables'), 'formation.param.organisation.create_new_fake'|trans({}, 'formation'), 'formation.param.parcours_organisation.resp_select_placeholder'|trans({}, 'formation')) }}
             </div>
         </div>
 
-        {{ fld.divider('Relation inter-parcours') }}
+        {{ fld.divider('formation.param.parcours_organisation.divider_relations'|trans({}, 'formation')) }}
 
         {# Récapitulatif en lecture seule — la durée, le positionnement et le
            parent de ramification s'éditent dans « Positionnement & ramification »
@@ -74,29 +74,29 @@
         {% set pchildren = parcours_nodes(formation)|filter(p => p.parcoursParent and p.parcoursParent.id == parcours.id) %}
         <div class="rounded-lg border p-4 space-y-2 text-sm" style="border-color:var(--c-border);background:#f8f9fb">
             <div class="flex flex-wrap justify-between gap-x-3">
-                <span class="text-gray-400">Durée du parcours</span>
+                <span class="text-gray-400">{{ 'formation.param.parcours_organisation.duree_label'|trans({}, 'formation') }}</span>
                 <span class="font-medium">{{ span }} {{ unit|lower }}{{ span > 1 ? 's' }}</span>
             </div>
             <div class="flex flex-wrap justify-between gap-x-3">
-                <span class="text-gray-400">Positionnement</span>
+                <span class="text-gray-400">{{ 'formation.param.parcours_organisation.positionnement_label'|trans({}, 'formation') }}</span>
                 <span class="font-medium">{{ unit|lower }}s {{ parcours.periodeDebut }}–{{ parcours.periodeFin }}</span>
             </div>
             <div class="flex flex-wrap justify-between gap-x-3">
-                <span class="text-gray-400">Parcours parent</span>
+                <span class="text-gray-400">{{ 'node.panel.parcours_parent_label'|trans({}, 'node') }}</span>
                 <span class="font-medium">{{ parcours.parcoursParent ? parcours.parcoursParent.displayLabel : '—' }}</span>
             </div>
             <div class="flex flex-wrap justify-between gap-x-3">
-                <span class="text-gray-400">Spécialisations (parcours enfants)</span>
+                <span class="text-gray-400">{{ 'formation.param.parcours_organisation.specialisations_label'|trans({}, 'formation') }}</span>
                 <span class="font-medium text-right">
                     {%- for ch in pchildren %}{{ ch.displayLabel }}{{ not loop.last ? ', ' }}{% else %}—{% endfor -%}
                 </span>
             </div>
             <a href="{{ node_url(parcours) }}" data-turbo-frame="node-panel"
-               class="inline-block pt-1 text-xs font-medium hover:underline" style="color:var(--c-primary)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} Modifier dans « Positionnement &amp; ramification »</a>
+               class="inline-block pt-1 text-xs font-medium hover:underline" style="color:var(--c-primary)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'formation.param.parcours_organisation.edit_in_ramification'|trans({}, 'formation') }}</a>
         </div>
 
         <div class="pt-2 border-t" style="border-color:var(--c-border)">
-            <button class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">Enregistrer</button>
+            <button class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
         </div>
     </form>
     </div>

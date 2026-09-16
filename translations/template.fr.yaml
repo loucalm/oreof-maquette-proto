@@ -1,0 +1,39 @@
+template:
+  index:
+    title: Templates de structure
+    heading: Templates de structure
+    description: >-
+      L'arbre imposé d'un diplôme. Rattaché à un diplôme, il est appliqué automatiquement à la création
+      d'une formation ; ses éléments pédagogiques verrouillés %lock_icon% figent la structure.
+    new_label: Nouveau template
+    new_button: Nouveau template
+    diplome_badge: 'diplôme : %diplome%'
+    multi_parcours: multi-parcours
+    mono_parcours: mono-parcours
+    root_count: '%count% ELP racine(s)'
+  edit:
+    unlock_title: ELP imposé — cliquer pour libérer
+    lock_title: Rendre cet ELP imposé (non supprimable côté formation)
+    label_placeholder: (libellé)
+    rename_button: renommer
+    move_up: Monter
+    move_down: Descendre
+    delete_node_confirm: 'Supprimer « %label% » et sa branche du template ?'
+    child_label_placeholder: libellé (optionnel)
+    add_child_button: enfant
+    label_field: Libellé
+    diplome_field: Diplôme imposé
+    diplome_none: — aucun (template libre) —
+    diplome_help: Un seul template par diplôme. Appliqué automatiquement à la création d'une formation.
+    multi_parcours_label: Multi-parcours
+    description_field: Description
+    mccc_note: >-
+      Les règles MCCC (CCI, CT…) de ce diplôme se configurent par type, pas par template —
+      %link_open%Types de MCCC%link_close%.
+    tree_title: Arbre du template
+    tree_empty: Aucun ELP. Ajoutez le premier niveau ci-dessous.
+    lock_legend: '%lock_icon% = élément pédagogique imposé : le responsable de formation ne pourra ni le supprimer ni le déplacer.'
+    add_root_label: 'Ajouter un ELP racine :'
+    add_root_button: racine
+    delete_confirm: 'Supprimer définitivement le template « %label% » ?'
+    delete_button: Supprimer ce template

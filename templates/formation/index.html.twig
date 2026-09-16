@@ -1,5 +1,5 @@
 {% extends 'base.html.twig' %}
-{% block title %}Détails des mentions/spécialités · Prototype maquette{% endblock %}
+{% block title %}{{ 'formation.index.page_title'|trans({}, 'formation') }}{% endblock %}
 
 {% block body %}
 <div data-controller="modal">
@@ -8,36 +8,36 @@
     <div class="rounded-2xl border bg-white px-7 py-6 mb-4" style="border-color:var(--c-border)">
         <div class="flex items-start justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-extrabold tracking-tight">Détails des mentions/spécialités</h1>
-                <p class="text-sm text-gray-500">Ici vous pouvez voir l'ensemble de vos formations créées</p>
+                <h1 class="text-3xl font-extrabold tracking-tight">{{ 'formation.index.heading'|trans({}, 'formation') }}</h1>
+                <p class="text-sm text-gray-500">{{ 'formation.index.subheading'|trans({}, 'formation') }}</p>
             </div>
             <div class="flex items-center gap-2">
-                <span class="fake-btn" style="color:#15803d;border-color:#bbf7d0">{{ ux_icon('ph:check-bold', {class: 'icon'}) }} Vérifier Export LHEO</span>
+                <span class="fake-btn" style="color:#15803d;border-color:#bbf7d0">{{ ux_icon('ph:check-bold', {class: 'icon'}) }} {{ 'formation.index.check_lheo'|trans({}, 'formation') }}</span>
                 <button type="button" data-action="modal#open"
                         class="rounded-lg border px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50" style="border-color:#bbf7d0">
-                    {{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter une formation
+                    {{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.index.add_button'|trans({}, 'formation') }}
                 </button>
             </div>
         </div>
         <div class="mt-3 text-sm text-gray-400">
-            {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">Accueil</span> › <span class="fake-link">Offre de formation</span> ›
-            <span class="rounded bg-gray-100 px-2 py-0.5 text-gray-600">Détails des mentions/spécialités</span>
+            {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">{{ 'formation.index.breadcrumb_home'|trans({}, 'formation') }}</span> › <span class="fake-link">{{ 'formation.index.breadcrumb_offer'|trans({}, 'formation') }}</span> ›
+            <span class="rounded bg-gray-100 px-2 py-0.5 text-gray-600">{{ 'formation.index.heading'|trans({}, 'formation') }}</span>
         </div>
     </div>
 
     {# ─── table ─── #}
     <div class="rounded-2xl border bg-white px-7 py-6" style="border-color:var(--c-border)">
-        <h2 class="text-2xl font-extrabold tracking-tight">DÉTAILS DES MENTIONS/SPÉCIALITÉS</h2>
-        <p class="text-sm text-gray-500 mb-5">Consultez et administrez rapidement les mentions et spécialités de l'offre de formation.</p>
+        <h2 class="text-2xl font-extrabold tracking-tight">{{ 'formation.index.heading'|trans({}, 'formation')|upper }}</h2>
+        <p class="text-sm text-gray-500 mb-5">{{ 'formation.index.table_description'|trans({}, 'formation') }}</p>
 
         <div class="flex gap-1 border-b mb-4" style="border-color:var(--c-border)">
             <a href="{{ path('formation_index') }}"
                class="-mb-px rounded-t-lg border-b-2 px-3.5 py-2 text-sm font-medium {{ consolidationTab ? 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' : '' }}"
-               style="border-color:{{ consolidationTab ? 'transparent' : 'var(--c-primary)' }};{{ consolidationTab ? '' : 'color:var(--c-primary)' }}">Toutes les formations</a>
+               style="border-color:{{ consolidationTab ? 'transparent' : 'var(--c-primary)' }};{{ consolidationTab ? '' : 'color:var(--c-primary)' }}">{{ 'formation.index.tab_all'|trans({}, 'formation') }}</a>
             <a href="{{ path('formation_index', {phase: 'consolidation'}) }}"
                class="-mb-px rounded-t-lg border-b-2 px-3.5 py-2 text-sm font-medium {{ consolidationTab ? '' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}"
                style="border-color:{{ consolidationTab ? 'var(--c-primary)' : 'transparent' }};{{ consolidationTab ? 'color:var(--c-primary)' : '' }}">
-                {{ ux_icon('ph:hourglass-medium', {class: 'icon'}) }} Consolidation de l’offre
+                {{ ux_icon('ph:hourglass-medium', {class: 'icon'}) }} {{ 'formation.index.tab_consolidation'|trans({}, 'formation') }}
             </a>
         </div>
 
@@ -45,11 +45,11 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                        <th class="text-left px-4 py-3">Formation</th>
-                        <th class="text-left px-4 py-3">Composante</th>
-                        <th class="text-center px-4 py-3">État</th>
-                        <th class="text-left px-4 py-3 w-64">Remplissage</th>
-                        <th class="text-right px-4 py-3">Actions</th>
+                        <th class="text-left px-4 py-3">{{ 'formation.index.col_formation'|trans({}, 'formation') }}</th>
+                        <th class="text-left px-4 py-3">{{ 'formation.index.col_composante'|trans({}, 'formation') }}</th>
+                        <th class="text-center px-4 py-3">{{ 'formation.index.col_state'|trans({}, 'formation') }}</th>
+                        <th class="text-left px-4 py-3 w-64">{{ 'formation.index.col_progress'|trans({}, 'formation') }}</th>
+                        <th class="text-right px-4 py-3">{{ 'formation.index.col_actions'|trans({}, 'formation') }}</th>
                     </tr>
                 </thead>
                 {% for row in rows %}
@@ -59,26 +59,26 @@
                         <td class="px-4 py-4 align-top">
                             <div class="font-medium">{{ f.name }}</div>
                             <div class="text-xs text-gray-400">
-                                {{ f.diplome ?: '—' }} · {{ f.multiParcours ? row.parcours|length ~ ' parcours' : 'mono-parcours' }}
+                                {{ f.diplome ?: '—' }} · {{ f.multiParcours ? 'formation.index.parcours_count'|trans({'%count%': row.parcours|length}, 'formation') : 'formation.index.mono_parcours'|trans({}, 'formation') }}
                             </div>
                             {% if row.parcours %}
                                 <button type="button" data-action="disclosure#toggle"
                                         class="mt-1.5 inline-flex items-center gap-1 whitespace-nowrap rounded-md border px-2 py-1 text-[11px] font-medium hover:bg-gray-50"
                                         style="border-color:var(--c-border);color:var(--c-primary)">
-                                    {{ ux_icon('ph:caret-right', {class: 'icon'}) }} <span data-disclosure-target="label">Voir</span>&nbsp;les parcours
+                                    {{ ux_icon('ph:caret-right', {class: 'icon'}) }} <span data-disclosure-target="label">{{ 'formation.index.toggle_show'|trans({}, 'formation') }}</span>&nbsp;{{ 'formation.index.toggle_parcours_suffix'|trans({}, 'formation') }}
                                 </button>
                             {% endif %}
                         </td>
                         <td class="px-4 py-4 align-top text-gray-600">{{ f.composante ?: '—' }}</td>
                         <td class="px-4 py-4 align-top text-center">
                             {% if f.phase.value == 'consolidation' %}
-                                <span class="pill" style="background:#fef3c7;color:#b45309">{{ ux_icon('ph:hourglass-medium', {class: 'icon'}) }} Consolidation{{ f.anneeUniversitaire ? ' · ' ~ f.anneeUniversitaire }}</span>
+                                <span class="pill" style="background:#fef3c7;color:#b45309">{{ ux_icon('ph:hourglass-medium', {class: 'icon'}) }} {{ 'formation.index.phase_consolidation'|trans({}, 'formation') }}{{ f.anneeUniversitaire ? ' · ' ~ f.anneeUniversitaire }}</span>
                             {% else %}
-                                <span class="pill" style="background:#dcfce7;color:#15803d">{{ ux_icon('ph:check-bold', {class: 'icon'}) }} Construction</span>
+                                <span class="pill" style="background:#dcfce7;color:#15803d">{{ ux_icon('ph:check-bold', {class: 'icon'}) }} {{ 'formation.index.phase_construction'|trans({}, 'formation') }}</span>
                             {% endif %}
                         </td>
                         <td class="px-4 py-4 align-top">
-                            <div class="flex justify-between text-[11px] text-gray-400"><span>Progression globale</span><span>{{ row.progress }}%</span></div>
+                            <div class="flex justify-between text-[11px] text-gray-400"><span>{{ 'formation.index.global_progress'|trans({}, 'formation') }}</span><span>{{ row.progress }}%</span></div>
                             <div class="mt-1 h-2 rounded-full bg-gray-100 overflow-hidden">
                                 <div class="h-full rounded-full" style="width:{{ row.progress }}%;background:{{ row.progress < 30 ? 'var(--st-empty)' : (row.progress < 70 ? 'var(--st-incomplete)' : 'var(--st-ok)') }}"></div>
                             </div>
@@ -86,20 +86,20 @@
                         <td class="px-4 py-4 align-top">
                             <div class="flex items-center justify-end gap-2">
                                 <a href="{{ path('formation_view', {id: f.id}) }}"
-                                   class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:eye', {class: 'icon'}) }} Voir</a>
+                                   class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:eye', {class: 'icon'}) }} {{ 'formation.index.view_button'|trans({}, 'formation') }}</a>
 
                                 <div class="relative" data-controller="menu">
                                     <button type="button" data-action="menu#toggle"
-                                            class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:dots-three-bold', {class: 'icon'}) }} Actions</button>
+                                            class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:dots-three-bold', {class: 'icon'}) }} {{ 'formation.index.actions_button'|trans({}, 'formation') }}</button>
                                     <div data-menu-target="menu" hidden
                                          class="absolute right-0 top-full z-30 mt-1.5 w-56 overflow-hidden rounded-xl border bg-white py-1.5 shadow-xl" style="border-color:var(--c-border)">
                                         <a href="{{ path('formation_check', {id: f.id}) }}"
-                                           class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-700 hover:bg-green-50">{{ ux_icon('ph:check-bold', {class: 'icon'}) }} Vérifier la saisie</a>
+                                           class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-700 hover:bg-green-50">{{ ux_icon('ph:check-bold', {class: 'icon'}) }} {{ 'formation.index.check_input_action'|trans({}, 'formation') }}</a>
                                         <a href="{{ path('formation_editor', {id: f.id}) }}"
-                                           class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-amber-700 hover:bg-amber-50">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} Modifier</a>
+                                           class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-amber-700 hover:bg-amber-50">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'common.edit'|trans({}, 'common') }}</a>
                                         <form method="post" action="{{ path('formation_delete', {id: f.id}) }}"
-                                              data-controller="confirm" data-confirm-message-value="Supprimer définitivement la formation « {{ f.name }} » ? Cette action est irréversible.">
-                                            <button class="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">{{ ux_icon('ph:trash', {class: 'icon'}) }} Supprimer</button>
+                                              data-controller="confirm" data-confirm-message-value="{{ 'formation.index.delete_confirm'|trans({'%name%': f.name}, 'formation') }}">
+                                            <button class="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">{{ ux_icon('ph:trash', {class: 'icon'}) }} {{ 'common.delete_full'|trans({}, 'common') }}</button>
                                         </form>
                                     </div>
                                 </div>
@@ -111,17 +111,17 @@
                             <td colspan="5" class="px-4 pb-5 pt-0" style="background:#fafafb">
                                 <div class="rounded-xl border bg-white overflow-hidden" style="border-color:var(--c-border)">
                                     <div class="flex items-center justify-between px-4 py-2.5 border-b" style="border-color:var(--c-border)">
-                                        <span class="text-sm font-semibold">Parcours de <span style="color:var(--c-primary)">{{ f.name }}</span></span>
-                                        <span class="text-xs text-gray-400">{{ row.parcours|length }} parcours</span>
+                                        <span class="text-sm font-semibold">{{ 'formation.index.parcours_of'|trans({}, 'formation') }} <span style="color:var(--c-primary)">{{ f.name }}</span></span>
+                                        <span class="text-xs text-gray-400">{{ 'formation.index.parcours_count'|trans({'%count%': row.parcours|length}, 'formation') }}</span>
                                     </div>
                                     <table class="w-full text-sm">
                                         <thead class="text-[11px] uppercase tracking-wide text-gray-400">
                                             <tr class="border-b" style="border-color:var(--c-border)">
-                                                <th class="text-left px-4 py-2">Parcours</th>
-                                                <th class="text-left px-4 py-2">Périodes</th>
-                                                <th class="text-left px-4 py-2">BCC</th>
-                                                <th class="text-left px-4 py-2 w-48">Remplissage</th>
-                                                <th class="text-right px-4 py-2">Actions</th>
+                                                <th class="text-left px-4 py-2">{{ 'formation.index.col_parcours'|trans({}, 'formation') }}</th>
+                                                <th class="text-left px-4 py-2">{{ 'formation.index.col_periods'|trans({}, 'formation') }}</th>
+                                                <th class="text-left px-4 py-2">{{ 'formation.index.col_bcc'|trans({}, 'formation') }}</th>
+                                                <th class="text-left px-4 py-2 w-48">{{ 'formation.index.col_progress'|trans({}, 'formation') }}</th>
+                                                <th class="text-right px-4 py-2">{{ 'formation.index.col_actions'|trans({}, 'formation') }}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -129,13 +129,13 @@
                                             <tr class="border-b last:border-0" style="border-color:var(--c-border)">
                                                 <td class="px-4 py-2.5">
                                                     <div class="font-medium">{{ p.label }}</div>
-                                                    {% if p.parent %}<div class="text-[11px] text-gray-400">spécialisation de « {{ p.parent }} »</div>{% endif %}
+                                                    {% if p.parent %}<div class="text-[11px] text-gray-400">{{ 'formation.index.parcours_specialization_of'|trans({'%parent%': p.parent}, 'formation') }}</div>{% endif %}
                                                 </td>
-                                                <td class="px-4 py-2.5 text-gray-500">{{ period_unit(f)|lower }}s {{ p.debut }}–{{ p.fin }}</td>
+                                                <td class="px-4 py-2.5 text-gray-500">{{ 'formation.index.periods_range'|trans({'%unit%': period_unit(f)|lower, '%start%': p.debut, '%end%': p.fin}, 'formation') }}</td>
                                                 <td class="px-4 py-2.5">
                                                     {% set bs = p.bcc ?? 'empty' %}
                                                     <span class="pill" style="background:{{ bs == 'ok' ? '#dcfce7' : (bs == 'incomplete' ? '#fef3c7' : '#fee2e2') }};color:{{ bs == 'ok' ? '#15803d' : (bs == 'incomplete' ? '#b45309' : '#b91c1c') }}">
-                                                        {{ bs == 'ok' ? 'Complet' : (bs == 'incomplete' ? 'Incomplet' : 'Vide') }}
+                                                        {{ bs == 'ok' ? 'formation.index.bcc_complete'|trans({}, 'formation') : (bs == 'incomplete' ? 'formation.index.bcc_incomplete'|trans({}, 'formation') : 'formation.index.bcc_empty'|trans({}, 'formation')) }}
                                                     </span>
                                                 </td>
                                                 <td class="px-4 py-2.5">
@@ -145,8 +145,8 @@
                                                     </div>
                                                 </td>
                                                 <td class="px-4 py-2.5 text-right whitespace-nowrap">
-                                                    <a href="{{ path('formation_view', {id: f.id}) }}" class="text-xs hover:underline">{{ ux_icon('ph:eye', {class: 'icon'}) }} Voir</a>
-                                                    <a href="{{ path('parcours_editor', {fid: f.id, nid: p.nid}) }}" class="ml-2 text-xs font-medium text-amber-700 hover:underline">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} Modifier</a>
+                                                    <a href="{{ path('formation_view', {id: f.id}) }}" class="text-xs hover:underline">{{ ux_icon('ph:eye', {class: 'icon'}) }} {{ 'formation.index.view_button'|trans({}, 'formation') }}</a>
+                                                    <a href="{{ path('parcours_editor', {fid: f.id, nid: p.nid}) }}" class="ml-2 text-xs font-medium text-amber-700 hover:underline">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'common.edit'|trans({}, 'common') }}</a>
                                                 </td>
                                             </tr>
                                         {% endfor %}
@@ -160,7 +160,7 @@
                 {% else %}
                 <tbody>
                     <tr><td colspan="5" class="px-4 py-10 text-center text-gray-400">
-                        Aucune formation. Cliquez sur « Ajouter une formation ».
+                        {{ 'formation.index.empty'|trans({}, 'formation') }}
                     </td></tr>
                 </tbody>
                 {% endfor %}
@@ -173,8 +173,8 @@
         <form method="post" action="{{ path('formation_create') }}">
             <div class="flex items-start justify-between border-b px-7 py-5" style="border-color:var(--c-border)">
                 <div>
-                    <h3 class="text-xl font-bold">Ajouter une nouvelle formation</h3>
-                    <p class="text-sm text-gray-500">Ajouter votre formation</p>
+                    <h3 class="text-xl font-bold">{{ 'formation.index.modal_title'|trans({}, 'formation') }}</h3>
+                    <p class="text-sm text-gray-500">{{ 'formation.index.modal_subtitle'|trans({}, 'formation') }}</p>
                 </div>
                 <button type="button" data-action="modal#close" class="rounded-lg border px-2.5 py-1.5 text-gray-500 hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:x', {class: 'icon'}) }}</button>
             </div>
@@ -182,77 +182,77 @@
             <div class="px-7 py-6 space-y-6">
                 <div>
                     <div class="flex items-center justify-between">
-                        <span class="fld-label">Nom de la formation</span>
-                        <span class="text-[11px] font-semibold text-red-500 uppercase">Champs requis</span>
+                        <span class="fld-label">{{ 'formation.index.name_field'|trans({}, 'formation') }}</span>
+                        <span class="text-[11px] font-semibold text-red-500 uppercase">{{ 'common.required_badge'|trans({}, 'common') }}</span>
                     </div>
-                    <input name="name" required placeholder="Formation exemple" class="fld mt-1">
-                    <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} Nommer votre formation</div>
+                    <input name="name" required placeholder="{{ 'formation.index.name_placeholder'|trans({}, 'formation') }}" class="fld mt-1">
+                    <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'formation.index.name_help'|trans({}, 'formation') }}</div>
                 </div>
 
                 <div class="grid gap-6 md:grid-cols-2">
                     <div>
                         <div class="flex items-center justify-between">
-                            <span class="fld-label">Type de diplôme</span>
-                            <span class="text-[11px] font-semibold text-red-500 uppercase">Champs requis</span>
+                            <span class="fld-label">{{ 'formation.index.diplome_field'|trans({}, 'formation') }}</span>
+                            <span class="text-[11px] font-semibold text-red-500 uppercase">{{ 'common.required_badge'|trans({}, 'common') }}</span>
                         </div>
                         <select name="diplome" class="fld mt-1">
                             {% for d in referentiel('diplomes') %}
                                 <option value="{{ d }}">{{ d }}</option>
                             {% endfor %}
                         </select>
-                        <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} La sélection de certains diplômes nécessite une demande</div>
+                        <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'formation.index.diplome_help'|trans({}, 'formation') }}</div>
                     </div>
                     <div>
                         <div class="flex items-center justify-between">
-                            <span class="fld-label">Domaine de formation</span>
-                            <span class="text-[11px] font-semibold text-red-500 uppercase">Champs requis</span>
+                            <span class="fld-label">{{ 'formation.index.domaine_field'|trans({}, 'formation') }}</span>
+                            <span class="text-[11px] font-semibold text-red-500 uppercase">{{ 'common.required_badge'|trans({}, 'common') }}</span>
                         </div>
                         <select name="domaine" class="fld mt-1">
-                            <option value="">— Choisir —</option>
+                            <option value="">{{ 'node.panel.choice_default'|trans({}, 'node') }}</option>
                             {% for d in referentiel('domaines') %}
                                 <option value="{{ d }}">{{ d }}</option>
                             {% endfor %}
                         </select>
-                        <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} Domaine auquel appartient votre formation</div>
+                        <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'formation.index.domaine_help'|trans({}, 'formation') }}</div>
                     </div>
                 </div>
 
                 <div>
                     <div class="flex items-center justify-between">
-                        <span class="fld-label">Composante porteuse de la formation</span>
-                        <span class="text-[11px] font-semibold text-red-500 uppercase">Champs requis</span>
+                        <span class="fld-label">{{ 'formation.index.composante_field'|trans({}, 'formation') }}</span>
+                        <span class="text-[11px] font-semibold text-red-500 uppercase">{{ 'common.required_badge'|trans({}, 'common') }}</span>
                     </div>
-                    <input name="composante" placeholder="Composante exemple" class="fld mt-1">
-                    <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} Indiquer la composante porteuse du projet, qui aura en charge le dépôt de la demande</div>
+                    <input name="composante" placeholder="{{ 'formation.index.composante_placeholder'|trans({}, 'formation') }}" class="fld mt-1">
+                    <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'formation.index.composante_help'|trans({}, 'formation') }}</div>
                 </div>
 
                 <label class="flex items-center gap-2 text-sm">
-                    <input type="checkbox" name="multiParcours" value="1"> La formation contient des parcours (multi-parcours)
+                    <input type="checkbox" name="multiParcours" value="1"> {{ 'formation.index.multi_parcours_label'|trans({}, 'formation') }}
                 </label>
 
                 <div class="rounded-lg border p-3 space-y-3" style="border-color:var(--c-border);background:#f8f9fb">
-                    <div class="fld-label">Type de création</div>
+                    <div class="fld-label">{{ 'formation.index.creation_type_label'|trans({}, 'formation') }}</div>
                     <div class="flex flex-col gap-2 text-sm">
                         <label class="flex items-start gap-2">
                             <input type="radio" name="phase" value="construction" checked class="mt-0.5">
-                            <span>Formation classique <span class="block text-xs text-gray-400">Construction immédiate de l'offre.</span></span>
+                            <span>{{ 'formation.index.phase_classic_label'|trans({}, 'formation') }} <span class="block text-xs text-gray-400">{{ 'formation.index.phase_classic_help'|trans({}, 'formation') }}</span></span>
                         </label>
                         <label class="flex items-start gap-2">
                             <input type="radio" name="phase" value="consolidation" class="mt-0.5">
-                            <span>Consolidation de l'offre <span class="block text-xs text-gray-400">Juste le squelette (nom, structure) — préparé en avance pour une année future, à compléter plus tard.</span></span>
+                            <span>{{ 'formation.index.phase_consolidation_label'|trans({}, 'formation') }} <span class="block text-xs text-gray-400">{{ 'formation.index.phase_consolidation_help'|trans({}, 'formation') }}</span></span>
                         </label>
                     </div>
                     <div>
-                        <span class="fld-label">Année universitaire visée</span>
-                        <input name="anneeUniversitaire" placeholder="ex. 2027-2028" class="fld mt-1">
-                        <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} Surtout utile pour une consolidation.</div>
+                        <span class="fld-label">{{ 'formation.index.annee_field'|trans({}, 'formation') }}</span>
+                        <input name="anneeUniversitaire" placeholder="{{ 'formation.index.annee_placeholder'|trans({}, 'formation') }}" class="fld mt-1">
+                        <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'formation.index.annee_help'|trans({}, 'formation') }}</div>
                     </div>
                 </div>
             </div>
 
             <div class="flex items-center justify-end gap-2 border-t px-7 py-4" style="border-color:var(--c-border)">
-                <button type="button" data-action="modal#close" class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">Annuler</button>
-                <button class="rounded-lg px-5 py-2 text-sm font-semibold text-white" style="background:var(--st-ok)">Créer</button>
+                <button type="button" data-action="modal#close" class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</button>
+                <button class="rounded-lg px-5 py-2 text-sm font-semibold text-white" style="background:var(--st-ok)">{{ 'formation.index.create_button'|trans({}, 'formation') }}</button>
             </div>
         </form>
     </dialog>

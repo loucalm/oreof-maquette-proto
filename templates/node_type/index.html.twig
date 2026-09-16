@@ -1,27 +1,26 @@
 {% extends 'admin/_layout.html.twig' %}
 {% set adminSection = 'types' %}
-{% block title %}Types d’éléments pédagogiques{% endblock %}
+{% block title %}{{ 'node_type.index.title'|trans({}, 'node_type') }}{% endblock %}
 
 {% block admin_body %}
 <div class="flex items-start justify-between mb-5">
     <div>
-        <h2 class="text-lg font-bold">Types d’éléments pédagogiques</h2>
+        <h2 class="text-lg font-bold">{{ 'node_type.index.heading'|trans({}, 'node_type') }}</h2>
         <p class="text-sm" style="color:var(--c-muted)">
-            Le métamodèle. Créez / modifiez les types et leurs capacités. La hiérarchie (qui contient qui)
-            est propre à chaque formation, dans « Configuration de la structure ».
+            {{ 'node_type.index.description'|trans({}, 'node_type') }}
         </p>
     </div>
-    <a href="{{ path('node_type_new') }}" class="rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} Nouveau type</a>
+    <a href="{{ path('node_type_new') }}" class="rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'node_type.index.new_button'|trans({}, 'node_type') }}</a>
 </div>
 
 <div class="rounded-xl border bg-white overflow-hidden" style="border-color:var(--c-border)">
     <table class="w-full text-sm">
         <thead class="text-xs uppercase tracking-wide" style="color:var(--c-muted)">
             <tr class="border-b" style="border-color:var(--c-border)">
-                <th class="text-left px-4 py-3">Type</th>
-                <th class="text-left px-4 py-3">Famille</th>
-                <th class="text-left px-4 py-3">Capacités</th>
-                <th class="text-left px-4 py-3">ECTS cible</th>
+                <th class="text-left px-4 py-3">{{ 'node_type.index.col_type'|trans({}, 'node_type') }}</th>
+                <th class="text-left px-4 py-3">{{ 'node_type.index.col_family'|trans({}, 'node_type') }}</th>
+                <th class="text-left px-4 py-3">{{ 'node_type.index.col_capabilities'|trans({}, 'node_type') }}</th>
+                <th class="text-left px-4 py-3">{{ 'node_type.index.col_ects_target'|trans({}, 'node_type') }}</th>
                 <th class="px-4 py-3"></th>
             </tr>
         </thead>
@@ -30,22 +29,22 @@
             <tr class="border-b last:border-0 align-top" style="border-color:var(--c-border)">
                 <td class="px-4 py-3">
                     <div class="font-medium">{{ ux_icon(t.icon, {class: 'icon'}) }} {{ t.label }}
-                        {% if t.system %}<span class="pill ml-1">socle</span>{% endif %}</div>
+                        {% if t.system %}<span class="pill ml-1">{{ 'common.badge_socle'|trans({}, 'common') }}</span>{% endif %}</div>
                     <code class="text-xs" style="color:var(--c-muted)">{{ t.key }}</code>
                     {% set styleSamples = {'decimal': '1,2,3', 'alpha': 'a,b,c', 'alpha_upper': 'A,B,C', 'roman': 'i,ii,iii'} %}
-                    {% if t.numbered %}<span class="pill ml-1" title="Numérotation : {{ t.numberStyle }}">№ {{ styleSamples[t.numberStyle] ?? '1,2,3' }}</span>{% endif %}
+                    {% if t.numbered %}<span class="pill ml-1" title="{{ 'node_type.index.numbering_title'|trans({'%style%': t.numberStyle}, 'node_type') }}">№ {{ styleSamples[t.numberStyle] ?? '1,2,3' }}</span>{% endif %}
                 </td>
                 <td class="px-4 py-3" style="color:var(--c-muted)">{{ t.family.label }}</td>
                 <td class="px-4 py-3">
-                    {% for c, on in t.capabilities %}<span class="type-badge mr-1" {{ t.isCapabilityLocked(c) ? 'title="Réservée admin"' }}>{{ capabilities[c] ?? c }}{% if t.isCapabilityLocked(c) %} {{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }}{% endif %}</span>{% endfor %}
+                    {% for c, on in t.capabilities %}<span class="type-badge mr-1" {{ t.isCapabilityLocked(c) ? 'title="' ~ 'node_type.index.reserved_admin_title'|trans({}, 'node_type') ~ '"' }}>{{ capabilities[c] ?? c }}{% if t.isCapabilityLocked(c) %} {{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }}{% endif %}</span>{% endfor %}
                 </td>
                 <td class="px-4 py-3">{{ t.ectsTarget ?? '—' }}</td>
                 <td class="px-4 py-3 text-right whitespace-nowrap">
-                    <a href="{{ path('node_type_edit', {id: t.id}) }}" class="text-xs hover:underline">Modifier</a>
+                    <a href="{{ path('node_type_edit', {id: t.id}) }}" class="text-xs hover:underline">{{ 'common.edit'|trans({}, 'common') }}</a>
                     {% if not t.system %}
                         <form method="post" action="{{ path('node_type_delete', {id: t.id}) }}" class="inline"
-                              data-controller="confirm" data-confirm-message-value="Supprimer le type « {{ t.label }} » ? Les éléments pédagogiques qui l'utilisent encore empêcheront la suppression.">
-                            <button class="text-xs text-red-600 hover:underline ml-2">Suppr.</button>
+                              data-controller="confirm" data-confirm-message-value="{{ 'node_type.index.delete_confirm'|trans({'%label%': t.label}, 'node_type') }}">
+                            <button class="text-xs text-red-600 hover:underline ml-2">{{ 'common.delete'|trans({}, 'common') }}</button>
                         </form>
                     {% endif %}
                 </td>

@@ -1,0 +1,48 @@
+mcctype:
+  index:
+    title: Types de MCCC
+    heading: Types de MCCC
+    description: >-
+      Les modalités de contrôle des connaissances proposées sur un EC (CCI, CT…), leurs diplômes
+      concernés et leurs règles de validation (nombre d’épreuves, coefficients…).
+    new_button: Nouveau type
+    col_type: Type
+    col_diplomes: Diplômes concernés
+    col_evaluations: Épreuves pondérées
+    col_rules: Règles
+    all_diplomes: Tous
+    delete_confirm: >-
+      Supprimer le type de MCCC « %label% » ? Les EC déjà réglés sur ce type conservent leur saisie mais
+      ce type ne sera plus proposé.
+    footer_note: >-
+      Un type sans diplôme sélectionné est proposé pour toutes les formations. Une même modalité qui
+      varie selon le diplôme (ex. CCI en Licence vs en Master) se déclare comme deux types distincts,
+      clairement nommés.
+  edit:
+    new_title: Nouveau type de MCCC
+    breadcrumb_new: nouveau
+    new_heading: Nouveau type de MCCC
+    edit_heading: 'Modifier « %label% »'
+    short_label_field: Libellé court (chip)
+    label_field: Libellé
+    key_field: Clé
+    key_placeholder: auto
+    description_field: Description (aide admin)
+    diplomes_field: Diplômes concernés (aucun coché = proposé pour tous)
+    has_evaluations_label: >-
+      Ce type comporte des épreuves à pondérer (nombre d’épreuves + coefficient de chacune)
+    evaluations_label_field: Libellé de la collection d’épreuves
+    order_field: Ordre
+    rules_title: Règles de validation
+    rules_empty: Aucune règle — ce type n’est validé que par sa simple sélection.
+    delete_rule_confirm: 'Supprimer la règle « %label% » ?'
+    add_rule_title: Ajouter une règle
+    rule_kind_field: Gabarit
+    rule_op_field: Opérateur
+    rule_value_field: Valeur
+    rule_severity_field: Gravité
+    rule_message_field: Message affiché (facultatif — sinon généré automatiquement)
+    add_rule_button: Ajouter
+    rules_help: >-
+      « Nombre d’épreuves » et « Somme des coefficients » portent sur l’ensemble des épreuves ;
+      « Chaque coefficient » s’applique individuellement à chacune.

@@ -1,6 +1,6 @@
 {% extends 'admin/_layout.html.twig' %}
 {% set adminSection = 'overview' %}
-{% block title %}Administration{% endblock %}
+{% block title %}{{ 'admin.index.title'|trans({}, 'admin') }}{% endblock %}
 
 {% block admin_body %}
 {% set sections = constant('App\\Controller\\AdminController::SECTIONS') %}
@@ -27,11 +27,11 @@
 </div>
 
 <div class="mt-6 rounded-xl border px-5 py-4 text-sm" style="border-color:#c7d2fe;background:var(--c-primary-soft)">
-    <div class="font-semibold" style="color:var(--c-primary)">Où se configure quoi&nbsp;?</div>
+    <div class="font-semibold" style="color:var(--c-primary)">{{ 'admin.index.where_title'|trans({}, 'admin') }}</div>
     <ul class="mt-1.5 space-y-1 text-gray-600">
-        <li>• La <strong>hiérarchie</strong> des niveaux (qui contient qui) est propre à chaque formation : « Configuration de la structure » dans son éditeur.</li>
-        <li>• Les <strong>paramètres d’une formation / d’un parcours</strong> (organisation, présentation…) se saisissent dans l’éditeur concerné.</li>
-        <li>• Ici on définit ce qui est <strong>commun</strong> : les types, les champs, les squelettes et les listes de valeurs.</li>
+        <li>• {{ 'admin.index.where_hierarchy'|trans({}, 'admin')|raw }}</li>
+        <li>• {{ 'admin.index.where_params'|trans({}, 'admin')|raw }}</li>
+        <li>• {{ 'admin.index.where_common'|trans({}, 'admin')|raw }}</li>
     </ul>
 </div>
 {% endblock %}

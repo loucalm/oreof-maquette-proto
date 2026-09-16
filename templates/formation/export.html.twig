@@ -1,5 +1,5 @@
 {% extends 'base.html.twig' %}
-{% block title %}Export · {{ formation.name }}{% endblock %}
+{% block title %}{{ 'formation.export.title_prefix'|trans({}, 'formation') }} · {{ formation.name }}{% endblock %}
 
 {% block body %}
 <div data-controller="json">
@@ -7,39 +7,39 @@
         <div class="flex items-start justify-between gap-4">
             <div>
                 <div class="text-xs text-gray-400">
-                    {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">Accueil</span> ›
-                    <a href="{{ path('formation_index') }}" class="hover:underline">Liste des formation</a> ›
+                    {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">{{ 'formation.index.breadcrumb_home'|trans({}, 'formation') }}</span> ›
+                    <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.editor.breadcrumb_list'|trans({}, 'formation') }}</a> ›
                     <a href="{{ path('formation_editor', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
-                    Export
+                    {{ 'formation.export.title_prefix'|trans({}, 'formation') }}
                 </div>
-                <h1 class="text-2xl font-extrabold tracking-tight mt-1">Export JSON — {{ formation.name }}</h1>
-                <p class="text-sm text-gray-500">Structure de stockage de la maquette (aperçu).</p>
+                <h1 class="text-2xl font-extrabold tracking-tight mt-1">{{ 'formation.export.heading'|trans({'%name%': formation.name}, 'formation') }}</h1>
+                <p class="text-sm text-gray-500">{{ 'formation.export.subtitle'|trans({}, 'formation') }}</p>
             </div>
             <a href="{{ path('formation_editor', {id: formation.id}) }}"
-               class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} Éditeur</a>
+               class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'formation.history.editor_link'|trans({}, 'formation') }}</a>
         </div>
 
         <div class="mt-4 flex flex-wrap items-center gap-2">
             <div class="inline-flex rounded-lg border overflow-hidden text-sm" style="border-color:var(--c-border)">
                 <a href="{{ path('formation_export', {id: formation.id, view: 'raw'}) }}"
                    class="px-3 py-1.5 {{ view == 'raw' ? 'font-semibold text-white' : 'hover:bg-gray-50' }}"
-                   style="{{ view == 'raw' ? 'background:var(--c-primary)' }}">Brut · 3 documents stockés</a>
+                   style="{{ view == 'raw' ? 'background:var(--c-primary)' }}">{{ 'formation.export.tab_raw'|trans({}, 'formation') }}</a>
                 <a href="{{ path('formation_export', {id: formation.id, view: 'enriched'}) }}"
                    class="px-3 py-1.5 border-l {{ view == 'enriched' ? 'font-semibold text-white' : 'hover:bg-gray-50' }}"
-                   style="border-color:var(--c-border);{{ view == 'enriched' ? 'background:var(--c-primary)' }}">Enrichi · arbre calculé</a>
+                   style="border-color:var(--c-border);{{ view == 'enriched' ? 'background:var(--c-primary)' }}">{{ 'formation.export.tab_enriched'|trans({}, 'formation') }}</a>
             </div>
 
             <span class="text-xs text-gray-400">
                 {{ view == 'raw'
-                    ? 'parametres (props formation) · dataParcours (props parcours) · arbre (structure + BCC + données des éléments pédagogiques)'
-                    : 'libellés de type résolus, référence hiérarchique, agrégats heures / ECTS, statut' }}
+                    ? 'formation.export.raw_note'|trans({}, 'formation')
+                    : 'formation.export.enriched_note'|trans({}, 'formation') }}
             </span>
 
             <div class="ml-auto flex items-center gap-2">
                 <button type="button" data-action="json#copy" data-json-target="btn"
-                        class="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:copy', {class: 'icon'}) }} Copier</button>
+                        class="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:copy', {class: 'icon'}) }} {{ 'formation.export.copy_button'|trans({}, 'formation') }}</button>
                 <a href="{{ path('formation_export_json', {id: formation.id, view: view}) }}"
-                   class="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:download-simple', {class: 'icon'}) }} Télécharger .json</a>
+                   class="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:download-simple', {class: 'icon'}) }} {{ 'formation.export.download_button'|trans({}, 'formation') }}</a>
             </div>
         </div>
     </div>

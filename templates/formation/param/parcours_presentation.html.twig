@@ -4,7 +4,7 @@
 <turbo-frame id="node-panel">
 <div class="panel-body" data-panel-active="param:{{ key }}">
     <div class="panel-head">
-        <h2 class="text-xl font-bold">Gestion du parcours</h2>
+        <h2 class="text-xl font-bold">{{ 'formation.param.parcours_panel_title'|trans({}, 'formation') }}</h2>
         <div class="text-sm text-gray-400">{{ label }}</div>
         <div class="text-sm text-gray-400 mt-1">{{ formation.name }} › {{ parcours.displayLabel }} › {{ label }}</div>
     </div>
@@ -12,68 +12,68 @@
     <div class="panel-scroll">
     <form method="post" action="{{ saveUrl }}" data-turbo-frame="_top" class="panel-card space-y-5">
 
-        {{ fld.divider('Informations du parcours') }}
+        {{ fld.divider('formation.param.parcours_presentation.divider_info'|trans({}, 'formation')) }}
 
         <div>
-            {{ fld.label('Objectif du parcours', true, 'Expliquez brièvement les objectifs du parcours') }}
+            {{ fld.label('formation.param.parcours_presentation.objectif_label'|trans({}, 'formation'), true, 'formation.param.parcours_presentation.objectif_help'|trans({}, 'formation')) }}
             {{ fld.textarea('objectif', data.objectif ?? '') }}
         </div>
         <div>
-            {{ fld.label('Mots clés', true, 'Mots clés caractérisant le parcours') }}
+            {{ fld.label('formation.view.plabel.mots_cles'|trans({}, 'formation'), true, 'formation.param.parcours_presentation.mots_cles_help'|trans({}, 'formation')) }}
             {{ fld.textarea('motsCles', data.motsCles ?? '') }}
         </div>
         <div>
-            {{ fld.label('Résultats attendus du parcours', true, 'Indiquez en 3000 caractères maximum les compétences acquises via la formation (compétences à acquérir, à améliorer ou à entretenir).') }}
+            {{ fld.label('formation.param.parcours_presentation.resultats_label'|trans({}, 'formation'), true, 'formation.param.parcours_presentation.resultats_help'|trans({}, 'formation')) }}
             {{ fld.textarea('resultats', data.resultats ?? '') }}
         </div>
         <div>
-            {{ fld.label('Contenu du parcours', true, 'Expliquez brièvement le contenu du parcours') }}
+            {{ fld.label('formation.param.parcours_presentation.contenu_label'|trans({}, 'formation'), true, 'formation.param.parcours_presentation.contenu_help'|trans({}, 'formation')) }}
             {{ fld.textarea('contenu', data.contenu ?? '') }}
         </div>
         <div>
-            {{ fld.label("Langue d'enseignement", true, "Langue dans laquelle sont dispensés les cours (à l'exception des cours de langue)") }}
-            {{ fld.selectAdd('langue', data.langue ?? '', referentiel('langues'), 'Ajouter une langue') }}
+            {{ fld.label('formation.view.plabel.langue'|trans({}, 'formation'), true, 'formation.param.parcours_presentation.langue_help'|trans({}, 'formation')) }}
+            {{ fld.selectAdd('langue', data.langue ?? '', referentiel('langues'), 'formation.param.parcours_presentation.add_langue_fake'|trans({}, 'formation')) }}
         </div>
         <div>
-            {{ fld.label('Niveau de langue requis', true, 'Indiquez le niveau de langue souhaité pour intégrer le parcours') }}
-            {{ fld.selectAdd('niveauLangue', data.niveauLangue ?? '', referentiel('niveaux_langue'), 'Ajouter une langue') }}
+            {{ fld.label('formation.view.plabel.niveau_langue'|trans({}, 'formation'), true, 'formation.param.parcours_presentation.niveau_langue_help'|trans({}, 'formation')) }}
+            {{ fld.selectAdd('niveauLangue', data.niveauLangue ?? '', referentiel('niveaux_langue'), 'formation.param.parcours_presentation.add_langue_fake'|trans({}, 'formation')) }}
         </div>
 
-        {{ fld.divider('Rythme de formation') }}
+        {{ fld.divider('formation.param.presentation.divider_rythme'|trans({}, 'formation')) }}
 
         <div>
-            {{ fld.label('Rythme de formation du parcours', false, 'Choisissez un rythme de formation ou complétez le champ ci-dessous') }}
+            {{ fld.label('formation.param.parcours_presentation.rythme_label'|trans({}, 'formation'), false, 'formation.param.presentation.rythme_help'|trans({}, 'formation')) }}
             {{ fld.select('rythme', data.rythme ?? '', referentiel('rythmes')) }}
         </div>
         <div>
-            {{ fld.label('Si besoin, précisez le rythme de formation', false) }}
+            {{ fld.label('formation.param.presentation.rythme_precision_label'|trans({}, 'formation'), false) }}
             {{ fld.textarea('rythmePrecision', data.rythmePrecision ?? '') }}
         </div>
 
-        {{ fld.divider('Contacts') }}
+        {{ fld.divider('formation.param.parcours_presentation.divider_contacts'|trans({}, 'formation')) }}
 
         <div>
-            {{ fld.label('Contacts du parcours', false) }}
+            {{ fld.label('formation.param.parcours_presentation.contacts_label'|trans({}, 'formation'), false) }}
             {{ fld.textarea('contacts', data.contacts ?? '') }}
         </div>
 
-        {{ fld.divider('Et après…') }}
+        {{ fld.divider('formation.param.parcours_presentation.divider_after'|trans({}, 'formation')) }}
 
         <div>
-            {{ fld.label("Poursuite d'études envisageables", true, "Indiquez en 3000 caractères maximum quelles sont les poursuites d'études envisageables.") }}
+            {{ fld.label('formation.view.plabel.poursuite_etudes'|trans({}, 'formation'), true, 'formation.param.parcours_presentation.poursuite_etudes_help'|trans({}, 'formation')) }}
             {{ fld.textarea('poursuiteEtudes', data.poursuiteEtudes ?? '') }}
         </div>
         <div>
-            {{ fld.label('Débouchés', true, "Indiquez les principaux débouchés professionnels accessibles à l'issue de cette formation.") }}
+            {{ fld.label('formation.view.plabel.debouches'|trans({}, 'formation'), true, 'formation.param.parcours_presentation.debouches_help'|trans({}, 'formation')) }}
             {{ fld.textarea('debouches', data.debouches ?? '') }}
         </div>
         <div>
-            {{ fld.label('Code(s) ROME', true, 'Ajoutez les codes ROME pour préciser les métiers accessibles aux diplômés.') }}
-            {{ fld.selectAdd('codesRome', data.codesRome ?? '', referentiel('codes_rome'), 'Ajouter un code ROME') }}
+            {{ fld.label('formation.param.parcours_presentation.codes_rome_label'|trans({}, 'formation'), true, 'formation.param.parcours_presentation.codes_rome_help'|trans({}, 'formation')) }}
+            {{ fld.selectAdd('codesRome', data.codesRome ?? '', referentiel('codes_rome'), 'formation.param.parcours_presentation.add_rome_fake'|trans({}, 'formation')) }}
         </div>
 
         <div class="pt-2 border-t" style="border-color:var(--c-border)">
-            <button class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">Enregistrer</button>
+            <button class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
         </div>
     </form>
     </div>

@@ -3,7 +3,7 @@
 <turbo-frame id="node-panel">
 <div class="panel-body" data-panel-active="param:{{ key }}" data-controller="modal">
     <div class="panel-head">
-        <h2 class="text-xl font-bold">Gestion de la formation</h2>
+        <h2 class="text-xl font-bold">{{ 'formation.param.panel_title'|trans({}, 'formation') }}</h2>
         <div class="text-sm text-gray-400">{{ label }}</div>
         <div class="text-sm text-gray-400 mt-1">{{ formation.name }} › {{ label }}</div>
     </div>
@@ -12,39 +12,37 @@
     <div class="panel-card space-y-6">
 
         {# ── Nombre de parcours ── #}
-        {{ fld.divider('Nombre de parcours') }}
+        {{ fld.divider('formation.param.structure.divider_parcours_count'|trans({}, 'formation')) }}
         <form method="post" action="{{ path('formation_settings', {id: formation.id}) }}" data-turbo-frame="_top" data-controller="confirm">
             <input type="hidden" name="name" value="{{ formation.name }}">
             <input type="hidden" name="diplome" value="{{ formation.diplome }}">
             <input type="hidden" name="domaine" value="{{ formation.domaine }}">
             <input type="hidden" name="composante" value="{{ formation.composante }}">
-            {{ fld.label('La formation contient-elle des parcours ?', true, 'Oui → chaque parcours est un élément pédagogique racine. Non → le niveau parcours reste invisible, la formation le porte elle-même.') }}
-            <p class="fld-help">{{ ux_icon('ph:warning', {class: 'icon'}) }} Changement important : bascule l'organisation de l'arbre existant, confirmation demandée.</p>
+            {{ fld.label('formation.param.structure.has_parcours_label'|trans({}, 'formation'), true, 'formation.param.structure.has_parcours_help'|trans({}, 'formation')) }}
+            <p class="fld-help">{{ ux_icon('ph:warning', {class: 'icon'}) }} {{ 'formation.param.structure.important_change_note'|trans({}, 'formation') }}</p>
             <div class="flex flex-wrap gap-8 mt-2 text-sm">
                 <label class="flex items-center gap-2">
                     <input type="radio" name="multiParcours" value="1" {{ formation.multiParcours ? 'checked' }}
                            data-confirm-target="restore" data-confirm-checked="{{ formation.multiParcours ? '1' : '0' }}"
                            data-action="change->confirm#confirmChange"
-                           data-confirm-message-param="Passer en multi-parcours va rassembler les éléments pédagogiques actuels de la formation dans un nouveau parcours.">
-                    Oui (options)
+                           data-confirm-message-param="{{ 'formation.param.structure.to_multi_confirm'|trans({}, 'formation') }}">
+                    {{ 'formation.param.structure.yes_options'|trans({}, 'formation') }}
                 </label>
                 <label class="flex items-center gap-2">
                     <input type="radio" name="multiParcours" value="0" {{ not formation.multiParcours ? 'checked' }}
                            data-confirm-target="restore" data-confirm-checked="{{ not formation.multiParcours ? '1' : '0' }}"
                            data-action="change->confirm#confirmChange"
-                           data-confirm-message-param="Passer en mono-parcours va supprimer le(s) parcours et remonter leurs éléments pédagogiques à la racine de la formation.">
-                    Non (mono-parcours)
+                           data-confirm-message-param="{{ 'formation.param.structure.to_mono_confirm'|trans({}, 'formation') }}">
+                    {{ 'formation.param.structure.no_mono'|trans({}, 'formation') }}
                 </label>
             </div>
         </form>
 
         {# ── Dimension temporelle ── #}
-        {{ fld.divider('Dimension temporelle') }}
+        {{ fld.divider('formation.param.structure.divider_temporal'|trans({}, 'formation')) }}
         {% set unit = period_unit(formation) %}
         <p class="text-xs text-gray-500 -mt-2">
-            Sur combien de temps la formation se déroule : 3 ans, 6 mois, 12 semaines…
-            Par défaut l'unité suit le type du 1er niveau du squelette (actuellement <strong>{{ unit }}</strong>) ;
-            renseigne un libellé pour le forcer.
+            {{ 'formation.param.structure.temporal_note'|trans({'%unit%': unit}, 'formation')|raw }}
         </p>
         <form method="post" action="{{ path('formation_settings', {id: formation.id}) }}" data-turbo-frame="_top" class="grid gap-4 sm:grid-cols-2">
             <input type="hidden" name="name" value="{{ formation.name }}">
@@ -54,11 +52,11 @@
             <input type="hidden" name="multiParcours" value="{{ formation.multiParcours ? '1' : '0' }}">
             <input type="hidden" name="ectsTotal" value="{{ formation.ectsTotal }}">
             <div>
-                {{ fld.label('Unité de temps', false, 'Vide = ' ~ unit) }}
+                {{ fld.label('formation.param.structure.calendar_unit_label'|trans({}, 'formation'), false, 'formation.param.structure.calendar_unit_help'|trans({'%unit%': unit}, 'formation')) }}
                 <input name="calendarUnit" value="{{ formation.calendarUnit }}" placeholder="{{ unit }}" class="fld mt-1">
             </div>
             <div>
-                {{ fld.label('Durée (nombre de ' ~ unit|lower ~ 's)', false, 'Vide = déduit de l’arbre / des parcours') }}
+                {{ fld.label('formation.param.structure.calendar_span_label'|trans({'%unit%': unit|lower}, 'formation'), false, 'formation.param.structure.calendar_span_help'|trans({}, 'formation')) }}
                 <div class="flex items-end gap-2">
                     <input type="number" min="1" name="calendarSpan" value="{{ formation.calendarSpan }}" class="fld mt-1">
                     <button class="rounded-lg px-3 py-2 text-sm font-semibold text-white shrink-0" style="background:var(--c-primary)">OK</button>
@@ -68,10 +66,9 @@
 
         {# ── Propriétés du parcours invisible (mono-parcours) ── #}
         {% if formation.isMono %}
-            {{ fld.divider('Propriétés formation mono-parcours') }}
+            {{ fld.divider('formation.param.structure.divider_mono_props'|trans({}, 'formation')) }}
             <p class="text-xs text-gray-500 -mt-2">
-                Ces propriétés seraient portées par un élément pédagogique <span class="type-badge">{{ ux_icon('ph:compass', {class: 'icon'}) }} Parcours</span> ; en mono-parcours cet élément pédagogique
-                est <strong>invisible et verrouillé</strong> : la formation les porte directement.
+                {{ 'formation.param.structure.mono_props_note'|trans({'%badge%': '<span class="type-badge">' ~ ux_icon('ph:compass', {class: 'icon'}) ~ ' ' ~ 'formation.graph.parcours_fallback'|trans({}, 'formation') ~ '</span>'}, 'formation')|raw }}
             </p>
             <form method="post" action="{{ path('formation_settings', {id: formation.id}) }}" data-turbo-frame="_top" class="space-y-4">
                 <input type="hidden" name="name" value="{{ formation.name }}">
@@ -80,24 +77,24 @@
                 <input type="hidden" name="multiParcours" value="0">
 
                 <div>
-                    {{ fld.label('Intitulé de mono parcours', false, "Si laissé vide, celui de la formation servira d'intitulé") }}
+                    {{ fld.label('formation.param.structure.intitule_mono_label'|trans({}, 'formation'), false, 'formation.param.structure.intitule_mono_help'|trans({}, 'formation')) }}
                     {{ fld.text('intituleMono', data.intituleMono ?? '') }}
                 </div>
 
                 <div class="grid gap-4 md:grid-cols-2">
                     <div>
-                        {{ fld.label("Volume d'ECTS total", true, "Cela servira à vérifier le total d'ECTS de votre formation mono-parcours") }}
+                        {{ fld.label('formation.param.structure.ects_total_label'|trans({}, 'formation'), true, 'formation.param.structure.ects_total_help'|trans({}, 'formation')) }}
                         <input type="number" name="ectsTotal" value="{{ formation.ectsTotal }}" class="fld mt-1">
                     </div>
                     <div>
-                        {{ fld.label("Composante d'inscription", true, "Composante(s) à laquelle les étudiants pourront s'inscrire") }}
+                        {{ fld.label('formation.view.plabel.composante_inscription'|trans({}, 'formation'), true, 'formation.param.parcours_organisation.composante_help'|trans({}, 'formation')) }}
                         <input name="composante" value="{{ formation.composante }}" class="fld mt-1">
-                        <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter une composante d'inscription</span></div>
+                        <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.param.parcours_organisation.add_composante_fake'|trans({}, 'formation') }}</span></div>
                     </div>
                 </div>
 
                 <div>
-                    {{ fld.label("Régime(s) d'inscription", true, "Choix multiples") }}
+                    {{ fld.label('formation.view.plabel.regimes'|trans({}, 'formation'), true, 'formation.param.parcours_organisation.multi_choice'|trans({}, 'formation')) }}
                     <div class="grid gap-2 sm:grid-cols-2 mt-2 text-sm">
                         {% set curRegimes = data.regimes ?? [] %}
                         {% for rv, rl in regimeChoices %}
@@ -109,56 +106,54 @@
                 </div>
 
                 <div>
-                    {{ fld.label("Précisez les modalités de l'alternance", true) }}
-                    {{ fld.textarea('modalitesAlternance', data.modalitesAlternance ?? '', 'Indiquez en 3000 caractères maximum les périodes et leurs durées en centre ou en entreprise.') }}
+                    {{ fld.label('formation.param.parcours_organisation.modalites_alternance_label'|trans({}, 'formation'), true) }}
+                    {{ fld.textarea('modalitesAlternance', data.modalitesAlternance ?? '', 'formation.param.parcours_organisation.modalites_alternance_help'|trans({}, 'formation')) }}
                 </div>
 
                 <div>
-                    {{ fld.label("Langue d'enseignement", true, "Langue dans laquelle sont dispensés les cours (à l'exception des cours de langue)") }}
+                    {{ fld.label('formation.view.plabel.langue'|trans({}, 'formation'), true, 'formation.param.parcours_presentation.langue_help'|trans({}, 'formation')) }}
                     {{ fld.select('langue', data.langue ?? '', referentiel('langues')) }}
-                    <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter une langue</span></div>
+                    <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.param.parcours_presentation.add_langue_fake'|trans({}, 'formation') }}</span></div>
                 </div>
 
-                {{ fld.divider('Et après…') }}
+                {{ fld.divider('formation.param.parcours_presentation.divider_after'|trans({}, 'formation')) }}
 
                 <div>
-                    {{ fld.label("Poursuite d'études envisageables", true) }}
-                    {{ fld.textarea('poursuiteEtudes', data.poursuiteEtudes ?? '', 'Indiquez en 3000 caractères maximum quelles sont les poursuites d’études envisageables.') }}
+                    {{ fld.label('formation.view.plabel.poursuite_etudes'|trans({}, 'formation'), true) }}
+                    {{ fld.textarea('poursuiteEtudes', data.poursuiteEtudes ?? '', 'formation.param.parcours_presentation.poursuite_etudes_help'|trans({}, 'formation')) }}
                 </div>
                 <div>
-                    {{ fld.label('Débouchés', true) }}
-                    {{ fld.textarea('debouches', data.debouches ?? '', 'Indiquez les principaux débouchés professionnels accessibles à l’issue de cette formation.') }}
+                    {{ fld.label('formation.view.plabel.debouches'|trans({}, 'formation'), true) }}
+                    {{ fld.textarea('debouches', data.debouches ?? '', 'formation.param.parcours_presentation.debouches_help'|trans({}, 'formation')) }}
                 </div>
                 <div>
-                    {{ fld.label('Code(s) ROME', true, 'Ajoutez les codes ROME pour préciser les métiers accessibles aux diplômés.') }}
+                    {{ fld.label('formation.param.parcours_presentation.codes_rome_label'|trans({}, 'formation'), true, 'formation.param.parcours_presentation.codes_rome_help'|trans({}, 'formation')) }}
                     {{ fld.select('codesRome', data.codesRome ?? '', referentiel('codes_rome')) }}
-                    <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter un code ROME</span></div>
+                    <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.param.parcours_presentation.add_rome_fake'|trans({}, 'formation') }}</span></div>
                 </div>
 
-                <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">Enregistrer</button>
+                <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
             </form>
         {% endif %}
 
         {# ── Structure : la hiérarchie des TYPES de nœud ── #}
-        {{ fld.divider('Structure') }}
+        {{ fld.divider('formation.param.structure.divider_structure'|trans({}, 'formation')) }}
 
         {% if not is_admin() %}
             {# vue responsable : la hiérarchie des niveaux est imposée, lecture seule #}
             <p class="text-xs text-gray-500 -mt-2">
-                La hiérarchie des niveaux est définie par le diplôme (administrateur SES). Vous construisez
-                l'arbre à l'intérieur de ce cadre depuis l'éditeur.
+                {{ 'formation.param.structure.readonly_note'|trans({}, 'formation') }}
             </p>
             <div class="flex flex-wrap items-center gap-1.5">
                 {% for row in structure_rows(formation) %}
                     {% if not loop.first %}<span class="text-gray-300">›</span>{% endif %}
                     <span class="type-badge">{{ row.type ? ux_icon(row.type.icon, {class: 'icon'}) }} [{{ row.type ? row.type.label : row.key }}]</span>
-                    {%- if row.mono %}<span class="text-[11px] text-gray-400">(porté par la formation)</span>{% endif -%}
+                    {%- if row.mono %}<span class="text-[11px] text-gray-400">{{ 'formation.param.structure.mono_carried_badge'|trans({}, 'formation') }}</span>{% endif -%}
                 {% endfor %}
             </div>
         {% else %}
         <p class="text-xs text-gray-500 -mt-2">
-            Définissez la hiérarchie : chaque ligne est le type des enfants de la ligne du dessus.
-            L'éditeur ne proposera que ces types lors de la construction de l'arbre.
+            {{ 'formation.param.structure.admin_note'|trans({}, 'formation') }}
         </p>
 
         {% set rows = structure_rows(formation) %}
@@ -170,9 +165,9 @@
                 <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
                     <tr>
                         <th class="w-8"></th>
-                        <th class="text-left px-3 py-2.5">Ordre</th>
-                        <th class="text-left px-3 py-2.5">Type d’ELP</th>
-                        <th class="text-right px-4 py-2.5">Actions</th>
+                        <th class="text-left px-3 py-2.5">{{ 'formation.param.structure.col_order'|trans({}, 'formation') }}</th>
+                        <th class="text-left px-3 py-2.5">{{ 'formation.param.structure.col_type'|trans({}, 'formation') }}</th>
+                        <th class="text-right px-4 py-2.5">{{ 'formation.index.col_actions'|trans({}, 'formation') }}</th>
                     </tr>
                 </thead>
                 <tbody data-controller="chain" data-chain-save-url-value="{{ path('formation_structure_save', {id: formation.id}) }}">
@@ -180,28 +175,28 @@
                     <tr class="border-t" style="border-color:var(--c-border)"
                         {{ not row.fixed ? 'data-chain-key=' ~ row.key }}>
                         <td class="px-2 text-center text-gray-300">
-                            {% if not row.fixed %}<span class="drag-handle" title="Glisser pour réordonner">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>{% endif %}
+                            {% if not row.fixed %}<span class="drag-handle" title="{{ 'formation.tree.drag_title'|trans({}, 'formation') }}">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>{% endif %}
                         </td>
                         <td class="px-3 py-2.5 text-gray-400">{{ loop.index0 }}</td>
                         <td class="px-3 py-2.5">
                             <span class="type-badge">{{ row.type ? ux_icon(row.type.icon, {class: 'icon'}) : ux_icon('ph:question', {class: 'icon'}) }} [{{ row.type ? row.type.label : row.key }}]</span>
-                            {% if row.mono %}<span class="pill ml-1">invisible · porté par la formation</span>
-                            {% elseif row.fixed %}<span class="pill ml-1">racine · figé</span>{% endif %}
+                            {% if row.mono %}<span class="pill ml-1">{{ 'formation.param.structure.invisible_mono_pill'|trans({}, 'formation') }}</span>
+                            {% elseif row.fixed %}<span class="pill ml-1">{{ 'formation.param.structure.root_fixed_pill'|trans({}, 'formation') }}</span>{% endif %}
                             {% if loop.index0 > 0 %}
                                 <span class="text-[11px] text-gray-400 ml-1">
-                                    {{- rows[loop.index0 - 1].mono ? 'racine visible de l\'arbre' : 'enfant de ' ~ (rows[loop.index0 - 1].type ? rows[loop.index0 - 1].type.label : rows[loop.index0 - 1].key) -}}
+                                    {{- rows[loop.index0 - 1].mono ? 'formation.param.structure.visible_root_note'|trans({}, 'formation') : 'formation.param.structure.child_of_note'|trans({'%parent%': rows[loop.index0 - 1].type ? rows[loop.index0 - 1].type.label : rows[loop.index0 - 1].key}, 'formation') -}}
                                 </span>
                             {% endif %}
                         </td>
                         <td class="px-4 py-2.5 text-right whitespace-nowrap">
                             {% if row.type and not row.mono %}
-                                <a href="{{ path('node_type_edit', {id: row.type.id}) }}" target="_blank" class="text-xs hover:underline">Modifier</a>
+                                <a href="{{ path('node_type_edit', {id: row.type.id}) }}" target="_blank" class="text-xs hover:underline">{{ 'common.edit'|trans({}, 'common') }}</a>
                             {% endif %}
                             {% if not row.fixed %}
                                 <form method="post" action="{{ path('formation_structure_save', {id: formation.id}) }}" data-turbo-frame="_top" class="inline ml-3"
-                                      data-controller="confirm" data-confirm-message-value="Retirer « {{ row.type ? row.type.label : row.key }} » du squelette ? (les ELP déjà créés ne sont pas supprimés)">
+                                      data-controller="confirm" data-confirm-message-value="{{ 'formation.param.structure.remove_confirm'|trans({'%label%': row.type ? row.type.label : row.key}, 'formation') }}">
                                     {% for k in body_keys|filter(k => k != row.key) %}<input type="hidden" name="chain[]" value="{{ k }}">{% endfor %}
-                                    <button class="text-xs text-red-600 hover:underline">Retirer</button>
+                                    <button class="text-xs text-red-600 hover:underline">{{ 'formation.param.structure.remove_button'|trans({}, 'formation') }}</button>
                                 </form>
                             {% endif %}
                         </td>
@@ -211,7 +206,7 @@
                 <tfoot>
                     <tr class="border-t" style="border-color:var(--c-border)">
                         <td colspan="4" class="px-4 py-3 text-center" style="background:#f0fdf4">
-                            <button type="button" data-action="modal#open" class="text-sm font-medium text-green-700 hover:underline">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter un ELP</button>
+                            <button type="button" data-action="modal#open" class="text-sm font-medium text-green-700 hover:underline">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.param.structure.add_elp_button'|trans({}, 'formation') }}</button>
                         </td>
                     </tr>
                 </tfoot>
@@ -223,67 +218,63 @@
                 class="rounded-2xl border-0 p-0 w-[min(440px,92vw)] backdrop:bg-black/40">
             <form method="post" action="{{ path('formation_structure_save', {id: formation.id}) }}" data-turbo-frame="_top" class="p-6 space-y-4">
                 {% for k in body_keys %}<input type="hidden" name="chain[]" value="{{ k }}">{% endfor %}
-                <h3 class="text-lg font-bold">Ajouter un ELP</h3>
+                <h3 class="text-lg font-bold">{{ 'formation.param.structure.add_elp_button'|trans({}, 'formation') }}</h3>
                 <div>
-                    {{ fld.label('ELP', true, 'Peut être changé plus tard') }}
+                    {{ fld.label('formation.param.structure.elp_field'|trans({}, 'formation'), true, 'formation.param.structure.elp_help'|trans({}, 'formation')) }}
                     <select name="chain[]" required class="fld mt-1">
-                        <option value="">— Choisir —</option>
+                        <option value="">{{ 'node.panel.choice_default'|trans({}, 'node') }}</option>
                         {% for t in addable %}<option value="{{ t.key }}">{{ t.label }}</option>{% endfor %}
                     </select>
                     {% if addable is empty %}
-                        <p class="fld-help">Tous les types disponibles sont déjà dans le squelette. Créez-en de nouveaux dans <a href="{{ path('node_type_index') }}" target="_blank" class="underline">les types d’élément pédagogique</a>.</p>
+                        <p class="fld-help">{{ 'formation.param.structure.all_types_used'|trans({'%link_open%': '<a href="' ~ path('node_type_index') ~ '" target="_blank" class="underline">', '%link_close%': '</a>'}, 'formation')|raw }}</p>
                     {% endif %}
                 </div>
                 <div class="flex items-center justify-end gap-2 pt-1">
-                    <button type="button" data-action="modal#close" class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">Annuler</button>
-                    <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--st-ok)">{{ ux_icon('ph:plus', {class: 'icon'}) }} Ajouter</button>
+                    <button type="button" data-action="modal#close" class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</button>
+                    <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--st-ok)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'common.add'|trans({}, 'common') }}</button>
                 </div>
             </form>
         </dialog>
         <p class="text-xs text-gray-400">
-            {{ nodeCount }} ELP déjà construit(s) dans l'arbre ·
-            les types sont gérés par les administrateurs —
-            <a href="{{ path('node_type_index') }}" target="_blank" class="underline">voir / éditer les types</a>.
+            {{ 'formation.param.structure.node_count_note'|trans({'%count%': nodeCount, '%link_open%': '<a href="' ~ path('node_type_index') ~ '" target="_blank" class="underline">', '%link_close%': '</a>'}, 'formation')|raw }}
         </p>
 
         {# ── Charger un template ── #}
-        {{ fld.divider('Charger un template') }}
+        {{ fld.divider('formation.param.structure.divider_load_template'|trans({}, 'formation')) }}
         <form method="post" action="{{ path('formation_apply_template', {id: formation.id}) }}" data-turbo-frame="_top"
-              data-controller="confirm" data-confirm-message-value="Charger ce template ÉCRASE le squelette ET les éléments pédagogiques actuels."
+              data-controller="confirm" data-confirm-message-value="{{ 'formation.param.structure.load_template_confirm'|trans({}, 'formation') }}"
               class="flex flex-wrap items-end gap-3">
             <div class="flex-1 min-w-[220px]">
                 <select name="template" class="fld">
                     {% for tpl in templates %}<option value="{{ tpl.key }}">{{ tpl.label }}</option>{% endfor %}
                 </select>
             </div>
-            <button class="rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">Charger</button>
+            <button class="rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'formation.param.structure.load_button'|trans({}, 'formation') }}</button>
         </form>
         <p class="text-xs text-gray-400">
-            Un template fixe le squelette et pré-remplit un arbre de départ, ensuite librement modifiable —
-            <a href="{{ path('template_index') }}" target="_blank" class="underline">liste des templates</a>.
+            {{ 'formation.param.structure.template_note'|trans({'%link_open%': '<a href="' ~ path('template_index') ~ '" target="_blank" class="underline">', '%link_close%': '</a>'}, 'formation')|raw }}
         </p>
 
         {# ── enregistrer / vider ── #}
         <div class="flex flex-wrap items-center gap-3 pt-2 border-t" style="border-color:var(--c-border)">
             <form method="post" action="{{ path('template_from_formation', {id: formation.id}) }}" data-turbo-frame="_top" class="flex items-end gap-2">
-                <input name="label" placeholder="Nom du template" required class="fld w-52">
-                <button class="rounded-lg border px-3 py-2.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:floppy-disk', {class: 'icon'}) }} Enregistrer comme template</button>
+                <input name="label" placeholder="{{ 'formation.param.structure.template_name_placeholder'|trans({}, 'formation') }}" required class="fld w-52">
+                <button class="rounded-lg border px-3 py-2.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:floppy-disk', {class: 'icon'}) }} {{ 'formation.param.structure.save_as_template_button'|trans({}, 'formation') }}</button>
             </form>
             <form method="post" action="{{ path('formation_reset', {id: formation.id}) }}" data-turbo-frame="_top" class="ml-auto"
-                  data-controller="confirm" data-confirm-message-value="Vider tous les éléments pédagogiques de l'arbre ? (le squelette et les éléments pédagogiques imposés sont conservés)">
-                <button class="rounded-lg border px-3 py-2.5 text-sm text-red-600 hover:bg-red-50" style="border-color:var(--c-border)">{{ ux_icon('ph:trash', {class: 'icon'}) }} Vider les ELP</button>
+                  data-controller="confirm" data-confirm-message-value="{{ 'formation.param.structure.reset_confirm'|trans({}, 'formation') }}">
+                <button class="rounded-lg border px-3 py-2.5 text-sm text-red-600 hover:bg-red-50" style="border-color:var(--c-border)">{{ ux_icon('ph:trash', {class: 'icon'}) }} {{ 'formation.param.structure.reset_button'|trans({}, 'formation') }}</button>
             </form>
         </div>
         {% endif %}
 
         {# ── Demandes de dérogation ── #}
-        {{ fld.divider('Demandes de dérogation') }}
+        {{ fld.divider('derogation.index.heading'|trans({}, 'derogation')) }}
         <p class="text-xs text-gray-500 -mt-2">
-            Pour ajouter, déplacer ou supprimer quelque chose que le template du diplôme ne prévoit pas
-            (typiquement un ELP imposé) — bouton {{ ux_icon('ph:flag', {class: 'icon'}) }} dans la barre d'actions de l'arborescence.
+            {{ 'formation.param.structure.derogation_note'|trans({'%flag_icon%': ux_icon('ph:flag', {class: 'icon'})}, 'formation')|raw }}
         </p>
         {% if derogations is empty %}
-            <p class="text-sm" style="color:var(--c-muted)">Aucune demande envoyée pour cette formation.</p>
+            <p class="text-sm" style="color:var(--c-muted)">{{ 'formation.param.structure.no_derogation'|trans({}, 'formation') }}</p>
         {% else %}
             <div class="space-y-2">
                 {% for d in derogations %}

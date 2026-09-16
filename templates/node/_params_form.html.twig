@@ -10,7 +10,7 @@
 
     <div class="flex items-start justify-between gap-3">
         <div>
-            <div class="text-lg font-bold">{{ ux_icon('ph:gear', {class: 'icon'}) }} Paramètre de l’élément pédagogique</div>
+            <div class="text-lg font-bold">{{ ux_icon('ph:gear', {class: 'icon'}) }} {{ 'node.params.title'|trans({}, 'node') }}</div>
             <div class="text-xs text-gray-400">{{ node.formation.name }} › {{ node.label ?: T }}</div>
         </div>
         <button type="button" data-action="modal#close" class="grid h-8 w-8 place-items-center rounded-lg border text-gray-500 hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:x', {class: 'icon'}) }}</button>
@@ -18,22 +18,22 @@
 
     {# navigation rapide entre nœuds #}
     <div>
-        <div class="fld-label">Aller aux paramètres de…</div>
+        <div class="fld-label">{{ 'node.params.jump_to_label'|trans({}, 'node') }}</div>
         <select data-controller="params-nav" data-action="change->params-nav#go" class="fld mt-1">
             {% for e in param_nav(node) %}
                 <option value="{{ node_url(e.target, 'node_params_form') }}" {{ e.current ? 'selected' }}>
-                    {{ e.type.label }}{% if not e.current %} — {{ e.target.label ?: '—' }}{% endif %}{{ e.current ? ' (cet ELP)' }}
+                    {{ e.type.label }}{% if not e.current %} — {{ e.target.label ?: '—' }}{% endif %}{{ e.current ? ' ' ~ 'node.params.current_node_suffix'|trans({}, 'node') }}
                 </option>
             {% endfor %}
         </select>
-        <div class="fld-help">Passe rapidement d'un niveau de la structure à un autre.</div>
+        <div class="fld-help">{{ 'node.params.jump_to_help'|trans({}, 'node') }}</div>
     </div>
 
     <div class="flex items-center gap-3 text-gray-300 text-[11px] uppercase tracking-widest">
-        <div class="h-px flex-1 bg-gray-200"></div>Champs affichés sur cet ELP<div class="h-px flex-1 bg-gray-200"></div>
+        <div class="h-px flex-1 bg-gray-200"></div>{{ 'node.params.fields_title'|trans({}, 'node') }}<div class="h-px flex-1 bg-gray-200"></div>
     </div>
     <p class="text-xs text-gray-400 -mt-1">
-        Cochez les champs à faire apparaître. Les champs <span class="pill">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} admin</span> sont imposés par l'administrateur du type.
+        {{ 'node.params.fields_note'|trans({'%admin_badge%': ux_icon('ph:lock-simple-fill', {class: 'icon'}) ~ ' admin'}, 'node')|raw }}
     </p>
 
     <form method="post" action="{{ node_url(node, 'node_params') }}" data-turbo-frame="_top" class="space-y-3">
@@ -43,17 +43,17 @@
             <label class="flex items-center gap-2 text-sm">
                 <input type="checkbox" name="capabilities[]" value="mutualisable"
                        {{ (caps.mutualisable ?? false) ? 'checked' }} {{ mutLocked ? 'disabled' }}>
-                <span class="uppercase text-xs tracking-wide text-gray-500">ELP mutualisable / accrochable</span>
-                {% if mutLocked %}<span class="pill">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} admin</span>{% endif %}
+                <span class="uppercase text-xs tracking-wide text-gray-500">{{ 'node.params.mutualisable_label'|trans({}, 'node') }}</span>
+                {% if mutLocked %}<span class="pill">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ 'node.params.admin_badge'|trans({}, 'node') }}</span>{% endif %}
             </label>
         {% endif %}
 
         <div class="space-y-1.5 opacity-70">
-            {% for coreLabel in ['ELP parent', 'Libellé'] %}
+            {% for coreLabel in ['node.panel.parent_label'|trans({}, 'node'), 'node.panel.label_field'|trans({}, 'node')] %}
                 <label class="flex items-center gap-2 text-sm">
                     <input type="checkbox" checked disabled>
                     <span class="uppercase text-xs tracking-wide text-gray-500">{{ coreLabel }}</span>
-                    <span class="pill">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} cœur</span>
+                    <span class="pill">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ 'node.params.core_badge'|trans({}, 'node') }}</span>
                 </label>
             {% endfor %}
         </div>
@@ -65,19 +65,19 @@
                     <input type="checkbox" name="capabilities[]" value="{{ key }}"
                            {{ (caps[key] ?? false) ? 'checked' }} {{ locked ? 'disabled' }}>
                     <span class="uppercase text-xs tracking-wide text-gray-500">{{ labels[key] ?? key }}</span>
-                    {% if locked %}<span class="pill">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} admin</span>{% endif %}
+                    {% if locked %}<span class="pill">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ 'node.params.admin_badge'|trans({}, 'node') }}</span>{% endif %}
                 </label>
             {% else %}
-                <p class="text-xs text-gray-400">Ce type ne porte aucun champ. Ajoutez-en depuis la gestion du type.</p>
+                <p class="text-xs text-gray-400">{{ 'node.params.no_field'|trans({}, 'node') }}</p>
             {% endfor %}
         </div>
 
         <div class="flex flex-wrap items-center gap-3 pt-3 border-t" style="border-color:var(--c-border)">
-            <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">Enregistrer</button>
+            <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
             <a href="{{ path('node_type_edit', {id: node.type.id}) }}" target="_blank"
-               class="text-xs hover:underline" style="color:var(--c-muted)">Gérer le type « {{ T }} » {{ ux_icon('ph:arrow-square-out', {class: 'icon'}) }}</a>
+               class="text-xs hover:underline" style="color:var(--c-muted)">{{ 'node.params.manage_type_link'|trans({'%type%': T}, 'node') }} {{ ux_icon('ph:arrow-square-out', {class: 'icon'}) }}</a>
             <a href="{{ path('field_index') }}" target="_blank"
-               class="text-xs hover:underline" style="color:var(--c-muted)">Gérer les champs {{ ux_icon('ph:arrow-square-out', {class: 'icon'}) }}</a>
+               class="text-xs hover:underline" style="color:var(--c-muted)">{{ 'node.params.manage_fields_link'|trans({}, 'node') }} {{ ux_icon('ph:arrow-square-out', {class: 'icon'}) }}</a>
         </div>
     </form>
 </div>

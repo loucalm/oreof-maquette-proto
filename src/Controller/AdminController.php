@@ -12,6 +12,7 @@ use App\Repository\MccTypeRepository;
 use App\Repository\NodeTypeRepository;
 use App\Repository\ReferentielRepository;
 use App\Repository\StructureTemplateRepository;
+use App\Service\TranslationFileManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -31,6 +32,7 @@ final class AdminController extends AbstractController
         'referentiels' => ['label' => 'Référentiels', 'route' => 'admin_referentiels', 'icon' => 'ph:books'],
         'mcctypes' => ['label' => 'Types de MCCC', 'route' => 'admin_mcctypes', 'icon' => 'ph:list-checks'],
         'derogations' => ['label' => 'Dérogations', 'route' => 'admin_derogations', 'icon' => 'ph:flag'],
+        'traductions' => ['label' => 'Traductions', 'route' => 'admin_traductions', 'icon' => 'ph:translate'],
     ];
 
     #[Route('/administration', name: 'admin_index', methods: ['GET'])]
@@ -41,11 +43,13 @@ final class AdminController extends AbstractController
         ReferentielRepository $referentiels,
         MccTypeRepository $mcctypes,
         DerogationRequestRepository $derogations,
+        TranslationFileManager $translations,
     ): Response {
         $allTypes = $types->findAllOrdered();
         $allFields = $fields->allOrdered();
         $allMccTypes = $mcctypes->allOrdered();
         $pendingDerogations = $derogations->countPending();
+        $translationFiles = $translations->listFiles();
 
         return $this->render('admin/index.html.twig', [
             'cards' => [
@@ -84,6 +88,12 @@ final class AdminController extends AbstractController
                     'count' => $pendingDerogations,
                     'sub' => 'en attente',
                     'text' => 'Les demandes des responsables de formation pour ajouter/déplacer/supprimer quelque chose que le template du diplôme ne prévoit pas.',
+                ],
+                [
+                    'section' => 'traductions',
+                    'count' => \count($translationFiles),
+                    'sub' => 'fichiers',
+                    'text' => 'Tous les textes affichés dans l\'application, modifiables ici sans intervenir dans le code.',
                 ],
             ],
         ]);

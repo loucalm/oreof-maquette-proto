@@ -1,0 +1,14 @@
+referentiel:
+  edit:
+    new_title: Nouveau référentiel
+    breadcrumb_root: Référentiels
+    breadcrumb_new: nouveau
+    new_heading: Nouveau référentiel
+    edit_heading: 'Modifier « %label% »'
+    label_field: Libellé
+    key_field: Clé
+    key_placeholder: auto
+    description_field: Description (affichée dans cette page)
+    order_field: Ordre
+    values_label: 'Valeurs de la liste (une par ligne : <code>valeur|Libellé</code> — ou juste <code>valeur</code> si identique au libellé)'
+    values_help: L'ordre des lignes est l'ordre proposé dans les select.

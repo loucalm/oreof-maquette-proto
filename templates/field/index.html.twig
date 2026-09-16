@@ -1,31 +1,30 @@
 {% extends 'admin/_layout.html.twig' %}
 {% set adminSection = 'fields' %}
-{% block title %}Champs des formulaires{% endblock %}
+{% block title %}{{ 'field.index.title'|trans({}, 'field') }}{% endblock %}
 
 {% block admin_body %}
 <div class="flex items-start justify-between mb-5">
     <div>
-        <h2 class="text-lg font-bold">Champs des formulaires d’élément pédagogique</h2>
+        <h2 class="text-lg font-bold">{{ 'field.index.heading'|trans({}, 'field') }}</h2>
         <p class="text-sm" style="color:var(--c-muted)">
-            Les champs saisissables sur les éléments pédagogiques, leur onglet et leur catégorie.
-            Un type d’élément pédagogique active ensuite les champs qui le concernent (via ses capacités).
+            {{ 'field.index.description'|trans({}, 'field') }}
         </p>
     </div>
-    <a href="{{ path('field_new') }}" class="rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} Nouveau champ</a>
+    <a href="{{ path('field_new') }}" class="rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'field.index.new_button'|trans({}, 'field') }}</a>
 </div>
 
 {% for tab, fields in byTab %}
     <div class="mb-6">
-        <div class="text-xs font-bold uppercase tracking-wide mb-2" style="color:var(--c-primary)">Onglet : {{ tab }}</div>
+        <div class="text-xs font-bold uppercase tracking-wide mb-2" style="color:var(--c-primary)">{{ 'field.index.tab_label'|trans({'%tab%': tab}, 'field') }}</div>
         <div class="rounded-xl border bg-white overflow-hidden" style="border-color:var(--c-border)">
             <table class="w-full text-sm">
                 <thead class="text-xs uppercase tracking-wide" style="color:var(--c-muted)">
                     <tr class="border-b" style="border-color:var(--c-border)">
-                        <th class="text-left px-4 py-2.5">Champ</th>
-                        <th class="text-left px-4 py-2.5">Catégorie</th>
-                        <th class="text-left px-4 py-2.5">Type</th>
-                        <th class="text-left px-4 py-2.5">Requis</th>
-                        <th class="text-left px-4 py-2.5">Ordre</th>
+                        <th class="text-left px-4 py-2.5">{{ 'field.index.col_field'|trans({}, 'field') }}</th>
+                        <th class="text-left px-4 py-2.5">{{ 'field.index.col_category'|trans({}, 'field') }}</th>
+                        <th class="text-left px-4 py-2.5">{{ 'field.index.col_type'|trans({}, 'field') }}</th>
+                        <th class="text-left px-4 py-2.5">{{ 'field.index.col_required'|trans({}, 'field') }}</th>
+                        <th class="text-left px-4 py-2.5">{{ 'field.index.col_order'|trans({}, 'field') }}</th>
                         <th class="px-4 py-2.5"></th>
                     </tr>
                 </thead>
@@ -35,18 +34,18 @@
                         <td class="px-4 py-2.5">
                             <span class="font-medium">{{ f.label }}</span>
                             <code class="text-xs ml-1" style="color:var(--c-muted)">{{ f.key }}</code>
-                            {% if f.system %}<span class="pill ml-1">socle</span>{% endif %}
+                            {% if f.system %}<span class="pill ml-1">{{ 'common.badge_socle'|trans({}, 'common') }}</span>{% endif %}
                         </td>
                         <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ f.category ?? '—' }}</td>
                         <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ constant('App\\Entity\\FieldDef::TYPES')[f.type] ?? f.type }}</td>
                         <td class="px-4 py-2.5">{{ f.required ? ux_icon('ph:check-bold', {class: 'icon'}) : '—' }}</td>
                         <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ f.position }}</td>
                         <td class="px-4 py-2.5 text-right whitespace-nowrap">
-                            <a href="{{ path('field_edit', {id: f.id}) }}" class="text-xs hover:underline">Modifier</a>
+                            <a href="{{ path('field_edit', {id: f.id}) }}" class="text-xs hover:underline">{{ 'common.edit'|trans({}, 'common') }}</a>
                             {% if not f.system %}
                                 <form method="post" action="{{ path('field_delete', {id: f.id}) }}" class="inline"
-                                      data-controller="confirm" data-confirm-message-value="Supprimer le champ « {{ f.label }} » ? Les valeurs déjà saisies dans les éléments pédagogiques restent en base mais ne seront plus affichées.">
-                                    <button class="text-xs text-red-600 hover:underline ml-2">Suppr.</button>
+                                      data-controller="confirm" data-confirm-message-value="{{ 'field.index.delete_confirm'|trans({'%label%': f.label}, 'field') }}">
+                                    <button class="text-xs text-red-600 hover:underline ml-2">{{ 'common.delete'|trans({}, 'common') }}</button>
                                 </form>
                             {% endif %}
                         </td>
@@ -59,7 +58,6 @@
 {% endfor %}
 
 <p class="text-xs" style="color:var(--c-muted)">
-    Les onglets <code>volume_horaire</code> et <code>mccc</code> ont un rendu spécial (présentiel / distanciel / TE, type de contrôle continu / terminal).
-    Les autres champs s'affichent de façon générique dans leur onglet, groupés par catégorie.
+    {{ 'field.index.footer_note'|trans({}, 'field')|raw }}
 </p>
 {% endblock %}

@@ -1,0 +1,47 @@
+node_type:
+  index:
+    title: Types d’éléments pédagogiques
+    heading: Types d’éléments pédagogiques
+    description: >-
+      Le métamodèle. Créez / modifiez les types et leurs capacités. La hiérarchie (qui contient qui)
+      est propre à chaque formation, dans « Configuration de la structure ».
+    new_button: Nouveau type
+    col_type: Type
+    col_family: Famille
+    col_capabilities: Capacités
+    col_ects_target: ECTS cible
+    numbering_title: 'Numérotation : %style%'
+    reserved_admin_title: Réservée admin
+    delete_confirm: >-
+      Supprimer le type « %label% » ? Les éléments pédagogiques qui l'utilisent encore empêcheront la
+      suppression.
+  edit:
+    new_title: Nouveau type
+    breadcrumb_new: nouveau
+    new_heading: Nouveau type d’élément pédagogique
+    edit_heading: 'Modifier « %label% »'
+    label_field: Libellé
+    icon_field: Icône
+    icon_help: "Nom d'icône %link% (ex. %example%)"
+    key_field: Clé
+    key_placeholder: auto depuis le libellé
+    family_field: Famille
+    position_field: Position
+    ects_target_field: ECTS cible
+    hierarchy_note: >-
+      La hiérarchie (quel type peut être enfant de quel type) n'est PAS définie ici : elle est propre à
+      chaque formation, dans « Configuration de la structure ».
+    numbering_legend: Numérotation automatique
+    numbered_label: 'Ce type porte une référence calculée (« Année 1 », « UE 1.1 »…)'
+    number_style_label: Style de l'indice
+    numbering_help: >-
+      Un type non numéroté (ex. Semestre) est « transparent » : ses enfants héritent du contexte du
+      parent numéroté.
+    capabilities_legend: Capacités & champs du type
+    capabilities_help: >-
+      <strong>Incluse</strong> : le champ existe pour ce type d’élément pédagogique.
+      <strong>Réservée admin</strong> : imposé — le responsable de formation ne peut pas l'activer /
+      désactiver par élément pédagogique.
+    col_capability: Capacité
+    col_included: Incluse
+    col_reserved_admin: Réservée admin

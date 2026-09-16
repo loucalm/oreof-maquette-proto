@@ -1,0 +1,39 @@
+field:
+  index:
+    title: Champs des formulaires
+    heading: Champs des formulaires d’élément pédagogique
+    description: >-
+      Les champs saisissables sur les éléments pédagogiques, leur onglet et leur catégorie. Un type
+      d’élément pédagogique active ensuite les champs qui le concernent (via ses capacités).
+    new_button: Nouveau champ
+    tab_label: 'Onglet : %tab%'
+    col_field: Champ
+    col_category: Catégorie
+    col_type: Type
+    col_required: Requis
+    col_order: Ordre
+    delete_confirm: >-
+      Supprimer le champ « %label% » ? Les valeurs déjà saisies dans les éléments pédagogiques restent
+      en base mais ne seront plus affichées.
+    footer_note: >-
+      Les onglets <code>volume_horaire</code> et <code>mccc</code> ont un rendu spécial (présentiel /
+      distanciel / TE, type de contrôle continu / terminal). Les autres champs s'affichent de façon
+      générique dans leur onglet, groupés par catégorie.
+  edit:
+    new_title: Nouveau champ
+    breadcrumb_root: Champs
+    breadcrumb_new: nouveau
+    new_heading: Nouveau champ
+    edit_heading: 'Modifier « %label% »'
+    label_field: Libellé
+    key_field: Clé
+    key_placeholder: auto
+    tab_field: Onglet
+    category_field: Catégorie
+    category_placeholder: (facultatif)
+    order_field: Ordre
+    type_field: Type de saisie
+    system_type_note: Type système — non modifiable.
+    required_label: Champ requis
+    options_label: 'Options (type « Liste de choix » — une par ligne : <code>valeur|Libellé</code>)'
+    help_label: Aide (texte sous le champ)

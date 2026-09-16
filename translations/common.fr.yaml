@@ -1,0 +1,10 @@
+common:
+  edit: Modifier
+  delete: Suppr.
+  delete_full: Supprimer
+  save: Enregistrer
+  cancel: Annuler
+  add: Ajouter
+  badge_socle: socle
+  required_badge: Champs requis
+  loading: Chargement…
