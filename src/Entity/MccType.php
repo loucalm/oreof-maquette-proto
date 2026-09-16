@@ -9,14 +9,18 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Un type de MCCC (Contrôle continu intégral, Contrôle terminal…), avec sa
- * portée par diplôme, son éventuelle collection d'épreuves pondérées et ses
- * règles de validation. Catalogue admin sur le même principe que `FieldDef`
- * et `Referentiel` : livré par les fixtures, puis entièrement éditable.
+ * Un type de MCCC (Contrôle continu intégral, Contrôle terminal…) : une
+ * identité stable (libellé, description, collection d'épreuves pondérées ou
+ * non) et une liste de **profils de règles** nommés (ex. « Licence », «
+ * Master ») — un même type peut se comporter différemment selon le diplôme
+ * sans dupliquer sa fiche. Le rattachement type↔profil pour un diplôme donné
+ * se décide au niveau du template (`StructureTemplate::mcccProfiles`), pas ici.
+ * Catalogue admin sur le même principe que `FieldDef` et `Referentiel` :
+ * livré par les fixtures, puis entièrement éditable.
  *
- * `rules` est une liste de `{key, label, severity, node}` où `node` est un
- * petit AST interprété par `App\Rules\RuleEvaluator` — jamais une expression
- * à parser ni un `eval()`.
+ * Chaque profil porte une liste de règles `{key, label, severity, node}` où
+ * `node` est un petit AST interprété par `App\Rules\RuleEvaluator` — jamais
+ * une expression à parser ni un `eval()`.
  */
 #[ORM\Entity(repositoryClass: MccTypeRepository::class)]
 #[ORM\Table(name: 'mcc_type')]
@@ -40,15 +44,6 @@ class MccType
     private ?string $description = null;
 
     /**
-     * Diplômes (clés de `referentiel('diplomes')`) pour lesquels ce type est
-     * proposé. Vide = proposé pour tous les diplômes.
-     *
-     * @var list<string>
-     */
-    #[ORM\Column(type: Types::JSON)]
-    private array $diplomes = [];
-
-    /**
      * Schéma minimal : `{"collections": {"evaluations": {"label": "..."}}}`
      * si ce type comporte une collection d'épreuves pondérées, `[]` sinon.
      * Le rendu des champs de la collection (type d'épreuve + coefficient)
@@ -61,10 +56,10 @@ class MccType
     private array $schema = [];
 
     /**
-     * @var list<array{key: string, label: string, severity: string, node: array<string, mixed>}>
+     * @var list<array{key: string, label: string, description?: ?string, rules: list<array{key: string, label: string, severity: string, node: array<string, mixed>}>}>
      */
     #[ORM\Column(type: Types::JSON)]
-    private array $rules = [];
+    private array $profiles = [];
 
     #[ORM\Column]
     private int $position = 0;
@@ -133,26 +128,6 @@ class MccType
         return $this;
     }
 
-    /** @return list<string> */
-    public function getDiplomes(): array
-    {
-        return $this->diplomes;
-    }
-
-    /** @param list<string> $diplomes */
-    public function setDiplomes(array $diplomes): self
-    {
-        $this->diplomes = array_values($diplomes);
-
-        return $this;
-    }
-
-    /** Ce type est-il proposé pour ce diplôme (ou pour tous, si non scopé) ? */
-    public function appliesToDiplome(?string $diplome): bool
-    {
-        return [] === $this->diplomes || (null !== $diplome && \in_array($diplome, $this->diplomes, true));
-    }
-
     /** @return array<string, mixed> */
     public function getSchema(): array
     {
@@ -177,18 +152,36 @@ class MccType
         return (string) ($this->schema['collections']['evaluations']['label'] ?? 'Épreuves');
     }
 
-    /** @return list<array{key: string, label: string, severity: string, node: array<string, mixed>}> */
-    public function getRules(): array
+    /** @return list<array{key: string, label: string, description?: ?string, rules: list<array<string, mixed>>}> */
+    public function getProfiles(): array
     {
-        return $this->rules;
+        return $this->profiles;
     }
 
-    /** @param list<array{key: string, label: string, severity: string, node: array<string, mixed>}> $rules */
-    public function setRules(array $rules): self
+    /** @param list<array{key: string, label: string, description?: ?string, rules: list<array<string, mixed>>}> $profiles */
+    public function setProfiles(array $profiles): self
     {
-        $this->rules = array_values($rules);
+        $this->profiles = array_values($profiles);
 
         return $this;
+    }
+
+    /** @return array{key: string, label: string, description?: ?string, rules: list<array<string, mixed>>}|null */
+    public function getProfile(string $key): ?array
+    {
+        foreach ($this->profiles as $profile) {
+            if (($profile['key'] ?? null) === $key) {
+                return $profile;
+            }
+        }
+
+        return null;
+    }
+
+    /** Règles du profil demandé, ou tableau vide si le profil n'existe pas (comportement permissif). */
+    public function getProfileRules(?string $key): array
+    {
+        return $this->getProfile((string) $key)['rules'] ?? [];
     }
 
     public function getPosition(): int

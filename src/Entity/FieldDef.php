@@ -27,10 +27,14 @@ class FieldDef
         'number' => 'Nombre',
         'choice' => 'Liste de choix',
         'radio' => 'Choix unique (boutons radio)',
+        'checkbox' => 'Case à cocher (choix multiple)',
         'competencies' => 'Compétences (référentiel)',
         'hours' => 'Volume horaire (présentiel / distanciel / TE)',
         'mccc' => 'MCCC (type de contrôle)',
     ];
+
+    /** Types dont les options peuvent venir d'un référentiel plutôt que d'une saisie inline. */
+    public const REFERENTIEL_CAPABLE_TYPES = ['choice', 'radio', 'checkbox'];
 
     public const SYSTEM_TYPES = ['competencies', 'hours', 'mccc'];
 
@@ -59,18 +63,38 @@ class FieldDef
     private string $type = 'text';
 
     /**
-     * Options pour type = "choice" : { valeur: libellé }.
+     * Options inline pour type = "choice"/"radio"/"checkbox" : { valeur: libellé }.
+     * Ignoré si `referentielKey` est renseigné.
      *
      * @var array<string, string>
      */
     #[ORM\Column(type: Types::JSON)]
     private array $options = [];
 
+    /** Si renseigné (types de REFERENTIEL_CAPABLE_TYPES), les options viennent de `referentiel(referentielKey)`. */
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $referentielKey = null;
+
+    /** Autorise une valeur libre en plus des options (uniquement pertinent pour choice/checkbox). */
+    #[ORM\Column]
+    private bool $allowExtra = false;
+
+    /** Propose un mini-formulaire d'ajout direct au référentiel associé, sans quitter la saisie. */
+    #[ORM\Column]
+    private bool $quickAdd = false;
+
     #[ORM\Column]
     private bool $required = false;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $help = null;
+
+    /** Bornes pour type = "number" (et longueur max pour text/textarea). */
+    #[ORM\Column(nullable: true)]
+    private ?float $min = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?float $max = null;
 
     #[ORM\Column]
     private int $position = 0;
@@ -165,6 +189,71 @@ class FieldDef
     public function setOptions(array $options): self
     {
         $this->options = $options;
+
+        return $this;
+    }
+
+    public function getReferentielKey(): ?string
+    {
+        return $this->referentielKey;
+    }
+
+    public function setReferentielKey(?string $referentielKey): self
+    {
+        $this->referentielKey = trim((string) $referentielKey) ?: null;
+
+        return $this;
+    }
+
+    public function isReferentielCapable(): bool
+    {
+        return \in_array($this->type, self::REFERENTIEL_CAPABLE_TYPES, true);
+    }
+
+    public function isAllowExtra(): bool
+    {
+        return $this->allowExtra;
+    }
+
+    public function setAllowExtra(bool $allowExtra): self
+    {
+        $this->allowExtra = $allowExtra;
+
+        return $this;
+    }
+
+    public function isQuickAdd(): bool
+    {
+        return $this->quickAdd;
+    }
+
+    public function setQuickAdd(bool $quickAdd): self
+    {
+        $this->quickAdd = $quickAdd;
+
+        return $this;
+    }
+
+    public function getMin(): ?float
+    {
+        return $this->min;
+    }
+
+    public function setMin(?float $min): self
+    {
+        $this->min = $min;
+
+        return $this;
+    }
+
+    public function getMax(): ?float
+    {
+        return $this->max;
+    }
+
+    public function setMax(?float $max): self
+    {
+        $this->max = $max;
 
         return $this;
     }

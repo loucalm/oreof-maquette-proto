@@ -52,7 +52,7 @@
             <span class="text-gray-500">{% if view.ectsTarget %}{{ 'node.panel.ects_target'|trans({'%target%': view.ectsTarget}, 'node') }} {% endif %}{{ 'node.panel.ects_unit'|trans({}, 'node') }}</span>
         </div>
         <div class="ml-auto flex flex-wrap gap-2">
-            {% if not node.isChoiceBloc() and node.getParent() %}
+            {% if not node.isChoiceBloc() and node.getParent() and node.type.choiceTransformable %}
             <form method="post" action="{{ path('node_convert_choice', {fid: formation.id, nid: node.id}) }}" data-turbo-frame="_top"
                   data-controller="confirm"
                   data-confirm-message-value="{{ 'node.panel.convert_choice_confirm'|trans({'%label%': node.getDisplayLabel()}, 'node') }}">
@@ -108,8 +108,13 @@
                     <div class="fld-help text-amber-600">{{ 'node.panel.no_location_help'|trans({}, 'node') }}</div>
                 {% endif %}
 
-                {{ ui.label('node.panel.label_field'|trans({}, 'node'), true, 'node.panel.label_help'|trans({}, 'node')) }}
-                <input name="label" value="{{ node.label }}" maxlength="200" class="fld">
+                {% if node.type.temporel %}
+                    {{ ui.label('node.panel.label_field'|trans({}, 'node'), false, 'node.panel.temporel_label_help'|trans({}, 'node')) }}
+                    <div class="fld flex items-center" style="background:#f8f9fb;color:var(--c-muted)">{{ node_display_label(node, view.ref) }}</div>
+                {% else %}
+                    {{ ui.label('node.panel.label_field'|trans({}, 'node'), true, 'node.panel.label_help'|trans({}, 'node')) }}
+                    <input name="label" value="{{ node.label }}" maxlength="200" class="fld">
+                {% endif %}
 
                 {% if caps.code ?? false %}
                     {% set isEc = node.type.key == 'ec' %}
@@ -214,19 +219,40 @@
         {% set fhelp = ectsTyped ? 'node.panel.ects_help'|trans({'%type%': node.type.label}, 'node') : (def.help ?? null) %}
         {{ ui.label(flabel, def.required ?? false, fhelp) }}
     {% endif %}
+    {% set opts = def.referentielKey ? referentiel(def.referentielKey) : def.options %}
     {% if def.field == 'number' %}
-        <input type="number" step="0.5" name="attr_{{ key }}" value="{{ val }}" class="fld w-44">
+        <input type="number" step="0.5" name="attr_{{ key }}" value="{{ val }}"
+               {% if def.min is not null %}min="{{ def.min }}"{% endif %}
+               {% if def.max is not null %}max="{{ def.max }}"{% endif %}
+               class="fld w-44">
     {% elseif def.field == 'textarea' %}
         <textarea name="attr_{{ key }}" rows="3" class="fld">{{ val }}</textarea>
     {% elseif def.field == 'choice' %}
         {% set ph = key == 'ueType' ? 'node.panel.choice_ue_type'|trans({}, 'node') : (key == 'ecType' ? 'node.panel.choice_ec_type'|trans({}, 'node') : 'node.panel.choice_default'|trans({}, 'node')) %}
         <select name="attr_{{ key }}" class="fld">
             <option value="">{{ ph }}</option>
-            {% for ov, ol in def.options %}<option value="{{ ov }}" {{ val == ov ? 'selected' }}>{{ ol }}</option>{% endfor %}
+            {% for ov, ol in opts %}<option value="{{ ov }}" {{ val == ov ? 'selected' }}>{{ ol }}</option>{% endfor %}
         </select>
+        {% if def.allowExtra %}
+            <div class="mt-1.5 flex items-center gap-2">
+                <span class="text-xs shrink-0" style="color:var(--c-muted)">{{ 'node.panel.or_free_value'|trans({}, 'node') }}</span>
+                <input type="text" name="attr_{{ key }}_autre" value="{{ (val and val not in opts|keys) ? val : '' }}" class="fld flex-1" placeholder="{{ 'node.panel.other_placeholder'|trans({}, 'node') }}">
+            </div>
+        {% endif %}
+        {% if def.quickAdd and def.referentielKey %}{{ ui.quickAdd(def.referentielKey, node.formation, node) }}{% endif %}
+    {% elseif def.field == 'checkbox' %}
+        {% set cur = val is iterable ? val : [] %}
+        <div class="mt-1 flex flex-wrap gap-x-6 gap-y-2">
+            {% for ov, ol in opts %}
+                <label class="flex items-center gap-2 text-sm cursor-pointer">
+                    <input type="checkbox" name="attr_{{ key }}[]" value="{{ ov }}" {{ ov in cur ? 'checked' }}>{{ ol }}
+                </label>
+            {% endfor %}
+        </div>
+        {% if def.quickAdd and def.referentielKey %}{{ ui.quickAdd(def.referentielKey, node.formation, node) }}{% endif %}
     {% elseif def.field == 'radio' %}
         <div class="mt-1 flex flex-wrap gap-x-6 gap-y-2">
-            {% for ov, ol in def.options %}
+            {% for ov, ol in opts %}
                 <label class="flex items-center gap-2 text-sm cursor-pointer">
                     <input type="radio" name="attr_{{ key }}" value="{{ ov }}" {{ val == ov ? 'checked' }}>{{ ol }}
                 </label>
@@ -410,4 +436,13 @@
             {{ ux_icon('ph:trash', {class: 'icon'}) }}
         </button>
     </div>
+{% endmacro %}
+
+{% macro quickAdd(referentielKey, formation, node) %}
+    <form method="post" action="{{ path('referentiel_quick_add', {key: referentielKey}) }}" data-turbo-frame="node-panel" class="mt-1.5 flex items-center gap-2">
+        <input type="hidden" name="fid" value="{{ formation.id }}">
+        <input type="hidden" name="nid" value="{{ node.id }}">
+        <input type="text" name="value" placeholder="{{ 'node.panel.quick_add_placeholder'|trans({}, 'node') }}" class="fld flex-1 text-xs">
+        <button class="shrink-0 rounded-lg border px-2.5 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'common.add'|trans({}, 'common') }}</button>
+    </form>
 {% endmacro %}

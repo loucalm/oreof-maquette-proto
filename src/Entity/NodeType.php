@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Enum\NodeFamily;
+use App\Enum\NodeKind;
 use App\Repository\NodeTypeRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -39,6 +40,14 @@ class NodeType
 
     #[ORM\Column(length: 20, enumType: NodeFamily::class)]
     private NodeFamily $family = NodeFamily::Structural;
+
+    /**
+     * Structurel (libellé saisi par le responsable, ex. UE) ou temporel (nom
+     * entièrement calculé — type + référence numérotée, ex. « Année 1 » — le
+     * champ Libellé n'est alors même pas proposé côté éditeur).
+     */
+    #[ORM\Column(length: 20, enumType: NodeKind::class)]
+    private NodeKind $kind = NodeKind::Structurel;
 
     /** Ordre d'affichage dans les sélecteurs. */
     #[ORM\Column]
@@ -79,6 +88,18 @@ class NodeType
     /** Style de l'indice : "decimal" (1, 2…), "alpha" (a, b…), "roman" (i, ii…). */
     #[ORM\Column(length: 12)]
     private string $numberStyle = 'decimal';
+
+    /**
+     * Si numéroté : comptage global continu sur tout l'arbre (Semestre 1, 2,
+     * 3, 4…, sans préfixe du parent) plutôt que contextuel/imbriqué (défaut,
+     * réinitialisé sous chaque parent numéroté, ex. UE 1.1, 1.2, 2.1…).
+     */
+    #[ORM\Column]
+    private bool $globalNumbering = false;
+
+    /** Le bouton « Transformer en bloc de choix » est-il proposé pour ce type ? */
+    #[ORM\Column]
+    private bool $choiceTransformable = true;
 
     /** Type "socle" livré par les fixtures — informatif, non bloquant dans le proto. */
     #[ORM\Column]
@@ -141,6 +162,23 @@ class NodeType
         $this->family = $family;
 
         return $this;
+    }
+
+    public function getKind(): NodeKind
+    {
+        return $this->kind;
+    }
+
+    public function setKind(NodeKind $kind): self
+    {
+        $this->kind = $kind;
+
+        return $this;
+    }
+
+    public function isTemporel(): bool
+    {
+        return $this->kind === NodeKind::Temporel;
     }
 
     public function getPosition(): int
@@ -242,6 +280,30 @@ class NodeType
     public function setNumberStyle(string $style): self
     {
         $this->numberStyle = \array_key_exists($style, self::NUMBER_STYLES) ? $style : 'decimal';
+
+        return $this;
+    }
+
+    public function isGlobalNumbering(): bool
+    {
+        return $this->globalNumbering;
+    }
+
+    public function setGlobalNumbering(bool $globalNumbering): self
+    {
+        $this->globalNumbering = $globalNumbering;
+
+        return $this;
+    }
+
+    public function isChoiceTransformable(): bool
+    {
+        return $this->choiceTransformable;
+    }
+
+    public function setChoiceTransformable(bool $choiceTransformable): self
+    {
+        $this->choiceTransformable = $choiceTransformable;
 
         return $this;
     }

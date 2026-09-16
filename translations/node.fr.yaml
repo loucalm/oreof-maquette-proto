@@ -25,6 +25,7 @@ node:
       Aucun emplacement : le squelette ne prévoit pas ce type sous un autre élément pédagogique.
     label_field: Libellé
     label_help: Max 200 caractères
+    temporel_label_help: Nom calculé automatiquement à partir du type et de la numérotation — non modifiable.
     ec_code_label: Précisez le code de l'EC
     code_label: Code
     ec_code_help: Code de l'EC
@@ -45,6 +46,9 @@ node:
     choice_ue_type: Choisir un type d'UE
     choice_ec_type: Choisir un type d'EC
     choice_default: — Choisir —
+    or_free_value: 'Ou saisir une autre valeur :'
+    other_placeholder: (facultatif)
+    quick_add_placeholder: Nouvelle valeur…
     nature_choice_note: >-
       Cocher une case ici n'assemble aucune alternative — utilisez « Transformer en bloc de choix » en
       haut de ce panneau pour regrouper cet ELP avec d'autres.

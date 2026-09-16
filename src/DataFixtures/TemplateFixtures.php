@@ -20,8 +20,8 @@ final class TemplateFixtures extends Fixture implements DependentFixtureInterfac
         return [NodeTypeFixtures::class];
     }
 
-    /** Verrous d'un nœud « imposé » : ni suppression, ni changement de parent. */
-    private const LOCK = ['delete', 'move'];
+    /** Verrous d'un nœud « imposé » : figé (ni ajout d'un autre du même type ici, ni suppression, ni duplication), mais déplaçable. */
+    private const LOCK = ['add', 'delete', 'duplicate'];
 
     public function load(ObjectManager $manager): void
     {
@@ -29,6 +29,9 @@ final class TemplateFixtures extends Fixture implements DependentFixtureInterfac
             ->setDescription('3 années, 2 semestres par année, UE adossées aux compétences, ressources et SAÉ.')
             ->setDiplome('BUT')
             ->setMultiParcours(false)
+            ->setStructure(['annee', 'semestre', 'ue', 'ec'])
+            ->setCalendarUnit('Année')
+            ->setCalendarSpan(3)
             ->setTree($this->butTree());
         $manager->persist($but);
 
@@ -36,6 +39,10 @@ final class TemplateFixtures extends Fixture implements DependentFixtureInterfac
             ->setDescription('3 années · 6 semestres · UE / EC. Les années et semestres sont imposés par le diplôme.')
             ->setDiplome('Licence')
             ->setMultiParcours(false)
+            ->setStructure(['annee', 'semestre', 'ue', 'ec'])
+            ->setCalendarUnit('Année')
+            ->setCalendarSpan(3)
+            ->setMcccProfiles(['CCI' => 'licence'])
             ->setTree($this->licenceTree());
         $manager->persist($licence);
 
@@ -43,6 +50,10 @@ final class TemplateFixtures extends Fixture implements DependentFixtureInterfac
             ->setDescription('Formation multi-parcours : 1 tronc + parcours, 2 années chacun.')
             ->setDiplome('Master')
             ->setMultiParcours(true)
+            ->setStructure(['annee', 'semestre', 'ue', 'ec'])
+            ->setCalendarUnit('Année')
+            ->setCalendarSpan(2)
+            ->setMcccProfiles(['CCI' => 'master'])
             ->setTree($this->masterTree());
         $manager->persist($master);
 

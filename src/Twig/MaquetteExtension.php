@@ -11,9 +11,11 @@ use App\Maquette\AttributeCatalog;
 use App\Maquette\Doc\TreeNode;
 use App\Maquette\Maquette;
 use App\Maquette\McccValidator;
+use App\Entity\StructureTemplate;
 use App\Repository\MccTypeRepository;
 use App\Repository\NodeTypeRepository;
 use App\Repository\ReferentielRepository;
+use App\Repository\StructureTemplateRepository;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
@@ -30,6 +32,7 @@ final class MaquetteExtension extends AbstractExtension
         private readonly ReferentielRepository $referentiels,
         private readonly MccTypeRepository $mcctypes,
         private readonly McccValidator $mcccValidator,
+        private readonly StructureTemplateRepository $templates,
     ) {
     }
 
@@ -42,6 +45,11 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('parcours_candidates', $this->parcoursCandidates(...)),
             new TwigFunction('structure_rows', $this->structureRows(...)),
             new TwigFunction('structure_addable', $this->structureAddable(...)),
+            new TwigFunction('template_structure_rows', $this->templateStructureRows(...)),
+            new TwigFunction('template_structure_addable', $this->templateStructureAddable(...)),
+            new TwigFunction('node_display_label', $this->nodeDisplayLabel(...)),
+            new TwigFunction('template_for_diplome', fn (?string $d) => null !== $d ? $this->templates->findOneByDiplome($d) : null),
+            new TwigFunction('template_type_at_depth', $this->templateTypeAtDepth(...)),
             new TwigFunction('root_type', $this->rootType(...)),
             new TwigFunction('type_meta', $this->typeMeta(...)),
             new TwigFunction('types_by_key', fn () => $this->types->findAllIndexed()),
@@ -62,7 +70,9 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('parcours_param_sections', static fn () => FormationController::PARCOURS_PARAM_SECTIONS),
             new TwigFunction('parcours_param_status', static fn (TreeNode $p, string $k) => FormationController::parcoursParamStatus($p, $k)),
             new TwigFunction('referentiel', fn (string $key) => $this->referentiels->values($key)),
-            new TwigFunction('mccc_types_for', fn (Formation $f) => $this->mcctypes->availableFor($f->getDiplome())),
+            new TwigFunction('mccc_types_for', fn (Formation $f) => $this->mcctypes->availableFor(
+                null !== $f->getDiplome() ? $this->templates->findOneByDiplome($f->getDiplome()) : null,
+            )),
             new TwigFunction('mccc_results', fn (TreeNode $n) => $this->mcccValidator->forNode($n)),
             new TwigFunction('mccc_type_label', function (string $key): ?string {
                 $t = $this->mcctypes->findOneByKey($key);
@@ -126,6 +136,81 @@ final class MaquetteExtension extends AbstractExtension
             $this->types->findAllOrdered(),
             static fn (NodeType $t) => 'parcours' !== $t->getKey() && !isset($inChain[$t->getKey()]),
         ));
+    }
+
+    /**
+     * Lignes du tableau structurel d'un template : « parcours » toujours en
+     * position 0 (comme `Formation::getEffectiveStructure()` — un vrai nœud en
+     * multi, porté par la formation elle-même en mono), dernier maillon fixé
+     * en dernière position — les deux non retirables depuis ce tableau.
+     *
+     * @return list<array{key: string, type: ?NodeType, fixed: bool, mono: bool}>
+     */
+    public function templateStructureRows(StructureTemplate $template): array
+    {
+        $byKey = $this->types->findAllIndexed();
+        $chain = array_merge(['parcours'], $template->getStructure());
+        $last = \count($chain) - 1;
+
+        $rows = [];
+        foreach ($chain as $i => $key) {
+            $rows[] = [
+                'key' => $key,
+                'type' => $byKey[$key] ?? null,
+                'fixed' => 0 === $i || $i === $last,
+                'mono' => 0 === $i && !$template->isMultiParcours(),
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Type imposé par le tableau structurel à cette profondeur de l'arbre
+     * (`parentPath` = chemin `TemplateTree`, « » pour la racine), ou `null` si
+     * le tableau ne couvre pas (encore) cette profondeur — l'ajout reste alors
+     * libre (choix parmi tous les types), comportement permissif du proto.
+     */
+    public function templateTypeAtDepth(StructureTemplate $template, string $parentPath): ?NodeType
+    {
+        $depth = '' === trim($parentPath) ? 0 : substr_count($parentPath, '.') + 1;
+        $index = $template->isMultiParcours() ? $depth - 1 : $depth;
+        $byKey = $this->types->findAllIndexed();
+
+        if ($index < 0) {
+            return $byKey['parcours'] ?? null;
+        }
+
+        $key = $template->getStructure()[$index] ?? null;
+
+        return null !== $key ? ($byKey[$key] ?? null) : null;
+    }
+
+    /** @return list<NodeType> */
+    public function templateStructureAddable(StructureTemplate $template): array
+    {
+        $inChain = array_flip($template->getStructure());
+
+        return array_values(array_filter(
+            $this->types->findAllOrdered(),
+            static fn (NodeType $t) => 'parcours' !== $t->getKey() && !isset($inChain[$t->getKey()]),
+        ));
+    }
+
+    /**
+     * Libellé affiché d'un nœud : sa saisie libre pour un type structurel,
+     * sinon (type temporel) le libellé du type + sa référence numérotée
+     * calculée (ex. « Année 1 ») — jamais de saisie côté éditeur pour ceux-là.
+     */
+    public function nodeDisplayLabel(TreeNode $node, ?string $ref = null): string
+    {
+        if (!$node->getType()->isTemporel()) {
+            return $node->getDisplayLabel();
+        }
+
+        return null !== $ref && '' !== $ref
+            ? $node->getType()->getLabel().' '.$ref
+            : $node->getType()->getLabel();
     }
 
     public function rootType(Formation $formation): ?NodeType

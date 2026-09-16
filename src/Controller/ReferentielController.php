@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\Referentiel;
+use App\Repository\ReferentielRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -84,5 +85,34 @@ final class ReferentielController extends AbstractController
         $this->addFlash('info', 'Référentiel supprimé.');
 
         return $this->redirectToRoute('admin_referentiels');
+    }
+
+    /**
+     * Ajout rapide d'une valeur à un référentiel depuis un champ de saisie
+     * (« quickAdd » sur `FieldDef`) — ouvert au responsable, pas seulement à
+     * l'admin : c'est une saisie de contenu (ex. ajouter un co-responsable pas
+     * encore inscrit), pas une opération de configuration.
+     */
+    #[Route('/referentiels/{key}/ajout-rapide', name: 'referentiel_quick_add', methods: ['POST'])]
+    public function quickAdd(string $key, Request $request, ReferentielRepository $repo, EntityManagerInterface $em): Response
+    {
+        $referentiel = $repo->findOneByKey($key);
+        $value = trim((string) $request->request->get('value'));
+
+        if (null !== $referentiel && '' !== $value) {
+            $values = $referentiel->getValues();
+            $slug = (new AsciiSlugger())->slug($value)->lower()->toString() ?: $value;
+            $values[$slug] = $value;
+            $referentiel->setValues($values);
+            $em->flush();
+            $this->addFlash('success', sprintf('« %s » ajouté à « %s ».', $value, $referentiel->getLabel()));
+        }
+
+        $fid = $request->request->get('fid');
+        $nid = $request->request->get('nid');
+
+        return null !== $fid && null !== $nid
+            ? $this->redirectToRoute('node_panel', ['fid' => $fid, 'nid' => $nid])
+            : $this->redirectToRoute('admin_referentiels');
     }
 }

@@ -20,7 +20,7 @@
                 <span class="type-badge"><span class="opacity-70">{{ ux_icon(node.type.icon, {class: 'icon'}) }}</span> [{{ node.type.label }}]</span>
                 {% if view.ref %}<span class="tree-ref" title="{{ 'formation.tree.ref_title'|trans({}, 'formation') }}">{{ view.ref }}</span>{% endif %}
                 <a href="{{ node_url(node) }}" data-turbo-frame="node-panel"
-                   class="tree-label">{{ node.label ?: '—' }}</a>
+                   class="tree-label">{{ node.type.temporel ? node_display_label(node, view.ref) : (node.label ?: '—') }}</a>
                 {% if isChoice %}
                     <span class="choice-count" title="{{ 'formation.tree.choice_count_title'|trans({}, 'formation') }}">{{ 'formation.tree.choice_count'|trans({'%chosen%': node.getAttribute('choiceCount') ?: '?', '%total%': view.children|length}, 'formation') }}</span>
                 {% elseif parentIsChoice %}

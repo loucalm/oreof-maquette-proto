@@ -24,10 +24,16 @@ final class TemplateTree
         return $path === '' ? [] : array_map('intval', explode('.', $path));
     }
 
-    /** @param list<int> $path */
+    /**
+     * Un nœud nouvellement créé dans le template part figé par défaut (ni
+     * ajout d'un autre nœud du même type à cette position, ni suppression, ni
+     * duplication) mais reste déplaçable — l'admin ouvre au cas par cas.
+     *
+     * @param list<int> $path
+     */
     public function addChild(array $path, string $type, string $label): void
     {
-        $node = ['type' => $type, 'label' => $label];
+        $node = ['type' => $type, 'label' => $label, 'locked' => ['add', 'delete', 'duplicate']];
         if ($path === []) {
             $this->tree[] = $node;
 
@@ -58,11 +64,33 @@ final class TemplateTree
         });
     }
 
-    /** @param list<int> $path */
-    public function toggleLock(array $path): void
+    /** Bascule le trio « figé » (add + delete + duplicate) d'un seul geste. */
+    public function toggleRigid(array $path): void
     {
-        $this->tree = $this->walk($this->tree, $path, static function (array &$n): void {
-            $n['locked'] = empty($n['locked']) ? ['delete', 'move'] : [];
+        $this->toggleLockedTokens($path, ['add', 'delete', 'duplicate']);
+    }
+
+    /** Bascule le verrou de déplacement, indépendamment du trio « figé ». */
+    public function toggleMove(array $path): void
+    {
+        $this->toggleLockedTokens($path, ['move']);
+    }
+
+    /**
+     * Ajoute ou retire un groupe de jetons de `locked` ensemble (tous présents
+     * → tous retirés ; sinon tous ajoutés), sans toucher aux autres jetons.
+     *
+     * @param list<int>    $path
+     * @param list<string> $tokens
+     */
+    private function toggleLockedTokens(array $path, array $tokens): void
+    {
+        $this->tree = $this->walk($this->tree, $path, static function (array &$n) use ($tokens): void {
+            $current = (array) ($n['locked'] ?? []);
+            $allSet = [] === array_diff($tokens, $current);
+            $n['locked'] = $allSet
+                ? array_values(array_diff($current, $tokens))
+                : array_values(array_unique([...$current, ...$tokens]));
             if ($n['locked'] === []) {
                 unset($n['locked']);
             }

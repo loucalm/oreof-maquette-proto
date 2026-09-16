@@ -18,9 +18,18 @@ final class TemplateApplier
 {
     public function apply(MaquetteDoc $doc, StructureTemplate $template): void
     {
+        $structure = $template->getStructure();
+        // rétro-compatible : un template sans tableau structurel explicite (pas encore renseigné)
+        // retombe sur l'ancienne déduction depuis l'arbre.
+        if ([] === $structure) {
+            $structure = $this->chainFromTree($template->getTree());
+        }
+
         $doc->formation
             ->setMultiParcours($template->isMultiParcours())
-            ->setStructure($this->chainFromTree($template->getTree()));
+            ->setStructure($structure)
+            ->setCalendarUnit($template->getCalendarUnit())
+            ->setCalendarSpan($template->getCalendarSpan());
 
         $doc->roots = [];
         $doc->parcours = [];

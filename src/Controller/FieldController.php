@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Entity\FieldDef;
 use App\Repository\FieldDefRepository;
+use App\Repository\ReferentielRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -33,7 +34,7 @@ final class FieldController extends AbstractController
 
     #[Route('/champs/nouveau', name: 'field_new', methods: ['GET', 'POST'])]
     #[Route('/champs/{id}/editer', name: 'field_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, EntityManagerInterface $em, FieldDefRepository $repo, ?FieldDef $field = null): Response
+    public function edit(Request $request, EntityManagerInterface $em, FieldDefRepository $repo, ReferentielRepository $referentiels, ?FieldDef $field = null): Response
     {
         $isNew = null === $field;
 
@@ -63,13 +64,21 @@ final class FieldController extends AbstractController
                 }
             }
 
+            $min = $request->request->get('min');
+            $max = $request->request->get('max');
+
             $field
                 ->setTab((string) $request->request->get('tab', 'props'))
                 ->setCategory($request->request->get('category'))
                 ->setType((string) $request->request->get('type', 'text'))
                 ->setOptions($options)
+                ->setReferentielKey($request->request->get('referentielKey'))
+                ->setAllowExtra($request->request->getBoolean('allowExtra'))
+                ->setQuickAdd($request->request->getBoolean('quickAdd'))
                 ->setRequired($request->request->getBoolean('required'))
                 ->setHelp($request->request->get('help'))
+                ->setMin('' !== $min && null !== $min ? (float) $min : null)
+                ->setMax('' !== $max && null !== $max ? (float) $max : null)
                 ->setPosition($request->request->getInt('position'));
 
             $em->flush();
@@ -82,6 +91,8 @@ final class FieldController extends AbstractController
             'field' => $field,
             'isNew' => $isNew,
             'types' => FieldDef::TYPES,
+            'referentielCapableTypes' => FieldDef::REFERENTIEL_CAPABLE_TYPES,
+            'referentiels' => $referentiels->allOrdered(),
             'tabs' => $this->knownTabs($repo),
         ]);
     }

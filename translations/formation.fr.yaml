@@ -415,6 +415,9 @@ formation:
       ects_total_label: Volume d'ECTS total
       ects_total_help: Cela servira à vérifier le total d'ECTS de votre formation mono-parcours
       divider_structure: Structure
+      locked_by_template_note: >-
+        Fixé par le template du diplôme (administrateur SES). Une demande de dérogation est nécessaire
+        pour le modifier — voir plus bas.
       readonly_note: >-
         La hiérarchie des niveaux est définie par le diplôme (administrateur SES). Vous construisez
         l'arbre à l'intérieur de ce cadre depuis l'éditeur.

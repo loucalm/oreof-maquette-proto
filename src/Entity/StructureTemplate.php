@@ -47,10 +47,48 @@ class StructureTemplate
     private bool $multiParcours = false;
 
     /**
+     * Tableau structurel : la chaîne de types qui compose le template (« 0
+     * Parcours, 1 Année, 2 Semestre, 3 UE, 4 EC »), fixée avant toute
+     * instanciation. Contraint les types proposables dans `tree` à chaque
+     * profondeur — remplace la déduction a posteriori depuis l'arbre.
+     *
+     * @var list<string>
+     */
+    #[ORM\Column(type: Types::JSON)]
+    private array $structure = [];
+
+    /**
      * @var list<array{type: string, label?: string, code?: string|null, attributes?: array<string, mixed>, children?: list<mixed>}>
      */
     #[ORM\Column(type: Types::JSON)]
     private array $tree = [];
+
+    /** Unité de temps par défaut du diplôme (ex. "Année"), copiée sur la formation à l'application. */
+    #[ORM\Column(length: 40, nullable: true)]
+    private ?string $calendarUnit = null;
+
+    /** Durée par défaut en nombre d'unités, copiée sur la formation à l'application. */
+    #[ORM\Column(nullable: true)]
+    private ?int $calendarSpan = null;
+
+    /**
+     * Surcharge de capacités par type utilisé dans ce template : clé =
+     * `NodeType::key`, valeur = `{capacité: bool}` (seulement les capacités
+     * non verrouillées globalement par le type peuvent être surchargées ici).
+     *
+     * @var array<string, array<string, bool>>
+     */
+    #[ORM\Column(type: Types::JSON)]
+    private array $fieldOverrides = [];
+
+    /**
+     * Types de MCCC disponibles pour ce diplôme et profil de règles choisi
+     * pour chacun : clé = `MccType::key`, valeur = `profile.key`.
+     *
+     * @var array<string, string>
+     */
+    #[ORM\Column(type: Types::JSON)]
+    private array $mcccProfiles = [];
 
     public function __construct(string $key, string $label)
     {
@@ -133,6 +171,90 @@ class StructureTemplate
     public function setTree(array $tree): self
     {
         $this->tree = $tree;
+
+        return $this;
+    }
+
+    /** @return list<string> */
+    public function getStructure(): array
+    {
+        return $this->structure;
+    }
+
+    /** @param list<string> $structure */
+    public function setStructure(array $structure): self
+    {
+        $this->structure = array_values($structure);
+
+        return $this;
+    }
+
+    public function getCalendarUnit(): ?string
+    {
+        return $this->calendarUnit;
+    }
+
+    public function setCalendarUnit(?string $calendarUnit): self
+    {
+        $this->calendarUnit = trim((string) $calendarUnit) ?: null;
+
+        return $this;
+    }
+
+    public function getCalendarSpan(): ?int
+    {
+        return $this->calendarSpan;
+    }
+
+    public function setCalendarSpan(?int $calendarSpan): self
+    {
+        $this->calendarSpan = $calendarSpan;
+
+        return $this;
+    }
+
+    /** @return array<string, array<string, bool>> */
+    public function getFieldOverrides(): array
+    {
+        return $this->fieldOverrides;
+    }
+
+    /** @param array<string, array<string, bool>> $fieldOverrides */
+    public function setFieldOverrides(array $fieldOverrides): self
+    {
+        $this->fieldOverrides = $fieldOverrides;
+
+        return $this;
+    }
+
+    /** @return array<string, bool> */
+    public function getFieldOverridesFor(string $typeKey): array
+    {
+        return $this->fieldOverrides[$typeKey] ?? [];
+    }
+
+    /** @param array<string, bool> $overrides */
+    public function setFieldOverridesFor(string $typeKey, array $overrides): self
+    {
+        if ($overrides === []) {
+            unset($this->fieldOverrides[$typeKey]);
+        } else {
+            $this->fieldOverrides[$typeKey] = $overrides;
+        }
+
+        return $this;
+    }
+
+    /** @return array<string, string> */
+    public function getMcccProfiles(): array
+    {
+        return $this->mcccProfiles;
+    }
+
+    /** @param array<string, string> $mcccProfiles */
+    public function setMcccProfiles(array $mcccProfiles): self
+    {
+        $this->mcccProfiles = $mcccProfiles;
 
         return $this;
     }

@@ -12,8 +12,10 @@ template:
     mono_parcours: mono-parcours
     root_count: '%count% ELP racine(s)'
   edit:
-    unlock_title: ELP imposé — cliquer pour libérer
-    lock_title: Rendre cet ELP imposé (non supprimable côté formation)
+    unlock_title: 'ELP figé (ajout/suppression/duplication bloqués) — cliquer pour libérer'
+    lock_title: 'Figer cet ELP (ni ajout d’un autre du même type ici, ni suppression, ni duplication côté formation)'
+    unlock_move_title: ELP non déplaçable — cliquer pour autoriser le déplacement
+    lock_move_title: Empêcher le déplacement de cet ELP côté formation
     label_placeholder: (libellé)
     rename_button: renommer
     move_up: Monter
@@ -27,12 +29,25 @@ template:
     diplome_help: Un seul template par diplôme. Appliqué automatiquement à la création d'une formation.
     multi_parcours_label: Multi-parcours
     description_field: Description
+    calendar_unit_field: Unité de temps
+    calendar_span_field: Durée (nombre d'unités)
+    calendar_help: >-
+      Valeurs par défaut du diplôme, copiées sur la formation à l'application du template — visibles
+      mais non modifiables côté responsable (une dérogation est nécessaire pour les changer).
+    structure_table_title: Tableau structurel
+    structure_table_help: >-
+      La hiérarchie des types de nœud de ce diplôme (« Parcours » toujours en tête, le dernier maillon
+      toujours en queue) — contraint les types proposables dans l'arbre ci-dessous.
+    mccc_types_title: Types de MCC utilisés
+    mccc_types_empty: Aucun type de MCC retenu pour ce diplôme pour l'instant.
+    mccc_profile_label: 'Profil :'
     mccc_note: >-
-      Les règles MCCC (CCI, CT…) de ce diplôme se configurent par type, pas par template —
-      %link_open%Types de MCCC%link_close%.
+      Les profils de règles de chaque type se créent dans %link_open%Types de MCCC%link_close% ; ici on
+      choisit lesquels s'appliquent à ce diplôme.
+    field_overrides_title: 'Champs de %type% pour ce template'
     tree_title: Arbre du template
     tree_empty: Aucun ELP. Ajoutez le premier niveau ci-dessous.
-    lock_legend: '%lock_icon% = élément pédagogique imposé : le responsable de formation ne pourra ni le supprimer ni le déplacer.'
+    lock_legend: '%lock_icon% = élément pédagogique figé : le responsable de formation ne pourra ni en ajouter un autre du même type ici, ni le supprimer, ni le dupliquer.'
     add_root_label: 'Ajouter un ELP racine :'
     add_root_button: racine
     delete_confirm: 'Supprimer définitivement le template « %label% » ?'

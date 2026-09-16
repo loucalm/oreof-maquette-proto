@@ -36,4 +36,12 @@ field:
     system_type_note: Type système — non modifiable.
     required_label: Champ requis
     options_label: 'Options (type « Liste de choix » — une par ligne : <code>valeur|Libellé</code>)'
+    options_help: Ignoré si un référentiel est associé ci-dessus.
+    referentiel_field: Référentiel associé
+    referentiel_none: — Aucun (options ci-dessous) —
+    referentiel_help: 'Pour liste de choix / choix unique / case à cocher : les valeurs viennent de ce référentiel plutôt que d’être saisies ici.'
+    allow_extra_label: Autoriser une valeur libre en plus de la liste
+    quick_add_label: Proposer un ajout rapide au référentiel depuis la saisie
+    min_field: Minimum (nombre)
+    max_field: Maximum (nombre)
     help_label: Aide (texte sous le champ)

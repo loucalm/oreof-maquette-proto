@@ -18,7 +18,7 @@
         <thead class="text-xs uppercase tracking-wide" style="color:var(--c-muted)">
             <tr class="border-b" style="border-color:var(--c-border)">
                 <th class="text-left px-4 py-2.5">{{ 'mcctype.index.col_type'|trans({}, 'mcctype') }}</th>
-                <th class="text-left px-4 py-2.5">{{ 'mcctype.index.col_diplomes'|trans({}, 'mcctype') }}</th>
+                <th class="text-left px-4 py-2.5">{{ 'mcctype.index.col_profiles'|trans({}, 'mcctype') }}</th>
                 <th class="text-left px-4 py-2.5">{{ 'mcctype.index.col_evaluations'|trans({}, 'mcctype') }}</th>
                 <th class="text-left px-4 py-2.5">{{ 'mcctype.index.col_rules'|trans({}, 'mcctype') }}</th>
                 <th class="px-4 py-2.5"></th>
@@ -32,9 +32,9 @@
                     {% if t.system %}<span class="pill ml-1">{{ 'common.badge_socle'|trans({}, 'common') }}</span>{% endif %}
                     {% if t.description %}<div class="fld-help mt-0.5">{{ t.description }}</div>{% endif %}
                 </td>
-                <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ t.diplomes is empty ? 'mcctype.index.all_diplomes'|trans({}, 'mcctype') : t.diplomes|join(', ') }}</td>
+                <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ t.profiles is empty ? '—' : t.profiles|map(p => p.label)|join(', ') }}</td>
                 <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ t.hasEvaluations ? t.evaluationsLabel : '—' }}</td>
-                <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ t.rules|length }}</td>
+                <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ t.profiles|reduce((carry, p) => carry + (p.rules|length), 0) }}</td>
                 <td class="px-4 py-2.5 text-right whitespace-nowrap">
                     <a href="{{ path('mcctype_edit', {id: t.id}) }}" class="text-xs hover:underline">{{ 'common.edit'|trans({}, 'common') }}</a>
                     {% if not t.system %}

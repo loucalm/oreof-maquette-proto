@@ -31,6 +31,13 @@
                     {% for fam in families %}<option value="{{ fam.value }}" {{ (nodeType.family ?? null) == fam ? 'selected' }}>{{ fam.label }}</option>{% endfor %}
                 </select>
             </label>
+            <label class="block">
+                <span class="text-xs font-medium">{{ 'node_type.edit.kind_field'|trans({}, 'node_type') }}</span>
+                <select name="kind" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                    {% for k in kinds %}<option value="{{ k.value }}" {{ (nodeType.kind ?? null) == k ? 'selected' }}>{{ k.label }}</option>{% endfor %}
+                </select>
+                <span class="text-[11px]" style="color:var(--c-muted)">{{ 'node_type.edit.kind_help'|trans({}, 'node_type') }}</span>
+            </label>
             <div class="grid grid-cols-2 gap-2">
                 <label class="block">
                     <span class="text-xs font-medium">{{ 'node_type.edit.position_field'|trans({}, 'node_type') }}</span>
@@ -61,10 +68,19 @@
                     {% endfor %}
                 </select>
             </label>
+            <label class="mt-2 flex items-center gap-2 text-sm">
+                <input type="checkbox" name="globalNumbering" value="1" {{ (nodeType.globalNumbering ?? false) ? 'checked' }}>
+                {{ 'node_type.edit.global_numbering_label'|trans({}, 'node_type') }}
+            </label>
             <p class="mt-2 text-xs" style="color:var(--c-muted)">
                 {{ 'node_type.edit.numbering_help'|trans({}, 'node_type') }}
             </p>
         </fieldset>
+
+        <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" name="choiceTransformable" value="1" {{ (nodeType.choiceTransformable ?? true) ? 'checked' }}>
+            {{ 'node_type.edit.choice_transformable_label'|trans({}, 'node_type') }}
+        </label>
 
         <fieldset>
             <legend class="text-xs font-medium mb-1">{{ 'node_type.edit.capabilities_legend'|trans({}, 'node_type') }}</legend>

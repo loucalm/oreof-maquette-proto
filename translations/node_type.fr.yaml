@@ -26,6 +26,10 @@ node_type:
     key_field: Clé
     key_placeholder: auto depuis le libellé
     family_field: Famille
+    kind_field: Type d'ELP
+    kind_help: >-
+      Temporel : le nom est calculé (type + numéro, ex. « Année 1 »), aucun libellé n'est demandé côté
+      éditeur.
     position_field: Position
     ects_target_field: ECTS cible
     hierarchy_note: >-
@@ -37,6 +41,10 @@ node_type:
     numbering_help: >-
       Un type non numéroté (ex. Semestre) est « transparent » : ses enfants héritent du contexte du
       parent numéroté.
+    global_numbering_label: >-
+      Comptage global continu (ex. Semestre 1, 2, 3, 4…) plutôt que réinitialisé sous chaque parent
+      (ex. UE 1.1, 1.2, 2.1…)
+    choice_transformable_label: Le bouton « Transformer en bloc de choix » est proposé pour ce type
     capabilities_legend: Capacités & champs du type
     capabilities_help: >-
       <strong>Incluse</strong> : le champ existe pour ce type d’élément pédagogique.

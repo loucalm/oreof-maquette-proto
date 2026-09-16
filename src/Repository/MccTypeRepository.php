@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\MccType;
+use App\Entity\StructureTemplate;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -33,12 +34,24 @@ class MccTypeRepository extends ServiceEntityRepository
         return $this->findOneBy(['key' => $key]);
     }
 
-    /** @return list<MccType> types proposés pour ce diplôme, dans l'ordre d'affichage */
-    public function availableFor(?string $diplome): array
+    /**
+     * Types proposés pour le diplôme de ce template : ceux que le template a
+     * explicitement retenus (`StructureTemplate::mcccProfiles`). Sans template
+     * (diplôme libre), repli permissif : tous les types du catalogue.
+     *
+     * @return list<MccType>
+     */
+    public function availableFor(?StructureTemplate $template): array
     {
+        if (null === $template || [] === $template->getMcccProfiles()) {
+            return $this->allOrdered();
+        }
+
+        $keys = array_flip(array_keys($template->getMcccProfiles()));
+
         return array_values(array_filter(
             $this->allOrdered(),
-            static fn (MccType $t): bool => $t->appliesToDiplome($diplome),
+            static fn (MccType $t): bool => isset($keys[$t->getKey()]),
         ));
     }
 }

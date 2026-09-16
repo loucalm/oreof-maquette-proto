@@ -10,8 +10,12 @@ namespace App\Maquette;
  *
  * Règle : la référence d'un nœud numéroté = référence du plus proche ANCÊTRE
  * numéroté + « . » + indice 1-based parmi les nœuds de même type de ce même
- * contexte (dans l'ordre de l'arbre). Les types non numérotés (ex. Semestre)
- * sont transparents : leurs enfants héritent du contexte du parent numéroté.
+ * contexte (dans l'ordre de l'arbre). Les types non numérotés sont transparents :
+ * leurs enfants héritent du contexte du parent numéroté. Un type numéroté peut
+ * aussi être en comptage global (NodeType::globalNumbering) : son indice est
+ * alors un compteur continu sur tout l'arbre, sans préfixe du parent (ex.
+ * Semestre 1, 2, 3, 4… même réparti sur plusieurs années) — ses propres enfants
+ * se préfixent malgré tout de sa référence, comme pour un nœud contextuel.
  * Le style de l'indice (décimal / alpha / romain) vient de NodeType::numberStyle.
  */
 final class Numbering
@@ -36,7 +40,12 @@ final class Numbering
     {
         foreach ($views as $view) {
             $type = $view->node->getType();
-            if ($type->isNumbered()) {
+            if ($type->isNumbered() && $type->isGlobalNumbering()) {
+                $key = '__global__|'.$type->getKey();
+                $n = ($counters[$key] = ($counters[$key] ?? 0) + 1);
+                $view->ref = $this->format($n, $type->getNumberStyle());
+                $childRef = $view->ref;
+            } elseif ($type->isNumbered()) {
                 $key = $parentRef.'|'.$type->getKey();
                 $n = ($counters[$key] = ($counters[$key] ?? 0) + 1);
                 $idx = $this->format($n, $type->getNumberStyle());

@@ -7,14 +7,21 @@
 {# ─── un nœud du template + sa branche ─── #}
 {% macro node(n, p, template, types) %}
     {% import _self as m %}
-    {% set locked = n.locked is defined and n.locked is not empty %}
+    {% set locked = n.locked is defined ? n.locked : [] %}
+    {% set rigid = 'add' in locked or 'delete' in locked or 'duplicate' in locked %}
+    {% set moveLocked = 'move' in locked %}
     {% set meta = types_by_key()[n.type] %}
     <li class="template-node">
         <div class="flex flex-wrap items-center gap-1.5 py-1">
-            <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'lock'}) }}" class="inline">
-                <button title="{{ locked ? 'template.edit.unlock_title'|trans({}, 'template') : 'template.edit.lock_title'|trans({}, 'template') }}"
+            <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'toggle-rigid'}) }}" class="inline">
+                <button title="{{ rigid ? 'template.edit.unlock_title'|trans({}, 'template') : 'template.edit.lock_title'|trans({}, 'template') }}"
                         class="grid h-6 w-6 place-items-center rounded border text-xs"
-                        style="border-color:var(--c-border);{{ locked ? 'background:#fef3c7' }}">{{ locked ? ux_icon('ph:lock-simple-fill', {class: 'icon'}) : ux_icon('ph:lock-simple-open', {class: 'icon'}) }}</button>
+                        style="border-color:var(--c-border);{{ rigid ? 'background:#fef3c7' }}">{{ rigid ? ux_icon('ph:lock-simple-fill', {class: 'icon'}) : ux_icon('ph:lock-simple-open', {class: 'icon'}) }}</button>
+            </form>
+            <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'toggle-move'}) }}" class="inline">
+                <button title="{{ moveLocked ? 'template.edit.unlock_move_title'|trans({}, 'template') : 'template.edit.lock_move_title'|trans({}, 'template') }}"
+                        class="grid h-6 w-6 place-items-center rounded border text-xs"
+                        style="border-color:var(--c-border);{{ moveLocked ? 'background:#fee2e2' }}">{{ ux_icon('ph:arrows-out-cardinal', {class: 'icon'}) }}</button>
             </form>
 
             <span class="type-badge">{{ meta ? ux_icon(meta.icon, {class: 'icon'}) }} [{{ meta ? meta.label : n.type }}]</span>
@@ -39,6 +46,8 @@
             </form>
         </div>
 
+        {{ m.fieldOverridesForm(n.type, template) }}
+
         {% if n.children is defined and n.children is not empty %}
             <ul class="template-branch">
                 {% for c in n.children %}
@@ -47,17 +56,50 @@
             </ul>
         {% endif %}
 
-        {# ajouter un enfant #}
+        {# ajouter un enfant — rien au-delà du dernier maillon du tableau structurel (ex. EC) une fois celui-ci renseigné #}
+        {% set childType = template_type_at_depth(template, p) %}
+        {% set pastStructureEnd = template.structure is not empty and childType is null and n.type != 'bloc_choix' %}
+        {% if not pastStructureEnd %}
         <form method="post" action="{{ path('template_node_add', {id: template.id}) }}"
               class="template-branch mt-1 flex flex-wrap items-center gap-1.5">
             <input type="hidden" name="parent" value="{{ p }}">
-            <select name="type" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
-                {% for t in types %}<option value="{{ t.key }}">{{ t.label }}</option>{% endfor %}
-            </select>
+            {% if childType %}
+                <input type="hidden" name="type" value="{{ childType.key }}">
+                <span class="type-badge">{{ ux_icon(childType.icon, {class: 'icon'}) }} [{{ childType.label }}]</span>
+            {% else %}
+                <select name="type" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
+                    {% for t in types %}<option value="{{ t.key }}">{{ t.label }}</option>{% endfor %}
+                </select>
+            {% endif %}
             <input name="label" placeholder="{{ 'template.edit.child_label_placeholder'|trans({}, 'template') }}" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
             <button class="rounded border px-2 py-1 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'template.edit.add_child_button'|trans({}, 'template') }}</button>
         </form>
+        {% endif %}
     </li>
+{% endmacro %}
+
+{# ─── surcharge des capacités d'un type, spécifique à ce template ─── #}
+{% macro fieldOverridesForm(typeKey, template) %}
+    {% set meta = types_by_key()[typeKey] ?? null %}
+    {% if meta %}
+        {% set overrides = template.getFieldOverridesFor(typeKey) %}
+        {% set togglable = capability_labels()|filter((label, key) => meta.hasCapability(key) and not meta.isCapabilityLocked(key)) %}
+        {% if togglable is not empty %}
+            <form method="post" action="{{ path('template_field_overrides', {id: template.id, typeKey: typeKey}) }}"
+                  class="template-branch mt-1 mb-1 rounded-md border px-3 py-2 text-xs" style="border-color:var(--c-border);background:#f8f9fb">
+                <div class="font-medium mb-1.5" style="color:var(--c-muted)">{{ 'template.edit.field_overrides_title'|trans({'%type%': meta.label}, 'template') }}</div>
+                <div class="flex flex-wrap gap-x-4 gap-y-1.5 mb-2">
+                    {% for key, label in togglable %}
+                        {% set on = overrides[key] ?? meta.capabilityDefault(key) %}
+                        <label class="flex items-center gap-1.5">
+                            <input type="checkbox" name="capabilities[]" value="{{ key }}" {{ on ? 'checked' }}> {{ label }}
+                        </label>
+                    {% endfor %}
+                </div>
+                <button class="rounded border px-2 py-1 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.save'|trans({}, 'common') }}</button>
+            </form>
+        {% endif %}
+    {% endif %}
 {% endmacro %}
 
 {% block admin_body %}
@@ -70,8 +112,9 @@
 <div class="grid gap-5 lg:grid-cols-[320px_1fr]">
 
     {# ─── métadonnées ─── #}
+    <div class="space-y-4 self-start">
     <form method="post" action="{{ path('template_meta', {id: template.id}) }}"
-          class="rounded-xl border bg-white p-4 space-y-3 self-start" style="border-color:var(--c-border)">
+          class="rounded-xl border bg-white p-4 space-y-3" style="border-color:var(--c-border)">
         <div>
             <div class="text-xs font-medium">{{ 'template.edit.label_field'|trans({}, 'template') }}</div>
             <input name="label" value="{{ template.label }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
@@ -93,14 +136,97 @@
             <div class="text-xs font-medium">{{ 'template.edit.description_field'|trans({}, 'template') }}</div>
             <textarea name="description" rows="3" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">{{ template.description }}</textarea>
         </div>
+        <div class="grid grid-cols-2 gap-2">
+            <div>
+                <div class="text-xs font-medium">{{ 'template.edit.calendar_unit_field'|trans({}, 'template') }}</div>
+                <input name="calendarUnit" value="{{ template.calendarUnit }}" placeholder="Année" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+            </div>
+            <div>
+                <div class="text-xs font-medium">{{ 'template.edit.calendar_span_field'|trans({}, 'template') }}</div>
+                <input type="number" min="1" name="calendarSpan" value="{{ template.calendarSpan }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+            </div>
+        </div>
+        <div class="fld-help">{{ 'template.edit.calendar_help'|trans({}, 'template') }}</div>
         <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
-
-        {% if template.diplome %}
-            <p class="mt-3 text-xs" style="color:var(--c-muted)">
-                {{ 'template.edit.mccc_note'|trans({'%link_open%': '<a href="' ~ path('admin_mcctypes') ~ '" target="_blank" class="underline">', '%link_close%': '</a>'}, 'template')|raw }}
-            </p>
-        {% endif %}
     </form>
+
+    {# ─── tableau structurel ─── #}
+    <div class="rounded-xl border bg-white p-4" style="border-color:var(--c-border)">
+        <div class="text-xs font-bold uppercase tracking-wide mb-2" style="color:var(--c-primary)">{{ 'template.edit.structure_table_title'|trans({}, 'template') }}</div>
+        <p class="text-xs mb-2" style="color:var(--c-muted)">{{ 'template.edit.structure_table_help'|trans({}, 'template') }}</p>
+        <table class="w-full text-xs">
+            <tbody data-controller="chain" data-chain-save-url-value="{{ path('template_structure_save', {id: template.id}) }}">
+            {% for row in template_structure_rows(template) %}
+                <tr class="border-t" style="border-color:var(--c-border)" {{ not row.fixed ? 'data-chain-key=' ~ row.key }}>
+                    <td class="py-1.5 pr-1 text-center text-gray-300 w-5">
+                        {% if not row.fixed %}<span class="drag-handle" title="{{ 'formation.tree.drag_title'|trans({}, 'formation') }}">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>{% endif %}
+                    </td>
+                    <td class="py-1.5">
+                        <span class="type-badge">{{ row.type ? ux_icon(row.type.icon, {class: 'icon'}) : ux_icon('ph:question', {class: 'icon'}) }} [{{ row.type ? row.type.label : row.key }}]</span>
+                        {% if row.mono %}<span class="pill ml-1">{{ 'formation.param.structure.invisible_mono_pill'|trans({}, 'formation') }}</span>{% endif %}
+                    </td>
+                    <td class="py-1.5 text-right">
+                        {% if not row.fixed %}
+                            <form method="post" action="{{ path('template_structure_remove', {id: template.id, key: row.key}) }}">
+                                <button class="text-xs text-red-600 hover:underline">{{ 'formation.param.structure.remove_button'|trans({}, 'formation') }}</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <form method="post" action="{{ path('template_structure_add', {id: template.id}) }}" class="mt-2 flex items-center gap-1.5 border-t pt-2" style="border-color:var(--c-border)">
+            <select name="type" class="rounded border px-2 py-1 text-xs flex-1" style="border-color:var(--c-border)">
+                {% for t in template_structure_addable(template) %}<option value="{{ t.key }}">{{ t.label }}</option>{% endfor %}
+            </select>
+            <button class="rounded border px-2 py-1 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'common.add'|trans({}, 'common') }}</button>
+        </form>
+    </div>
+
+    {# ─── types de MCC utilisés pour ce diplôme ─── #}
+    <div class="rounded-xl border bg-white p-4" style="border-color:var(--c-border)">
+        <div class="text-xs font-bold uppercase tracking-wide mb-2" style="color:var(--c-primary)">{{ 'template.edit.mccc_types_title'|trans({}, 'template') }}</div>
+        {% set usedKeys = template.mcccProfiles|keys %}
+        {% if template.mcccProfiles is empty %}
+            <p class="text-xs mb-2" style="color:var(--c-muted)">{{ 'template.edit.mccc_types_empty'|trans({}, 'template') }}</p>
+        {% else %}
+            <div class="space-y-2 mb-2">
+                {% for typeKey, profileKey in template.mcccProfiles %}
+                    {% set mtype = mccTypes|filter(t => t.key == typeKey)|first %}
+                    {% if mtype %}
+                        <div class="rounded-md border p-2 text-xs" style="border-color:var(--c-border)">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="font-medium">{{ mtype.shortLabel }} — {{ mtype.label }}</span>
+                                <form method="post" action="{{ path('template_mccc_remove', {id: template.id, typeKey: typeKey}) }}">
+                                    <button class="text-red-600 hover:underline">{{ 'formation.param.structure.remove_button'|trans({}, 'formation') }}</button>
+                                </form>
+                            </div>
+                            <form method="post" action="{{ path('template_mccc_profile', {id: template.id, typeKey: typeKey}) }}" class="mt-1.5 flex items-center gap-1.5">
+                                <span style="color:var(--c-muted)">{{ 'template.edit.mccc_profile_label'|trans({}, 'template') }}</span>
+                                <select name="profile" class="rounded border px-2 py-1 text-xs flex-1" style="border-color:var(--c-border)">
+                                    {% for profile in mtype.profiles %}
+                                        <option value="{{ profile.key }}" {{ profileKey == profile.key ? 'selected' }}>{{ profile.label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button class="rounded border px-2 py-1 font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.save'|trans({}, 'common') }}</button>
+                            </form>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+        <form method="post" action="{{ path('template_mccc_add', {id: template.id}) }}" class="flex items-center gap-1.5 border-t pt-2" style="border-color:var(--c-border)">
+            <select name="type" class="rounded border px-2 py-1 text-xs flex-1" style="border-color:var(--c-border)">
+                {% for t in mccTypes %}{% if t.key not in usedKeys %}<option value="{{ t.key }}">{{ t.shortLabel }} — {{ t.label }}</option>{% endif %}{% endfor %}
+            </select>
+            <button class="rounded border px-2 py-1 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'common.add'|trans({}, 'common') }}</button>
+        </form>
+        <p class="text-[11px] mt-2" style="color:var(--c-muted)">
+            {{ 'template.edit.mccc_note'|trans({'%link_open%': '<a href="' ~ path('admin_mcctypes') ~ '" target="_blank" class="underline">', '%link_close%': '</a>'}, 'template')|raw }}
+        </p>
+    </div>
+    </div>
 
     {# ─── arbre ─── #}
     <div class="rounded-xl border bg-white p-4" style="border-color:var(--c-border)">
@@ -119,13 +245,19 @@
             <p class="mt-2 text-xs" style="color:var(--c-muted)">{{ 'template.edit.lock_legend'|trans({'%lock_icon%': ux_icon('ph:lock-simple-fill', {class: 'icon'})}, 'template')|raw }}</p>
         {% endif %}
 
+        {% set rootType = template_type_at_depth(template, '') %}
         <form method="post" action="{{ path('template_node_add', {id: template.id}) }}"
               class="mt-3 flex flex-wrap items-center gap-1.5 border-t pt-3" style="border-color:var(--c-border)">
             <input type="hidden" name="parent" value="">
             <span class="text-xs font-medium" style="color:var(--c-muted)">{{ 'template.edit.add_root_label'|trans({}, 'template') }}</span>
-            <select name="type" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
-                {% for t in types %}<option value="{{ t.key }}">{{ t.label }}</option>{% endfor %}
-            </select>
+            {% if rootType %}
+                <input type="hidden" name="type" value="{{ rootType.key }}">
+                <span class="type-badge">{{ ux_icon(rootType.icon, {class: 'icon'}) }} [{{ rootType.label }}]</span>
+            {% else %}
+                <select name="type" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
+                    {% for t in types %}<option value="{{ t.key }}">{{ t.label }}</option>{% endfor %}
+                </select>
+            {% endif %}
             <input name="label" placeholder="{{ 'template.edit.label_placeholder'|trans({}, 'template') }}" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
             <button class="rounded border px-2 py-1 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'template.edit.add_root_button'|trans({}, 'template') }}</button>
         </form>

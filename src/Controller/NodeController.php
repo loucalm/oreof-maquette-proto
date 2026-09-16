@@ -91,7 +91,13 @@ final class NodeController extends AbstractController
                 'competencies' => array_values(array_filter(
                     array_map(static fn ($v) => trim((string) $v), $request->request->all('attr_competencies')),
                 )),
-                default => trim((string) $request->request->get("attr_$key")) ?: null,
+                'checkbox' => array_values(array_filter(
+                    array_map(static fn ($v) => trim((string) $v), $request->request->all("attr_$key")),
+                )),
+                // « valeur libre » : prioritaire sur la sélection si renseignée (choice/radio adossés à un référentiel avec allowExtra)
+                default => ($def['allowExtra'] ?? false) && '' !== trim((string) $request->request->get("attr_{$key}_autre"))
+                    ? trim((string) $request->request->get("attr_{$key}_autre"))
+                    : (trim((string) $request->request->get("attr_$key")) ?: null),
             };
         }
 
@@ -190,6 +196,21 @@ final class NodeController extends AbstractController
                 : $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);
         }
 
+        // structure imposée : un nœud existant de ce type à cet emplacement peut fermer la position à tout autre ajout
+        $siblings = $parent?->getChildren() ?? $doc->roots;
+        foreach ($siblings as $sibling) {
+            if ($sibling->typeKey === $typeKey && $sibling->isLocked('add')) {
+                $this->addFlash('warning', sprintf(
+                    'La structure imposée par le diplôme ne permet pas d’ajouter un autre « %s » ici.',
+                    $type->getLabel(),
+                ));
+
+                return null !== $parent
+                    ? $this->editorRedirect($parent)
+                    : $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);
+            }
+        }
+
         $node = $doc->addNode($parent?->getId(), $typeKey, trim((string) $request->request->get('label')));
         $this->applyChoiceNature($node, $parent);
         $this->maquette->save($formation, $doc);
@@ -232,7 +253,18 @@ final class NodeController extends AbstractController
     public function duplicate(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid): Response
     {
         $doc = $this->maquette->open($formation);
-        $copy = $doc->duplicateNode($this->pick($doc, $nid));
+        $node = $this->pick($doc, $nid);
+
+        if ($node->isLocked('duplicate')) {
+            $this->addFlash('warning', sprintf(
+                '« %s » fait partie de la structure imposée par le diplôme : il ne peut pas être dupliqué.',
+                $node->getDisplayLabel(),
+            ));
+
+            return $this->editorRedirect($node);
+        }
+
+        $copy = $doc->duplicateNode($node);
         $this->maquette->save($formation, $doc);
 
         return $this->editorRedirect($copy);

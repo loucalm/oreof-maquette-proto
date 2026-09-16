@@ -49,7 +49,8 @@ final class AttributeCatalog
     /**
      * @return array<string, array{
      *     domain: string, label: string, field: string, category: ?string,
-     *     options: array<string, string>, required: bool, help: ?string
+     *     options: array<string, string>, referentielKey: ?string, allowExtra: bool,
+     *     quickAdd: bool, required: bool, help: ?string, min: ?float, max: ?float
      * }>
      */
     public function all(): array
@@ -66,8 +67,13 @@ final class AttributeCatalog
                 'field' => $f->getType(),
                 'category' => $f->getCategory(),
                 'options' => $f->getOptions(),
+                'referentielKey' => $f->getReferentielKey(),
+                'allowExtra' => $f->isAllowExtra(),
+                'quickAdd' => $f->isQuickAdd(),
                 'required' => $f->isRequired(),
                 'help' => $f->getHelp(),
+                'min' => $f->getMin(),
+                'max' => $f->getMax(),
             ];
         }
 

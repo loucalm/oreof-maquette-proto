@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Entity\NodeType;
 use App\Enum\NodeFamily;
+use App\Enum\NodeKind;
 use App\Maquette\AttributeCatalog;
 use App\Maquette\Maquette;
 use App\Repository\NodeTypeRepository;
@@ -57,10 +58,13 @@ final class NodeTypeController extends AbstractController
             $nodeType
                 ->setIcon(trim((string) $request->request->get('icon')) ?: null)
                 ->setFamily(NodeFamily::from((string) $request->request->get('family', 'structural')))
+                ->setKind(NodeKind::from((string) $request->request->get('kind', 'structurel')))
                 ->setPosition($request->request->getInt('position'))
                 ->setEctsTarget($request->request->get('ectsTarget') !== '' ? $request->request->getInt('ectsTarget') : null)
                 ->setNumbered($request->request->getBoolean('numbered'))
                 ->setNumberStyle((string) $request->request->get('numberStyle', 'decimal'))
+                ->setGlobalNumbering($request->request->getBoolean('globalNumbering'))
+                ->setChoiceTransformable($request->request->getBoolean('choiceTransformable'))
                 ->setCapabilities(array_fill_keys($request->request->all('capabilities'), true))
                 ->setLockedCapabilities($request->request->all('lockedCapabilities'));
 
@@ -74,6 +78,7 @@ final class NodeTypeController extends AbstractController
             'nodeType' => $nodeType,
             'isNew' => $isNew,
             'families' => NodeFamily::cases(),
+            'kinds' => NodeKind::cases(),
             'capabilities' => $this->capabilityLabels(),
         ]);
     }

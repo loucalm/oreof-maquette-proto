@@ -13,6 +13,13 @@
 
         {# ── Nombre de parcours ── #}
         {{ fld.divider('formation.param.structure.divider_parcours_count'|trans({}, 'formation')) }}
+        {% set hasTemplate = formation.diplome and template_for_diplome(formation.diplome) %}
+        {% if not is_admin() and hasTemplate %}
+            <p class="text-xs text-gray-500 -mt-2">
+                {{ 'formation.param.structure.locked_by_template_note'|trans({}, 'formation') }}
+            </p>
+            <p class="text-sm font-medium">{{ formation.multiParcours ? 'formation.param.structure.yes_options'|trans({}, 'formation') : 'formation.param.structure.no_mono'|trans({}, 'formation') }}</p>
+        {% else %}
         <form method="post" action="{{ path('formation_settings', {id: formation.id}) }}" data-turbo-frame="_top" data-controller="confirm">
             <input type="hidden" name="name" value="{{ formation.name }}">
             <input type="hidden" name="diplome" value="{{ formation.diplome }}">
@@ -37,10 +44,17 @@
                 </label>
             </div>
         </form>
+        {% endif %}
 
         {# ── Dimension temporelle ── #}
         {{ fld.divider('formation.param.structure.divider_temporal'|trans({}, 'formation')) }}
         {% set unit = period_unit(formation) %}
+        {% if not is_admin() and hasTemplate %}
+            <p class="text-xs text-gray-500 -mt-2">
+                {{ 'formation.param.structure.locked_by_template_note'|trans({}, 'formation') }}
+            </p>
+            <p class="text-sm font-medium">{{ formation.calendarSpan ?: '—' }} {{ (formation.calendarUnit ?: unit)|lower }}(s)</p>
+        {% else %}
         <p class="text-xs text-gray-500 -mt-2">
             {{ 'formation.param.structure.temporal_note'|trans({'%unit%': unit}, 'formation')|raw }}
         </p>
@@ -63,6 +77,7 @@
                 </div>
             </div>
         </form>
+        {% endif %}
 
         {# ── Propriétés du parcours invisible (mono-parcours) ── #}
         {% if formation.isMono %}
