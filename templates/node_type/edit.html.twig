@@ -79,7 +79,7 @@
 {% endmacro %}
 
 {% block body %}
-<div class="max-w-3xl">
+<div class="max-w-3xl mx-auto">
     <div class="text-xs" style="color:var(--c-muted)">
         <a href="{{ path('node_type_index') }}" class="hover:underline">{{ 'node_type.index.heading'|trans({}, 'node_type') }}</a> › {{ isNew ? 'node_type.edit.breadcrumb_new'|trans({}, 'node_type') : nodeType.label }}
     </div>

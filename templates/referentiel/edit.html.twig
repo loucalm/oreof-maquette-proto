@@ -2,7 +2,7 @@
 {% block title %}{{ isNew ? 'referentiel.edit.new_title'|trans({}, 'referentiel') : referentiel.label }}{% endblock %}
 
 {% block body %}
-<div class="max-w-2xl">
+<div class="max-w-2xl mx-auto">
     <div class="text-xs" style="color:var(--c-muted)">
         <a href="{{ path('admin_referentiels') }}" class="hover:underline">{{ 'referentiel.edit.breadcrumb_root'|trans({}, 'referentiel') }}</a> › {{ isNew ? 'referentiel.edit.breadcrumb_new'|trans({}, 'referentiel') : referentiel.label }}
     </div>

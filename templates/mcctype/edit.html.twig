@@ -2,7 +2,7 @@
 {% block title %}{{ isNew ? 'mcctype.edit.new_title'|trans({}, 'mcctype') : type.label }}{% endblock %}
 
 {% block body %}
-<div class="max-w-3xl">
+<div class="max-w-3xl mx-auto">
     <div class="text-xs" style="color:var(--c-muted)">
         <a href="{{ path('admin_mcctypes') }}" class="hover:underline">{{ 'mcctype.index.heading'|trans({}, 'mcctype') }}</a> › {{ isNew ? 'mcctype.edit.breadcrumb_new'|trans({}, 'mcctype') : type.label }}
     </div>
