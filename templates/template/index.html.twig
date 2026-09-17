@@ -10,7 +10,7 @@
             {{ 'template.index.description'|trans({'%lock_icon%': ux_icon('ph:lock-simple-fill', {class: 'icon'})}, 'template')|raw }}
         </p>
     </div>
-    <form method="post" action="{{ path('template_new') }}" class="shrink-0">
+    <form method="post" action="{{ path('template_new') }}" class="shrink-0" data-turbo-frame="_top">
         <input type="hidden" name="label" value="{{ 'template.index.new_label'|trans({}, 'template') }}">
         <button class="rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'template.index.new_button'|trans({}, 'template') }}</button>
     </form>
@@ -18,7 +18,7 @@
 
 <div class="grid gap-4 md:grid-cols-2">
     {% for tpl in templates %}
-        <a href="{{ path('template_edit', {id: tpl.id}) }}"
+        <a href="{{ path('template_edit', {id: tpl.id}) }}" data-turbo-frame="_top"
            class="block rounded-xl border bg-white p-4 hover:shadow-sm" style="border-color:var(--c-border)">
             <div class="flex items-center gap-2">
                 <span class="font-semibold">{{ tpl.label }}</span>

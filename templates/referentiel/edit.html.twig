@@ -2,13 +2,14 @@
 {% block title %}{{ isNew ? 'referentiel.edit.new_title'|trans({}, 'referentiel') : referentiel.label }}{% endblock %}
 
 {% block body %}
+<turbo-frame id="admin-content">
 <div class="max-w-2xl mx-auto">
     <div class="text-xs" style="color:var(--c-muted)">
-        <a href="{{ path('admin_referentiels') }}" class="hover:underline">{{ 'referentiel.edit.breadcrumb_root'|trans({}, 'referentiel') }}</a> › {{ isNew ? 'referentiel.edit.breadcrumb_new'|trans({}, 'referentiel') : referentiel.label }}
+        <a href="{{ path('admin_referentiels') }}" data-turbo-frame="_top" class="hover:underline">{{ 'referentiel.edit.breadcrumb_root'|trans({}, 'referentiel') }}</a> › {{ isNew ? 'referentiel.edit.breadcrumb_new'|trans({}, 'referentiel') : referentiel.label }}
     </div>
     <h1 class="text-xl font-bold mt-1 mb-5">{{ isNew ? 'referentiel.edit.new_heading'|trans({}, 'referentiel') : 'referentiel.edit.edit_heading'|trans({'%label%': referentiel.label}, 'referentiel') }}</h1>
 
-    <form method="post" class="rounded-xl border bg-white p-5 space-y-4" style="border-color:var(--c-border)">
+    <form method="post" data-turbo-frame="_top" class="rounded-xl border bg-white p-5 space-y-4" style="border-color:var(--c-border)">
         <div class="grid grid-cols-3 gap-3">
             <label class="block col-span-2">
                 <span class="text-xs font-medium">{{ 'referentiel.edit.label_field'|trans({}, 'referentiel') }}</span>
@@ -55,8 +56,9 @@
 
         <div class="flex gap-2 pt-1">
             <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
-            <a href="{{ path('admin_referentiels') }}" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</a>
+            <a href="{{ path('admin_referentiels') }}" data-turbo-frame="_top" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</a>
         </div>
     </form>
 </div>
+</turbo-frame>
 {% endblock %}

@@ -2,13 +2,14 @@
 {% block title %}{{ isNew ? 'mcctype.edit.new_title'|trans({}, 'mcctype') : type.label }}{% endblock %}
 
 {% block body %}
+<turbo-frame id="admin-content">
 <div class="max-w-3xl mx-auto">
     <div class="text-xs" style="color:var(--c-muted)">
-        <a href="{{ path('admin_mcctypes') }}" class="hover:underline">{{ 'mcctype.index.heading'|trans({}, 'mcctype') }}</a> › {{ isNew ? 'mcctype.edit.breadcrumb_new'|trans({}, 'mcctype') : type.label }}
+        <a href="{{ path('admin_mcctypes') }}" data-turbo-frame="_top" class="hover:underline">{{ 'mcctype.index.heading'|trans({}, 'mcctype') }}</a> › {{ isNew ? 'mcctype.edit.breadcrumb_new'|trans({}, 'mcctype') : type.label }}
     </div>
     <h1 class="text-xl font-bold mt-1 mb-5">{{ isNew ? 'mcctype.edit.new_heading'|trans({}, 'mcctype') : 'mcctype.edit.edit_heading'|trans({'%label%': type.label}, 'mcctype') }}</h1>
 
-    <form method="post" class="rounded-xl border bg-white p-5 space-y-4" style="border-color:var(--c-border)">
+    <form method="post" {{ isNew ? 'data-turbo-frame="_top"' }} class="rounded-xl border bg-white p-5 space-y-4" style="border-color:var(--c-border)">
         <div class="grid grid-cols-3 gap-3">
             <label class="block">
                 <span class="text-xs font-medium">{{ 'mcctype.edit.short_label_field'|trans({}, 'mcctype') }}</span>
@@ -49,7 +50,7 @@
 
         <div class="flex gap-2 pt-1">
             <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
-            <a href="{{ path('admin_mcctypes') }}" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</a>
+            <a href="{{ path('admin_mcctypes') }}" data-turbo-frame="_top" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</a>
         </div>
     </form>
 
@@ -148,4 +149,5 @@
         </div>
     {% endif %}
 </div>
+</turbo-frame>
 {% endblock %}

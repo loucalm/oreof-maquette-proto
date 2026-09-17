@@ -26,5 +26,10 @@
     {% endfor %}
 </nav>
 
+{# Les petites actions in-place (renommer/déplacer/verrouiller/supprimer une ligne…) restent dans ce
+   cadre : pas de rechargement de page, la position de scroll est conservée. Une vraie navigation vers
+   une autre page (retour à la liste, nouvelle fiche…) doit porter data-turbo-frame="_top" pour en sortir. #}
+<turbo-frame id="admin-content">
 {% block admin_body %}{% endblock %}
+</turbo-frame>
 {% endblock %}

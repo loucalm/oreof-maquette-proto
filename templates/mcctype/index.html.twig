@@ -10,7 +10,7 @@
             {{ 'mcctype.index.description'|trans({}, 'mcctype') }}
         </p>
     </div>
-    <a href="{{ path('mcctype_new') }}" class="rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'mcctype.index.new_button'|trans({}, 'mcctype') }}</a>
+    <a href="{{ path('mcctype_new') }}" data-turbo-frame="_top" class="rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'mcctype.index.new_button'|trans({}, 'mcctype') }}</a>
 </div>
 
 <div class="rounded-xl border bg-white overflow-hidden" style="border-color:var(--c-border)">
@@ -36,7 +36,7 @@
                 <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ t.hasEvaluations ? t.evaluationsLabel : '—' }}</td>
                 <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ t.profiles|reduce((carry, p) => carry + (p.rules|length), 0) }}</td>
                 <td class="px-4 py-2.5 text-right whitespace-nowrap">
-                    <a href="{{ path('mcctype_edit', {id: t.id}) }}" class="text-xs hover:underline">{{ 'common.edit'|trans({}, 'common') }}</a>
+                    <a href="{{ path('mcctype_edit', {id: t.id}) }}" data-turbo-frame="_top" class="text-xs hover:underline">{{ 'common.edit'|trans({}, 'common') }}</a>
                     {% if not t.system %}
                         <form method="post" action="{{ path('mcctype_delete', {id: t.id}) }}" class="inline"
                               data-controller="confirm" data-confirm-message-value="{{ 'mcctype.index.delete_confirm'|trans({'%label%': t.label}, 'mcctype') }}">

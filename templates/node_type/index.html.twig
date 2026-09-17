@@ -22,7 +22,7 @@
                     </td>
                     <td class="px-4 py-3" style="color:var(--c-muted)">{{ t.kind.label }}</td>
                     <td class="px-4 py-3 text-right whitespace-nowrap">
-                        <a href="{{ path('node_type_edit', {id: t.id}) }}" class="text-xs hover:underline">{{ 'common.edit'|trans({}, 'common') }}</a>
+                        <a href="{{ path('node_type_edit', {id: t.id}) }}" data-turbo-frame="_top" class="text-xs hover:underline">{{ 'common.edit'|trans({}, 'common') }}</a>
                         {% if showDelete and not t.system %}
                             <form method="post" action="{{ path('node_type_delete', {id: t.id}) }}" class="inline"
                                   data-controller="confirm" data-confirm-message-value="{{ 'node_type.index.delete_confirm'|trans({'%label%': t.label}, 'node_type') }}">
@@ -54,7 +54,7 @@
     <div>
         <div class="flex items-center justify-between mb-2">
             <div class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">{{ 'node_type.index.elp_title'|trans({}, 'node_type') }}</div>
-            <a href="{{ path('node_type_new') }}" class="rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'node_type.index.new_button'|trans({}, 'node_type') }}</a>
+            <a href="{{ path('node_type_new') }}" data-turbo-frame="_top" class="rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'node_type.index.new_button'|trans({}, 'node_type') }}</a>
         </div>
         {{ ui.table(elpTypes, true, true) }}
     </div>

@@ -104,7 +104,7 @@
 {% import _self as m %}
 
 <div class="text-xs mb-1" style="color:var(--c-muted)">
-    <a href="{{ path('template_index') }}" class="hover:underline">{{ 'template.index.heading'|trans({}, 'template') }}</a> › {{ template.label }}
+    <a href="{{ path('template_index') }}" data-turbo-frame="_top" class="hover:underline">{{ 'template.index.heading'|trans({}, 'template') }}</a> › {{ template.label }}
 </div>
 
 <div class="grid gap-5 lg:grid-cols-[320px_1fr]">
@@ -294,7 +294,7 @@
     </div>
 </div>
 
-<form method="post" action="{{ path('template_delete', {id: template.id}) }}" class="mt-4"
+<form method="post" action="{{ path('template_delete', {id: template.id}) }}" class="mt-4" data-turbo-frame="_top"
       data-controller="confirm" data-confirm-message-value="{{ 'template.edit.delete_confirm'|trans({'%label%': template.label}, 'template') }}">
     <button class="text-xs text-red-600 hover:underline">{{ 'template.edit.delete_button'|trans({}, 'template') }}</button>
 </form>

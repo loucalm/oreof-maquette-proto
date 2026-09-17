@@ -38,11 +38,11 @@
         <div>
             <div class="fld-label">{{ 'admin.referentiels.competences_row_title'|trans({}, 'admin') }}</div>
             <p class="text-xs" style="color:var(--c-muted)">
-                {{ 'admin.referentiels.competences_row_help'|trans({'%link_open%': '<a href="' ~ path('node_type_index') ~ '" class="underline">', '%link_close%': '</a>'}, 'admin')|raw }}
+                {{ 'admin.referentiels.competences_row_help'|trans({'%link_open%': '<a href="' ~ path('node_type_index') ~ '" data-turbo-frame="_top" class="underline">', '%link_close%': '</a>'}, 'admin')|raw }}
             </p>
         </div>
         <p class="text-xs" style="color:var(--c-muted)">
-            {{ 'admin.referentiels.mcc_note'|trans({'%link_open%': '<a href="' ~ path('admin_mcctypes') ~ '" class="underline">', '%link_close%': '</a>'}, 'admin')|raw }}
+            {{ 'admin.referentiels.mcc_note'|trans({'%link_open%': '<a href="' ~ path('admin_mcctypes') ~ '" data-turbo-frame="_top" class="underline">', '%link_close%': '</a>'}, 'admin')|raw }}
         </p>
     </div>
 
@@ -53,7 +53,7 @@
                 <div class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">{{ 'admin.referentiels.libre_title'|trans({}, 'admin') }}</div>
                 <p class="text-xs mt-1" style="color:var(--c-muted)">{{ 'admin.referentiels.libre_description'|trans({}, 'admin') }}</p>
             </div>
-            <a href="{{ path('referentiel_new') }}" class="shrink-0 rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'admin.referentiels.new_button'|trans({}, 'admin') }}</a>
+            <a href="{{ path('referentiel_new') }}" data-turbo-frame="_top" class="shrink-0 rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'admin.referentiels.new_button'|trans({}, 'admin') }}</a>
         </div>
         {% for ref in libres %}
             <div class="rounded-lg border p-3" style="border-color:var(--c-border)">
@@ -65,7 +65,7 @@
                         {% if ref.description %}<div class="fld-help mt-0.5">{{ ref.description }}</div>{% endif %}
                     </div>
                     <div class="shrink-0 whitespace-nowrap text-right">
-                        <a href="{{ path('referentiel_edit', {id: ref.id}) }}" class="text-xs hover:underline">{{ 'common.edit'|trans({}, 'common') }}</a>
+                        <a href="{{ path('referentiel_edit', {id: ref.id}) }}" data-turbo-frame="_top" class="text-xs hover:underline">{{ 'common.edit'|trans({}, 'common') }}</a>
                         {% if not ref.system %}
                             <form method="post" action="{{ path('referentiel_delete', {id: ref.id}) }}" class="inline"
                                   data-controller="confirm" data-confirm-message-value="{{ 'admin.referentiels.delete_confirm'|trans({'%label%': ref.label}, 'admin') }}">
@@ -104,7 +104,7 @@
                         {% if ref.entiteCible %}<div class="fld-help mt-0.5">{{ 'admin.referentiels.entite_cible_prefix'|trans({}, 'admin') }} {{ ref.entiteCible }}</div>{% endif %}
                     </div>
                     <div class="shrink-0 whitespace-nowrap text-right">
-                        <a href="{{ path('referentiel_edit', {id: ref.id}) }}" class="text-xs hover:underline">{{ 'common.edit'|trans({}, 'common') }}</a>
+                        <a href="{{ path('referentiel_edit', {id: ref.id}) }}" data-turbo-frame="_top" class="text-xs hover:underline">{{ 'common.edit'|trans({}, 'common') }}</a>
                         <span class="text-xs ml-2" style="color:var(--c-muted)" title="{{ 'admin.referentiels.go_to_entity_title'|trans({}, 'admin') }}">{{ 'admin.referentiels.go_to_entity'|trans({}, 'admin') }}</span>
                     </div>
                 </div>

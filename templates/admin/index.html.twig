@@ -8,7 +8,7 @@
 <div class="grid gap-4 md:grid-cols-2">
     {% for card in cards %}
         {% set s = sections[card.section] %}
-        <a href="{{ path(s.route) }}"
+        <a href="{{ path(s.route) }}" data-turbo-frame="_top"
            class="group flex flex-col rounded-xl border bg-white p-5 hover:shadow-sm hover:border-gray-300 transition"
            style="border-color:var(--c-border)">
             <div class="flex items-start justify-between gap-3">
