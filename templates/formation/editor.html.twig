@@ -4,7 +4,7 @@
 {% set focus = app.request.query.get('focus') %}
 {% set param = app.request.query.get('param') %}
 {% set bcc = app.request.query.get('bcc') %}
-{% set multi = formation.multiParcours %}
+{% set multi = formation.avecParcours %}
 {% set frameSrc = bcc ? path('bcc_editor', {fid: formation.id})
     : (param ? path('formation_param', {id: formation.id, key: param})
     : (focus ? path('node_panel', {fid: formation.id, nid: focus}) : null)) %}

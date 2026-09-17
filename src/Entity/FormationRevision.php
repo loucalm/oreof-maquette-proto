@@ -37,7 +37,7 @@ class FormationRevision
     private string $label;
 
     /**
-     * État complet restaurable : name/diplome/domaine/composante/multiParcours/
+     * État complet restaurable : name/diplome/domaine/composante/avecParcours/
      * ectsTotal/calendarSpan/calendarUnit/structure/parametres/dataParcours/arbre.
      *
      * @var array<string, mixed>

@@ -35,7 +35,7 @@ final class MaquetteExporter
                 'diplome' => $formation->getDiplome(),
                 'domaine' => $formation->getDomaine(),
                 'composante' => $formation->getComposante(),
-                'multiParcours' => $formation->isMultiParcours(),
+                'avecParcours' => $formation->isAvecParcours(),
                 'ectsTotal' => $formation->getEctsTotal(),
                 'calendar' => ['span' => $formation->getCalendarSpan(), 'unit' => $formation->getCalendarUnit()],
                 'structure' => $formation->getStructure(),
@@ -56,7 +56,7 @@ final class MaquetteExporter
             'formation' => [
                 'name' => $formation->getName(),
                 'diplome' => $formation->getDiplome(),
-                'multiParcours' => $formation->isMultiParcours(),
+                'avecParcours' => $formation->isAvecParcours(),
                 'ectsTotal' => $formation->getEctsTotal(),
                 'progress' => $this->builder->progress($roots),
                 'parametres' => $this->maquette->open($formation)->parametres,
@@ -101,7 +101,7 @@ final class MaquetteExporter
     private function bcc(Formation $formation): array
     {
         $doc = $this->maquette->open($formation);
-        $contexts = $formation->isMultiParcours() ? $doc->parcoursNodes() : [null];
+        $contexts = $formation->isAvecParcours() ? $doc->parcoursNodes() : [null];
 
         $out = [];
         foreach ($contexts as $ctx) {

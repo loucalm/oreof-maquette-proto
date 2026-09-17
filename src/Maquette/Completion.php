@@ -92,7 +92,7 @@ final class Completion
         }
 
         $parcours = [];
-        if ($doc->formation->isMultiParcours()) {
+        if ($doc->formation->isAvecParcours()) {
             foreach ($doc->parcoursNodes() as $p) {
                 $ps = $this->rollup($p);
                 $parcours[] = [

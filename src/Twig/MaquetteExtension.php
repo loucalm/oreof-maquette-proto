@@ -116,7 +116,7 @@ final class MaquetteExtension extends AbstractExtension
                 'key' => $key,
                 'type' => $byKey[$key] ?? null,
                 'fixed' => $isRootParcours,
-                'mono' => $isRootParcours && $formation->isMono(),
+                'mono' => $isRootParcours && $formation->isSansParcours(),
             ];
         }
 
@@ -158,7 +158,7 @@ final class MaquetteExtension extends AbstractExtension
                 'key' => $key,
                 'type' => $byKey[$key] ?? null,
                 'fixed' => 0 === $i || $i === $last,
-                'mono' => 0 === $i && !$template->isMultiParcours(),
+                'mono' => 0 === $i && !$template->isAvecParcours(),
             ];
         }
 
@@ -174,7 +174,7 @@ final class MaquetteExtension extends AbstractExtension
     public function templateTypeAtDepth(StructureTemplate $template, string $parentPath): ?NodeType
     {
         $depth = '' === trim($parentPath) ? 0 : substr_count($parentPath, '.') + 1;
-        $index = $template->isMultiParcours() ? $depth - 1 : $depth;
+        $index = $template->isAvecParcours() ? $depth - 1 : $depth;
         $byKey = $this->types->findAllIndexed();
 
         if ($index < 0) {

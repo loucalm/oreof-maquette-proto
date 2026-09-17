@@ -19,7 +19,7 @@ formation:
     col_periods: Périodes
     col_bcc: BCC
     parcours_count: '%count% parcours'
-    mono_parcours: mono-parcours
+    mono_parcours: sans parcours
     toggle_show: Voir
     toggle_parcours_suffix: les parcours
     phase_consolidation: Consolidation
@@ -49,7 +49,7 @@ formation:
     composante_placeholder: Composante exemple
     composante_help: >-
       Indiquer la composante porteuse du projet, qui aura en charge le dépôt de la demande
-    multi_parcours_label: La formation contient des parcours (multi-parcours)
+    multi_parcours_label: La formation contient des parcours (avec parcours)
     creation_type_label: Type de création
     phase_classic_label: Formation classique
     phase_classic_help: Construction immédiate de l'offre.
@@ -81,7 +81,7 @@ formation:
     meta_composante_default: Composante exemple
     meta_mention: Mention
     meta_parcours: Parcours
-    meta_mono_parcours: Mono-parcours
+    meta_mono_parcours: Sans parcours
     process_progress: Avancement du process
     consolidation_banner_title: En consolidation
     consolidation_banner_text: Structure à préparer ; le contenu sera complété plus tard.
@@ -186,21 +186,21 @@ formation:
       temporal_dimension: Dimension temporelle
       ects_total: ECTS total visé
       hierarchy: Hiérarchie des niveaux
-      intitule_mono: Intitulé mono-parcours
+      intitule_mono: Intitulé sans parcours
     section_organisation: Organisation et localisation
     section_presentation: Présentation
     no_field: Aucun champ renseigné pour cet ELP.
     mutualized_badge: mutualisé
     node_content_title: Contenu de cet ELP
     formation_params_breadcrumb: Paramètres de la formation
-    multi_parcours_value: Multi-parcours
+    multi_parcours_value: Avec parcours
     temporal_dimension_deduced: déduite de la structure (%unit%)
     implicit_badge: implicite
     section_empty: Section non renseignée.
     edit_section_button: Modifier cette section
     no_bloc: Aucun bloc de compétences.
     no_competency: Aucune compétence.
-    bcc_per_parcours_note: En multi-parcours, le référentiel est défini par parcours.
+    bcc_per_parcours_note: Avec parcours, le référentiel est défini par parcours.
     edit_lowercase: modifier
     bloc_count: '%count% bloc(s)'
     edit_referentiel_button: Modifier le référentiel
@@ -208,8 +208,8 @@ formation:
     readonly_pill: Lecture seule
     export_json_button: Export JSON
     list_button: Liste
-    multi_short: Multi
-    mono_short: Mono
+    multi_short: Avec parcours
+    mono_short: Sans parcours
     duree_label: Durée
     structure_label: Structure
     no_structure: Aucune structure définie.
@@ -387,13 +387,13 @@ formation:
       important_change_note: >-
         Changement important : bascule l'organisation de l'arbre existant, confirmation demandée.
       to_multi_confirm: >-
-        Passer en multi-parcours va rassembler les éléments pédagogiques actuels de la formation dans un
+        Passer avec parcours va rassembler les éléments pédagogiques actuels de la formation dans un
         nouveau parcours.
       yes_options: Oui (options)
       to_mono_confirm: >-
-        Passer en mono-parcours va supprimer le(s) parcours et remonter leurs éléments pédagogiques à la
+        Passer sans parcours va supprimer le(s) parcours et remonter leurs éléments pédagogiques à la
         racine de la formation.
-      no_mono: Non (mono-parcours)
+      no_mono: Non (sans parcours)
       divider_temporal: Dimension temporelle
       temporal_note: >-
         Sur combien de temps la formation se déroule : 3 ans, 6 mois, 12 semaines… Par défaut l'unité
@@ -403,14 +403,14 @@ formation:
       calendar_unit_help: 'Vide = %unit%'
       calendar_span_label: 'Durée (nombre de %unit%s)'
       calendar_span_help: Vide = déduit de l'arbre / des parcours
-      divider_mono_props: Propriétés formation mono-parcours
+      divider_mono_props: Propriétés formation sans parcours
       mono_props_note: >-
-        Ces propriétés seraient portées par un élément pédagogique %badge% ; en mono-parcours cet élément
+        Ces propriétés seraient portées par un élément pédagogique %badge% ; sans parcours cet élément
         pédagogique est <strong>invisible et verrouillé</strong> : la formation les porte directement.
-      intitule_mono_label: Intitulé de mono parcours
+      intitule_mono_label: Intitulé sans parcours
       intitule_mono_help: Si laissé vide, celui de la formation servira d'intitulé
       ects_total_label: Volume d'ECTS total
-      ects_total_help: Cela servira à vérifier le total d'ECTS de votre formation mono-parcours
+      ects_total_help: Cela servira à vérifier le total d'ECTS de votre formation sans parcours
       divider_structure: Structure
       locked_by_template_note: >-
         Fixé par le template du diplôme (administrateur SES). Une demande de dérogation est nécessaire

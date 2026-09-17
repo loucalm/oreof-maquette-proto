@@ -73,7 +73,7 @@ final class MaquetteDoc
     }
 
     /**
-     * Blocs BCC de niveau formation (mono-parcours), transversal en tête.
+     * Blocs BCC de niveau formation (sans parcours), transversal en tête.
      *
      * @return list<TreeNode>
      */

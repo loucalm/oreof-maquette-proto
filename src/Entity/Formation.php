@@ -44,7 +44,7 @@ class Formation
 
     /** « La formation contient-elle des parcours ? » */
     #[ORM\Column]
-    private bool $multiParcours = false;
+    private bool $avecParcours = false;
 
     /** Cible d'ECTS total (surtout utile en mono-parcours). */
     #[ORM\Column(nullable: true)]
@@ -216,14 +216,14 @@ class Formation
         return $this;
     }
 
-    public function isMultiParcours(): bool
+    public function isAvecParcours(): bool
     {
-        return $this->multiParcours;
+        return $this->avecParcours;
     }
 
-    public function setMultiParcours(bool $multiParcours): self
+    public function setAvecParcours(bool $avecParcours): self
     {
-        $this->multiParcours = $multiParcours;
+        $this->avecParcours = $avecParcours;
 
         return $this;
     }
@@ -392,9 +392,9 @@ class Formation
     }
 
     /** true = mono-parcours : pas de nœud « parcours », la formation l'incarne. */
-    public function isMono(): bool
+    public function isSansParcours(): bool
     {
-        return !$this->multiParcours;
+        return !$this->avecParcours;
     }
 
     /** Clé de type de la racine effective (pour la création de nœuds). */
@@ -409,7 +409,7 @@ class Formation
      */
     public function getVisibleRootTypeKey(): ?string
     {
-        return $this->multiParcours ? 'parcours' : ($this->structure[0] ?? null);
+        return $this->avecParcours ? 'parcours' : ($this->structure[0] ?? null);
     }
 
     /** Clé de type des enfants d'un nœud de type $typeKey, d'après le squelette. */
@@ -432,7 +432,7 @@ class Formation
         $parent = $chain[$i - 1];
 
         // en mono, le niveau « parcours » n'a pas de nœud → ses enfants sont racine
-        return ('parcours' === $parent && $this->isMono()) ? null : $parent;
+        return ('parcours' === $parent && $this->isSansParcours()) ? null : $parent;
     }
 
     /** $childTypeKey peut-il être enfant de $parentTypeKey selon le squelette ? */

@@ -283,7 +283,7 @@ final class Maquette
             ->setDiplome($snap['diplome'] ?? null)
             ->setDomaine($snap['domaine'] ?? null)
             ->setComposante($snap['composante'] ?? null)
-            ->setMultiParcours((bool) ($snap['multiParcours'] ?? false))
+            ->setAvecParcours((bool) ($snap['avecParcours'] ?? false))
             ->setEctsTotal($snap['ectsTotal'] ?? null)
             ->setCalendarSpan($snap['calendarSpan'] ?? null)
             ->setCalendarUnit($snap['calendarUnit'] ?? null)
@@ -352,7 +352,7 @@ final class Maquette
             'diplome' => $formation->getDiplome(),
             'domaine' => $formation->getDomaine(),
             'composante' => $formation->getComposante(),
-            'multiParcours' => $formation->isMultiParcours(),
+            'avecParcours' => $formation->isAvecParcours(),
             'ectsTotal' => $formation->getEctsTotal(),
             'calendarSpan' => $formation->getCalendarSpan(),
             'calendarUnit' => $formation->getCalendarUnit(),
@@ -376,8 +376,8 @@ final class Maquette
         if ($before == $after) {
             return null;
         }
-        if ($before['multiParcours'] !== $after['multiParcours']) {
-            return $after['multiParcours'] ? 'Bascule en multi-parcours' : 'Bascule en mono-parcours';
+        if ($before['avecParcours'] !== $after['avecParcours']) {
+            return $after['avecParcours'] ? 'Bascule avec parcours' : 'Bascule sans parcours';
         }
 
         if ($before['arbre'] !== $after['arbre']) {

@@ -18,7 +18,7 @@
             <p class="text-xs text-gray-500 -mt-2">
                 {{ 'formation.param.structure.locked_by_template_note'|trans({}, 'formation') }}
             </p>
-            <p class="text-sm font-medium">{{ formation.multiParcours ? 'formation.param.structure.yes_options'|trans({}, 'formation') : 'formation.param.structure.no_mono'|trans({}, 'formation') }}</p>
+            <p class="text-sm font-medium">{{ formation.avecParcours ? 'formation.param.structure.yes_options'|trans({}, 'formation') : 'formation.param.structure.no_mono'|trans({}, 'formation') }}</p>
         {% else %}
         <form method="post" action="{{ path('formation_settings', {id: formation.id}) }}" data-turbo-frame="_top" data-controller="confirm">
             <input type="hidden" name="name" value="{{ formation.name }}">
@@ -29,15 +29,15 @@
             <p class="fld-help">{{ ux_icon('ph:warning', {class: 'icon'}) }} {{ 'formation.param.structure.important_change_note'|trans({}, 'formation') }}</p>
             <div class="flex flex-wrap gap-8 mt-2 text-sm">
                 <label class="flex items-center gap-2">
-                    <input type="radio" name="multiParcours" value="1" {{ formation.multiParcours ? 'checked' }}
-                           data-confirm-target="restore" data-confirm-checked="{{ formation.multiParcours ? '1' : '0' }}"
+                    <input type="radio" name="avecParcours" value="1" {{ formation.avecParcours ? 'checked' }}
+                           data-confirm-target="restore" data-confirm-checked="{{ formation.avecParcours ? '1' : '0' }}"
                            data-action="change->confirm#confirmChange"
                            data-confirm-message-param="{{ 'formation.param.structure.to_multi_confirm'|trans({}, 'formation') }}">
                     {{ 'formation.param.structure.yes_options'|trans({}, 'formation') }}
                 </label>
                 <label class="flex items-center gap-2">
-                    <input type="radio" name="multiParcours" value="0" {{ not formation.multiParcours ? 'checked' }}
-                           data-confirm-target="restore" data-confirm-checked="{{ not formation.multiParcours ? '1' : '0' }}"
+                    <input type="radio" name="avecParcours" value="0" {{ not formation.avecParcours ? 'checked' }}
+                           data-confirm-target="restore" data-confirm-checked="{{ not formation.avecParcours ? '1' : '0' }}"
                            data-action="change->confirm#confirmChange"
                            data-confirm-message-param="{{ 'formation.param.structure.to_mono_confirm'|trans({}, 'formation') }}">
                     {{ 'formation.param.structure.no_mono'|trans({}, 'formation') }}
@@ -63,7 +63,7 @@
             <input type="hidden" name="diplome" value="{{ formation.diplome }}">
             <input type="hidden" name="domaine" value="{{ formation.domaine }}">
             <input type="hidden" name="composante" value="{{ formation.composante }}">
-            <input type="hidden" name="multiParcours" value="{{ formation.multiParcours ? '1' : '0' }}">
+            <input type="hidden" name="avecParcours" value="{{ formation.avecParcours ? '1' : '0' }}">
             <input type="hidden" name="ectsTotal" value="{{ formation.ectsTotal }}">
             <div>
                 {{ fld.label('formation.param.structure.calendar_unit_label'|trans({}, 'formation'), false, 'formation.param.structure.calendar_unit_help'|trans({'%unit%': unit}, 'formation')) }}
@@ -80,7 +80,7 @@
         {% endif %}
 
         {# ── Propriétés du parcours invisible (mono-parcours) ── #}
-        {% if formation.isMono %}
+        {% if formation.isSansParcours %}
             {{ fld.divider('formation.param.structure.divider_mono_props'|trans({}, 'formation')) }}
             <p class="text-xs text-gray-500 -mt-2">
                 {{ 'formation.param.structure.mono_props_note'|trans({'%badge%': '<span class="type-badge">' ~ ux_icon('ph:compass', {class: 'icon'}) ~ ' ' ~ 'formation.graph.parcours_fallback'|trans({}, 'formation') ~ '</span>'}, 'formation')|raw }}
@@ -89,7 +89,7 @@
                 <input type="hidden" name="name" value="{{ formation.name }}">
                 <input type="hidden" name="diplome" value="{{ formation.diplome }}">
                 <input type="hidden" name="domaine" value="{{ formation.domaine }}">
-                <input type="hidden" name="multiParcours" value="0">
+                <input type="hidden" name="avecParcours" value="0">
 
                 <div>
                     {{ fld.label('formation.param.structure.intitule_mono_label'|trans({}, 'formation'), false, 'formation.param.structure.intitule_mono_help'|trans({}, 'formation')) }}

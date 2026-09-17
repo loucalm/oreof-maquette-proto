@@ -8,8 +8,8 @@ template:
     new_label: Nouveau template
     new_button: Nouveau template
     diplome_badge: 'diplôme : %diplome%'
-    multi_parcours: multi-parcours
-    mono_parcours: mono-parcours
+    multi_parcours: avec parcours
+    mono_parcours: sans parcours
     root_count: '%count% ELP racine(s)'
   edit:
     unlock_title: 'ELP figé (ajout/suppression/duplication bloqués) — cliquer pour libérer'
@@ -27,7 +27,7 @@ template:
     diplome_field: Diplôme imposé
     diplome_none: — aucun (template libre) —
     diplome_help: Un seul template par diplôme. Appliqué automatiquement à la création d'une formation.
-    multi_parcours_label: Multi-parcours
+    multi_parcours_label: Avec parcours
     description_field: Description
     calendar_unit_field: Unité de temps
     calendar_span_field: Durée (nombre d'unités)

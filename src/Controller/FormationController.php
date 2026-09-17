@@ -76,7 +76,7 @@ final class FormationController extends AbstractController
             ->setDiplome($diplome)
             ->setDomaine(trim((string) $request->request->get('domaine')) ?: null)
             ->setComposante(trim((string) $request->request->get('composante')) ?: null)
-            ->setMultiParcours($request->request->getBoolean('multiParcours'))
+            ->setAvecParcours($request->request->getBoolean('avecParcours'))
             ->setPhase($phase)
             ->setAnneeUniversitaire($request->request->get('anneeUniversitaire'))
             ->setStructure(['annee', 'semestre', 'ue', 'ec']);
@@ -393,8 +393,8 @@ final class FormationController extends AbstractController
     #[Route('/formations/{id}/settings', name: 'formation_settings', methods: ['POST'])]
     public function settings(Formation $formation, Request $request, EntityManagerInterface $em): Response
     {
-        $wasMulti = $formation->isMultiParcours();
-        $willMulti = $request->request->getBoolean('multiParcours');
+        $wasMulti = $formation->isAvecParcours();
+        $willMulti = $request->request->getBoolean('avecParcours');
 
         $doc = $this->maquette->open($formation);
 
@@ -403,7 +403,7 @@ final class FormationController extends AbstractController
             ->setDiplome(trim((string) $request->request->get('diplome')) ?: null)
             ->setDomaine(trim((string) $request->request->get('domaine')) ?: null)
             ->setComposante(trim((string) $request->request->get('composante')) ?: null)
-            ->setMultiParcours($willMulti);
+            ->setAvecParcours($willMulti);
 
         // seuls les formulaires qui exposent le champ y touchent (le bouton radio
         // mono/multi ne le poste pas → ne doit pas remettre l'ECTS total à zéro)

@@ -44,7 +44,7 @@ class StructureTemplate
 
     /** Si le modèle suppose des parcours (multi) ou non (mono). */
     #[ORM\Column]
-    private bool $multiParcours = false;
+    private bool $avecParcours = false;
 
     /**
      * Tableau structurel : la chaîne de types qui compose le template (« 0
@@ -149,14 +149,14 @@ class StructureTemplate
         return $this;
     }
 
-    public function isMultiParcours(): bool
+    public function isAvecParcours(): bool
     {
-        return $this->multiParcours;
+        return $this->avecParcours;
     }
 
-    public function setMultiParcours(bool $multiParcours): self
+    public function setAvecParcours(bool $avecParcours): self
     {
-        $this->multiParcours = $multiParcours;
+        $this->avecParcours = $avecParcours;
 
         return $this;
     }

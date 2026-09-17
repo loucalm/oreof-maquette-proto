@@ -31,7 +31,7 @@ final class TemplateApplier
         }
 
         $doc->formation
-            ->setMultiParcours($template->isMultiParcours())
+            ->setAvecParcours($template->isAvecParcours())
             ->setStructure($structure)
             ->setCalendarUnit($template->getCalendarUnit())
             ->setCalendarSpan($template->getCalendarSpan());

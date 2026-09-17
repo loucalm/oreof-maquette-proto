@@ -25,7 +25,7 @@
                 {% if tpl.diplome %}<span class="pill" style="background:var(--c-primary-soft);color:var(--c-primary)">{{ 'template.index.diplome_badge'|trans({'%diplome%': tpl.diplome}, 'template') }}</span>{% endif %}
             </div>
             <div class="text-xs mb-2" style="color:var(--c-muted)">
-                <code>{{ tpl.key }}</code> · {{ tpl.multiParcours ? 'template.index.multi_parcours'|trans({}, 'template') : 'template.index.mono_parcours'|trans({}, 'template') }} · {{ 'template.index.root_count'|trans({'%count%': tpl.tree|length}, 'template') }}
+                <code>{{ tpl.key }}</code> · {{ tpl.avecParcours ? 'template.index.multi_parcours'|trans({}, 'template') : 'template.index.mono_parcours'|trans({}, 'template') }} · {{ 'template.index.root_count'|trans({'%count%': tpl.tree|length}, 'template') }}
             </div>
             <p class="text-sm" style="color:var(--c-muted)">{{ tpl.description }}</p>
         </a>

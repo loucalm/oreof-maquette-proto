@@ -246,7 +246,7 @@
 
             {% if key == 'structure' %}
                 <dl class="divide-y" style="border-color:var(--c-border)">
-                    {{ m.prow('formation.view.plabel.org_parcours'|trans({}, 'formation'), formation.multiParcours ? 'formation.view.multi_parcours_value'|trans({}, 'formation') : 'formation.editor.meta_mono_parcours'|trans({}, 'formation')) }}
+                    {{ m.prow('formation.view.plabel.org_parcours'|trans({}, 'formation'), formation.avecParcours ? 'formation.view.multi_parcours_value'|trans({}, 'formation') : 'formation.editor.meta_mono_parcours'|trans({}, 'formation')) }}
                     {{ m.prow('formation.view.plabel.temporal_dimension'|trans({}, 'formation'),
                         formation.calendarSpan
                             ? formation.calendarSpan ~ ' ' ~ period_unit(formation)|lower ~ (formation.calendarSpan > 1 ? 's' : '')
@@ -259,13 +259,13 @@
                                 {% set tm = type_meta()[tk] ?? null %}
                                 {% if not loop.first %}<span class="text-gray-300">›</span>{% endif %}
                                 <span class="type-badge">{{ tm ? ux_icon(tm.icon, {class: 'icon'}) }} [{{ tm ? tm.label : tk }}]</span>
-                                {%- if tk == 'parcours' and formation.isMono %}<span class="text-xs text-gray-400">{{ 'formation.view.implicit_badge'|trans({}, 'formation') }}</span>{% endif -%}
+                                {%- if tk == 'parcours' and formation.isSansParcours %}<span class="text-xs text-gray-400">{{ 'formation.view.implicit_badge'|trans({}, 'formation') }}</span>{% endif -%}
                             {% endfor %}
                         </dd>
                     </div>
                     {% set regimes = data.regimes ?? [] %}
                     {% if regimes %}{{ m.prow('formation.view.plabel.regimes'|trans({}, 'formation'), regimes|join(', ')) }}{% endif %}
-                    {% if formation.isMono %}
+                    {% if formation.isSansParcours %}
                         {% for f in [
                             {k: 'intituleMono', l: 'formation.view.plabel.intitule_mono'|trans({}, 'formation')},
                             {k: 'langue', l: 'formation.view.plabel.langue'|trans({}, 'formation')},
@@ -348,7 +348,7 @@
         <div class="flex flex-wrap items-center gap-2">
             <h3 class="text-lg font-bold">{{ 'formation.editor.bcc_section_label'|trans({}, 'formation') }}</h3>
         </div>
-        {% if formation.multiParcours %}
+        {% if formation.avecParcours %}
             <p class="text-sm text-gray-500">{{ 'formation.view.bcc_per_parcours_note'|trans({}, 'formation') }}</p>
             {% for p in parcours_nodes(formation) %}
                 <div class="space-y-2">
@@ -397,14 +397,14 @@
             (('formation.editor.meta_domaine'|trans({}, 'formation'))): formation.domaine ?: 'formation.editor.meta_domaine_default'|trans({}, 'formation'),
             (('formation.editor.meta_diplome'|trans({}, 'formation'))): formation.diplome ?: '—',
             (('formation.editor.meta_composante'|trans({}, 'formation'))): formation.composante ?: '—',
-            (('formation.editor.meta_parcours'|trans({}, 'formation'))): formation.multiParcours ? 'formation.view.multi_short'|trans({}, 'formation') : 'formation.view.mono_short'|trans({}, 'formation'),
+            (('formation.editor.meta_parcours'|trans({}, 'formation'))): formation.avecParcours ? 'formation.view.multi_short'|trans({}, 'formation') : 'formation.view.mono_short'|trans({}, 'formation'),
             (('formation.view.duree_label'|trans({}, 'formation'))): (formation.calendarSpan ? formation.calendarSpan ~ ' ' ~ period_unit(formation)|lower ~ (formation.calendarSpan > 1 ? 's' : '') : '—'),
             (('formation.index.global_progress'|trans({}, 'formation'))): progress ~ '%'
         } %}
             <div><div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{{ k }}</div><div class="text-sm mt-1">{{ v }}</div></div>
         {% endfor %}
     </div>
-    {% if formation.isMono and (formation.getParametre('structure').regimes ?? []) %}
+    {% if formation.isSansParcours and (formation.getParametre('structure').regimes ?? []) %}
         <div class="mt-3 pt-3 border-t text-xs text-gray-500" style="border-color:var(--c-border)">
             {{ 'formation.view.plabel.regimes'|trans({}, 'formation') }} : <strong class="text-gray-700">{{ formation.getParametre('structure').regimes|join(', ') }}</strong>
         </div>
@@ -427,7 +427,7 @@
                     <span class="status-dot" data-status="{{ bcc_status(formation) }}"></span>
                     <span class="tree-label">{{ 'formation.editor.bcc_section_label'|trans({}, 'formation') }}</span>
                 </div>
-                {% if formation.multiParcours %}
+                {% if formation.avecParcours %}
                     <a href="{{ path('formation_parcours_graph', {id: formation.id}) }}" class="block rounded-md px-2 py-1.5 text-sm hover:bg-gray-50" style="color:var(--c-primary)">{{ ux_icon('ph:map-trifold', {class: 'icon'}) }} {{ 'formation.editor.ramification_section_label'|trans({}, 'formation') }}</a>
                 {% endif %}
             </div>

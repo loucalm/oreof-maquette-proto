@@ -72,7 +72,7 @@ final class TemplateController extends AbstractController
             ->setLabel(trim((string) $request->request->get('label')) ?: $template->getLabel())
             ->setDescription(trim((string) $request->request->get('description')) ?: null)
             ->setDiplome($request->request->get('diplome') ?: null)
-            ->setMultiParcours($request->request->getBoolean('multiParcours'))
+            ->setAvecParcours($request->request->getBoolean('avecParcours'))
             ->setCalendarUnit($request->request->get('calendarUnit'))
             ->setCalendarSpan('' !== $span && null !== $span ? (int) $span : null);
         $this->em->flush();
@@ -259,7 +259,7 @@ final class TemplateController extends AbstractController
 
         $template = (new StructureTemplate($key, $label))
             ->setDescription('Créé depuis la formation « '.$formation->getName().' ».')
-            ->setMultiParcours($formation->isMultiParcours())
+            ->setAvecParcours($formation->isAvecParcours())
             ->setTree($this->serialize($this->maquette->open($formation)->pedagogicalRoots()));
 
         $this->em->persist($template);

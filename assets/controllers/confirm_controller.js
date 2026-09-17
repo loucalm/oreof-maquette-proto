@@ -10,7 +10,7 @@ import { Controller } from '@hotwired/stimulus';
  *    `<form>` : confirme avant l'envoi (boutons Supprimer, Vider, etc.).
  *  - `data-action="change->confirm#confirmChange" data-confirm-message-param="…"`
  *    sur un radio/checkbox qui déclenche lui-même la soumission (ex. bascule
- *    mono/multi-parcours) : confirme avant de soumettre, et remet l'entrée
+ *    mono/avec parcours) : confirme avant de soumettre, et remet l'entrée
  *    d'origine (`data-confirm-target="restore"` + `data-confirm-checked`)
  *    si l'utilisateur annule — sinon le radio resterait visuellement sur le
  *    nouveau choix alors que rien n'a été enregistré.

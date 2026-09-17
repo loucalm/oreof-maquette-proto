@@ -67,7 +67,7 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
         return $n;
     }
 
-    // ─── 1re démo : Licence Informatique, mono-parcours ───
+    // ─── 1re démo : Licence Informatique, sans parcours ───
 
     private function licenceInfo(): Formation
     {
@@ -136,7 +136,7 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
             ->setDiplome('Licence')
             ->setDomaine('Sciences, technologies, santé')
             ->setComposante('UFR Sciences Exactes et Naturelles')
-            ->setMultiParcours(false)
+            ->setAvecParcours(false)
             ->setStructure(['annee', 'semestre', 'ue', 'ec'])
             ->setEctsTotal(180)
             ->setArbre($arbre)
@@ -167,7 +167,7 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
             ]);
     }
 
-    // ─── 2e démo : multi-parcours avec ramification cohérente sur 3 ans ───
+    // ─── 2e démo : avec parcours avec ramification cohérente sur 3 ans ───
 
     private function licenceMulti(): Formation
     {
@@ -244,11 +244,11 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
             ],
         ];
 
-        return (new Formation('Licence Sciences & Technologies (démo multi-parcours)'))
+        return (new Formation('Licence Sciences & Technologies (démo avec parcours)'))
             ->setDiplome('Licence')
             ->setDomaine('Sciences, technologies, santé')
             ->setComposante('UFR Sciences Exactes et Naturelles')
-            ->setMultiParcours(true)
+            ->setAvecParcours(true)
             ->setStructure(['annee', 'semestre', 'ue', 'ec'])
             ->setCalendarSpan(3)
             ->setEctsTotal(180)
@@ -273,7 +273,7 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
             ->setDiplome('Certificat')
             ->setDomaine('Sciences, technologies, santé')
             ->setComposante('Formation continue')
-            ->setMultiParcours(false)
+            ->setAvecParcours(false)
             ->setStructure(['semaine', 'ue', 'ec'])
             ->setCalendarUnit('Semaine')
             ->setCalendarSpan(6)

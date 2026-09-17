@@ -23,7 +23,7 @@ use Symfony\Component\Routing\Attribute\Route;
  *
  * Les nœuds BCC vivent dans le même document `Formation::arbre` que la structure
  * pédagogique (famille « compétence », filtrée à l'affichage). Contexte : la
- * formation en mono-parcours (blocs = racines), un nœud parcours en multi
+ * formation en sans parcours (blocs = racines), un nœud parcours en multi
  * (blocs = enfants du parcours).
  */
 final class BccController extends AbstractController

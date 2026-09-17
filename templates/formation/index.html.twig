@@ -59,7 +59,7 @@
                         <td class="px-4 py-4 align-top">
                             <div class="font-medium">{{ f.name }}</div>
                             <div class="text-xs text-gray-400">
-                                {{ f.diplome ?: '—' }} · {{ f.multiParcours ? 'formation.index.parcours_count'|trans({'%count%': row.parcours|length}, 'formation') : 'formation.index.mono_parcours'|trans({}, 'formation') }}
+                                {{ f.diplome ?: '—' }} · {{ f.avecParcours ? 'formation.index.parcours_count'|trans({'%count%': row.parcours|length}, 'formation') : 'formation.index.mono_parcours'|trans({}, 'formation') }}
                             </div>
                             {% if row.parcours %}
                                 <button type="button" data-action="disclosure#toggle"
@@ -227,7 +227,7 @@
                 </div>
 
                 <label class="flex items-center gap-2 text-sm">
-                    <input type="checkbox" name="multiParcours" value="1"> {{ 'formation.index.multi_parcours_label'|trans({}, 'formation') }}
+                    <input type="checkbox" name="avecParcours" value="1"> {{ 'formation.index.multi_parcours_label'|trans({}, 'formation') }}
                 </label>
 
                 <div class="rounded-lg border p-3 space-y-3" style="border-color:var(--c-border);background:#f8f9fb">
