@@ -41,9 +41,14 @@ template:
     mccc_types_title: Types de MCC utilisés
     mccc_types_empty: Aucun type de MCC retenu pour ce diplôme pour l'instant.
     mccc_profile_label: 'Profil :'
+    mccc_add_button: Ajouter des types de MCC
+    mccc_add_help: >-
+      Plusieurs types peuvent coexister pour ce diplôme (ex. CC et CT) — la règle (profil) à appliquer
+      se choisit ici, directement.
+    mccc_no_profile: Aucune règle définie pour ce type.
     mccc_note: >-
-      Les profils de règles de chaque type se créent dans %link_open%Types de MCCC%link_close% ; ici on
-      choisit lesquels s'appliquent à ce diplôme.
+      Les règles elles-mêmes (contenu d'un profil) se créent dans %link_open%Types de MCCC%link_close% ;
+      ici on choisit lesquelles s'appliquent à ce diplôme.
     field_overrides_title: 'Champs de %type% pour ce template'
     field_overrides_pencil_title: Champs togglables de cette ligne pour ce template
     tree_title: Arbre du template

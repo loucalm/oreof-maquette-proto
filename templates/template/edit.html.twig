@@ -218,12 +218,40 @@
                 {% endfor %}
             </div>
         {% endif %}
-        <form method="post" action="{{ path('template_mccc_add', {id: template.id}) }}" class="flex items-center gap-1.5 border-t pt-2" style="border-color:var(--c-border)">
-            <select name="type" class="rounded border px-2 py-1 text-xs flex-1" style="border-color:var(--c-border)">
-                {% for t in mccTypes %}{% if t.key not in usedKeys %}<option value="{{ t.key }}">{{ t.shortLabel }} — {{ t.label }}</option>{% endif %}{% endfor %}
-            </select>
-            <button class="rounded border px-2 py-1 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'common.add'|trans({}, 'common') }}</button>
-        </form>
+        {% set addableMccTypes = mccTypes|filter(t => t.key not in usedKeys) %}
+        {% if addableMccTypes is not empty %}
+            <div data-controller="modal" class="border-t pt-2" style="border-color:var(--c-border)">
+                <button type="button" data-action="modal#open" class="rounded border px-2 py-1 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">
+                    {{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'template.edit.mccc_add_button'|trans({}, 'template') }}
+                </button>
+                <dialog data-modal-target="dialog" data-action="click->modal#clickOutside"
+                        class="rounded-2xl border-0 p-0 w-[min(480px,92vw)] backdrop:bg-black/40">
+                    <form method="post" action="{{ path('template_mccc_add', {id: template.id}) }}" class="p-6 space-y-3">
+                        <h3 class="text-lg font-bold">{{ 'template.edit.mccc_add_button'|trans({}, 'template') }}</h3>
+                        <p class="text-xs" style="color:var(--c-muted)">{{ 'template.edit.mccc_add_help'|trans({}, 'template') }}</p>
+                        <div class="space-y-2">
+                            {% for t in addableMccTypes %}
+                                <div class="flex items-center gap-2 rounded-md border p-2 text-sm" style="border-color:var(--c-border)">
+                                    <input type="checkbox" name="types[]" value="{{ t.key }}" id="mccc-add-{{ t.key }}">
+                                    <label for="mccc-add-{{ t.key }}" class="flex-1">{{ t.shortLabel }} — {{ t.label }}</label>
+                                    {% if t.profiles is not empty %}
+                                        <select name="profile[{{ t.key }}]" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
+                                            {% for profile in t.profiles %}<option value="{{ profile.key }}">{{ profile.label }}</option>{% endfor %}
+                                        </select>
+                                    {% else %}
+                                        <span class="text-[11px]" style="color:var(--c-muted)">{{ 'template.edit.mccc_no_profile'|trans({}, 'template') }}</span>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="flex justify-end gap-2 pt-1">
+                            <button type="button" data-action="modal#close" class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</button>
+                            <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.add'|trans({}, 'common') }}</button>
+                        </div>
+                    </form>
+                </dialog>
+            </div>
+        {% endif %}
         <p class="text-[11px] mt-2" style="color:var(--c-muted)">
             {{ 'template.edit.mccc_note'|trans({'%link_open%': '<a href="' ~ path('admin_mcctypes') ~ '" target="_blank" class="underline">', '%link_close%': '</a>'}, 'template')|raw }}
         </p>

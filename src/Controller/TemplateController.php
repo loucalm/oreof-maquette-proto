@@ -152,18 +152,28 @@ final class TemplateController extends AbstractController
         return $this->redirectToRoute('template_edit', ['id' => $template->getId()]);
     }
 
-    /** Types de MCCC retenus pour ce diplôme + profil choisi pour chacun. */
+    /**
+     * Types de MCCC retenus pour ce diplôme + profil (règle) choisi pour chacun —
+     * plusieurs types à la fois (ex. CC et CT pour le même diplôme), la règle se
+     * choisit ici, pas besoin d'aller dans l'éditeur de type de MCCC pour ça.
+     */
     #[Route('/administration/templates/{id}/mccc', name: 'template_mccc_add', methods: ['POST'])]
     public function mcccAdd(StructureTemplate $template, Request $request, MccTypeRepository $mccTypes): Response
     {
-        $typeKey = trim((string) $request->request->get('type'));
-        $type = $mccTypes->findOneByKey($typeKey);
-        if (null !== $type) {
-            $profiles = $template->getMcccProfiles();
-            $profiles[$typeKey] ??= $type->getProfiles()[0]['key'] ?? '';
-            $template->setMcccProfiles($profiles);
-            $this->em->flush();
+        $selectedKeys = array_map('strval', (array) $request->request->all('types'));
+        $profileChoices = (array) $request->request->all('profile');
+
+        $profiles = $template->getMcccProfiles();
+        foreach ($selectedKeys as $typeKey) {
+            $type = $mccTypes->findOneByKey($typeKey);
+            if (null === $type) {
+                continue;
+            }
+            $chosen = (string) ($profileChoices[$typeKey] ?? '');
+            $profiles[$typeKey] = null !== $type->getProfile($chosen) ? $chosen : ($type->getProfiles()[0]['key'] ?? '');
         }
+        $template->setMcccProfiles($profiles);
+        $this->em->flush();
 
         return $this->redirectToRoute('template_edit', ['id' => $template->getId()]);
     }
