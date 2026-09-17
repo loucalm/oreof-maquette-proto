@@ -312,7 +312,7 @@
         </select>
         <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'node.panel.create_fiche_fake'|trans({}, 'node') }}</span></div>
     {% elseif def.field == 'hours' %}
-        {% set mods = {'cm': 'CM', 'td': 'TD', 'tp': 'TP'} %}
+        {% set mods = referentiel('modalites_heure')|filter((l, k) => k != 'te') %}
         <div data-controller="hours" class="space-y-4">
             <label class="flex items-center gap-3 text-sm">
                 <input type="checkbox" class="switch" name="attr_hours[none]" value="1" {{ (val.none ?? false) ? 'checked' }}
@@ -321,7 +321,7 @@
             </label>
 
             <div data-hours-target="fields" class="space-y-4">
-                {% set places = {'pres': 'node.panel.place_pres'|trans({}, 'node'), 'dist': 'node.panel.place_dist'|trans({}, 'node')} %}
+                {% set places = referentiel('lieux_enseignement') %}
                 {% for place, plabel in places %}
                     <div class="rounded-xl border p-4" style="border-color:var(--c-border)">
                         <div class="flex items-center justify-between gap-2">

@@ -34,13 +34,16 @@
         <div class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">{{ 'admin.referentiels.metamodel_title'|trans({}, 'admin') }}</div>
         <p class="text-xs" style="color:var(--c-muted)">{{ 'admin.referentiels.metamodel_help'|trans({}, 'admin') }}</p>
         {{ ui.row('admin.referentiels.field_types_row_title'|trans({}, 'admin'), 'admin.referentiels.field_types_row_help'|trans({}, 'admin'), fieldTypes) }}
-        {{ ui.row('admin.referentiels.node_types_row_title'|trans({}, 'admin'), 'admin.referentiels.node_types_row_help'|trans({}, 'admin'), nodeTypePills) }}
+        {{ ui.row('admin.referentiels.node_types_row_title'|trans({}, 'admin'), 'admin.referentiels.node_types_row_help'|trans({}, 'admin'), kindPills) }}
         <div>
-            {{ ui.row('admin.referentiels.hours_row_title'|trans({}, 'admin'), 'admin.referentiels.hours_row_help'|trans({}, 'admin'), hourModalities|merge(hourPlaces)) }}
-            <p class="text-xs mt-1.5">
-                {{ 'admin.referentiels.mcc_note'|trans({'%link_open%': '<a href="' ~ path('admin_mcctypes') ~ '" class="underline">', '%link_close%': '</a>'}, 'admin')|raw }}
+            <div class="fld-label">{{ 'admin.referentiels.competences_row_title'|trans({}, 'admin') }}</div>
+            <p class="text-xs" style="color:var(--c-muted)">
+                {{ 'admin.referentiels.competences_row_help'|trans({'%link_open%': '<a href="' ~ path('node_type_index') ~ '" class="underline">', '%link_close%': '</a>'}, 'admin')|raw }}
             </p>
         </div>
+        <p class="text-xs" style="color:var(--c-muted)">
+            {{ 'admin.referentiels.mcc_note'|trans({'%link_open%': '<a href="' ~ path('admin_mcctypes') ~ '" class="underline">', '%link_close%': '</a>'}, 'admin')|raw }}
+        </p>
     </div>
 
     {# ─── libre : nomenclatures entièrement éditables ─── #}

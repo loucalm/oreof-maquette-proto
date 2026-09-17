@@ -26,18 +26,22 @@ admin:
     field_types_row_title: Type de saisie d’un champ
     field_types_row_help: Choisis à la création d’un champ, depuis l’éditeur d’un type d’ELP.
     node_types_row_title: Type d’élément pédagogique
-    node_types_row_help: Gérés depuis la page « Types d’élément pédagogique ».
-    hours_row_title: Modalités d’heure
-    hours_row_help: Lieux (présentiel/distanciel) et modalités (CM/TD/TP).
+    node_types_row_help: Structurel ou temporel — cf. « Types d’élément pédagogique » pour les types concrets (UE, EC, Année…).
+    competences_row_title: Compétences (BCC)
+    competences_row_help: >-
+      Les blocs/compétences se créent depuis %link_open%Types d’élément pédagogique%link_close% (types
+      « Bloc de compétences »/« Compétence ») ; ils s’attribuent à un ELP via le champ « Compétence(s)
+      associée(s) ».
     mcc_note: 'Les types de MCCC (CCI, CT…) ont leur propre page — %link_open%Types de MCCC%link_close%.'
     libre_title: Libre
     libre_description: >-
-      Nomenclatures entièrement éditables : diplômes, domaines, régimes, langues, codes ROME…
-      Réutilisées telles quelles dans les formulaires de formation et de parcours.
+      Nomenclatures entièrement éditables, sans équivalent réel dans une autre application : modalités
+      d’heure, lieux, régimes d’inscription, niveaux de langue/entrée/sortie…
     entite_title: Lier à des entités
     entite_description: >-
-      Référentiels destinés à référencer de vraies entités dans l’application finale (établissement,
-      composante, annuaire…) — restent des listes plates dans ce prototype.
+      Référentiels destinés à référencer de vraies entités (ou API externes) dans l’application finale —
+      établissement, composante, ville, plateforme d’admission, annuaire, ROME, RNCP… Restent des listes
+      plates avec des valeurs fictives dans ce prototype.
     entite_cible_prefix: 'Cible finale :'
     go_to_entity: Aller à l’entité
     go_to_entity_title: Non disponible dans ce prototype — pointera vers la vraie entité dans l’application finale.

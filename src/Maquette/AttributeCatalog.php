@@ -134,25 +134,20 @@ final class AttributeCatalog
         return \is_array($hours) && (!empty($hours['none']) || self::sumHours($hours) > 0);
     }
 
-    /** Défauts pour amorcer les fixtures / restaurer le socle. */
+    /**
+     * Défauts pour amorcer les fixtures / restaurer le socle.
+     *
+     * [key, label, tab, category, type, options, required, help, referentielKey]
+     */
     public const SEED = [
-        ['ects', 'ECTS', 'props', null, 'number', [], true, 'ECTS associés à cet ELP.'],
-        ['choiceCount', 'Nombre à choisir', 'props', null, 'number', [], true, 'Combien de ces éléments doivent être choisis parmi les options de ce bloc (ex. 1 parmi 3).'],
-        ['ueType', "Type d'UE", 'props', null, 'choice', [
-            'disciplinaire' => 'Disciplinaire', 'transversale' => 'Transversale',
-            'langue' => 'Langue', 'projet' => 'Projet / stage', 'libre' => 'Ouverture / libre',
-        ], false, null],
-        ['ecType', "Type d'EC", 'props', null, 'choice', [
-            'cm' => 'Cours magistral', 'td' => 'Travaux dirigés', 'tp' => 'Travaux pratiques',
-            'projet' => 'Projet', 'stage' => 'Stage', 'autre' => 'Autre',
-        ], false, null],
-        ['nature', "Nature de l'élément", 'props', null, 'radio', [
-            'obligatoire' => 'Obligatoire', 'choix_libre' => 'À choix libre',
-            'choix_restreint' => 'À choix restreint', 'specifique_sante' => 'Spécifique santé facultative',
-        ], true, null],
-        ['competencies', 'Compétence(s) associée(s)', 'props', null, 'competencies', [], false, 'Sélection de compétences du référentiel (BCC).'],
-        ['ficheMatiere', 'Fiche matière obligatoire', 'props', null, 'text', [], true, 'Fiche matière rattachée à l’EC.'],
-        ['hours', 'Volume horaire', 'volume_horaire', null, 'hours', [], true, null],
-        ['mccc', 'MCCC', 'mccc', null, 'mccc', [], true, null],
+        ['ects', 'ECTS', 'props', null, 'number', [], true, 'ECTS associés à cet ELP.', null],
+        ['choiceCount', 'Nombre à choisir', 'props', null, 'number', [], true, 'Combien de ces éléments doivent être choisis parmi les options de ce bloc (ex. 1 parmi 3).', null],
+        ['ueType', "Type d'UE", 'props', null, 'choice', [], false, null, 'types_ue'],
+        ['ecType', "Type d'EC", 'props', null, 'choice', [], false, null, 'types_ec'],
+        ['nature', "Nature de l'élément", 'props', null, 'radio', [], true, null, 'nature_elp'],
+        ['competencies', 'Compétence(s) associée(s)', 'props', null, 'competencies', [], false, 'Sélection de compétences du référentiel (BCC).', null],
+        ['ficheMatiere', 'Fiche matière obligatoire', 'props', null, 'text', [], true, 'Fiche matière rattachée à l’EC.', 'fiches_matiere'],
+        ['hours', 'Volume horaire', 'volume_horaire', null, 'hours', [], true, null, null],
+        ['mccc', 'MCCC', 'mccc', null, 'mccc', [], true, null, null],
     ];
 }

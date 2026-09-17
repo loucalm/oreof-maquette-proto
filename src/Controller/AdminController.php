@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\FieldDef;
+use App\Enum\NodeKind;
 use App\Enum\RefCategory;
-use App\Maquette\AttributeCatalog;
 use App\Repository\DerogationRequestRepository;
 use App\Repository\MccTypeRepository;
 use App\Repository\NodeTypeRepository;
@@ -91,22 +91,20 @@ final class AdminController extends AbstractController
     }
 
     #[Route('/administration/referentiels', name: 'admin_referentiels', methods: ['GET'])]
-    public function referentiels(NodeTypeRepository $types, ReferentielRepository $referentiels): Response
+    public function referentiels(ReferentielRepository $referentiels): Response
     {
         $all = $referentiels->allOrdered();
 
-        $nodeTypePills = [];
-        foreach ($types->findAllOrdered() as $t) {
-            $nodeTypePills[$t->getKey()] = $t->getLabel();
+        $kindPills = [];
+        foreach (NodeKind::cases() as $k) {
+            $kindPills[$k->value] = $k->label();
         }
 
         return $this->render('admin/referentiels.html.twig', [
             'libres' => array_values(array_filter($all, static fn ($r) => $r->getCategory() === RefCategory::Libre)),
             'entites' => array_values(array_filter($all, static fn ($r) => $r->getCategory() === RefCategory::Entite)),
-            'hourModalities' => AttributeCatalog::HOUR_MODALITIES,
-            'hourPlaces' => AttributeCatalog::HOUR_PLACES,
             'fieldTypes' => FieldDef::TYPES,
-            'nodeTypePills' => $nodeTypePills,
+            'kindPills' => $kindPills,
         ]);
     }
 
