@@ -42,13 +42,18 @@ node_type:
       Numérotation héritée = préfixée par le numéro du parent (ex. UE 2.1, héritant du Semestre 2).
       Décochée = comptage global continu sur tout l'arbre, sans préfixe (ex. Semestre 1, 2, 3, 4…).
     form_builder_title: Formulaire associé
-    form_builder_help: Onglet › séparateur › champ. Les champs sont partagés entre types (ex. ECTS sur UE et EC).
+    form_builder_help: >-
+      Onglet › champs et séparateurs, glissables (⠿) pour réordonner. Les champs sont partagés entre
+      types (ex. ECTS sur UE et EC).
     form_builder_empty: Aucun champ pour l’instant.
     tab_label: 'Onglet : %tab%'
     add_field_button: Ajouter un champ
     add_field_reuse_help: >-
       Si la clé saisie correspond à un champ existant, il est réutilisé tel quel (le reste du formulaire
       est ignoré) ; sinon un nouveau champ est créé.
+    add_separator_button: Ajouter un séparateur
+    separator_pill: Séparateur
+    separator_label_placeholder: 'ex. Volume horaire'
     remove_field_confirm: >-
       Retirer « %label% » de ce formulaire ? Si aucun autre type ne l'utilise, le champ sera supprimé
       du catalogue.
@@ -58,8 +63,6 @@ node_type:
     field_key_field: Clé
     field_key_placeholder: existant ou nouveau
     field_tab_field: Onglet
-    field_category_field: Séparateur
-    field_category_placeholder: 'ex. Volume horaire'
     field_required_label: Champs requis
     field_help_field: Tooltip / aide
     field_referentiel_field: Référentiel associé

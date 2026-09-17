@@ -11,16 +11,15 @@ use Doctrine\Persistence\ObjectManager;
 
 /**
  * Champs de formulaire « socle », amorcés depuis AttributeCatalog::SEED.
- * Tout est ensuite éditable dans /champs.
+ * Tout est ensuite éditable depuis l'éditeur d'un type d'ELP (« Formulaire associé »).
  */
 final class FieldDefFixtures extends Fixture
 {
     public function load(ObjectManager $manager): void
     {
-        foreach (AttributeCatalog::SEED as $i => [$key, $label, $tab, $category, $type, $options, $required, $help, $referentielKey]) {
+        foreach (AttributeCatalog::SEED as $i => [$key, $label, $tab, $type, $options, $required, $help, $referentielKey]) {
             $field = (new FieldDef($key, $label))
                 ->setTab($tab)
-                ->setCategory($category)
                 ->setType($type)
                 ->setOptions($options)
                 ->setReferentielKey($referentielKey)

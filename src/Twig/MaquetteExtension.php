@@ -488,6 +488,9 @@ final class MaquetteExtension extends AbstractExtension
     {
         $out = [];
         foreach ($this->catalog->all() as $key => $def) {
+            if ('separator' === $def['field']) {
+                continue; // ligne d'organisation, pas une capacité togglable par template
+            }
             $out[$key] = $def['label'];
         }
         foreach (AttributeCatalog::FLAGS as $key => $label) {

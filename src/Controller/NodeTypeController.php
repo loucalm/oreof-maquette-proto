@@ -136,8 +136,7 @@ final class NodeTypeController extends AbstractController
             $this->addFlash('info', sprintf('Champ existant « %s » réutilisé tel quel.', $existing->getLabel()));
         } else {
             $field = (new FieldDef($key, $label))
-                ->setTab((string) $request->request->get('tab', 'props'))
-                ->setCategory($request->request->get('category'));
+                ->setTab((string) $request->request->get('tab', 'props'));
             $this->applyFieldRequest($field, $request);
             $em->persist($field);
         }
@@ -150,7 +149,7 @@ final class NodeTypeController extends AbstractController
     }
 
     /** Modifie le FieldDef partagé (impacte tous les types qui l'utilisent) + son état togglable pour CE type. */
-    #[Route('/administration/node-types/{id}/champs/{fieldId}', name: 'node_type_field_edit', methods: ['POST'])]
+    #[Route('/administration/node-types/{id}/champs/{fieldId}', name: 'node_type_field_edit', methods: ['POST'], requirements: ['fieldId' => '\d+'])]
     public function fieldEdit(NodeType $nodeType, int $fieldId, Request $request, EntityManagerInterface $em, FieldDefRepository $fields): Response
     {
         $field = $fields->find($fieldId);
@@ -159,9 +158,13 @@ final class NodeTypeController extends AbstractController
         }
 
         $field->setLabel(trim((string) $request->request->get('label')) ?: $field->getLabel());
-        $field->setTab((string) $request->request->get('tab', $field->getTab()));
-        $field->setCategory($request->request->get('category'));
-        $this->applyFieldRequest($field, $request);
+
+        // un séparateur n'a qu'un libellé — inutile (et dangereux) de repasser par applyFieldRequest,
+        // qui réinitialiserait son type faute des autres champs du formulaire complet.
+        if ('separator' !== $field->getType()) {
+            $field->setTab((string) $request->request->get('tab', $field->getTab()));
+            $this->applyFieldRequest($field, $request);
+        }
 
         $this->setCapability($nodeType, $field->getKey(), true, $request->request->getBoolean('togglable'));
         $em->flush();
@@ -170,8 +173,64 @@ final class NodeTypeController extends AbstractController
         return $this->redirectToRoute('node_type_edit', ['id' => $nodeType->getId()]);
     }
 
+    /** Insère un séparateur (ligne d'organisation) en fin de cet onglet, pour ce type. */
+    #[Route('/administration/node-types/{id}/champs/separateur', name: 'node_type_separator_add', methods: ['POST'])]
+    public function separatorAdd(NodeType $nodeType, Request $request, EntityManagerInterface $em, FieldDefRepository $fields): Response
+    {
+        $tab = (string) $request->request->get('tab', 'props');
+        $label = trim((string) $request->request->get('label')) ?: 'Séparateur';
+        $key = 'sep_'.bin2hex(random_bytes(4));
+
+        $tabFields = array_filter($fields->allOrdered(), static fn (FieldDef $f) => $f->getTab() === $tab);
+        $maxPosition = array_reduce($tabFields, static fn (int $max, FieldDef $f) => max($max, $f->getPosition()), 0);
+
+        $separator = (new FieldDef($key, $label))
+            ->setType('separator')
+            ->setTab($tab)
+            ->setPosition($maxPosition + 5);
+        $em->persist($separator);
+
+        $this->setCapability($nodeType, $key, true, true);
+        $em->flush();
+        $this->addFlash('success', 'Séparateur ajouté.');
+
+        return $this->redirectToRoute('node_type_edit', ['id' => $nodeType->getId()]);
+    }
+
+    /**
+     * Réordonne les champs/séparateurs d'un onglet par glisser-déposer — les
+     * positions déjà utilisées par cet onglet sont juste réattribuées dans le
+     * nouvel ordre, ce qui laisse les autres onglets (et donc leur ordre
+     * d'apparition) inchangés.
+     */
+    #[Route('/administration/node-types/{id}/champs/{tab}/reordonner', name: 'node_type_fields_reorder', methods: ['POST'])]
+    public function fieldsReorder(NodeType $nodeType, string $tab, Request $request, EntityManagerInterface $em, FieldDefRepository $fields): Response
+    {
+        $byKey = [];
+        $positions = [];
+        foreach ($fields->allOrdered() as $f) {
+            if ($f->getTab() === $tab && $nodeType->hasCapability($f->getKey())) {
+                $byKey[$f->getKey()] = $f;
+                $positions[] = $f->getPosition();
+            }
+        }
+        sort($positions);
+
+        $orderedKeys = array_values(array_intersect((array) $request->request->all('chain'), array_keys($byKey)));
+        foreach ($orderedKeys as $i => $key) {
+            $byKey[$key]->setPosition($positions[$i] ?? end($positions));
+        }
+        $em->flush();
+
+        if ($request->isXmlHttpRequest()) {
+            return new Response(null, Response::HTTP_NO_CONTENT);
+        }
+
+        return $this->redirectToRoute('node_type_edit', ['id' => $nodeType->getId()]);
+    }
+
     /** Retire le champ du formulaire de ce type ; supprime le FieldDef du catalogue si plus aucun autre type ne l'utilise. */
-    #[Route('/administration/node-types/{id}/champs/{fieldId}/supprimer', name: 'node_type_field_remove', methods: ['POST'])]
+    #[Route('/administration/node-types/{id}/champs/{fieldId}/supprimer', name: 'node_type_field_remove', methods: ['POST'], requirements: ['fieldId' => '\d+'])]
     public function fieldRemove(NodeType $nodeType, int $fieldId, EntityManagerInterface $em, FieldDefRepository $fields, NodeTypeRepository $types): Response
     {
         $field = $fields->find($fieldId);
@@ -243,27 +302,21 @@ final class NodeTypeController extends AbstractController
     }
 
     /**
-     * Formulaire associé, groupé onglet > séparateur (catégorie) > champ, pour
-     * les seules capacités actives de ce type qui correspondent à un FieldDef
-     * du catalogue (les drapeaux hors-catalogue comme « mutualisable » n'y
+     * Formulaire associé, groupé onglet > liste ordonnée (champs et séparateurs
+     * mêlés, dans l'ordre où ils seront affichés/glissés), pour les seules
+     * capacités actives de ce type qui correspondent à un FieldDef du
+     * catalogue (les drapeaux hors-catalogue comme « mutualisable » n'y
      * apparaissent pas, ils sont gérés dans le bloc « Propriété de l'ELP »).
      *
-     * @return array<string, array<string, list<FieldDef>>>
+     * @return array<string, list<FieldDef>>
      */
     private function formBuilderData(NodeType $nodeType, FieldDefRepository $fields): array
     {
-        $byKey = [];
-        foreach ($fields->allOrdered() as $f) {
-            $byKey[$f->getKey()] = $f;
-        }
-
         $out = [];
-        foreach ($nodeType->getCapabilities() as $key => $on) {
-            if (!$on || !isset($byKey[$key])) {
-                continue;
+        foreach ($fields->allOrdered() as $f) {
+            if ($nodeType->hasCapability($f->getKey()) && ($nodeType->getCapabilities()[$f->getKey()] ?? false)) {
+                $out[$f->getTab()][] = $f;
             }
-            $field = $byKey[$key];
-            $out[$field->getTab()][$field->getCategory() ?? ''][] = $field;
         }
 
         return $out;

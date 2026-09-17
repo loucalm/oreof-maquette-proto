@@ -123,15 +123,14 @@
                 {% endif %}
             {% endif %}
 
-            {# champs du catalogue pour cet onglet, groupés par catégorie #}
-            {% set curCat = '__init__' %}
+            {# champs (et séparateurs) du catalogue pour cet onglet, dans l'ordre #}
             {% for key, def in catalog %}
                 {% if def.domain == tk and (caps[key] ?? false) %}
-                    {% if (def.category ?? null) != curCat %}
-                        {% set curCat = def.category ?? null %}
-                        {% if curCat %}<div class="fld-cat">{{ curCat }}</div>{% endif %}
+                    {% if def.field == 'separator' %}
+                        <div class="fld-cat">{{ def.label }}</div>
+                    {% else %}
+                        {{ ui.field(key, def, node) }}
                     {% endif %}
-                    {{ ui.field(key, def, node) }}
                 {% endif %}
             {% endfor %}
 

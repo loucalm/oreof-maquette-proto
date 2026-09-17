@@ -19,13 +19,9 @@
                 <span class="text-xs font-medium">{{ 'node_type.edit.field_key_field'|trans({}, 'node_type') }}</span>
                 <input name="key" list="existing-field-keys" placeholder="{{ 'node_type.edit.field_key_placeholder'|trans({}, 'node_type') }}" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
             </label>
-            <label class="block">
+            <label class="block col-span-2">
                 <span class="text-xs font-medium">{{ 'node_type.edit.field_tab_field'|trans({}, 'node_type') }}</span>
                 <input name="tab" value="props" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
-            </label>
-            <label class="block col-span-2">
-                <span class="text-xs font-medium">{{ 'node_type.edit.field_category_field'|trans({}, 'node_type') }}</span>
-                <input name="category" placeholder="{{ 'node_type.edit.field_category_placeholder'|trans({}, 'node_type') }}" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
             </label>
         {% endif %}
         <label class="flex items-center gap-2 text-sm pt-4">
@@ -168,48 +164,75 @@
             <p class="text-xs mt-1" style="color:var(--c-muted)">{{ 'node_type.edit.form_builder_help'|trans({}, 'node_type') }}</p>
         </div>
 
-        {% for tab, categories in form %}
+        {% for tab, fields in form %}
             <div class="rounded-lg border p-3" style="border-color:var(--c-border)">
                 <div class="text-sm font-semibold mb-2">{{ 'node_type.edit.tab_label'|trans({'%tab%': tab}, 'node_type') }}</div>
-                {% for category, fields in categories %}
-                    {% if category %}
-                        <div class="flex items-center gap-2 my-2 text-[11px] uppercase tracking-wide" style="color:var(--c-muted)">
-                            <span class="h-px flex-1 bg-gray-200"></span>{{ category }}<span class="h-px flex-1 bg-gray-200"></span>
-                        </div>
-                    {% endif %}
-                    <div class="space-y-2">
-                        {% for f in fields %}
-                            {% set togglableDefault = not nodeType.isCapabilityLocked(f.key) %}
-                            <details class="rounded-md border" style="border-color:var(--c-border)">
-                                <summary class="flex items-center justify-between gap-2 px-3 py-2 cursor-pointer text-sm">
-                                    <span>{{ f.label }} <code class="text-xs" style="color:var(--c-muted)">{{ f.key }}</code>
-                                        {% if not togglableDefault %}<span class="pill ml-1" title="{{ 'node_type.edit.not_togglable_title'|trans({}, 'node_type') }}">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }}</span>{% endif %}
-                                    </span>
-                                    <form method="post" action="{{ path('node_type_field_remove', {id: nodeType.id, fieldId: f.id}) }}" onclick="event.stopPropagation()"
-                                          data-controller="confirm" data-confirm-message-value="{{ 'node_type.edit.remove_field_confirm'|trans({'%label%': f.label}, 'node_type') }}">
-                                        <button class="text-xs text-red-600 hover:underline">{{ 'common.remove'|trans({}, 'common') }}</button>
-                                    </form>
-                                </summary>
-                                <div class="p-3 border-t" style="border-color:var(--c-border)">
-                                    {{ ui.fieldForm(path('node_type_field_edit', {id: nodeType.id, fieldId: f.id}), f, referentiels, referentielCapableTypes, fieldTypes, 'common.save'|trans({}, 'common'), togglableDefault) }}
-                                </div>
-                            </details>
-                        {% endfor %}
-                    </div>
-                {% endfor %}
+                <ul data-controller="chain" data-chain-save-url-value="{{ path('node_type_fields_reorder', {id: nodeType.id, tab: tab}) }}" class="space-y-2">
+                    {% for f in fields %}
+                        <li data-chain-key="{{ f.key }}" class="flex items-start gap-1.5">
+                            <span class="drag-handle mt-2.5 shrink-0 text-gray-300" title="{{ 'formation.tree.drag_title'|trans({}, 'formation') }}">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>
+                            <div class="flex-1 min-w-0">
+                                {% if f.type == 'separator' %}
+                                    <div class="flex items-center gap-2 rounded-md border px-3 py-2" style="border-color:var(--c-border);background:#fafafa">
+                                        <span class="text-[11px] uppercase tracking-wide shrink-0" style="color:var(--c-muted)">{{ 'node_type.edit.separator_pill'|trans({}, 'node_type') }}</span>
+                                        <form method="post" action="{{ path('node_type_field_edit', {id: nodeType.id, fieldId: f.id}) }}" class="flex-1 flex items-center gap-2">
+                                            <input name="label" value="{{ f.label }}" class="flex-1 rounded border px-2 py-1 text-sm" style="border-color:var(--c-border)">
+                                            <button class="text-xs hover:underline shrink-0">{{ 'common.save'|trans({}, 'common') }}</button>
+                                        </form>
+                                        <form method="post" action="{{ path('node_type_field_remove', {id: nodeType.id, fieldId: f.id}) }}" class="shrink-0">
+                                            <button class="text-xs text-red-600 hover:underline">{{ 'common.remove'|trans({}, 'common') }}</button>
+                                        </form>
+                                    </div>
+                                {% else %}
+                                    {% set togglableDefault = not nodeType.isCapabilityLocked(f.key) %}
+                                    <details class="rounded-md border" style="border-color:var(--c-border)">
+                                        <summary class="flex items-center justify-between gap-2 px-3 py-2 cursor-pointer text-sm">
+                                            <span>{{ f.label }} <code class="text-xs" style="color:var(--c-muted)">{{ f.key }}</code>
+                                                {% if not togglableDefault %}<span class="pill ml-1" title="{{ 'node_type.edit.not_togglable_title'|trans({}, 'node_type') }}">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }}</span>{% endif %}
+                                            </span>
+                                            <form method="post" action="{{ path('node_type_field_remove', {id: nodeType.id, fieldId: f.id}) }}" onclick="event.stopPropagation()"
+                                                  data-controller="confirm" data-confirm-message-value="{{ 'node_type.edit.remove_field_confirm'|trans({'%label%': f.label}, 'node_type') }}">
+                                                <button class="text-xs text-red-600 hover:underline">{{ 'common.remove'|trans({}, 'common') }}</button>
+                                            </form>
+                                        </summary>
+                                        <div class="p-3 border-t" style="border-color:var(--c-border)">
+                                            {{ ui.fieldForm(path('node_type_field_edit', {id: nodeType.id, fieldId: f.id}), f, referentiels, referentielCapableTypes, fieldTypes, 'common.save'|trans({}, 'common'), togglableDefault) }}
+                                        </div>
+                                    </details>
+                                {% endif %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
             </div>
         {% else %}
             <p class="text-sm" style="color:var(--c-muted)">{{ 'node_type.edit.form_builder_empty'|trans({}, 'node_type') }}</p>
         {% endfor %}
 
-        <details class="rounded-md border" style="border-color:var(--c-border)">
-            <summary class="px-3 py-2 cursor-pointer text-sm font-medium" style="color:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'node_type.edit.add_field_button'|trans({}, 'node_type') }}</summary>
-            <div class="p-3 border-t" style="border-color:var(--c-border)">
-                <datalist id="existing-field-keys">{% for f in catalog %}<option value="{{ f.key }}">{% endfor %}</datalist>
-                {{ ui.fieldForm(path('node_type_field_add', {id: nodeType.id}), null, referentiels, referentielCapableTypes, fieldTypes, 'node_type.edit.add_field_button'|trans({}, 'node_type'), true) }}
-                <p class="text-[11px] mt-1" style="color:var(--c-muted)">{{ 'node_type.edit.add_field_reuse_help'|trans({}, 'node_type') }}</p>
-            </div>
-        </details>
+        <div class="flex flex-wrap gap-2">
+            <details class="rounded-md border flex-1 min-w-[240px]" style="border-color:var(--c-border)">
+                <summary class="px-3 py-2 cursor-pointer text-sm font-medium" style="color:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'node_type.edit.add_field_button'|trans({}, 'node_type') }}</summary>
+                <div class="p-3 border-t" style="border-color:var(--c-border)">
+                    <datalist id="existing-field-keys">{% for f in catalog %}<option value="{{ f.key }}">{% endfor %}</datalist>
+                    {{ ui.fieldForm(path('node_type_field_add', {id: nodeType.id}), null, referentiels, referentielCapableTypes, fieldTypes, 'node_type.edit.add_field_button'|trans({}, 'node_type'), true) }}
+                    <p class="text-[11px] mt-1" style="color:var(--c-muted)">{{ 'node_type.edit.add_field_reuse_help'|trans({}, 'node_type') }}</p>
+                </div>
+            </details>
+            <details class="rounded-md border flex-1 min-w-[240px]" style="border-color:var(--c-border)">
+                <summary class="px-3 py-2 cursor-pointer text-sm font-medium" style="color:var(--c-primary)">{{ ux_icon('ph:minus', {class: 'icon'}) }} {{ 'node_type.edit.add_separator_button'|trans({}, 'node_type') }}</summary>
+                <form method="post" action="{{ path('node_type_separator_add', {id: nodeType.id}) }}" class="p-3 border-t flex items-end gap-2" style="border-color:var(--c-border)">
+                    <label class="block flex-1">
+                        <span class="text-xs font-medium">{{ 'node_type.edit.field_tab_field'|trans({}, 'node_type') }}</span>
+                        <input name="tab" value="props" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
+                    </label>
+                    <label class="block flex-[2]">
+                        <span class="text-xs font-medium">{{ 'node_type.edit.field_label_field'|trans({}, 'node_type') }}</span>
+                        <input name="label" required placeholder="{{ 'node_type.edit.separator_label_placeholder'|trans({}, 'node_type') }}" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
+                    </label>
+                    <button class="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">{{ 'node_type.edit.add_separator_button'|trans({}, 'node_type') }}</button>
+                </form>
+            </details>
+        </div>
     </div>
     {% endif %}
 </div>

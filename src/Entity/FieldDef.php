@@ -20,7 +20,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'field_def')]
 class FieldDef
 {
-    /** Types de saisie. Les trois derniers sont « système » (rendu spécial). */
+    /** Types de saisie. Les trois avant-derniers sont « système » (rendu spécial) ; « separator » n'est pas un champ saisissable. */
     public const TYPES = [
         'text' => 'Texte court',
         'textarea' => 'Texte long',
@@ -31,6 +31,7 @@ class FieldDef
         'competencies' => 'Compétences (référentiel)',
         'hours' => 'Volume horaire (présentiel / distanciel / TE)',
         'mccc' => 'MCCC (type de contrôle)',
+        'separator' => 'Séparateur (ligne d’organisation)',
     ];
 
     /** Types dont les options peuvent venir d'un référentiel plutôt que d'une saisie inline. */
@@ -53,10 +54,6 @@ class FieldDef
     /** Onglet du formulaire : "props", "volume_horaire", "mccc" ou un onglet créé par l'admin. */
     #[ORM\Column(length: 40)]
     private string $tab = 'props';
-
-    /** Sous-titre de regroupement dans l'onglet (facultatif). */
-    #[ORM\Column(length: 80, nullable: true)]
-    private ?string $category = null;
 
     /** Une des clés de self::TYPES. */
     #[ORM\Column(length: 20)]
@@ -146,18 +143,6 @@ class FieldDef
     public function setTab(string $tab): self
     {
         $this->tab = trim($tab) ?: 'props';
-
-        return $this;
-    }
-
-    public function getCategory(): ?string
-    {
-        return $this->category;
-    }
-
-    public function setCategory(?string $category): self
-    {
-        $this->category = trim((string) $category) ?: null;
 
         return $this;
     }

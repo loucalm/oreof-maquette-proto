@@ -48,7 +48,7 @@ final class AttributeCatalog
 
     /**
      * @return array<string, array{
-     *     domain: string, label: string, field: string, category: ?string,
+     *     domain: string, label: string, field: string,
      *     options: array<string, string>, referentielKey: ?string, allowExtra: bool,
      *     quickAdd: bool, required: bool, help: ?string, min: ?float, max: ?float
      * }>
@@ -65,7 +65,6 @@ final class AttributeCatalog
                 'domain' => $f->getTab(),
                 'label' => $f->getLabel(),
                 'field' => $f->getType(),
-                'category' => $f->getCategory(),
                 'options' => $f->getOptions(),
                 'referentielKey' => $f->getReferentielKey(),
                 'allowExtra' => $f->isAllowExtra(),
@@ -137,17 +136,17 @@ final class AttributeCatalog
     /**
      * Défauts pour amorcer les fixtures / restaurer le socle.
      *
-     * [key, label, tab, category, type, options, required, help, referentielKey]
+     * [key, label, tab, type, options, required, help, referentielKey]
      */
     public const SEED = [
-        ['ects', 'ECTS', 'props', null, 'number', [], true, 'ECTS associés à cet ELP.', null],
-        ['choiceCount', 'Nombre à choisir', 'props', null, 'number', [], true, 'Combien de ces éléments doivent être choisis parmi les options de ce bloc (ex. 1 parmi 3).', null],
-        ['ueType', "Type d'UE", 'props', null, 'choice', [], false, null, 'types_ue'],
-        ['ecType', "Type d'EC", 'props', null, 'choice', [], false, null, 'types_ec'],
-        ['nature', "Nature de l'élément", 'props', null, 'radio', [], true, null, 'nature_elp'],
-        ['competencies', 'Compétence(s) associée(s)', 'props', null, 'competencies', [], false, 'Sélection de compétences du référentiel (BCC).', null],
-        ['ficheMatiere', 'Fiche matière obligatoire', 'props', null, 'text', [], true, 'Fiche matière rattachée à l’EC.', 'fiches_matiere'],
-        ['hours', 'Volume horaire', 'volume_horaire', null, 'hours', [], true, null, null],
-        ['mccc', 'MCCC', 'mccc', null, 'mccc', [], true, null, null],
+        ['ects', 'ECTS', 'props', 'number', [], true, 'ECTS associés à cet ELP.', null],
+        ['choiceCount', 'Nombre à choisir', 'props', 'number', [], true, 'Combien de ces éléments doivent être choisis parmi les options de ce bloc (ex. 1 parmi 3).', null],
+        ['ueType', "Type d'UE", 'props', 'choice', [], false, null, 'types_ue'],
+        ['ecType', "Type d'EC", 'props', 'choice', [], false, null, 'types_ec'],
+        ['nature', "Nature de l'élément", 'props', 'radio', [], true, null, 'nature_elp'],
+        ['competencies', 'Compétence(s) associée(s)', 'props', 'competencies', [], false, 'Sélection de compétences du référentiel (BCC).', null],
+        ['ficheMatiere', 'Fiche matière obligatoire', 'props', 'text', [], true, 'Fiche matière rattachée à l’EC.', 'fiches_matiere'],
+        ['hours', 'Volume horaire', 'volume_horaire', 'hours', [], true, null, null],
+        ['mccc', 'MCCC', 'mccc', 'mccc', [], true, null, null],
     ];
 }
