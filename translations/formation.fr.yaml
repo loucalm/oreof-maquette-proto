@@ -344,9 +344,6 @@ formation:
       modalites_alternance_label: Précisez les modalités de l'alternance
       modalites_alternance_help: >-
         Indiquez en 3000 caractères maximum les périodes et leurs durées en centre ou en entreprise.
-      divider_localisation: Localisation
-      localisation_label: Localisation du parcours
-      add_localisation_fake: Ajouter une autre localisation
       resp_label: Responsable du parcours
       resp_help: Responsable principale du parcours
       resp_select_placeholder: 'Choisir dans la liste ou choisir "+ nouveau"'

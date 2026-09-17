@@ -221,7 +221,7 @@ final class FormationController extends AbstractController
     public const PARCOURS_PARAM_FIELDS = [
         'organisation' => [
             'modalitesEnseignement', 'composante', 'regimes', 'modalitesAlternance',
-            'lieu', 'respParcours',
+            'respParcours',
         ],
         'presentation' => [
             'objectif', 'motsCles', 'resultats', 'contenu', 'langue', 'niveauLangue',

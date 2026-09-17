@@ -41,12 +41,6 @@
             {{ fld.textarea('modalitesAlternance', data.modalitesAlternance ?? '', 'formation.param.parcours_organisation.modalites_alternance_help'|trans({}, 'formation')) }}
         </div>
 
-        {{ fld.divider('formation.param.parcours_organisation.divider_localisation'|trans({}, 'formation')) }}
-
-        <div>
-            {{ fld.label('formation.param.parcours_organisation.localisation_label'|trans({}, 'formation'), true) }}
-            {{ fld.selectAdd('lieu', data.lieu ?? '', referentiel('localisations'), 'formation.param.parcours_organisation.add_localisation_fake'|trans({}, 'formation')) }}
-        </div>
         <div>
             {{ fld.label('formation.param.organisation.code_apogee_label'|trans({}, 'formation'), false, 'formation.param.organisation.code_apogee_help'|trans({}, 'formation')) }}
             {{ fld.text('codeApogee', data.codeApogee ?? '', 'formation.param.organisation.code_apogee_placeholder'|trans({}, 'formation')) }}

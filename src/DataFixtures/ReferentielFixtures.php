@@ -42,13 +42,10 @@ final class ReferentielFixtures extends Fixture
         ['niveaux_sortie', 'Niveaux de sortie', 'Niveau visé à la sortie.', [
             'Bac+2' => 'Bac+2', 'Bac+3' => 'Bac+3', 'Bac+5' => 'Bac+5',
         ], RefCategory::Libre, null],
-        // conservés Libre, non repris dans la dernière liste mais sans équivalent entité identifié
+        // conservé Libre, non repris dans la dernière liste mais sans équivalent entité identifié
         ['modalites_enseignement', 'Modalités d’enseignement', 'Présentiel, distance, hybride, alternance.', [
             'En présentiel' => 'En présentiel', 'À distance' => 'À distance',
             'Hybride (présentiel + distanciel)' => 'Hybride (présentiel + distanciel)', 'En alternance' => 'En alternance',
-        ], RefCategory::Libre, null],
-        ['localisations', 'Localisations', 'Sites d’enseignement.', [
-            'Campus principal' => 'Campus principal', 'Campus secondaire' => 'Campus secondaire', 'À distance' => 'À distance',
         ], RefCategory::Libre, null],
 
         // ─── Lier à des entités : listes destinées à pointer vers de vraies entités/API dans l'appli finale ───
