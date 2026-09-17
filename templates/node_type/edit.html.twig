@@ -210,28 +210,49 @@
         {% endfor %}
 
         <div class="flex flex-wrap gap-2">
-            <details class="rounded-md border flex-1 min-w-[240px]" style="border-color:var(--c-border)">
-                <summary class="px-3 py-2 cursor-pointer text-sm font-medium" style="color:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'node_type.edit.add_field_button'|trans({}, 'node_type') }}</summary>
-                <div class="p-3 border-t" style="border-color:var(--c-border)">
-                    <datalist id="existing-field-keys">{% for f in catalog %}<option value="{{ f.key }}">{% endfor %}</datalist>
-                    {{ ui.fieldForm(path('node_type_field_add', {id: nodeType.id}), null, referentiels, referentielCapableTypes, fieldTypes, 'node_type.edit.add_field_button'|trans({}, 'node_type'), true) }}
-                    <p class="text-[11px] mt-1" style="color:var(--c-muted)">{{ 'node_type.edit.add_field_reuse_help'|trans({}, 'node_type') }}</p>
-                </div>
-            </details>
-            <details class="rounded-md border flex-1 min-w-[240px]" style="border-color:var(--c-border)">
-                <summary class="px-3 py-2 cursor-pointer text-sm font-medium" style="color:var(--c-primary)">{{ ux_icon('ph:minus', {class: 'icon'}) }} {{ 'node_type.edit.add_separator_button'|trans({}, 'node_type') }}</summary>
-                <form method="post" action="{{ path('node_type_separator_add', {id: nodeType.id}) }}" class="p-3 border-t flex items-end gap-2" style="border-color:var(--c-border)">
-                    <label class="block flex-1">
-                        <span class="text-xs font-medium">{{ 'node_type.edit.field_tab_field'|trans({}, 'node_type') }}</span>
-                        <input name="tab" value="props" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
-                    </label>
-                    <label class="block flex-[2]">
-                        <span class="text-xs font-medium">{{ 'node_type.edit.field_label_field'|trans({}, 'node_type') }}</span>
-                        <input name="label" required placeholder="{{ 'node_type.edit.separator_label_placeholder'|trans({}, 'node_type') }}" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
-                    </label>
-                    <button class="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">{{ 'node_type.edit.add_separator_button'|trans({}, 'node_type') }}</button>
-                </form>
-            </details>
+            {# ── modale « Ajouter un champ » ── #}
+            <div data-controller="modal" class="flex-1 min-w-[200px]">
+                <button type="button" data-action="modal#open" class="w-full rounded-md border px-3 py-2 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border);color:var(--c-primary)">
+                    {{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'node_type.edit.add_field_button'|trans({}, 'node_type') }}
+                </button>
+                <dialog data-modal-target="dialog" data-action="click->modal#clickOutside"
+                        class="rounded-2xl border-0 p-0 w-[min(560px,92vw)] backdrop:bg-black/40">
+                    <div class="p-6 space-y-3">
+                        <h3 class="text-lg font-bold">{{ 'node_type.edit.add_field_button'|trans({}, 'node_type') }}</h3>
+                        <datalist id="existing-field-keys">{% for f in catalog %}<option value="{{ f.key }}">{% endfor %}</datalist>
+                        {{ ui.fieldForm(path('node_type_field_add', {id: nodeType.id}), null, referentiels, referentielCapableTypes, fieldTypes, 'node_type.edit.add_field_button'|trans({}, 'node_type'), true) }}
+                        <p class="text-[11px]" style="color:var(--c-muted)">{{ 'node_type.edit.add_field_reuse_help'|trans({}, 'node_type') }}</p>
+                        <div class="flex justify-end">
+                            <button type="button" data-action="modal#close" class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</button>
+                        </div>
+                    </div>
+                </dialog>
+            </div>
+
+            {# ── modale « Ajouter un séparateur » ── #}
+            <div data-controller="modal" class="flex-1 min-w-[200px]">
+                <button type="button" data-action="modal#open" class="w-full rounded-md border px-3 py-2 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border);color:var(--c-primary)">
+                    {{ ux_icon('ph:minus', {class: 'icon'}) }} {{ 'node_type.edit.add_separator_button'|trans({}, 'node_type') }}
+                </button>
+                <dialog data-modal-target="dialog" data-action="click->modal#clickOutside"
+                        class="rounded-2xl border-0 p-0 w-[min(420px,92vw)] backdrop:bg-black/40">
+                    <form method="post" action="{{ path('node_type_separator_add', {id: nodeType.id}) }}" class="p-6 space-y-3">
+                        <h3 class="text-lg font-bold">{{ 'node_type.edit.add_separator_button'|trans({}, 'node_type') }}</h3>
+                        <label class="block">
+                            <span class="text-xs font-medium">{{ 'node_type.edit.field_tab_field'|trans({}, 'node_type') }}</span>
+                            <input name="tab" value="props" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
+                        </label>
+                        <label class="block">
+                            <span class="text-xs font-medium">{{ 'node_type.edit.field_label_field'|trans({}, 'node_type') }}</span>
+                            <input name="label" required placeholder="{{ 'node_type.edit.separator_label_placeholder'|trans({}, 'node_type') }}" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
+                        </label>
+                        <div class="flex justify-end gap-2 pt-1">
+                            <button type="button" data-action="modal#close" class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</button>
+                            <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'node_type.edit.add_separator_button'|trans({}, 'node_type') }}</button>
+                        </div>
+                    </form>
+                </dialog>
+            </div>
         </div>
     </div>
     {% endif %}
