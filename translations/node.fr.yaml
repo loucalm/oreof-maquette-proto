@@ -74,6 +74,8 @@ node:
     mccc_total_label: 'Total :'
     add_evaluation_button: Ajouter une épreuve
     evaluation_type_placeholder: — Type d'épreuve —
+    evaluation_duree_placeholder: durée
+    evaluation_duree_title: Durée de l'épreuve, en minutes (facultatif)
     delete_title: Supprimer
   attach:
     title: Raccrocher un élément pédagogique mutualisé

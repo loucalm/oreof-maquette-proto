@@ -133,7 +133,7 @@ final class MaquetteExtension extends AbstractExtension
         $inChain = array_flip($formation->getEffectiveStructure());
 
         return array_values(array_filter(
-            $this->types->findAllOrdered(),
+            $this->types->forTree(),
             static fn (NodeType $t) => 'parcours' !== $t->getKey() && !isset($inChain[$t->getKey()]),
         ));
     }
@@ -192,7 +192,7 @@ final class MaquetteExtension extends AbstractExtension
         $inChain = array_flip($template->getStructure());
 
         return array_values(array_filter(
-            $this->types->findAllOrdered(),
+            $this->types->forTree(),
             static fn (NodeType $t) => 'parcours' !== $t->getKey() && !isset($inChain[$t->getKey()]),
         ));
     }

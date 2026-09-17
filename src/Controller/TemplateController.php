@@ -59,7 +59,7 @@ final class TemplateController extends AbstractController
     {
         return $this->render('template/edit.html.twig', [
             'template' => $template,
-            'types' => $types->findAllOrdered(),
+            'types' => $types->forTree(),
             'mccTypes' => $mccTypes->allOrdered(),
         ]);
     }

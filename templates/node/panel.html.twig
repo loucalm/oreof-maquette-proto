@@ -391,13 +391,13 @@
                     <div class="text-sm text-gray-500">{{ 'node.panel.mccc_total_label'|trans({}, 'node') }} <span class="font-semibold" data-mccc-target="sum">0</span> %</div>
                 </div>
                 <div data-mccc-target="rows" class="mt-2 space-y-2">
-                    {% for e in evals %}{{ ui.mcccRow(loop.index0, e.type ?? '', e.weight ?? '') }}{% endfor %}
+                    {% for e in evals %}{{ ui.mcccRow(loop.index0, e.type ?? '', e.weight ?? '', e.duree ?? '') }}{% endfor %}
                 </div>
                 <button type="button" data-action="mccc#addRow"
                         class="mt-2 inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">
                     {{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'node.panel.add_evaluation_button'|trans({}, 'node') }}
                 </button>
-                <template data-mccc-target="rowTemplate">{{ ui.mcccRow('__INDEX__', '', '') }}</template>
+                <template data-mccc-target="rowTemplate">{{ ui.mcccRow('__INDEX__', '', '', '') }}</template>
             </div>
         </div>
 
@@ -420,12 +420,17 @@
     {% endif %}
 {% endmacro %}
 
-{% macro mcccRow(index, type, weight) %}
+{% macro mcccRow(index, type, weight, duree) %}
     <div class="flex items-center gap-2" data-mccc-target="row">
         <select name="attr_mccc[evaluations][{{ index }}][type]" class="fld flex-1">
             <option value="">{{ 'node.panel.evaluation_type_placeholder'|trans({}, 'node') }}</option>
             {% for k, l in referentiel('types_epreuve') %}<option value="{{ k }}" {{ type == k ? 'selected' }}>{{ l }}</option>{% endfor %}
         </select>
+        <div class="relative w-24 shrink-0">
+            <input type="number" step="1" min="0" name="attr_mccc[evaluations][{{ index }}][duree]" value="{{ duree }}"
+                   placeholder="{{ 'node.panel.evaluation_duree_placeholder'|trans({}, 'node') }}" class="fld pr-8" title="{{ 'node.panel.evaluation_duree_title'|trans({}, 'node') }}">
+            <span class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-xs text-gray-400">min</span>
+        </div>
         <div class="relative w-28 shrink-0">
             <input type="number" step="0.1" min="0" name="attr_mccc[evaluations][{{ index }}][weight]" value="{{ weight }}"
                    class="fld pr-7" data-mccc-target="weightInput" data-action="input->mccc#updateSum">

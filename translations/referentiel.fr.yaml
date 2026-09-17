@@ -10,5 +10,9 @@ referentiel:
     key_placeholder: auto
     description_field: Description (affichée dans cette page)
     order_field: Ordre
+    category_field: Groupe
+    entite_cible_field: Entité cible (si « Lier à des entités »)
+    entite_cible_placeholder: 'ex. Établissement (annuaire ORéOF)'
+    entite_cible_help: Note libre décrivant la vraie entité à laquelle ce référentiel devra se relier dans l'application finale.
     values_label: 'Valeurs de la liste (une par ligne : <code>valeur|Libellé</code> — ou juste <code>valeur</code> si identique au libellé)'
     values_help: L'ordre des lignes est l'ordre proposé dans les select.

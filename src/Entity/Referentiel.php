@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Enum\RefCategory;
 use App\Repository\ReferentielRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -50,6 +51,13 @@ class Referentiel
     /** Livré par les fixtures — protège seulement de la suppression (des gabarits l'utilisent par sa clé). */
     #[ORM\Column]
     private bool $system = false;
+
+    #[ORM\Column(length: 20, enumType: RefCategory::class)]
+    private RefCategory $category = RefCategory::Libre;
+
+    /** Note libre : quelle entité réelle ce référentiel devra référencer dans l'application finale (catégorie « Lier à des entités »). */
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $entiteCible = null;
 
     public function __construct(string $key, string $label)
     {
@@ -132,6 +140,30 @@ class Referentiel
     public function setSystem(bool $system): self
     {
         $this->system = $system;
+
+        return $this;
+    }
+
+    public function getCategory(): RefCategory
+    {
+        return $this->category;
+    }
+
+    public function setCategory(RefCategory $category): self
+    {
+        $this->category = $category;
+
+        return $this;
+    }
+
+    public function getEntiteCible(): ?string
+    {
+        return $this->entiteCible;
+    }
+
+    public function setEntiteCible(?string $entiteCible): self
+    {
+        $this->entiteCible = trim((string) $entiteCible) ?: null;
 
         return $this;
     }

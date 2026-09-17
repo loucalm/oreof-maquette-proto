@@ -84,57 +84,48 @@
                                 </div>
                             </div>
 
-                            {% if profile.rules is empty %}
-                                <p class="text-xs mt-2" style="color:var(--c-muted)">{{ 'mcctype.edit.rules_empty'|trans({}, 'mcctype') }}</p>
-                            {% else %}
-                                <div class="space-y-1.5 mt-2">
-                                    {% for r in profile.rules %}
-                                        <div class="flex items-center justify-between gap-3 rounded-lg border px-3 py-1.5 text-sm" style="border-color:var(--c-border);background:#fafafb">
-                                            <div class="flex items-center gap-2">
-                                                <span class="rounded px-2 py-0.5 text-[11px] font-semibold uppercase"
-                                                      style="{{ r.severity == 'error' ? 'background:#fee2e2;color:#b91c1c' : (r.severity == 'warning' ? 'background:#fef3c7;color:#b45309' : 'background:#e0f2fe;color:#0369a1') }}">{{ severities[r.severity] ?? r.severity }}</span>
-                                                <span>{{ r.label }}</span>
-                                            </div>
-                                            <form method="post" action="{{ path('mcctype_rule_delete', {id: type.id, profileKey: profile.key, key: r.key}) }}"
-                                                  data-controller="confirm" data-confirm-message-value="{{ 'mcctype.edit.delete_rule_confirm'|trans({'%label%': r.label}, 'mcctype') }}">
-                                                <button class="text-xs text-red-600 hover:underline">{{ 'common.delete'|trans({}, 'common') }}</button>
-                                            </form>
-                                        </div>
-                                    {% endfor %}
+                            {% set cs = clauseStates[profile.key] %}
+                            <form method="post" action="{{ path('mcctype_profile_clauses', {id: type.id, profileKey: profile.key}) }}" class="rounded-lg border p-3 space-y-3 mt-3" style="border-color:var(--c-border);background:#f8f9fb">
+                                <label class="flex flex-wrap items-center gap-2 text-sm">
+                                    <input type="checkbox" name="count_on" value="1" {{ cs.count.on ? 'checked' }}>
+                                    <span class="font-medium">{{ 'mcctype.edit.clause_count_label'|trans({}, 'mcctype') }}</span>
+                                    <select name="count_op" class="rounded-md border px-2 py-1 text-xs" style="border-color:var(--c-border)">
+                                        {% for k, l in ruleOps %}<option value="{{ k }}" {{ cs.count.op == k ? 'selected' }}>{{ l }}</option>{% endfor %}
+                                    </select>
+                                    <input type="number" step="1" min="0" name="count_value" value="{{ cs.count.value }}" class="w-20 rounded-md border px-2 py-1 text-xs" style="border-color:var(--c-border)">
+                                </label>
+
+                                <label class="flex flex-wrap items-center gap-2 text-sm">
+                                    <input type="checkbox" name="ponderation_on" value="1" {{ cs.ponderation.on ? 'checked' }}>
+                                    <span class="font-medium">{{ 'mcctype.edit.clause_ponderation_label'|trans({}, 'mcctype') }}</span>
+                                    <span class="text-xs" style="color:var(--c-muted)">{{ 'mcctype.edit.clause_ponderation_sum_note'|trans({}, 'mcctype') }}</span>
+                                </label>
+                                <label class="ml-6 flex flex-wrap items-center gap-2 text-sm">
+                                    <input type="checkbox" name="ponderation_egale" value="1" {{ cs.ponderation.egale ? 'checked' }}>
+                                    <span>{{ 'mcctype.edit.clause_ponderation_egale_label'|trans({}, 'mcctype') }}</span>
+                                    <input type="number" step="0.1" min="0" name="ponderation_max" value="{{ cs.ponderation.max }}" class="w-20 rounded-md border px-2 py-1 text-xs" style="border-color:var(--c-border)">
+                                    <span class="text-xs" style="color:var(--c-muted)">%</span>
+                                </label>
+
+                                <label class="flex items-center gap-2 text-sm">
+                                    <input type="checkbox" name="duree_on" value="1" {{ cs.duree.on ? 'checked' }}>
+                                    <span class="font-medium">{{ 'mcctype.edit.clause_duree_label'|trans({}, 'mcctype') }}</span>
+                                </label>
+
+                                <label class="flex items-center gap-2 text-sm">
+                                    <input type="checkbox" name="rattrapage_on" value="1" {{ cs.rattrapage ? 'checked' }}>
+                                    <span class="font-medium">{{ 'mcctype.edit.clause_rattrapage_label'|trans({}, 'mcctype') }}</span>
+                                </label>
+                                <p class="text-[11px]" style="color:var(--c-muted)">{{ 'mcctype.edit.clause_rattrapage_help'|trans({}, 'mcctype') }}</p>
+
+                                <button class="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.save'|trans({}, 'common') }}</button>
+                            </form>
+
+                            {% if profile.rules is not empty %}
+                                <div class="flex flex-wrap gap-1.5 mt-2">
+                                    {% for r in profile.rules %}<span class="rounded-md border px-2 py-0.5 text-xs" style="border-color:var(--c-border)">{{ r.label }}</span>{% endfor %}
                                 </div>
                             {% endif %}
-
-                            <form method="post" action="{{ path('mcctype_rule_add', {id: type.id, profileKey: profile.key}) }}" class="rounded-lg border p-3 space-y-3 mt-3" style="border-color:var(--c-border);background:#f8f9fb">
-                                <div class="grid gap-3 sm:grid-cols-4">
-                                    <label class="block">
-                                        <span class="text-xs">{{ 'mcctype.edit.rule_kind_field'|trans({}, 'mcctype') }}</span>
-                                        <select name="kind" required class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
-                                            {% for k, l in ruleKinds %}<option value="{{ k }}">{{ l }}</option>{% endfor %}
-                                        </select>
-                                    </label>
-                                    <label class="block">
-                                        <span class="text-xs">{{ 'mcctype.edit.rule_op_field'|trans({}, 'mcctype') }}</span>
-                                        <select name="op" required class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
-                                            {% for k, l in ruleOps %}<option value="{{ k }}">{{ l }}</option>{% endfor %}
-                                        </select>
-                                    </label>
-                                    <label class="block">
-                                        <span class="text-xs">{{ 'mcctype.edit.rule_value_field'|trans({}, 'mcctype') }}</span>
-                                        <input type="number" step="0.1" name="value" required class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
-                                    </label>
-                                    <label class="block">
-                                        <span class="text-xs">{{ 'mcctype.edit.rule_severity_field'|trans({}, 'mcctype') }}</span>
-                                        <select name="severity" required class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
-                                            {% for k, l in severities %}<option value="{{ k }}" {{ k == 'error' ? 'selected' }}>{{ l }}</option>{% endfor %}
-                                        </select>
-                                    </label>
-                                </div>
-                                <label class="block">
-                                    <span class="text-xs">{{ 'mcctype.edit.rule_message_field'|trans({}, 'mcctype') }}</span>
-                                    <input name="label" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
-                                </label>
-                                <button class="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'mcctype.edit.add_rule_button'|trans({}, 'mcctype') }}</button>
-                            </form>
                         </div>
                     {% endfor %}
                 </div>

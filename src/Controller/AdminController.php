@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Enum\NodeFamily;
+use App\Entity\FieldDef;
+use App\Enum\RefCategory;
 use App\Maquette\AttributeCatalog;
 use App\Repository\DerogationRequestRepository;
-use App\Repository\FieldDefRepository;
 use App\Repository\MccTypeRepository;
 use App\Repository\NodeTypeRepository;
 use App\Repository\ReferentielRepository;
@@ -27,7 +27,6 @@ final class AdminController extends AbstractController
     public const SECTIONS = [
         'overview' => ['label' => 'Vue d’ensemble', 'route' => 'admin_index', 'icon' => 'ph:gear'],
         'types' => ['label' => 'Types d’élément pédagogique', 'route' => 'node_type_index', 'icon' => 'ph:puzzle-piece'],
-        'fields' => ['label' => 'Champs des formulaires', 'route' => 'field_index', 'icon' => 'ph:note-pencil'],
         'templates' => ['label' => 'Templates de structure', 'route' => 'template_index', 'icon' => 'ph:folders'],
         'referentiels' => ['label' => 'Référentiels', 'route' => 'admin_referentiels', 'icon' => 'ph:books'],
         'mcctypes' => ['label' => 'Types de MCCC', 'route' => 'admin_mcctypes', 'icon' => 'ph:list-checks'],
@@ -38,7 +37,6 @@ final class AdminController extends AbstractController
     #[Route('/administration', name: 'admin_index', methods: ['GET'])]
     public function index(
         NodeTypeRepository $types,
-        FieldDefRepository $fields,
         StructureTemplateRepository $templates,
         ReferentielRepository $referentiels,
         MccTypeRepository $mcctypes,
@@ -46,7 +44,6 @@ final class AdminController extends AbstractController
         TranslationFileManager $translations,
     ): Response {
         $allTypes = $types->findAllOrdered();
-        $allFields = $fields->allOrdered();
         $allMccTypes = $mcctypes->allOrdered();
         $pendingDerogations = $derogations->countPending();
         $translationFiles = $translations->listFiles();
@@ -58,12 +55,6 @@ final class AdminController extends AbstractController
                     'count' => \count($allTypes),
                     'sub' => \count(array_filter($allTypes, static fn ($t) => $t->isSystem())).' du socle',
                     'text' => 'Les briques des structures pédagogiques et du référentiel de compétences, et les capacités (champs) que chacune porte.',
-                ],
-                [
-                    'section' => 'fields',
-                    'count' => \count($allFields),
-                    'sub' => \count(array_filter($allFields, static fn ($f) => $f->isSystem())).' du socle',
-                    'text' => 'Les champs saisissables sur les éléments pédagogiques : onglet, type de saisie, options, obligatoire.',
                 ],
                 [
                     'section' => 'templates',
@@ -100,23 +91,22 @@ final class AdminController extends AbstractController
     }
 
     #[Route('/administration/referentiels', name: 'admin_referentiels', methods: ['GET'])]
-    public function referentiels(FieldDefRepository $fields, AttributeCatalog $catalog, ReferentielRepository $referentiels): Response
+    public function referentiels(NodeTypeRepository $types, ReferentielRepository $referentiels): Response
     {
-        // options des champs « liste » / « radio » (nature, type d'UE, type d'EC…)
-        $choiceFields = [];
-        foreach ($fields->allOrdered() as $f) {
-            if (\in_array($f->getType(), ['choice', 'radio'], true) && $f->getOptions() !== []) {
-                $choiceFields[] = ['label' => $f->getLabel(), 'key' => $f->getKey(), 'options' => $f->getOptions()];
-            }
+        $all = $referentiels->allOrdered();
+
+        $nodeTypePills = [];
+        foreach ($types->findAllOrdered() as $t) {
+            $nodeTypePills[$t->getKey()] = $t->getLabel();
         }
 
         return $this->render('admin/referentiels.html.twig', [
-            'referentiels' => $referentiels->allOrdered(),
+            'libres' => array_values(array_filter($all, static fn ($r) => $r->getCategory() === RefCategory::Libre)),
+            'entites' => array_values(array_filter($all, static fn ($r) => $r->getCategory() === RefCategory::Entite)),
             'hourModalities' => AttributeCatalog::HOUR_MODALITIES,
             'hourPlaces' => AttributeCatalog::HOUR_PLACES,
-            'families' => NodeFamily::cases(),
-            'fieldTypes' => \App\Entity\FieldDef::TYPES,
-            'choiceFields' => $choiceFields,
+            'fieldTypes' => FieldDef::TYPES,
+            'nodeTypePills' => $nodeTypePills,
         ]);
     }
 

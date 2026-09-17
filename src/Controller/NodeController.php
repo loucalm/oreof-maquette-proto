@@ -590,10 +590,15 @@ final class NodeController extends AbstractController
         foreach ((array) ($raw['evaluations'] ?? []) as $row) {
             $etype = \is_array($row) ? trim((string) ($row['type'] ?? '')) : '';
             $weight = \is_array($row) ? (float) str_replace(',', '.', (string) ($row['weight'] ?? '')) : 0.0;
-            if ('' === $etype && $weight <= 0) {
+            $dureeRaw = \is_array($row) ? trim((string) ($row['duree'] ?? '')) : '';
+            if ('' === $etype && $weight <= 0 && '' === $dureeRaw) {
                 continue;
             }
-            $evaluations[] = ['type' => $etype, 'weight' => $weight];
+            $entry = ['type' => $etype, 'weight' => $weight];
+            if ('' !== $dureeRaw) {
+                $entry['duree'] = (float) str_replace(',', '.', $dureeRaw);
+            }
+            $evaluations[] = $entry;
         }
         if ([] !== $evaluations) {
             $out['evaluations'] = $evaluations;

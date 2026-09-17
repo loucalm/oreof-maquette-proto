@@ -18,25 +18,29 @@ admin:
       Ici on définit ce qui est <strong>commun</strong> : les types, les champs, les squelettes et les
       listes de valeurs.
   referentiels:
-    title: Référentiels
-    heading: Référentiels & nomenclatures
+    title: Référentiel
+    heading: Référentiel
     description: Les listes de valeurs (select, choix) proposées dans les formulaires.
     metamodel_title: Métamodèle
-    families_row_title: Familles de type d’élément pédagogique
-    families_row_help: Déterminent le rendu et l’emplacement d’un type.
-    field_types_row_title: Types de saisie d’un champ
-    field_types_row_help: Choisis à la création d’un champ.
-    choice_fields_title: 'Options des champs « liste » / « radio »'
-    choice_fields_link: modifier dans Champs
-    hours_title: Volume horaire
-    hour_modalities_row_title: Modalités d’heures
-    hour_places_row_title: Lieux
-    hour_places_row_help: Le volume « travail étudiant (TE) » est un total global à part.
+    metamodel_help: Catalogues fixes de l’application — informatifs, non modifiables depuis cette page.
+    field_types_row_title: Type de saisie d’un champ
+    field_types_row_help: Choisis à la création d’un champ, depuis l’éditeur d’un type d’ELP.
+    node_types_row_title: Type d’élément pédagogique
+    node_types_row_help: Gérés depuis la page « Types d’élément pédagogique ».
+    hours_row_title: Modalités d’heure
+    hours_row_help: Lieux (présentiel/distanciel) et modalités (CM/TD/TP).
     mcc_note: 'Les types de MCCC (CCI, CT…) ont leur propre page — %link_open%Types de MCCC%link_close%.'
-    nomenclatures_title: Nomenclatures de l’offre de formation
-    nomenclatures_description: >-
-      Diplômes, domaines, régimes, langues, codes ROME… Réutilisées telles quelles dans les formulaires
-      de formation et de parcours.
+    libre_title: Libre
+    libre_description: >-
+      Nomenclatures entièrement éditables : diplômes, domaines, régimes, langues, codes ROME…
+      Réutilisées telles quelles dans les formulaires de formation et de parcours.
+    entite_title: Lier à des entités
+    entite_description: >-
+      Référentiels destinés à référencer de vraies entités dans l’application finale (établissement,
+      composante, annuaire…) — restent des listes plates dans ce prototype.
+    entite_cible_prefix: 'Cible finale :'
+    go_to_entity: Aller à l’entité
+    go_to_entity_title: Non disponible dans ce prototype — pointera vers la vraie entité dans l’application finale.
     new_button: Nouveau référentiel
     delete_confirm: >-
       Supprimer le référentiel « %label% » ? Les valeurs déjà saisies dans les formulaires restent en

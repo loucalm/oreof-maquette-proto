@@ -76,8 +76,6 @@
             <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
             <a href="{{ path('node_type_edit', {id: node.type.id}) }}" target="_blank"
                class="text-xs hover:underline" style="color:var(--c-muted)">{{ 'node.params.manage_type_link'|trans({'%type%': T}, 'node') }} {{ ux_icon('ph:arrow-square-out', {class: 'icon'}) }}</a>
-            <a href="{{ path('field_index') }}" target="_blank"
-               class="text-xs hover:underline" style="color:var(--c-muted)">{{ 'node.params.manage_fields_link'|trans({}, 'node') }} {{ ux_icon('ph:arrow-square-out', {class: 'icon'}) }}</a>
         </div>
     </form>
 </div>

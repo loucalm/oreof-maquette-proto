@@ -31,6 +31,20 @@
             </label>
         </div>
 
+        <div class="grid grid-cols-3 gap-3">
+            <label class="block">
+                <span class="text-xs font-medium">{{ 'referentiel.edit.category_field'|trans({}, 'referentiel') }}</span>
+                <select name="category" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                    {% for cat in categories %}<option value="{{ cat.value }}" {{ (referentiel.category ?? constant('App\\Enum\\RefCategory::Libre')) == cat ? 'selected' }}>{{ cat.label }}</option>{% endfor %}
+                </select>
+            </label>
+            <label class="block col-span-2">
+                <span class="text-xs font-medium">{{ 'referentiel.edit.entite_cible_field'|trans({}, 'referentiel') }}</span>
+                <input name="entiteCible" value="{{ referentiel.entiteCible ?? '' }}" placeholder="{{ 'referentiel.edit.entite_cible_placeholder'|trans({}, 'referentiel') }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                <span class="text-[11px]" style="color:var(--c-muted)">{{ 'referentiel.edit.entite_cible_help'|trans({}, 'referentiel') }}</span>
+            </label>
+        </div>
+
         <label class="block">
             <span class="text-xs font-medium">{{ 'referentiel.edit.values_label'|trans({}, 'referentiel')|raw }}</span>
             <textarea name="values" rows="8" class="mt-1 w-full rounded-md border px-3 py-2 text-sm font-mono" style="border-color:var(--c-border)"

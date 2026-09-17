@@ -41,15 +41,10 @@ mcctype:
     profile_label_field: Nom du profil
     profile_description_field: Description (facultatif)
     add_profile_button: Ajouter un profil
-    rules_empty: Aucune règle — ce profil n’est validé que par sa simple sélection.
-    delete_rule_confirm: 'Supprimer la règle « %label% » ?'
-    add_rule_title: Ajouter une règle
-    rule_kind_field: Gabarit
-    rule_op_field: Opérateur
-    rule_value_field: Valeur
-    rule_severity_field: Gravité
-    rule_message_field: Message affiché (facultatif — sinon généré automatiquement)
-    add_rule_button: Ajouter
-    rules_help: >-
-      « Nombre d’épreuves » et « Somme des coefficients » portent sur l’ensemble des épreuves ;
-      « Chaque coefficient » s’applique individuellement à chacune.
+    clause_count_label: Nombre d'épreuves
+    clause_ponderation_label: Pondération
+    clause_ponderation_sum_note: (la somme des coefficients doit faire 100 %)
+    clause_ponderation_egale_label: Épreuves égales — plafonner chaque coefficient à
+    clause_duree_label: Chaque épreuve a une durée renseignée
+    clause_rattrapage_label: Rattrapage / 2nde chance
+    clause_rattrapage_help: Informatif pour l'instant — mêmes règles appliquées à la 2nde session, pas de jeu de règles séparé.

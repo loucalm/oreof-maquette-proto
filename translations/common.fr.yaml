@@ -2,6 +2,7 @@ common:
   edit: Modifier
   delete: Suppr.
   delete_full: Supprimer
+  remove: Retirer
   save: Enregistrer
   cancel: Annuler
   add: Ajouter

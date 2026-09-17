@@ -46,8 +46,6 @@
             </form>
         </div>
 
-        {{ m.fieldOverridesForm(n.type, template) }}
-
         {% if n.children is defined and n.children is not empty %}
             <ul class="template-branch">
                 {% for c in n.children %}
@@ -167,7 +165,11 @@
                     </td>
                     <td class="py-1.5 text-right">
                         {% if not row.fixed %}
-                            <form method="post" action="{{ path('template_structure_remove', {id: template.id, key: row.key}) }}">
+                            <details class="inline-block text-left align-middle">
+                                <summary class="inline-grid h-6 w-6 place-items-center rounded border text-xs cursor-pointer" style="border-color:var(--c-border)" title="{{ 'template.edit.field_overrides_pencil_title'|trans({}, 'template') }}">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }}</summary>
+                                {{ m.fieldOverridesForm(row.key, template) }}
+                            </details>
+                            <form method="post" action="{{ path('template_structure_remove', {id: template.id, key: row.key}) }}" class="inline">
                                 <button class="text-xs text-red-600 hover:underline">{{ 'formation.param.structure.remove_button'|trans({}, 'formation') }}</button>
                             </form>
                         {% endif %}

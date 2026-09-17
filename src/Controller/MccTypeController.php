@@ -20,14 +20,16 @@ use Symfony\Component\String\Slugger\AsciiSlugger;
  * (`StructureTemplate::mcccProfiles`), pas ici — un type et ses profils
  * restent génériques et réutilisables.
  *
- * Sur le même principe que `ReferentielController`/`FieldController` : livré
- * par les fixtures, puis entièrement modifiable, avec suppression protégée
- * pour les types « socle ».
+ * Sur le même principe que `ReferentielController` : livré par les fixtures,
+ * puis entièrement modifiable, avec suppression protégée pour les types
+ * « socle ».
  *
- * Les règles d'un profil sont ajoutées via un choix parmi 3 gabarits fixes
- * (nombre d'épreuves / somme des coefficients / chaque coefficient) — pas de
- * canevas AST, pas de JSON à taper à la main. `buildRuleNode()` traduit ce
- * choix en AST (`App\Rules\RuleEvaluator`).
+ * Un profil se pilote via 4 clauses togglables (nombre d'épreuves / pondération
+ * / durée / rattrapage) plutôt qu'un ajout de règle libre : `clauseState()`
+ * dérive l'état des cases depuis les règles déjà stockées, `profileClauses()`
+ * reconstruit entièrement `rules[]` à la sauvegarde. `buildRuleNode()` traduit
+ * une clause en AST (`App\Rules\RuleEvaluator`) — le moteur de règles lui-même
+ * n'a pas changé.
  */
 final class MccTypeController extends AbstractController
 {
@@ -75,12 +77,18 @@ final class MccTypeController extends AbstractController
             return $this->redirectToRoute('mcctype_edit', ['id' => $type->getId()]);
         }
 
+        $clauseStates = [];
+        if (!$isNew) {
+            foreach ($type->getProfiles() as $profile) {
+                $clauseStates[$profile['key']] = $this->clauseState($profile);
+            }
+        }
+
         return $this->render('mcctype/edit.html.twig', [
             'type' => $type,
             'isNew' => $isNew,
-            'ruleKinds' => self::RULE_KINDS,
             'ruleOps' => self::RULE_OPS,
-            'severities' => self::SEVERITIES,
+            'clauseStates' => $clauseStates,
         ]);
     }
 
@@ -160,61 +168,103 @@ final class MccTypeController extends AbstractController
         return $this->redirectToRoute('mcctype_edit', ['id' => $type->getId()]);
     }
 
-    #[Route('/administration/mcc-types/{id}/profils/{profileKey}/regles', name: 'mcctype_rule_add', methods: ['POST'])]
-    public function ruleAdd(MccType $type, string $profileKey, Request $request, EntityManagerInterface $em): Response
+    /**
+     * Reconstruit entièrement les règles d'un profil depuis 4 clauses togglables
+     * (nombre d'épreuves / pondération / durée / rattrapage) — remplace l'ajout
+     * de règle unitaire par une sauvegarde atomique de tout le profil.
+     */
+    #[Route('/administration/mcc-types/{id}/profils/{profileKey}/clauses', name: 'mcctype_profile_clauses', methods: ['POST'])]
+    public function profileClauses(MccType $type, string $profileKey, Request $request, EntityManagerInterface $em): Response
     {
-        $kind = (string) $request->request->get('kind', '');
-        $op = (string) $request->request->get('op', '==');
-        $value = (float) str_replace(',', '.', (string) $request->request->get('value', '0'));
-        $severity = \in_array($request->request->get('severity'), ['info', 'warning', 'error'], true)
-            ? $request->request->get('severity') : 'error';
-        $customLabel = trim((string) $request->request->get('label'));
+        $num = static fn (string $key, string $default = '0') => (float) str_replace(',', '.', (string) $request->request->get($key, $default));
+        $op = static function (string $key, string $default) use ($request): string {
+            $value = (string) $request->request->get($key, $default);
 
-        if (!\array_key_exists($kind, self::RULE_KINDS) || !\array_key_exists($op, self::RULE_OPS)) {
-            $this->addFlash('warning', 'Règle invalide.');
-
-            return $this->redirectToRoute('mcctype_edit', ['id' => $type->getId()]);
-        }
+            return \array_key_exists($value, self::RULE_OPS) ? $value : $default;
+        };
 
         $profiles = $type->getProfiles();
         foreach ($profiles as &$profile) {
-            if (($profile['key'] ?? null) === $profileKey) {
-                $profile['rules'][] = [
-                    'key' => $kind.'_'.bin2hex(random_bytes(3)),
-                    'label' => $customLabel !== '' ? $customLabel : $this->defaultRuleLabel($kind, $op, $value),
-                    'severity' => $severity,
-                    'node' => $this->buildRuleNode($kind, $op, $value),
-                ];
-                break;
+            if (($profile['key'] ?? null) !== $profileKey) {
+                continue;
             }
+
+            $rules = [];
+
+            if ($request->request->getBoolean('count_on')) {
+                $rules[] = $this->rule('count', $op('count_op', '>='), $num('count_value'), 'error');
+            }
+
+            if ($request->request->getBoolean('ponderation_on')) {
+                $rules[] = $this->rule('sum', '==', 100.0, 'error');
+                if ($request->request->getBoolean('ponderation_egale')) {
+                    $rules[] = $this->rule('each_weight', '<=', $num('ponderation_max'), 'error');
+                }
+            }
+
+            if ($request->request->getBoolean('duree_on')) {
+                $rules[] = [
+                    'key' => 'duree_'.bin2hex(random_bytes(3)),
+                    'label' => 'Chaque épreuve a une durée renseignée',
+                    'severity' => 'error',
+                    'node' => ['kind' => 'each', 'collection' => 'evaluations', 'field' => 'duree', 'op' => '>', 'value' => ['kind' => 'literal', 'value' => 0]],
+                ];
+            }
+
+            $profile['rules'] = $rules;
+            $profile['secondChance'] = $request->request->getBoolean('rattrapage_on');
+            break;
         }
         unset($profile);
         $type->setProfiles($profiles);
         $em->flush();
-        $this->addFlash('success', 'Règle ajoutée.');
+        $this->addFlash('success', 'Profil mis à jour.');
 
         return $this->redirectToRoute('mcctype_edit', ['id' => $type->getId()]);
     }
 
-    #[Route('/administration/mcc-types/{id}/profils/{profileKey}/regles/{key}/supprimer', name: 'mcctype_rule_delete', methods: ['POST'])]
-    public function ruleDelete(MccType $type, string $profileKey, string $key, EntityManagerInterface $em): Response
+    /**
+     * État des 4 clauses, dérivé des règles déjà stockées (pour pré-remplir les cases à l'édition).
+     *
+     * @param array{rules?: list<array<string, mixed>>, secondChance?: bool} $profile
+     *
+     * @return array{count: array{on: bool, op: string, value: float}, ponderation: array{on: bool, egale: bool, max: float}, duree: array{on: bool}, rattrapage: bool}
+     */
+    private function clauseState(array $profile): array
     {
-        $profiles = $type->getProfiles();
-        foreach ($profiles as &$profile) {
-            if (($profile['key'] ?? null) === $profileKey) {
-                $profile['rules'] = array_values(array_filter(
-                    $profile['rules'] ?? [],
-                    static fn (array $r): bool => ($r['key'] ?? null) !== $key,
-                ));
-                break;
+        $state = [
+            'count' => ['on' => false, 'op' => '>=', 'value' => 0.0],
+            'ponderation' => ['on' => false, 'egale' => false, 'max' => 0.0],
+            'duree' => ['on' => false],
+            'rattrapage' => (bool) ($profile['secondChance'] ?? false),
+        ];
+
+        foreach ($profile['rules'] ?? [] as $r) {
+            $node = (array) ($r['node'] ?? []);
+            $left = (array) ($node['left'] ?? []);
+            if ('comparison' === ($node['kind'] ?? null) && 'COUNT' === ($left['fn'] ?? null)) {
+                $state['count'] = ['on' => true, 'op' => (string) $node['op'], 'value' => (float) ($node['right']['value'] ?? 0)];
+            } elseif ('comparison' === ($node['kind'] ?? null) && 'SUM' === ($left['fn'] ?? null)) {
+                $state['ponderation']['on'] = true;
+            } elseif ('each' === ($node['kind'] ?? null) && 'weight' === ($node['field'] ?? null)) {
+                $state['ponderation']['egale'] = true;
+                $state['ponderation']['max'] = (float) ($node['value']['value'] ?? 0);
+            } elseif ('each' === ($node['kind'] ?? null) && 'duree' === ($node['field'] ?? null)) {
+                $state['duree']['on'] = true;
             }
         }
-        unset($profile);
-        $type->setProfiles($profiles);
-        $em->flush();
-        $this->addFlash('info', 'Règle supprimée.');
 
-        return $this->redirectToRoute('mcctype_edit', ['id' => $type->getId()]);
+        return $state;
+    }
+
+    private function rule(string $kind, string $op, float $value, string $severity): array
+    {
+        return [
+            'key' => $kind.'_'.bin2hex(random_bytes(3)),
+            'label' => $this->defaultRuleLabel($kind, $op, $value),
+            'severity' => $severity,
+            'node' => $this->buildRuleNode($kind, $op, $value),
+        ];
     }
 
     /** @return array<string, mixed> */

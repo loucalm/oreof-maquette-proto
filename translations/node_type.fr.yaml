@@ -1,15 +1,15 @@
 node_type:
   index:
     title: Types d’éléments pédagogiques
-    heading: Types d’éléments pédagogiques
+    heading: Type d’éléments pédagogiques
     description: >-
-      Le métamodèle. Créez / modifiez les types et leurs capacités. La hiérarchie (qui contient qui)
-      est propre à chaque formation, dans « Configuration de la structure ».
+      Créer les ELP / modifier les formulaires. La hiérarchie (qui contient qui) est propre à chaque
+      formation ou template, dans « Configuration de la structure ».
+    param_title: Formation / Parcours
+    elp_title: Éléments pédagogique
     new_button: Nouveau type
+    col_label: Libellé
     col_type: Type
-    col_family: Famille
-    col_capabilities: Capacités
-    col_ects_target: ECTS cible
     numbering_title: 'Numérotation : %style%'
     reserved_admin_title: Réservée admin
     delete_confirm: >-
@@ -18,38 +18,56 @@ node_type:
   edit:
     new_title: Nouveau type
     breadcrumb_new: nouveau
-    new_heading: Nouveau type d’élément pédagogique
+    new_heading: Nouveau type d’ELP
     edit_heading: 'Modifier « %label% »'
+    properties_title: Propriété de l’ELP
     label_field: Libellé
-    icon_field: Icône
+    icon_field: Icône associé
     icon_help: "Nom d'icône %link% (ex. %example%)"
     key_field: Clé
     key_placeholder: auto depuis le libellé
-    family_field: Famille
+    position_field: Position
     kind_field: Type d'ELP
     kind_help: >-
       Temporel : le nom est calculé (type + numéro, ex. « Année 1 »), aucun libellé n'est demandé côté
       éditeur.
-    position_field: Position
-    ects_target_field: ECTS cible
-    hierarchy_note: >-
-      La hiérarchie (quel type peut être enfant de quel type) n'est PAS définie ici : elle est propre à
-      chaque formation, dans « Configuration de la structure ».
-    numbering_legend: Numérotation automatique
-    numbered_label: 'Ce type porte une référence calculée (« Année 1 », « UE 1.1 »…)'
-    number_style_label: Style de l'indice
+    elp_params_legend: Paramètre de l’ELP
+    mutualisable_label: Mutualisable / raccrochable
+    choice_transformable_label: Transformable en bloc de choix
+    numbering_legend: Numérotation
+    numbered_label: Numérotation automatique
+    number_style_label: Type de numérotation
+    heritee_label: Numérotation héritée
     numbering_help: >-
-      Un type non numéroté (ex. Semestre) est « transparent » : ses enfants héritent du contexte du
-      parent numéroté.
-    global_numbering_label: >-
-      Comptage global continu (ex. Semestre 1, 2, 3, 4…) plutôt que réinitialisé sous chaque parent
-      (ex. UE 1.1, 1.2, 2.1…)
-    choice_transformable_label: Le bouton « Transformer en bloc de choix » est proposé pour ce type
-    capabilities_legend: Capacités & champs du type
-    capabilities_help: >-
-      <strong>Incluse</strong> : le champ existe pour ce type d’élément pédagogique.
-      <strong>Réservée admin</strong> : imposé — le responsable de formation ne peut pas l'activer /
-      désactiver par élément pédagogique.
-    col_capability: Capacité
-    col_included: Incluse
-    col_reserved_admin: Réservée admin
+      Numérotation héritée = préfixée par le numéro du parent (ex. UE 2.1, héritant du Semestre 2).
+      Décochée = comptage global continu sur tout l'arbre, sans préfixe (ex. Semestre 1, 2, 3, 4…).
+    form_builder_title: Formulaire associé
+    form_builder_help: Onglet › séparateur › champ. Les champs sont partagés entre types (ex. ECTS sur UE et EC).
+    form_builder_empty: Aucun champ pour l’instant.
+    tab_label: 'Onglet : %tab%'
+    add_field_button: Ajouter un champ
+    add_field_reuse_help: >-
+      Si la clé saisie correspond à un champ existant, il est réutilisé tel quel (le reste du formulaire
+      est ignoré) ; sinon un nouveau champ est créé.
+    remove_field_confirm: >-
+      Retirer « %label% » de ce formulaire ? Si aucun autre type ne l'utilise, le champ sera supprimé
+      du catalogue.
+    not_togglable_title: Ce champ n'est pas togglable par template
+    field_type_field: Type de champ
+    field_label_field: Libellé
+    field_key_field: Clé
+    field_key_placeholder: existant ou nouveau
+    field_tab_field: Onglet
+    field_category_field: Séparateur
+    field_category_placeholder: 'ex. Volume horaire'
+    field_required_label: Champs requis
+    field_help_field: Tooltip / aide
+    field_referentiel_field: Référentiel associé
+    field_referentiel_none: — Aucun —
+    field_referentiel_help: Affiché seulement si le type de champ le permet (choix, radio, case à cocher).
+    field_allow_extra_label: 'Autoriser l’ajout de valeur libre (« Autre : ___ »)'
+    field_quick_add_label: Autoriser l’ajout au référentiel depuis le formulaire
+    field_min_field: Minimum
+    field_max_field: Maximum
+    field_options_field: 'Options (si pas de référentiel) — une par ligne : <code>valeur|Libellé</code>'
+    field_togglable_label: 'Champ togglable (activable/désactivable par diplôme, depuis le tableau structurel du template)'

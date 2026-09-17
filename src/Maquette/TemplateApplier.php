@@ -16,8 +16,13 @@ use App\Maquette\Doc\TreeNode;
  */
 final class TemplateApplier
 {
+    /** @var array<string, array<string, bool>> */
+    private array $fieldOverrides = [];
+
     public function apply(MaquetteDoc $doc, StructureTemplate $template): void
     {
+        $this->fieldOverrides = $template->getFieldOverrides();
+
         $structure = $template->getStructure();
         // rétro-compatible : un template sans tableau structurel explicite (pas encore renseigné)
         // retombe sur l'ancienne déduction depuis l'arbre.
@@ -88,6 +93,9 @@ final class TemplateApplier
             label: (string) ($spec['label'] ?? ''),
             code: ($spec['code'] ?? null) !== null && $spec['code'] !== '' ? (string) $spec['code'] : null,
             attributes: \is_array($spec['attributes'] ?? null) ? $spec['attributes'] : [],
+            // surcharge de capacités du template pour ce type (tableau structurel, crayon) — sans
+            // ceci la surcharge n'a aucun effet réel sur les formations instanciées (bug de câblage).
+            capabilityOverrides: $this->fieldOverrides[$typeKey] ?? null,
             locked: array_values(array_filter((array) ($spec['locked'] ?? []), 'is_string')),
         );
         $node->bindType($type);

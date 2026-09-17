@@ -1,14 +1,94 @@
 {% extends 'base.html.twig' %}
 {% block title %}{{ isNew ? 'node_type.edit.new_title'|trans({}, 'node_type') : nodeType.label }}{% endblock %}
 
+{# ─── formulaire partagé pour ajouter/éditer un champ du formulaire associé ─── #}
+{% macro fieldForm(action, field, referentiels, referentielCapableTypes, fieldTypes, submitLabel, togglableDefault) %}
+    <form method="post" action="{{ action }}" class="grid grid-cols-2 gap-x-3 gap-y-2 rounded-md border p-3" style="border-color:var(--c-border)">
+        <label class="block">
+            <span class="text-xs font-medium">{{ 'node_type.edit.field_type_field'|trans({}, 'node_type') }}</span>
+            <select name="type" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
+                {% for k, lbl in fieldTypes %}<option value="{{ k }}" {{ (field.type ?? 'text') == k ? 'selected' }}>{{ lbl }}</option>{% endfor %}
+            </select>
+        </label>
+        <label class="block">
+            <span class="text-xs font-medium">{{ 'node_type.edit.field_label_field'|trans({}, 'node_type') }}</span>
+            <input name="label" value="{{ field.label ?? '' }}" required class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
+        </label>
+        {% if field is null %}
+            <label class="block">
+                <span class="text-xs font-medium">{{ 'node_type.edit.field_key_field'|trans({}, 'node_type') }}</span>
+                <input name="key" list="existing-field-keys" placeholder="{{ 'node_type.edit.field_key_placeholder'|trans({}, 'node_type') }}" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
+            </label>
+            <label class="block">
+                <span class="text-xs font-medium">{{ 'node_type.edit.field_tab_field'|trans({}, 'node_type') }}</span>
+                <input name="tab" value="props" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
+            </label>
+            <label class="block col-span-2">
+                <span class="text-xs font-medium">{{ 'node_type.edit.field_category_field'|trans({}, 'node_type') }}</span>
+                <input name="category" placeholder="{{ 'node_type.edit.field_category_placeholder'|trans({}, 'node_type') }}" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
+            </label>
+        {% endif %}
+        <label class="flex items-center gap-2 text-sm pt-4">
+            <input type="checkbox" name="required" value="1" {{ (field.required ?? false) ? 'checked' }}>
+            {{ 'node_type.edit.field_required_label'|trans({}, 'node_type') }}
+        </label>
+        <label class="block col-span-2">
+            <span class="text-xs font-medium">{{ 'node_type.edit.field_help_field'|trans({}, 'node_type') }}</span>
+            <input name="help" value="{{ field.help ?? '' }}" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
+        </label>
+        <label class="block">
+            <span class="text-xs font-medium">{{ 'node_type.edit.field_referentiel_field'|trans({}, 'node_type') }}</span>
+            <select name="referentielKey" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
+                <option value="">{{ 'node_type.edit.field_referentiel_none'|trans({}, 'node_type') }}</option>
+                {% for r in referentiels %}<option value="{{ r.key }}" {{ (field.referentielKey ?? '') == r.key ? 'selected' }}>{{ r.label }}</option>{% endfor %}
+            </select>
+            <span class="text-[11px]" style="color:var(--c-muted)">{{ 'node_type.edit.field_referentiel_help'|trans({}, 'node_type') }}</span>
+        </label>
+        <div class="flex flex-col gap-1 justify-end pb-1">
+            <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="allowExtra" value="1" {{ (field.allowExtra ?? false) ? 'checked' }}>
+                {{ 'node_type.edit.field_allow_extra_label'|trans({}, 'node_type') }}
+            </label>
+            <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="quickAdd" value="1" {{ (field.quickAdd ?? false) ? 'checked' }}>
+                {{ 'node_type.edit.field_quick_add_label'|trans({}, 'node_type') }}
+            </label>
+        </div>
+        <label class="block">
+            <span class="text-xs font-medium">{{ 'node_type.edit.field_min_field'|trans({}, 'node_type') }}</span>
+            <input type="number" step="any" name="min" value="{{ field.min ?? '' }}" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
+        </label>
+        <label class="block">
+            <span class="text-xs font-medium">{{ 'node_type.edit.field_max_field'|trans({}, 'node_type') }}</span>
+            <input type="number" step="any" name="max" value="{{ field.max ?? '' }}" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
+        </label>
+        {% if field is null %}
+            <label class="block col-span-2">
+                <span class="text-xs font-medium">{{ 'node_type.edit.field_options_field'|trans({}, 'node_type')|raw }}</span>
+                <textarea name="options" rows="3" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm font-mono" style="border-color:var(--c-border)"></textarea>
+            </label>
+        {% endif %}
+        <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" name="togglable" value="1" {{ togglableDefault ? 'checked' }}>
+            {{ 'node_type.edit.field_togglable_label'|trans({}, 'node_type') }}
+        </label>
+        <div class="col-span-2 flex justify-end">
+            <button class="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ submitLabel }}</button>
+        </div>
+    </form>
+{% endmacro %}
+
 {% block body %}
-<div class="max-w-2xl">
+<div class="max-w-3xl">
     <div class="text-xs" style="color:var(--c-muted)">
         <a href="{{ path('node_type_index') }}" class="hover:underline">{{ 'node_type.index.heading'|trans({}, 'node_type') }}</a> › {{ isNew ? 'node_type.edit.breadcrumb_new'|trans({}, 'node_type') : nodeType.label }}
     </div>
     <h1 class="text-xl font-bold mt-1 mb-5">{{ isNew ? 'node_type.edit.new_heading'|trans({}, 'node_type') : 'node_type.edit.edit_heading'|trans({'%label%': nodeType.label}, 'node_type') }}</h1>
 
-    <form method="post" class="rounded-xl border bg-white p-5 space-y-4" style="border-color:var(--c-border)">
+    {% set isParam = not isNew and nodeType.family.value == 'parameter' %}
+
+    <form method="post" class="rounded-xl border bg-white p-5 space-y-4 mb-5" style="border-color:var(--c-border)">
+        <div class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">{{ 'node_type.edit.properties_title'|trans({}, 'node_type') }}</div>
         <div class="grid grid-cols-3 gap-3">
             <label class="block col-span-2">
                 <span class="text-xs font-medium">{{ 'node_type.edit.label_field'|trans({}, 'node_type') }}</span>
@@ -20,39 +100,37 @@
                 <span class="text-[11px]" style="color:var(--c-muted)">{{ 'node_type.edit.icon_help'|trans({'%link%': '<a href="https://icones.js.org/collection/ph" target="_blank" class="underline">Phosphor</a>', '%example%': '<code>ph:calendar</code>'}, 'node_type')|raw }}</span>
             </label>
         </div>
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-2 gap-3">
             <label class="block">
                 <span class="text-xs font-medium">{{ 'node_type.edit.key_field'|trans({}, 'node_type') }}</span>
                 <input name="key" value="{{ nodeType.key ?? '' }}" placeholder="{{ 'node_type.edit.key_placeholder'|trans({}, 'node_type') }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
             </label>
             <label class="block">
-                <span class="text-xs font-medium">{{ 'node_type.edit.family_field'|trans({}, 'node_type') }}</span>
-                <select name="family" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
-                    {% for fam in families %}<option value="{{ fam.value }}" {{ (nodeType.family ?? null) == fam ? 'selected' }}>{{ fam.label }}</option>{% endfor %}
-                </select>
+                <span class="text-xs font-medium">{{ 'node_type.edit.position_field'|trans({}, 'node_type') }}</span>
+                <input type="number" name="position" value="{{ nodeType.position ?? 0 }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
             </label>
-            <label class="block">
-                <span class="text-xs font-medium">{{ 'node_type.edit.kind_field'|trans({}, 'node_type') }}</span>
-                <select name="kind" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
-                    {% for k in kinds %}<option value="{{ k.value }}" {{ (nodeType.kind ?? null) == k ? 'selected' }}>{{ k.label }}</option>{% endfor %}
-                </select>
-                <span class="text-[11px]" style="color:var(--c-muted)">{{ 'node_type.edit.kind_help'|trans({}, 'node_type') }}</span>
-            </label>
-            <div class="grid grid-cols-2 gap-2">
-                <label class="block">
-                    <span class="text-xs font-medium">{{ 'node_type.edit.position_field'|trans({}, 'node_type') }}</span>
-                    <input type="number" name="position" value="{{ nodeType.position ?? 0 }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
-                </label>
-                <label class="block">
-                    <span class="text-xs font-medium">{{ 'node_type.edit.ects_target_field'|trans({}, 'node_type') }}</span>
-                    <input type="number" name="ectsTarget" value="{{ nodeType.ectsTarget ?? '' }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
-                </label>
-            </div>
         </div>
 
-        <p class="text-xs rounded-md px-3 py-2" style="background:var(--c-primary-soft);color:var(--c-primary)">
-            {{ 'node_type.edit.hierarchy_note'|trans({}, 'node_type') }}
-        </p>
+        {% if not isParam %}
+        <label class="block max-w-xs">
+            <span class="text-xs font-medium">{{ 'node_type.edit.kind_field'|trans({}, 'node_type') }}</span>
+            <select name="kind" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                {% for k in kinds %}<option value="{{ k.value }}" {{ (nodeType.kind ?? null) == k ? 'selected' }}>{{ k.label }}</option>{% endfor %}
+            </select>
+            <span class="text-[11px]" style="color:var(--c-muted)">{{ 'node_type.edit.kind_help'|trans({}, 'node_type') }}</span>
+        </label>
+
+        <fieldset class="rounded-md border p-3" style="border-color:var(--c-border)">
+            <legend class="text-xs font-medium px-1">{{ 'node_type.edit.elp_params_legend'|trans({}, 'node_type') }}</legend>
+            <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="mutualisable" value="1" {{ (not isNew and nodeType.hasCapability('mutualisable')) ? 'checked' }}>
+                {{ 'node_type.edit.mutualisable_label'|trans({}, 'node_type') }}
+            </label>
+            <label class="mt-2 flex items-center gap-2 text-sm">
+                <input type="checkbox" name="choiceTransformable" value="1" {{ (nodeType.choiceTransformable ?? true) ? 'checked' }}>
+                {{ 'node_type.edit.choice_transformable_label'|trans({}, 'node_type') }}
+            </label>
+        </fieldset>
 
         <fieldset class="rounded-md border p-3" style="border-color:var(--c-border)">
             <legend class="text-xs font-medium px-1">{{ 'node_type.edit.numbering_legend'|trans({}, 'node_type') }}</legend>
@@ -69,54 +147,70 @@
                 </select>
             </label>
             <label class="mt-2 flex items-center gap-2 text-sm">
-                <input type="checkbox" name="globalNumbering" value="1" {{ (nodeType.globalNumbering ?? false) ? 'checked' }}>
-                {{ 'node_type.edit.global_numbering_label'|trans({}, 'node_type') }}
+                <input type="checkbox" name="heritee" value="1" {{ not (nodeType.globalNumbering ?? false) ? 'checked' }}>
+                {{ 'node_type.edit.heritee_label'|trans({}, 'node_type') }}
             </label>
-            <p class="mt-2 text-xs" style="color:var(--c-muted)">
-                {{ 'node_type.edit.numbering_help'|trans({}, 'node_type') }}
-            </p>
+            <p class="mt-2 text-xs" style="color:var(--c-muted)">{{ 'node_type.edit.numbering_help'|trans({}, 'node_type') }}</p>
         </fieldset>
-
-        <label class="flex items-center gap-2 text-sm">
-            <input type="checkbox" name="choiceTransformable" value="1" {{ (nodeType.choiceTransformable ?? true) ? 'checked' }}>
-            {{ 'node_type.edit.choice_transformable_label'|trans({}, 'node_type') }}
-        </label>
-
-        <fieldset>
-            <legend class="text-xs font-medium mb-1">{{ 'node_type.edit.capabilities_legend'|trans({}, 'node_type') }}</legend>
-            <p class="text-xs mb-2" style="color:var(--c-muted)">
-                {{ 'node_type.edit.capabilities_help'|trans({}, 'node_type')|raw }}
-            </p>
-            <table class="w-full text-sm">
-                <thead class="text-[11px] uppercase tracking-wide" style="color:var(--c-muted)">
-                    <tr class="border-b" style="border-color:var(--c-border)">
-                        <th class="text-left py-1.5">{{ 'node_type.edit.col_capability'|trans({}, 'node_type') }}</th>
-                        <th class="w-20 text-center">{{ 'node_type.edit.col_included'|trans({}, 'node_type') }}</th>
-                        <th class="w-28 text-center">{{ 'node_type.edit.col_reserved_admin'|trans({}, 'node_type') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for key, label in capabilities %}
-                    <tr class="border-b last:border-0" style="border-color:var(--c-border)">
-                        <td class="py-1.5">{{ label }} <code class="text-xs" style="color:var(--c-muted)">{{ key }}</code></td>
-                        <td class="text-center">
-                            <input type="checkbox" name="capabilities[]" value="{{ key }}"
-                                   {{ (not isNew and nodeType.hasCapability(key)) ? 'checked' }}>
-                        </td>
-                        <td class="text-center">
-                            <input type="checkbox" name="lockedCapabilities[]" value="{{ key }}"
-                                   {{ (not isNew and nodeType.isCapabilityLocked(key)) ? 'checked' }}>
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </fieldset>
+        {% endif %}
 
         <div class="flex gap-2 pt-1">
             <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
             <a href="{{ path('node_type_index') }}" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</a>
         </div>
     </form>
+
+    {% if not isNew %}
+    {% import _self as ui %}
+    <div class="rounded-xl border bg-white p-5 space-y-4" style="border-color:var(--c-border)">
+        <div>
+            <div class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">{{ 'node_type.edit.form_builder_title'|trans({}, 'node_type') }}</div>
+            <p class="text-xs mt-1" style="color:var(--c-muted)">{{ 'node_type.edit.form_builder_help'|trans({}, 'node_type') }}</p>
+        </div>
+
+        {% for tab, categories in form %}
+            <div class="rounded-lg border p-3" style="border-color:var(--c-border)">
+                <div class="text-sm font-semibold mb-2">{{ 'node_type.edit.tab_label'|trans({'%tab%': tab}, 'node_type') }}</div>
+                {% for category, fields in categories %}
+                    {% if category %}
+                        <div class="flex items-center gap-2 my-2 text-[11px] uppercase tracking-wide" style="color:var(--c-muted)">
+                            <span class="h-px flex-1 bg-gray-200"></span>{{ category }}<span class="h-px flex-1 bg-gray-200"></span>
+                        </div>
+                    {% endif %}
+                    <div class="space-y-2">
+                        {% for f in fields %}
+                            {% set togglableDefault = not nodeType.isCapabilityLocked(f.key) %}
+                            <details class="rounded-md border" style="border-color:var(--c-border)">
+                                <summary class="flex items-center justify-between gap-2 px-3 py-2 cursor-pointer text-sm">
+                                    <span>{{ f.label }} <code class="text-xs" style="color:var(--c-muted)">{{ f.key }}</code>
+                                        {% if not togglableDefault %}<span class="pill ml-1" title="{{ 'node_type.edit.not_togglable_title'|trans({}, 'node_type') }}">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }}</span>{% endif %}
+                                    </span>
+                                    <form method="post" action="{{ path('node_type_field_remove', {id: nodeType.id, fieldId: f.id}) }}" onclick="event.stopPropagation()"
+                                          data-controller="confirm" data-confirm-message-value="{{ 'node_type.edit.remove_field_confirm'|trans({'%label%': f.label}, 'node_type') }}">
+                                        <button class="text-xs text-red-600 hover:underline">{{ 'common.remove'|trans({}, 'common') }}</button>
+                                    </form>
+                                </summary>
+                                <div class="p-3 border-t" style="border-color:var(--c-border)">
+                                    {{ ui.fieldForm(path('node_type_field_edit', {id: nodeType.id, fieldId: f.id}), f, referentiels, referentielCapableTypes, fieldTypes, 'common.save'|trans({}, 'common'), togglableDefault) }}
+                                </div>
+                            </details>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-sm" style="color:var(--c-muted)">{{ 'node_type.edit.form_builder_empty'|trans({}, 'node_type') }}</p>
+        {% endfor %}
+
+        <details class="rounded-md border" style="border-color:var(--c-border)">
+            <summary class="px-3 py-2 cursor-pointer text-sm font-medium" style="color:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'node_type.edit.add_field_button'|trans({}, 'node_type') }}</summary>
+            <div class="p-3 border-t" style="border-color:var(--c-border)">
+                <datalist id="existing-field-keys">{% for f in catalog %}<option value="{{ f.key }}">{% endfor %}</datalist>
+                {{ ui.fieldForm(path('node_type_field_add', {id: nodeType.id}), null, referentiels, referentielCapableTypes, fieldTypes, 'node_type.edit.add_field_button'|trans({}, 'node_type'), true) }}
+                <p class="text-[11px] mt-1" style="color:var(--c-muted)">{{ 'node_type.edit.add_field_reuse_help'|trans({}, 'node_type') }}</p>
+            </div>
+        </details>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

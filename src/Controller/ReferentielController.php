@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\Referentiel;
+use App\Enum\RefCategory;
 use App\Repository\ReferentielRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -57,7 +58,9 @@ final class ReferentielController extends AbstractController
             $referentiel
                 ->setDescription($request->request->get('description'))
                 ->setValues($values)
-                ->setPosition($request->request->getInt('position'));
+                ->setPosition($request->request->getInt('position'))
+                ->setCategory(RefCategory::from((string) $request->request->get('category', RefCategory::Libre->value)))
+                ->setEntiteCible($request->request->get('entiteCible'));
 
             $em->flush();
             $this->addFlash('success', 'Référentiel enregistré.');
@@ -68,6 +71,7 @@ final class ReferentielController extends AbstractController
         return $this->render('referentiel/edit.html.twig', [
             'referentiel' => $referentiel,
             'isNew' => $isNew,
+            'categories' => RefCategory::cases(),
         ]);
     }
 
