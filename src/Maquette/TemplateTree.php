@@ -64,6 +64,47 @@ final class TemplateTree
         });
     }
 
+    /**
+     * Réordonne (glisser-déposer) les enfants directs du nœud à `$parentPath`
+     * (« [] » = la racine) : `$order` est la liste des index d'origine dans
+     * leur nouvel ordre. Ignoré silencieusement si `$order` n'est pas une
+     * permutation valide des index actuels (requête corrompue/obsolète).
+     *
+     * @param list<int> $parentPath
+     * @param list<int> $order
+     */
+    public function reorder(array $parentPath, array $order): void
+    {
+        if ($parentPath === []) {
+            $this->tree = $this->applyOrder($this->tree, $order);
+
+            return;
+        }
+        $this->tree = $this->walk($this->tree, $parentPath, function (array &$n) use ($order): void {
+            $n['children'] ??= [];
+            $n['children'] = $this->applyOrder($n['children'], $order);
+        });
+    }
+
+    /**
+     * @param list<array<string, mixed>> $siblings
+     * @param list<int>                  $order
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function applyOrder(array $siblings, array $order): array
+    {
+        $count = \count($siblings);
+        $expected = $count > 0 ? range(0, $count - 1) : [];
+        $check = $order;
+        sort($check);
+        if ($check !== $expected) {
+            return $siblings;
+        }
+
+        return array_map(static fn (int $i) => $siblings[$i], $order);
+    }
+
     /** Bascule le trio « figé » (add + delete + duplicate) d'un seul geste. */
     public function toggleRigid(array $path): void
     {

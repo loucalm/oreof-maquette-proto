@@ -11,43 +11,41 @@
     {% set rigid = 'add' in locked or 'delete' in locked or 'duplicate' in locked %}
     {% set moveLocked = 'move' in locked %}
     {% set meta = types_by_key()[n.type] %}
-    <li class="template-node">
-        <div class="flex flex-wrap items-center gap-1.5 py-1">
-            <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'toggle-rigid'}) }}" class="inline">
-                <button title="{{ rigid ? 'template.edit.unlock_title'|trans({}, 'template') : 'template.edit.lock_title'|trans({}, 'template') }}"
-                        class="grid h-6 w-6 place-items-center rounded border text-xs"
-                        style="border-color:var(--c-border);{{ rigid ? 'background:#fef3c7' }}">{{ rigid ? ux_icon('ph:lock-simple-fill', {class: 'icon'}) : ux_icon('ph:lock-simple-open', {class: 'icon'}) }}</button>
-            </form>
-            <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'toggle-move'}) }}" class="inline">
-                <button title="{{ moveLocked ? 'template.edit.unlock_move_title'|trans({}, 'template') : 'template.edit.lock_move_title'|trans({}, 'template') }}"
-                        class="grid h-6 w-6 place-items-center rounded border text-xs"
-                        style="border-color:var(--c-border);{{ moveLocked ? 'background:#fee2e2' }}">{{ ux_icon('ph:arrows-out-cardinal', {class: 'icon'}) }}</button>
-            </form>
+    <li class="template-node" data-node-index="{{ p|split('.')|last }}">
+        <div class="group flex flex-wrap items-center gap-1.5 py-1 px-1 -mx-1 rounded-md hover:bg-gray-50">
+            <span class="drag-handle shrink-0" title="{{ 'template.edit.drag_title'|trans({}, 'template') }}">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>
 
             <span class="type-badge">{{ meta ? ux_icon(meta.icon, {class: 'icon'}) }} [{{ meta ? meta.label : n.type }}]</span>
+            {% if rigid %}<span class="tree-lock" title="{{ 'template.edit.rigid_hint'|trans({}, 'template') }}">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }}</span>{% endif %}
 
             <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'rename'}) }}" class="inline flex items-center gap-1">
                 <input name="label" value="{{ n.label ?? '' }}" placeholder="{{ 'template.edit.label_placeholder'|trans({}, 'template') }}"
-                       class="rounded border px-2 py-0.5 text-sm" style="border-color:var(--c-border);width:220px">
-                <button class="text-xs hover:underline" style="color:var(--c-muted)">{{ 'template.edit.rename_button'|trans({}, 'template') }}</button>
+                       class="rounded border border-transparent px-2 py-0.5 text-sm hover:border-gray-200 focus:border-gray-300 focus:bg-white" style="width:220px">
+                <button class="template-mini opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity" title="{{ 'template.edit.rename_button'|trans({}, 'template') }}">{{ ux_icon('ph:check', {class: 'icon'}) }}</button>
             </form>
 
             <span class="flex-1"></span>
 
-            <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'up'}) }}" class="inline">
-                <button class="template-mini" title="{{ 'template.edit.move_up'|trans({}, 'template') }}">{{ ux_icon('ph:arrow-up', {class: 'icon'}) }}</button>
-            </form>
-            <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'down'}) }}" class="inline">
-                <button class="template-mini" title="{{ 'template.edit.move_down'|trans({}, 'template') }}">{{ ux_icon('ph:arrow-down', {class: 'icon'}) }}</button>
-            </form>
-            <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'delete'}) }}" class="inline"
-                  data-controller="confirm" data-confirm-message-value="{{ 'template.edit.delete_node_confirm'|trans({'%label%': n.label ?? n.type}, 'template') }}">
-                <button class="template-mini template-mini--danger" title="{{ 'common.delete'|trans({}, 'common') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
-            </form>
+            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+                <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'toggle-rigid'}) }}" class="inline">
+                    <button title="{{ rigid ? 'template.edit.unlock_title'|trans({}, 'template') : 'template.edit.lock_title'|trans({}, 'template') }}"
+                            class="template-mini" style="{{ rigid ? 'background:#fef3c7' }}">{{ rigid ? ux_icon('ph:lock-simple-fill', {class: 'icon'}) : ux_icon('ph:lock-simple-open', {class: 'icon'}) }}</button>
+                </form>
+                <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'toggle-move'}) }}" class="inline">
+                    <button title="{{ moveLocked ? 'template.edit.unlock_move_title'|trans({}, 'template') : 'template.edit.lock_move_title'|trans({}, 'template') }}"
+                            class="template-mini" style="{{ moveLocked ? 'background:#fee2e2' }}">{{ ux_icon('ph:arrows-out-cardinal', {class: 'icon'}) }}</button>
+                </form>
+                <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'delete'}) }}" class="inline"
+                      data-controller="confirm" data-confirm-message-value="{{ 'template.edit.delete_node_confirm'|trans({'%label%': n.label ?? n.type}, 'template') }}">
+                    <button class="template-mini template-mini--danger" title="{{ 'common.delete'|trans({}, 'common') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
+                </form>
+            </div>
         </div>
 
         {% if n.children is defined and n.children is not empty %}
-            <ul class="template-branch">
+            <ul class="template-branch" data-controller="tpltree"
+                data-tpltree-save-url-value="{{ path('template_node_reorder', {id: template.id}) }}"
+                data-tpltree-parent-path-value="{{ p }}">
                 {% for c in n.children %}
                     {{ m.node(c, p ~ '.' ~ loop.index0, template, types) }}
                 {% endfor %}
@@ -281,7 +279,9 @@
         {% if template.tree is empty %}
             <p class="text-sm mb-3" style="color:var(--c-muted)">{{ 'template.edit.tree_empty'|trans({}, 'template') }}</p>
         {% else %}
-            <ul class="template-branch template-branch--root">
+            <ul class="template-branch template-branch--root" data-controller="tpltree"
+                data-tpltree-save-url-value="{{ path('template_node_reorder', {id: template.id}) }}"
+                data-tpltree-parent-path-value="">
                 {% for n in template.tree %}
                     {{ m.node(n, loop.index0 ~ '', template, types) }}
                 {% endfor %}

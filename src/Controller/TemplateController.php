@@ -116,7 +116,12 @@ final class TemplateController extends AbstractController
     #[Route('/administration/templates/{id}/structure', name: 'template_structure_save', methods: ['POST'])]
     public function structureSave(StructureTemplate $template, Request $request): Response
     {
-        $template->setStructure(array_map('strval', (array) $request->request->all('chain')));
+        // Le dernier maillon de la chaîne est fixe (non draggable, cf. templateStructureRows()) : le
+        // formulaire de réordonnancement ne soumet donc que le préfixe déplaçable, il faut le lui rajouter.
+        $chain = array_map('strval', (array) $request->request->all('chain'));
+        $tail = $template->getStructure();
+        $lastLink = [] !== $tail ? [array_pop($tail)] : [];
+        $template->setStructure([...$chain, ...$lastLink]);
         $this->em->flush();
 
         if ($request->isXmlHttpRequest()) {
@@ -239,6 +244,20 @@ final class TemplateController extends AbstractController
             'rename' => $tree->rename($p, trim((string) $request->request->get('label'))),
         };
 
+        $template->setTree($tree->tree);
+        $this->em->flush();
+
+        return $this->redirectToRoute('template_edit', ['id' => $template->getId()]);
+    }
+
+    #[Route('/administration/templates/{id}/nodes/reorder', name: 'template_node_reorder', methods: ['POST'])]
+    public function nodeReorder(StructureTemplate $template, Request $request): Response
+    {
+        $tree = new TemplateTree($template->getTree());
+        $parentPath = TemplateTree::path((string) $request->request->get('parentPath', ''));
+        $order = array_map('intval', (array) $request->request->all('order'));
+
+        $tree->reorder($parentPath, $order);
         $template->setTree($tree->tree);
         $this->em->flush();
 
