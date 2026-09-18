@@ -49,11 +49,34 @@ final class NodeTypeController extends AbstractController
         ]);
     }
 
+    /**
+     * Les types « Parameter » (sections fixes Organisation/Présentation/BCC…) ne pilotent
+     * pas réellement de formulaire : les pages formation correspondantes utilisent des
+     * libellés et des champs codés en dur (FormationController::PARAM_SECTIONS /
+     * PARCOURS_PARAM_SECTIONS), pas ce catalogue. Toute modification ici serait acceptée
+     * sans jamais avoir d'effet visible — bloqué plutôt que silencieusement inopérant.
+     */
+    private function assertEditable(NodeType $nodeType): ?Response
+    {
+        if (NodeFamily::Parameter !== $nodeType->getFamily()) {
+            return null;
+        }
+        $this->addFlash('warning', sprintf(
+            '« %s » n’est pas modifiable : cette section est encore codée en dur côté formation, pas pilotée par ce catalogue.',
+            $nodeType->getLabel(),
+        ));
+
+        return $this->redirectToRoute('node_type_index');
+    }
+
     #[Route('/node-types/new', name: 'node_type_new', methods: ['GET', 'POST'])]
     #[Route('/node-types/{id}/edit', name: 'node_type_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, EntityManagerInterface $em, ReferentielRepository $referentiels, FieldDefRepository $fields, ?NodeType $nodeType = null): Response
     {
         $isNew = $nodeType === null;
+        if (!$isNew && null !== ($blocked = $this->assertEditable($nodeType))) {
+            return $blocked;
+        }
 
         if ($request->isMethod('POST')) {
             $label = trim((string) $request->request->get('label')) ?: 'Type';
@@ -139,6 +162,10 @@ final class NodeTypeController extends AbstractController
     #[Route('/administration/node-types/{id}/champs', name: 'node_type_field_add', methods: ['POST'])]
     public function fieldAdd(NodeType $nodeType, Request $request, EntityManagerInterface $em, FieldDefRepository $fields): Response
     {
+        if (null !== ($blocked = $this->assertEditable($nodeType))) {
+            return $blocked;
+        }
+
         $label = trim((string) $request->request->get('label')) ?: 'Champ';
         $key = trim((string) $request->request->get('key'))
             ?: (new AsciiSlugger())->slug($label)->lower()->toString();
@@ -164,6 +191,10 @@ final class NodeTypeController extends AbstractController
     #[Route('/administration/node-types/{id}/champs/{fieldId}', name: 'node_type_field_edit', methods: ['POST'], requirements: ['fieldId' => '\d+'])]
     public function fieldEdit(NodeType $nodeType, int $fieldId, Request $request, EntityManagerInterface $em, FieldDefRepository $fields): Response
     {
+        if (null !== ($blocked = $this->assertEditable($nodeType))) {
+            return $blocked;
+        }
+
         $field = $fields->find($fieldId);
         if (null === $field || !$nodeType->hasCapability($field->getKey())) {
             throw $this->createNotFoundException();
@@ -189,6 +220,10 @@ final class NodeTypeController extends AbstractController
     #[Route('/administration/node-types/{id}/champs/separateur', name: 'node_type_separator_add', methods: ['POST'])]
     public function separatorAdd(NodeType $nodeType, Request $request, EntityManagerInterface $em, FieldDefRepository $fields): Response
     {
+        if (null !== ($blocked = $this->assertEditable($nodeType))) {
+            return $blocked;
+        }
+
         $tab = (string) $request->request->get('tab', 'props');
         $label = trim((string) $request->request->get('label')) ?: 'Séparateur';
         $key = 'sep_'.bin2hex(random_bytes(4));
@@ -218,6 +253,10 @@ final class NodeTypeController extends AbstractController
     #[Route('/administration/node-types/{id}/champs/{tab}/reordonner', name: 'node_type_fields_reorder', methods: ['POST'])]
     public function fieldsReorder(NodeType $nodeType, string $tab, Request $request, EntityManagerInterface $em, FieldDefRepository $fields): Response
     {
+        if (null !== ($blocked = $this->assertEditable($nodeType))) {
+            return $blocked;
+        }
+
         $byKey = [];
         $positions = [];
         foreach ($fields->allOrdered() as $f) {
@@ -245,6 +284,10 @@ final class NodeTypeController extends AbstractController
     #[Route('/administration/node-types/{id}/champs/{fieldId}/supprimer', name: 'node_type_field_remove', methods: ['POST'], requirements: ['fieldId' => '\d+'])]
     public function fieldRemove(NodeType $nodeType, int $fieldId, EntityManagerInterface $em, FieldDefRepository $fields, NodeTypeRepository $types): Response
     {
+        if (null !== ($blocked = $this->assertEditable($nodeType))) {
+            return $blocked;
+        }
+
         $field = $fields->find($fieldId);
         if (null === $field) {
             throw $this->createNotFoundException();

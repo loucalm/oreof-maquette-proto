@@ -22,7 +22,11 @@
                     </td>
                     <td class="px-4 py-3" style="color:var(--c-muted)">{{ t.kind.label }}</td>
                     <td class="px-4 py-3 text-right whitespace-nowrap">
-                        <a href="{{ path('node_type_edit', {id: t.id}) }}" data-turbo-frame="_top" class="text-xs hover:underline">{{ 'common.edit'|trans({}, 'common') }}</a>
+                        {% if t.family.value == 'parameter' %}
+                            <span class="text-xs" style="color:var(--c-muted)" title="{{ 'node_type.index.readonly_title'|trans({}, 'node_type') }}">{{ 'node_type.index.readonly_label'|trans({}, 'node_type') }}</span>
+                        {% else %}
+                            <a href="{{ path('node_type_edit', {id: t.id}) }}" data-turbo-frame="_top" class="text-xs hover:underline">{{ 'common.edit'|trans({}, 'common') }}</a>
+                        {% endif %}
                         {% if showDelete and not t.system %}
                             <form method="post" action="{{ path('node_type_delete', {id: t.id}) }}" class="inline"
                                   data-controller="confirm" data-confirm-message-value="{{ 'node_type.index.delete_confirm'|trans({'%label%': t.label}, 'node_type') }}">

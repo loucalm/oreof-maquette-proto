@@ -15,6 +15,10 @@ node_type:
     delete_confirm: >-
       Supprimer le type « %label% » ? Les éléments pédagogiques qui l'utilisent encore empêcheront la
       suppression.
+    readonly_label: lecture seule
+    readonly_title: >-
+      Cette section (libellé, champs) est encore codée en dur côté formation — la modifier ici n'aurait
+      aucun effet visible, donc ce n'est pas modifiable.
     internal_title: Types internes (non listés ici)
     internal_help: >-
       « Bloc de choix » n'apparaît jamais dans cette liste : ce n'est pas un ELP qu'on choisit, il se
