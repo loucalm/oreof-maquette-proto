@@ -51,6 +51,7 @@ template:
       ici on choisit lesquelles s'appliquent à ce diplôme.
     field_overrides_title: 'Champs de %type% pour ce template'
     field_overrides_pencil_title: Champs togglables de cette ligne pour ce template
+    field_overrides_empty: Ce type n'a aucun champ togglable pour ce template.
     tree_title: Arbre du template
     tree_empty: Aucun ELP. Ajoutez le premier niveau ci-dessous.
     lock_legend: '%lock_icon% = élément pédagogique figé : le responsable de formation ne pourra ni en ajouter un autre du même type ici, ni le supprimer, ni le dupliquer.'

@@ -76,27 +76,34 @@
     </li>
 {% endmacro %}
 
-{# ─── surcharge des capacités d'un type, spécifique à ce template ─── #}
+{# ─── surcharge des capacités d'un type, spécifique à ce template (contenu d'une modale) ─── #}
 {% macro fieldOverridesForm(typeKey, template) %}
     {% set meta = types_by_key()[typeKey] ?? null %}
     {% if meta %}
         {% set overrides = template.getFieldOverridesFor(typeKey) %}
         {% set togglable = capability_labels()|filter((label, key) => meta.hasCapability(key) and not meta.isCapabilityLocked(key)) %}
-        {% if togglable is not empty %}
-            <form method="post" action="{{ path('template_field_overrides', {id: template.id, typeKey: typeKey}) }}"
-                  class="template-branch mt-1 mb-1 rounded-md border px-3 py-2 text-xs" style="border-color:var(--c-border);background:#f8f9fb">
-                <div class="font-medium mb-1.5" style="color:var(--c-muted)">{{ 'template.edit.field_overrides_title'|trans({'%type%': meta.label}, 'template') }}</div>
-                <div class="flex flex-wrap gap-x-4 gap-y-1.5 mb-2">
+        <form method="post" action="{{ path('template_field_overrides', {id: template.id, typeKey: typeKey}) }}" class="p-6 space-y-3">
+            <h3 class="text-lg font-bold">{{ 'template.edit.field_overrides_title'|trans({'%type%': meta.label}, 'template') }}</h3>
+            {% if togglable is empty %}
+                <p class="text-sm" style="color:var(--c-muted)">{{ 'template.edit.field_overrides_empty'|trans({}, 'template') }}</p>
+                <div class="flex justify-end pt-1">
+                    <button type="button" data-action="modal#close" class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.close'|trans({}, 'common') }}</button>
+                </div>
+            {% else %}
+                <div class="grid grid-cols-2 gap-x-4 gap-y-2">
                     {% for key, label in togglable %}
                         {% set on = overrides[key] ?? meta.capabilityDefault(key) %}
-                        <label class="flex items-center gap-1.5">
+                        <label class="flex items-center gap-1.5 text-sm">
                             <input type="checkbox" name="capabilities[]" value="{{ key }}" {{ on ? 'checked' }}> {{ label }}
                         </label>
                     {% endfor %}
                 </div>
-                <button class="rounded border px-2 py-1 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.save'|trans({}, 'common') }}</button>
-            </form>
-        {% endif %}
+                <div class="flex justify-end gap-2 pt-1">
+                    <button type="button" data-action="modal#close" class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</button>
+                    <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
+                </div>
+            {% endif %}
+        </form>
     {% endif %}
 {% endmacro %}
 
@@ -155,24 +162,31 @@
         <table class="w-full text-xs">
             <tbody data-controller="chain" data-chain-save-url-value="{{ path('template_structure_save', {id: template.id}) }}">
             {% for row in template_structure_rows(template) %}
-                <tr class="border-t" style="border-color:var(--c-border)" {{ not row.fixed ? 'data-chain-key=' ~ row.key }}>
-                    <td class="py-1.5 pr-1 text-center text-gray-300 w-5">
+                <tr class="border-t hover:bg-gray-50" style="border-color:var(--c-border)" {{ not row.fixed ? 'data-chain-key=' ~ row.key }}>
+                    <td class="py-2 pr-1 text-center text-gray-300 w-5">
                         {% if not row.fixed %}<span class="drag-handle" title="{{ 'formation.tree.drag_title'|trans({}, 'formation') }}">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>{% endif %}
                     </td>
-                    <td class="py-1.5">
+                    <td class="py-2">
                         <span class="type-badge">{{ row.type ? ux_icon(row.type.icon, {class: 'icon'}) : ux_icon('ph:question', {class: 'icon'}) }} [{{ row.type ? row.type.label : row.key }}]</span>
                         {% if row.mono %}<span class="pill ml-1">{{ 'formation.param.structure.invisible_mono_pill'|trans({}, 'formation') }}</span>{% endif %}
                     </td>
-                    <td class="py-1.5 text-right">
-                        {% if not row.fixed %}
-                            <details class="inline-block text-left align-middle">
-                                <summary class="inline-grid h-6 w-6 place-items-center rounded border text-xs cursor-pointer" style="border-color:var(--c-border)" title="{{ 'template.edit.field_overrides_pencil_title'|trans({}, 'template') }}">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }}</summary>
-                                {{ m.fieldOverridesForm(row.key, template) }}
-                            </details>
-                            <form method="post" action="{{ path('template_structure_remove', {id: template.id, key: row.key}) }}" class="inline">
-                                <button class="text-xs text-red-600 hover:underline">{{ 'formation.param.structure.remove_button'|trans({}, 'formation') }}</button>
-                            </form>
-                        {% endif %}
+                    <td class="py-2 text-right">
+                        <div class="flex items-center justify-end gap-1">
+                            {% if row.key != 'parcours' %}
+                                <div data-controller="modal">
+                                    <button type="button" data-action="modal#open" class="template-mini" title="{{ 'template.edit.field_overrides_pencil_title'|trans({}, 'template') }}">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }}</button>
+                                    <dialog data-modal-target="dialog" data-action="click->modal#clickOutside"
+                                            class="rounded-2xl border-0 p-0 w-[min(420px,92vw)] backdrop:bg-black/40">
+                                        {{ m.fieldOverridesForm(row.key, template) }}
+                                    </dialog>
+                                </div>
+                            {% endif %}
+                            {% if not row.fixed %}
+                                <form method="post" action="{{ path('template_structure_remove', {id: template.id, key: row.key}) }}" class="inline">
+                                    <button class="template-mini template-mini--danger" title="{{ 'formation.param.structure.remove_button'|trans({}, 'formation') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
+                                </form>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
             {% endfor %}

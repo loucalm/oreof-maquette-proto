@@ -5,6 +5,7 @@ common:
   remove: Retirer
   save: Enregistrer
   cancel: Annuler
+  close: Fermer
   add: Ajouter
   badge_socle: socle
   required_badge: Champs requis
