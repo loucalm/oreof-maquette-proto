@@ -15,6 +15,12 @@ node_type:
     delete_confirm: >-
       Supprimer le type « %label% » ? Les éléments pédagogiques qui l'utilisent encore empêcheront la
       suppression.
+    internal_title: Types internes (non listés ici)
+    internal_help: >-
+      « Bloc de choix » n'apparaît jamais dans cette liste : ce n'est pas un ELP qu'on choisit, il se
+      crée automatiquement quand on clique « Transformer en choix » sur un ELP déjà en place. « Bloc de
+      compétences » et « Compétence » (référentiel BCC) ne sont pas non plus des ELP au sens de cette
+      page : ils se gèrent depuis l'éditeur BCC de chaque formation, pas depuis un formulaire ici.
   edit:
     new_title: Nouveau type
     breadcrumb_new: nouveau

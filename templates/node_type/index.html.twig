@@ -58,5 +58,10 @@
         </div>
         {{ ui.table(elpTypes, true, true) }}
     </div>
+
+    <div class="rounded-xl border px-4 py-3 text-xs" style="border-color:var(--c-border);background:#f8f9fb;color:var(--c-muted)">
+        <div class="font-semibold mb-1" style="color:var(--c-muted)">{{ 'node_type.index.internal_title'|trans({}, 'node_type') }}</div>
+        <p>{{ 'node_type.index.internal_help'|trans({}, 'node_type') }}</p>
+    </div>
 </div>
 {% endblock %}

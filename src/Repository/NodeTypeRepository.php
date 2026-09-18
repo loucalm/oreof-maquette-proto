@@ -52,8 +52,9 @@ class NodeTypeRepository extends ServiceEntityRepository
     /**
      * Types utilisables dans un arbre pédagogique (squelette de formation ou de
      * template) : exclut la famille `Parameter` (sections fixes Organisation/
-     * Présentation/Configuration/BCC, jamais des nœuds d'arbre) — même principe
-     * que le filtrage de la famille `Competence` hors de l'arbre pédagogique.
+     * Présentation/Configuration/BCC, jamais des nœuds d'arbre) et la famille
+     * `Competence` (arbre BCC parallèle — ses nœuds se créent depuis l'éditeur
+     * BCC, jamais depuis le squelette pédagogique).
      *
      * @return list<NodeType>
      */
@@ -61,7 +62,7 @@ class NodeTypeRepository extends ServiceEntityRepository
     {
         return array_values(array_filter(
             $this->findAllOrdered(),
-            static fn (NodeType $t) => NodeFamily::Parameter !== $t->getFamily(),
+            static fn (NodeType $t) => !\in_array($t->getFamily(), [NodeFamily::Parameter, NodeFamily::Competence], true),
         ));
     }
 

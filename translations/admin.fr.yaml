@@ -29,8 +29,8 @@ admin:
     node_types_row_help: Structurel ou temporel — cf. « Types d’élément pédagogique » pour les types concrets (UE, EC, Année…).
     competences_row_title: Compétences (BCC)
     competences_row_help: >-
-      Les blocs/compétences se créent depuis %link_open%Types d’élément pédagogique%link_close% (types
-      « Bloc de compétences »/« Compétence ») ; ils s’attribuent à un ELP via le champ « Compétence(s)
+      Les blocs/compétences se créent directement dans l’éditeur BCC de chaque formation (pas depuis un
+      formulaire d’admin — ce ne sont pas des ELP) ; ils s’attribuent à un ELP via le champ « Compétence(s)
       associée(s) ».
     mcc_note: 'Les types de MCCC (CCI, CT…) ont leur propre page — %link_open%Types de MCCC%link_close%.'
     libre_title: Libre

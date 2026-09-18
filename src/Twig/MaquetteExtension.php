@@ -83,10 +83,15 @@ final class MaquetteExtension extends AbstractExtension
     }
 
     /**
-     * Types ajoutables sous ce nœud : l'enfant prévu par le squelette de la
-     * formation (résolu via l'hôte effectif — cf. TreeNode::getEffectiveHostTypeKey),
-     * et « Bloc de choix » en plus quand applicable, pour permettre d'imbriquer
-     * des choix à l'infini.
+     * Types ajoutables sous ce nœud DEPUIS LE FORMULAIRE : l'enfant prévu par
+     * le squelette de la formation (résolu via l'hôte effectif — cf.
+     * TreeNode::getEffectiveHostTypeKey). « Bloc de choix » n'est PAS proposé
+     * ici — ce n'est pas un ELP qu'on choisit dans une liste, il n'existe que
+     * comme résultat de « Transformer en choix » sur un ELP déjà en place
+     * (cf. NodeController::convertToChoice) ; TreeNode::allowedChildTypeKeys()
+     * continue de le considérer « accepté » pour que ce bouton fonctionne,
+     * y compris pour imbriquer un choix dans un choix (en convertissant une
+     * de ses alternatives déjà en place).
      *
      * @return list<NodeType>
      */
@@ -97,7 +102,7 @@ final class MaquetteExtension extends AbstractExtension
         return array_values(array_filter(array_map(
             static fn (string $key) => $byKey[$key] ?? null,
             $node->allowedChildTypeKeys(),
-        )));
+        ), static fn (?NodeType $t) => null !== $t && 'bloc_choix' !== $t->getKey()));
     }
 
     /**

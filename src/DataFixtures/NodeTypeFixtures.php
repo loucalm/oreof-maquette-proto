@@ -36,8 +36,12 @@ final class NodeTypeFixtures extends Fixture
             ['ue',          'UE',        'ph:puzzle-piece',       NodeFamily::Structural,     40,       ['ects' => true, 'ueType' => true, 'nature' => true, 'competencies' => true, 'mutualisable' => true], null, ['nature'],        true,     'decimal', NodeKind::Structurel, false,     true, false],
             ['ec',          'EC',        'ph:file-text',          NodeFamily::Structural,     50,       ['code' => true, 'ecType' => true, 'ects' => true, 'nature' => true, 'competencies' => true, 'ficheMatiere' => true, 'hours' => true, 'mccc' => true, 'mutualisable' => true], null, ['code', 'nature', 'mccc', 'ficheMatiere'], true, 'alpha', NodeKind::Structurel, false, true, true],
             // transparent pour le squelette (cf. TreeNode::getEffectiveHostTypeKey) : peut
-            // remplacer n'importe quel UE/EC attendu par la chaîne, et s'imbriquer en lui-même à l'infini
-            ['bloc_choix',  'Bloc de choix', 'ph:shuffle',        NodeFamily::Structural, 60,       ['ects' => true, 'choiceCount' => true, 'nature' => true, 'mutualisable' => true], null,       ['nature'],      false,    'decimal', NodeKind::Structurel, false, false, false],
+            // remplacer n'importe quel UE/EC attendu par la chaîne, et s'imbriquer en lui-même à l'infini.
+            // Jamais choisi à la main (exclu de node_type_index et des dropdowns d'ajout, cf.
+            // NodeTypeController::INTERNAL_KEYS / MaquetteExtension::typesAllowedFor) : n'existe que
+            // par conversion d'un ELP déjà en place (NodeController::convertToChoice), donc protégé
+            // comme les autres types dont le code dépend structurellement.
+            ['bloc_choix',  'Bloc de choix', 'ph:shuffle',        NodeFamily::Structural, 60,       ['ects' => true, 'choiceCount' => true, 'nature' => true, 'mutualisable' => true], null,       ['nature'],      false,    'decimal', NodeKind::Structurel, false, false, true],
             // ─── référentiel de compétences (BCC) : arbre parallèle à la structure pédagogique — le
             // BCC en dépend structurellement (BccController cherche ces clés), donc protégés eux aussi.
             ['bloc_competences', 'Bloc de compétences', 'ph:graduation-cap', NodeFamily::Competence, 70, ['mutualisable' => true],                                          null,       [],              true,     'decimal', NodeKind::Structurel, false, false, true],

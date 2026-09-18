@@ -26,14 +26,26 @@ use Symfony\Component\String\Slugger\AsciiSlugger;
  */
 final class NodeTypeController extends AbstractController
 {
+    /**
+     * Clés internes, jamais choisies à la main par un admin : « Bloc de choix »
+     * n'existe qu'en convertissant un ELP déjà en place (cf.
+     * MaquetteExtension::typesAllowedFor()), les types « compétence » sont
+     * gérés depuis l'éditeur BCC (BccController) — ni l'un ni l'autre n'a sa
+     * place dans la liste éditable des ELP.
+     */
+    private const INTERNAL_KEYS = ['bloc_choix'];
+
     #[Route('/node-types', name: 'node_type_index', methods: ['GET'])]
     public function index(NodeTypeRepository $repo): Response
     {
         $all = $repo->findAllOrdered();
+        $isElp = static fn (NodeType $t) => NodeFamily::Parameter !== $t->getFamily()
+            && NodeFamily::Competence !== $t->getFamily()
+            && !\in_array($t->getKey(), self::INTERNAL_KEYS, true);
 
         return $this->render('node_type/index.html.twig', [
             'paramTypes' => array_values(array_filter($all, static fn (NodeType $t) => NodeFamily::Parameter === $t->getFamily())),
-            'elpTypes' => array_values(array_filter($all, static fn (NodeType $t) => NodeFamily::Parameter !== $t->getFamily())),
+            'elpTypes' => array_values(array_filter($all, $isElp)),
         ]);
     }
 
