@@ -20,6 +20,7 @@ template:
     rename_button: renommer
     drag_title: 'Glisser pour réordonner parmi les éléments de même niveau'
     rigid_hint: 'ELP figé (ajout/suppression/duplication bloqués côté formation)'
+    temporel_label_hint: 'Nom calculé (type + numéro) — aucune saisie possible pour un ELP temporel'
     delete_node_confirm: 'Supprimer « %label% » et sa branche du template ?'
     child_label_placeholder: libellé (optionnel)
     add_child_button: enfant

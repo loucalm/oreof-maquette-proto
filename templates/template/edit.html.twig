@@ -11,6 +11,8 @@
     {% set rigid = 'add' in locked or 'delete' in locked or 'duplicate' in locked %}
     {% set moveLocked = 'move' in locked %}
     {% set meta = types_by_key()[n.type] %}
+    {% set temporel = meta and meta.temporel %}
+    {% set displayLabel = temporel ? meta.label ~ ' ' ~ ((p|split('.')|last) + 1) : (n.label ?: (meta ? meta.label : n.type)) %}
     <li class="template-node" data-node-index="{{ p|split('.')|last }}">
         <div class="group flex flex-wrap items-center gap-1.5 py-1 px-1 -mx-1 rounded-md hover:bg-gray-50">
             <span class="drag-handle shrink-0" title="{{ 'template.edit.drag_title'|trans({}, 'template') }}">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>
@@ -18,11 +20,15 @@
             <span class="type-badge">{{ meta ? ux_icon(meta.icon, {class: 'icon'}) }} [{{ meta ? meta.label : n.type }}]</span>
             {% if rigid %}<span class="tree-lock" title="{{ 'template.edit.rigid_hint'|trans({}, 'template') }}">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }}</span>{% endif %}
 
-            <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'rename'}) }}" class="flex items-center gap-1">
-                <input name="label" value="{{ n.label ?? '' }}" placeholder="{{ 'template.edit.label_placeholder'|trans({}, 'template') }}"
-                       class="rounded border border-transparent px-2 py-0.5 text-sm hover:border-gray-200 focus:border-gray-300 focus:bg-white" style="width:220px">
-                <button class="template-mini opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity" title="{{ 'template.edit.rename_button'|trans({}, 'template') }}">{{ ux_icon('ph:check', {class: 'icon'}) }}</button>
-            </form>
+            {% if temporel %}
+                <span class="text-sm" style="color:var(--c-muted)" title="{{ 'template.edit.temporel_label_hint'|trans({}, 'template') }}">{{ displayLabel }}</span>
+            {% else %}
+                <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'rename'}) }}" class="flex items-center gap-1">
+                    <input name="label" value="{{ n.label ?? '' }}" placeholder="{{ 'template.edit.label_placeholder'|trans({}, 'template') }}"
+                           class="rounded border border-transparent px-2 py-0.5 text-sm hover:border-gray-200 focus:border-gray-300 focus:bg-white" style="width:220px">
+                    <button class="template-mini opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity" title="{{ 'template.edit.rename_button'|trans({}, 'template') }}">{{ ux_icon('ph:check', {class: 'icon'}) }}</button>
+                </form>
+            {% endif %}
 
             <span class="flex-1"></span>
 
@@ -36,7 +42,7 @@
                             class="template-mini" style="{{ moveLocked ? 'background:#fee2e2' }}">{{ ux_icon('ph:arrows-out-cardinal', {class: 'icon'}) }}</button>
                 </form>
                 <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'delete'}) }}" class="inline"
-                      data-controller="confirm" data-confirm-message-value="{{ 'template.edit.delete_node_confirm'|trans({'%label%': n.label ?? n.type}, 'template') }}">
+                      data-controller="confirm" data-confirm-message-value="{{ 'template.edit.delete_node_confirm'|trans({'%label%': displayLabel}, 'template') }}">
                     <button class="template-mini template-mini--danger" title="{{ 'common.delete'|trans({}, 'common') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
                 </form>
             </div>
@@ -67,7 +73,9 @@
                     {% for t in types %}<option value="{{ t.key }}">{{ t.label }}</option>{% endfor %}
                 </select>
             {% endif %}
-            <input name="label" placeholder="{{ 'template.edit.child_label_placeholder'|trans({}, 'template') }}" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
+            {% if not (childType and childType.temporel) %}
+                <input name="label" placeholder="{{ 'template.edit.child_label_placeholder'|trans({}, 'template') }}" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
+            {% endif %}
             <button class="rounded border px-2 py-1 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'template.edit.add_child_button'|trans({}, 'template') }}</button>
         </form>
         {% endif %}
@@ -302,7 +310,9 @@
                     {% for t in types %}<option value="{{ t.key }}">{{ t.label }}</option>{% endfor %}
                 </select>
             {% endif %}
-            <input name="label" placeholder="{{ 'template.edit.label_placeholder'|trans({}, 'template') }}" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
+            {% if not (rootType and rootType.temporel) %}
+                <input name="label" placeholder="{{ 'template.edit.label_placeholder'|trans({}, 'template') }}" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
+            {% endif %}
             <button class="rounded border px-2 py-1 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'template.edit.add_root_button'|trans({}, 'template') }}</button>
         </form>
     </div>
