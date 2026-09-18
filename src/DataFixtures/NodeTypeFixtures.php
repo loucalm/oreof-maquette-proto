@@ -68,23 +68,31 @@ final class NodeTypeFixtures extends Fixture
 
         // ─── sections fixes « Formation / Parcours » : Organisation, Présentation,
         // Configuration de la structure, BCC — jamais des nœuds d'arbre (family Parameter,
-        // exclues des dropdowns structurels par NodeTypeRepository::forTree()), mais leur
-        // liste de champs devient configurable via le même constructeur de formulaire.
+        // exclues des dropdowns structurels par NodeTypeRepository::forTree()). Organisation
+        // et Présentation (formation + parcours) sont réellement pilotées par ce catalogue
+        // (cf. NodeTypeController::EDITABLE_PARAM_KEYS) ; Structure et BCC gardent leur
+        // propre UI dédiée, `capabilities` reste vide pour elles.
+        $orgFormation = ['name', 'diplome', 'domaine', 'composante', 'contacts', 'sep_org_specifiques', 'mention', 'niveauEntree', 'niveauSortie', 'rncp', 'codeRncp', 'codeApogee', 'sep_org_responsables', 'respMention', 'coRespMention'];
+        $orgParcours = ['nom', 'ectsTotal', 'modalitesEnseignement', 'composanteInscription', 'regimes', 'modalitesAlternance', 'lieu', 'codeApogee', 'sep_org_responsables', 'respParcours', 'coRespParcours'];
+        $presFormation = ['objectif', 'resultats', 'contenu', 'sep_pres_rythme', 'rythme', 'rythmePrecision'];
+        $presParcours = ['objectif', 'motsCles', 'resultats', 'contenu', 'langue', 'niveauLangue', 'sep_pres_rythme', 'rythme', 'rythmePrecision', 'sep_pres_contacts', 'contactsParcours', 'sep_pres_apres', 'poursuiteEtudes', 'debouches', 'codesRome'];
+
         $paramDefs = [
-            ['param_organisation_formation', 'Organisation et localisation', 'ph:map-pin', 110],
-            ['param_presentation_formation', 'Présentation', 'ph:notepad', 112],
-            ['param_structure_formation', 'Configuration de la structure', 'ph:tree-structure', 114],
-            ['param_structure_sans_parcours_formation', 'Configuration de la structure (sans parcours)', 'ph:tree-structure', 116],
-            ['param_bcc_sans_parcours_formation', 'BCC (sans parcours)', 'ph:graduation-cap', 118],
-            ['param_organisation_parcours', 'Organisation et localisation', 'ph:map-pin', 120],
-            ['param_presentation_parcours', 'Présentation', 'ph:notepad', 122],
-            ['param_bcc_parcours', 'BCC', 'ph:graduation-cap', 124],
+            ['param_organisation_formation', 'Organisation et localisation', 'ph:map-pin', 110, $orgFormation],
+            ['param_presentation_formation', 'Présentation', 'ph:notepad', 112, $presFormation],
+            ['param_structure_formation', 'Configuration de la structure', 'ph:tree-structure', 114, []],
+            ['param_structure_sans_parcours_formation', 'Configuration de la structure (sans parcours)', 'ph:tree-structure', 116, []],
+            ['param_bcc_sans_parcours_formation', 'BCC (sans parcours)', 'ph:graduation-cap', 118, []],
+            ['param_organisation_parcours', 'Organisation et localisation', 'ph:map-pin', 120, $orgParcours],
+            ['param_presentation_parcours', 'Présentation', 'ph:notepad', 122, $presParcours],
+            ['param_bcc_parcours', 'BCC', 'ph:graduation-cap', 124, []],
         ];
-        foreach ($paramDefs as [$key, $label, $icon, $position]) {
+        foreach ($paramDefs as [$key, $label, $icon, $position, $fieldKeys]) {
             $manager->persist((new NodeType($key, $label))
                 ->setIcon($icon)
                 ->setFamily(NodeFamily::Parameter)
                 ->setPosition($position)
+                ->setCapabilities(array_fill_keys($fieldKeys, true))
                 ->setSystem(true));
         }
 

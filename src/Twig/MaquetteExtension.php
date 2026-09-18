@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Twig;
 
 use App\Controller\FormationController;
+use App\Controller\NodeTypeController;
 use App\Entity\Formation;
 use App\Entity\NodeType;
 use App\Maquette\AttributeCatalog;
@@ -12,6 +13,7 @@ use App\Maquette\Doc\TreeNode;
 use App\Maquette\Maquette;
 use App\Maquette\McccValidator;
 use App\Entity\StructureTemplate;
+use App\Repository\FieldDefRepository;
 use App\Repository\MccTypeRepository;
 use App\Repository\NodeTypeRepository;
 use App\Repository\ReferentielRepository;
@@ -33,6 +35,7 @@ final class MaquetteExtension extends AbstractExtension
         private readonly MccTypeRepository $mcctypes,
         private readonly McccValidator $mcccValidator,
         private readonly StructureTemplateRepository $templates,
+        private readonly FieldDefRepository $fields,
     ) {
     }
 
@@ -64,11 +67,15 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('bcc_competences', $this->bccCompetences(...)),
             new TwigFunction('period_unit', $this->periodUnit(...)),
             new TwigFunction('param_sections', static fn () => FormationController::PARAM_SECTIONS),
-            new TwigFunction('param_status', static fn (Formation $f, string $k) => FormationController::paramStatus($f, $k)),
-            new TwigFunction('param_fields', static fn (string $k) => FormationController::PARAM_FIELDS[$k] ?? []),
+            new TwigFunction('param_status', fn (Formation $f, string $k) => $this->completion->formationParamStatus($f, $k)),
+            new TwigFunction('param_active_fields', $this->paramActiveFields(...)),
+            new TwigFunction('param_field_value', fn (Formation $f, string $k, array $data) => $this->completion->formationFieldValue($f, $k, $data)),
             new TwigFunction('bcc_status', $this->bccStatus(...)),
             new TwigFunction('parcours_param_sections', static fn () => FormationController::PARCOURS_PARAM_SECTIONS),
-            new TwigFunction('parcours_param_status', static fn (TreeNode $p, string $k) => FormationController::parcoursParamStatus($p, $k)),
+            new TwigFunction('parcours_param_status', fn (TreeNode $p, string $k) => $this->completion->parcoursParamStatus($p, $k)),
+            new TwigFunction('parcours_param_active_fields', $this->parcoursParamActiveFields(...)),
+            new TwigFunction('parcours_field_value', fn (TreeNode $p, string $k, array $data) => $this->completion->parcoursFieldValue($p, $k, $data)),
+            new TwigFunction('node_type_param_editable', static fn (NodeType $t) => \in_array($t->getKey(), NodeTypeController::EDITABLE_PARAM_KEYS, true)),
             new TwigFunction('referentiel', fn (string $key) => $this->referentiels->values($key)),
             new TwigFunction('mccc_types_for', fn (Formation $f) => $this->mcctypes->availableFor(
                 null !== $f->getDiplome() ? $this->templates->findOneByDiplome($f->getDiplome()) : null,
@@ -486,6 +493,22 @@ final class MaquetteExtension extends AbstractExtension
         }
 
         return $out;
+    }
+
+    /** Champs actifs d'une section « Paramètre de la formation » (organisation/presentation). @return list<FieldDef> */
+    public function paramActiveFields(string $key): array
+    {
+        $type = $this->types->findOneByKey('param_'.$key.'_formation');
+
+        return null !== $type ? $this->fields->activeOrderedFor($type) : [];
+    }
+
+    /** Équivalent de paramActiveFields() pour une section « Paramètre du parcours ». @return list<FieldDef> */
+    public function parcoursParamActiveFields(string $key): array
+    {
+        $type = $this->types->findOneByKey('param_'.$key.'_parcours');
+
+        return null !== $type ? $this->fields->activeOrderedFor($type) : [];
     }
 
     /** @return array<string, string> */

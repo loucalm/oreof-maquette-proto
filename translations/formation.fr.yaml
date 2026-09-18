@@ -295,6 +295,7 @@ formation:
   param:
     panel_title: Gestion de la formation
     parcours_panel_title: Gestion du parcours
+    generic_add_hint: Ajouter une valeur
     organisation:
       divider_global: Informations globale
       diplome_help: 'Licence, Master, BUT, DU, Ingénieur, etc.'

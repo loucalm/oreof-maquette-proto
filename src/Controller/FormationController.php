@@ -10,6 +10,7 @@ use App\Maquette\Doc\TreeNode;
 use App\Maquette\Maquette;
 use App\Maquette\MaquetteBuilder;
 use App\Maquette\TemplateApplier;
+use App\Repository\FieldDefRepository;
 use App\Repository\FormationRepository;
 use App\Repository\NodeTypeRepository;
 use App\Repository\StructureTemplateRepository;
@@ -212,47 +213,6 @@ final class FormationController extends AbstractController
         'presentation' => 'Présentation',
     ];
 
-    /**
-     * Clés requises par section (pour la pastille de statut). Le détail des
-     * champs et leur rendu vivent dans les gabarits parcours_<section>.html.twig.
-     *
-     * @var array<string, list<string>>
-     */
-    public const PARCOURS_PARAM_FIELDS = [
-        'organisation' => [
-            'modalitesEnseignement', 'composante', 'regimes', 'modalitesAlternance',
-            'respParcours',
-        ],
-        'presentation' => [
-            'objectif', 'motsCles', 'resultats', 'contenu', 'langue', 'niveauLangue',
-            'poursuiteEtudes', 'debouches', 'codesRome',
-        ],
-    ];
-
-    public static function parcoursParamStatus(TreeNode $parcours, string $key): string
-    {
-        $data = $parcours->getParametre($key);
-        $keys = self::PARCOURS_PARAM_FIELDS[$key] ?? [];
-
-        $filled = \count(array_filter($keys, static function (string $k) use ($data): bool {
-            $v = $data[$k] ?? null;
-
-            return \is_array($v) ? $v !== [] : trim((string) $v) !== '';
-        }));
-        // section « organisation » : le volume d'ECTS est porté par le nœud
-        $total = \count($keys);
-        if ($key === 'organisation') {
-            ++$total;
-            $filled += $parcours->getAttribute('ects') ? 1 : 0;
-        }
-
-        if ($filled === 0) {
-            return 'empty';
-        }
-
-        return $filled === $total ? 'ok' : 'incomplete';
-    }
-
     #[Route('/formations/{fid}/parcours/{nid}', name: 'parcours_editor', methods: ['GET'])]
     public function parcoursEditor(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid, MaquetteBuilder $builder): Response
     {
@@ -270,12 +230,13 @@ final class FormationController extends AbstractController
     }
 
     #[Route('/formations/{fid}/parcours/{nid}/parametre/{key}', name: 'parcours_param', methods: ['GET'])]
-    public function parcoursParam(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid, string $key): Response
+    public function parcoursParam(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid, string $key, NodeTypeRepository $types, FieldDefRepository $fields): Response
     {
         if (!isset(self::PARCOURS_PARAM_SECTIONS[$key])) {
             throw $this->createNotFoundException();
         }
         $node = $this->parcoursNode($formation, $nid);
+        $type = $types->findOneByKey('param_'.$key.'_parcours');
 
         return $this->render("formation/param/parcours_$key.html.twig", [
             'formation' => $formation,
@@ -283,6 +244,7 @@ final class FormationController extends AbstractController
             'key' => $key,
             'label' => self::PARCOURS_PARAM_SECTIONS[$key],
             'data' => $node->getParametre($key),
+            'fields' => null !== $type ? $fields->activeOrderedFor($type) : [],
             'saveUrl' => $this->generateUrl('parcours_param_save', ['fid' => $formation->getId(), 'nid' => $nid, 'key' => $key]),
         ]);
     }
@@ -303,9 +265,6 @@ final class FormationController extends AbstractController
         $data = $node->getParametre($key);
         foreach ($request->request->all('p') as $k => $v) {
             $data[$k] = \is_string($v) ? trim($v) : $v;
-        }
-        if ($request->request->has('regimes')) {
-            $data['regimes'] = array_values(array_filter($request->request->all('regimes')));
         }
         $node->setParametre($key, array_filter(
             $data,
@@ -563,67 +522,10 @@ final class FormationController extends AbstractController
     }
 
     public const PARAM_SECTIONS = [
-        'organisation' => ['label' => 'Organisation et localisation', 'requiredKeys' => ['niveauEntree', 'niveauSortie', 'respMention']],
-        'presentation' => ['label' => 'Présentation', 'requiredKeys' => ['objectif', 'resultats', 'contenu']],
-        'structure' => ['label' => 'Configuration de la structure', 'requiredKeys' => []],
+        'organisation' => ['label' => 'Organisation et localisation'],
+        'presentation' => ['label' => 'Présentation'],
+        'structure' => ['label' => 'Configuration de la structure'],
     ];
-
-    /**
-     * Schéma d'affichage lecture seule des sections « Paramètre de la formation ».
-     * `entity` = valeur lue sur l'entité (getX), sinon dans parametres[section].
-     * `long` = texte multi-lignes. La section « structure » a un rendu dédié.
-     *
-     * @var array<string, list<array{key: string, label: string, entity?: bool, long?: bool}>>
-     */
-    public const PARAM_FIELDS = [
-        'organisation' => [
-            ['key' => 'name', 'label' => 'Nom de la formation', 'entity' => true],
-            ['key' => 'diplome', 'label' => 'Type de diplôme', 'entity' => true],
-            ['key' => 'domaine', 'label' => 'Domaine de formation', 'entity' => true],
-            ['key' => 'composante', 'label' => 'Composante porteuse de la formation', 'entity' => true],
-            ['key' => 'contacts', 'label' => 'Contacts de la formation', 'long' => true],
-            ['key' => 'mention', 'label' => 'Mention / spécialité'],
-            ['key' => 'niveauEntree', 'label' => "Niveau d'entrée en formation"],
-            ['key' => 'niveauSortie', 'label' => 'Niveau de sortie de la formation'],
-            ['key' => 'rncp', 'label' => 'Inscrite au RNCP ?'],
-            ['key' => 'codeRncp', 'label' => 'Code RNCP'],
-            ['key' => 'codeApogee', 'label' => 'Code Apogée de la mention'],
-            ['key' => 'respMention', 'label' => 'Responsable de la mention'],
-            ['key' => 'coRespMention', 'label' => 'Co-responsable de la mention'],
-        ],
-        'presentation' => [
-            ['key' => 'objectif', 'label' => 'Objectif de la formation', 'long' => true],
-            ['key' => 'resultats', 'label' => 'Résultats attendus de la formation', 'long' => true],
-            ['key' => 'contenu', 'label' => 'Contenu de la formation', 'long' => true],
-            ['key' => 'rythme', 'label' => 'Rythme de la formation'],
-            ['key' => 'rythmePrecision', 'label' => 'Précision du rythme de formation', 'long' => true],
-        ],
-    ];
-
-    /**
-     * Statut d'une section « Paramètre de la formation » (pastille de l'arbre).
-     */
-    public static function paramStatus(Formation $formation, string $key): string
-    {
-        if ($key === 'structure') {
-            return $formation->getStructure() === [] ? 'empty' : 'ok';
-        }
-        $required = self::PARAM_SECTIONS[$key]['requiredKeys'] ?? [];
-        if ($key === 'organisation') {
-            // le nom + composante viennent de l'entité
-            $baseOk = trim((string) $formation->getComposante()) !== '' && trim((string) ($formation->getDomaine() ?? '')) !== '';
-        } else {
-            $baseOk = true;
-        }
-        $data = $formation->getParametre($key);
-        $filled = array_filter($required, static fn ($k) => trim((string) ($data[$k] ?? '')) !== '');
-
-        if ($data === [] && !$baseOk) {
-            return 'empty';
-        }
-
-        return (\count($filled) === \count($required) && $baseOk) ? 'ok' : 'incomplete';
-    }
 
     #[Route('/formations/{id}/parametre/{key}', name: 'formation_param', methods: ['GET'])]
     public function param(
@@ -631,16 +533,20 @@ final class FormationController extends AbstractController
         string $key,
         StructureTemplateRepository $templates,
         \App\Repository\DerogationRequestRepository $derogations,
+        NodeTypeRepository $types,
+        FieldDefRepository $fields,
     ): Response {
         if (!isset(self::PARAM_SECTIONS[$key])) {
             throw $this->createNotFoundException();
         }
+        $type = 'structure' !== $key ? $types->findOneByKey('param_'.$key.'_formation') : null;
 
         return $this->render("formation/param/$key.html.twig", [
             'formation' => $formation,
             'key' => $key,
             'label' => self::PARAM_SECTIONS[$key]['label'],
             'data' => $formation->getParametre($key),
+            'fields' => null !== $type ? $fields->activeOrderedFor($type) : [],
             // seulement pour "structure"
             'nodeCount' => $key === 'structure' ? \count($this->maquette->open($formation)->allNodes()) : 0,
             'templates' => $templates->findAllOrdered(),

@@ -11,89 +11,45 @@
     <form method="post" action="{{ path('formation_param_save', {id: formation.id, key: key}) }}" data-turbo-frame="_top"
           class="panel-card space-y-5">
 
-        {{ fld.divider('formation.param.organisation.divider_global'|trans({}, 'formation')) }}
-
-        <div>
-            {{ fld.label('formation.index.name_field'|trans({}, 'formation'), true, 'formation.index.name_help'|trans({}, 'formation')) }}
-            <input name="name" value="{{ formation.name }}" class="fld mt-1">
-        </div>
-        <div class="grid gap-5 md:grid-cols-2">
-            <div>
-                {{ fld.label('formation.index.diplome_field'|trans({}, 'formation'), true, 'formation.param.organisation.diplome_help'|trans({}, 'formation')) }}
-                <select name="diplome" class="fld mt-1">
-                    {% for d in referentiel('diplomes') %}
-                        <option value="{{ d }}" {{ formation.diplome == d ? 'selected' }}>{{ d }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                {{ fld.label('formation.index.domaine_field'|trans({}, 'formation'), true, 'formation.index.domaine_help'|trans({}, 'formation')) }}
-                <select name="domaine" class="fld mt-1">
-                    <option value="">{{ 'formation.fields.default_placeholder'|trans({}, 'formation') }}</option>
-                    {% for d in referentiel('domaines') %}
-                        <option value="{{ d }}" {{ formation.domaine == d ? 'selected' }}>{{ d }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-        <div>
-            {{ fld.label('formation.index.composante_field'|trans({}, 'formation'), true, 'formation.param.organisation.composante_help'|trans({}, 'formation')) }}
-            <input name="composante" value="{{ formation.composante }}" class="fld mt-1">
-        </div>
-        <div>
-            {{ fld.label('formation.param.organisation.contacts_label'|trans({}, 'formation'), false) }}
-            {{ fld.textarea('contacts', data.contacts ?? '') }}
-        </div>
-
-        {{ fld.divider('formation.param.organisation.divider_specific'|trans({}, 'formation')) }}
-
-        <div>
-            {{ fld.label('formation.param.organisation.mention_label'|trans({}, 'formation'), false) }}
-            {{ fld.select('mention', data.mention ?? '', referentiel('mentions')) }}
-            <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.param.organisation.add_mention_fake'|trans({}, 'formation') }}</span></div>
-        </div>
-        <div class="grid gap-5 md:grid-cols-2">
-            <div>
-                {{ fld.label('formation.param.organisation.niveau_entree_label'|trans({}, 'formation'), true) }}
-                {{ fld.select('niveauEntree', data.niveauEntree ?? '', referentiel('niveaux_entree')) }}
-            </div>
-            <div>
-                {{ fld.label('formation.param.organisation.niveau_sortie_label'|trans({}, 'formation'), true) }}
-                {{ fld.select('niveauSortie', data.niveauSortie ?? '', referentiel('niveaux_sortie')) }}
-            </div>
-        </div>
-        <div class="grid gap-5 md:grid-cols-2">
-            <div>
-                {{ fld.label('formation.param.organisation.rncp_label'|trans({}, 'formation'), true) }}
-                <div class="flex gap-6 mt-2 text-sm">
-                    <label class="flex items-center gap-2"><input type="radio" name="p[rncp]" value="oui" {{ (data.rncp ?? '') == 'oui' ? 'checked' }}> {{ 'formation.param.organisation.yes'|trans({}, 'formation') }}</label>
-                    <label class="flex items-center gap-2"><input type="radio" name="p[rncp]" value="non" {{ (data.rncp ?? '') == 'non' ? 'checked' }}> {{ 'formation.param.organisation.no'|trans({}, 'formation') }}</label>
-                </div>
-            </div>
-            <div>
-                {{ fld.label('formation.param.organisation.code_rncp_label'|trans({}, 'formation'), true, 'formation.param.organisation.code_rncp_help'|trans({}, 'formation')) }}
-                {{ fld.text('codeRncp', data.codeRncp ?? '', 'formation.param.organisation.code_rncp_placeholder'|trans({}, 'formation')) }}
-            </div>
-        </div>
-        <div>
-            {{ fld.label('formation.param.organisation.code_apogee_label'|trans({}, 'formation'), false, 'formation.param.organisation.code_apogee_help'|trans({}, 'formation')) }}
-            {{ fld.text('codeApogee', data.codeApogee ?? '', 'formation.param.organisation.code_apogee_placeholder'|trans({}, 'formation')) }}
-        </div>
-
-        {{ fld.divider('formation.param.organisation.divider_responsables'|trans({}, 'formation')) }}
-
-        <div class="grid gap-5 md:grid-cols-2">
-            <div>
-                {{ fld.label('formation.param.organisation.resp_mention_label'|trans({}, 'formation'), true, 'formation.param.organisation.resp_mention_help'|trans({}, 'formation')) }}
-                {{ fld.select('respMention', data.respMention ?? '', referentiel('responsables'), 'formation.param.organisation.resp_select_placeholder'|trans({}, 'formation')) }}
-                <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.param.organisation.create_new_fake'|trans({}, 'formation') }}</span></div>
-            </div>
-            <div>
-                {{ fld.label('formation.param.organisation.co_resp_mention_label'|trans({}, 'formation'), false, 'formation.param.organisation.co_resp_mention_help'|trans({}, 'formation')) }}
-                {{ fld.select('coRespMention', data.coRespMention ?? '', referentiel('responsables'), 'formation.param.organisation.resp_select_placeholder'|trans({}, 'formation')) }}
-                <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.param.organisation.create_new_fake'|trans({}, 'formation') }}</span></div>
-            </div>
-        </div>
+        {% for f in fields %}
+            {% if f.type == 'separator' %}
+                {{ fld.divider(f.label) }}
+            {% elseif f.locked %}
+                {# champs verrouillés : ils écrivent directement sur l'entité Formation, markup dédié inchangé #}
+                {% if f.key == 'name' %}
+                    <div>
+                        {{ fld.label('formation.index.name_field'|trans({}, 'formation'), true, 'formation.index.name_help'|trans({}, 'formation')) }}
+                        <input name="name" value="{{ formation.name }}" class="fld mt-1">
+                    </div>
+                {% elseif f.key == 'diplome' %}
+                    <div>
+                        {{ fld.label('formation.index.diplome_field'|trans({}, 'formation'), true, 'formation.param.organisation.diplome_help'|trans({}, 'formation')) }}
+                        <select name="diplome" class="fld mt-1">
+                            {% for d in referentiel('diplomes') %}
+                                <option value="{{ d }}" {{ formation.diplome == d ? 'selected' }}>{{ d }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% elseif f.key == 'domaine' %}
+                    <div>
+                        {{ fld.label('formation.index.domaine_field'|trans({}, 'formation'), true, 'formation.index.domaine_help'|trans({}, 'formation')) }}
+                        <select name="domaine" class="fld mt-1">
+                            <option value="">{{ 'formation.fields.default_placeholder'|trans({}, 'formation') }}</option>
+                            {% for d in referentiel('domaines') %}
+                                <option value="{{ d }}" {{ formation.domaine == d ? 'selected' }}>{{ d }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% elseif f.key == 'composante' %}
+                    <div>
+                        {{ fld.label('formation.index.composante_field'|trans({}, 'formation'), true, 'formation.param.organisation.composante_help'|trans({}, 'formation')) }}
+                        <input name="composante" value="{{ formation.composante }}" class="fld mt-1">
+                    </div>
+                {% endif %}
+            {% else %}
+                <div>{{ fld.field(f.key, f, data) }}</div>
+            {% endif %}
+        {% endfor %}
 
         <div class="pt-2 border-t" style="border-color:var(--c-border)">
             <button class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>

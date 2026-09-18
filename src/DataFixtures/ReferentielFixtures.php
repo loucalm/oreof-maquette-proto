@@ -78,6 +78,7 @@ final class ReferentielFixtures extends Fixture
             'Université A' => 'Université A', 'Université B' => 'Université B',
         ], RefCategory::Entite, 'Établissement (annuaire ORéOF)'],
         ['composantes', 'Composantes', 'Composantes / UFR porteuses d’une formation.', [
+            'UFR Sciences Exactes et Naturelles' => 'UFR Sciences Exactes et Naturelles',
             'UFR Sciences' => 'UFR Sciences', 'UFR Droit-Économie-Gestion' => 'UFR Droit-Économie-Gestion',
         ], RefCategory::Entite, 'Composante (annuaire ORéOF)'],
         ['plateformes_admission', 'Plateformes d’admission', 'Plateformes de candidature (Parcoursup, mon master…).', [

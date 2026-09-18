@@ -100,6 +100,18 @@ class FieldDef
     #[ORM\Column]
     private bool $system = false;
 
+    /**
+     * Champ verrouillé : visible et déplaçable dans le constructeur de formulaire du
+     * type, mais ni éditable ni retirable depuis là (cf. NodeTypeController::assertFieldEditable()).
+     * Sert aux quelques champs qui écrivent sur une propriété d'entité dédiée plutôt
+     * que sur le blob générique d'attributs (ex. nom/diplôme d'une formation) — leur
+     * redéfinir label/type/etc. depuis ce formulaire casserait la logique de
+     * sauvegarde qui leur est propre. Sans rapport avec NodeType::lockedCapabilities
+     * (qui empêche de désactiver une capacité en aval, pas d'éditer sa définition).
+     */
+    #[ORM\Column]
+    private bool $locked = false;
+
     public function __construct(string $key, string $label)
     {
         $this->key = $key;
@@ -287,6 +299,18 @@ class FieldDef
     public function setSystem(bool $system): self
     {
         $this->system = $system;
+
+        return $this;
+    }
+
+    public function isLocked(): bool
+    {
+        return $this->locked;
+    }
+
+    public function setLocked(bool $locked): self
+    {
+        $this->locked = $locked;
 
         return $this;
     }

@@ -68,6 +68,11 @@ node_type:
       Retirer « %label% » de ce formulaire ? Si aucun autre type ne l'utilise, le champ sera supprimé
       du catalogue.
     not_togglable_title: Ce champ n'est pas togglable par template
+    field_locked_title: >-
+      Champ verrouillé : il écrit directement sur une propriété dédiée (pas le blob générique
+      d'attributs), sa définition ne peut pas être modifiée ni retirée depuis ce formulaire — seul son
+      ordre peut changer.
+    field_required_badge: obligatoire
     field_type_field: Type de champ
     field_label_field: Libellé
     field_key_field: Clé

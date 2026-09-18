@@ -12,65 +12,13 @@
     <div class="panel-scroll">
     <form method="post" action="{{ saveUrl }}" data-turbo-frame="_top" class="panel-card space-y-5">
 
-        {{ fld.divider('formation.param.parcours_presentation.divider_info'|trans({}, 'formation')) }}
-
-        <div>
-            {{ fld.label('formation.param.parcours_presentation.objectif_label'|trans({}, 'formation'), true, 'formation.param.parcours_presentation.objectif_help'|trans({}, 'formation')) }}
-            {{ fld.textarea('objectif', data.objectif ?? '') }}
-        </div>
-        <div>
-            {{ fld.label('formation.view.plabel.mots_cles'|trans({}, 'formation'), true, 'formation.param.parcours_presentation.mots_cles_help'|trans({}, 'formation')) }}
-            {{ fld.textarea('motsCles', data.motsCles ?? '') }}
-        </div>
-        <div>
-            {{ fld.label('formation.param.parcours_presentation.resultats_label'|trans({}, 'formation'), true, 'formation.param.parcours_presentation.resultats_help'|trans({}, 'formation')) }}
-            {{ fld.textarea('resultats', data.resultats ?? '') }}
-        </div>
-        <div>
-            {{ fld.label('formation.param.parcours_presentation.contenu_label'|trans({}, 'formation'), true, 'formation.param.parcours_presentation.contenu_help'|trans({}, 'formation')) }}
-            {{ fld.textarea('contenu', data.contenu ?? '') }}
-        </div>
-        <div>
-            {{ fld.label('formation.view.plabel.langue'|trans({}, 'formation'), true, 'formation.param.parcours_presentation.langue_help'|trans({}, 'formation')) }}
-            {{ fld.selectAdd('langue', data.langue ?? '', referentiel('langues'), 'formation.param.parcours_presentation.add_langue_fake'|trans({}, 'formation')) }}
-        </div>
-        <div>
-            {{ fld.label('formation.view.plabel.niveau_langue'|trans({}, 'formation'), true, 'formation.param.parcours_presentation.niveau_langue_help'|trans({}, 'formation')) }}
-            {{ fld.selectAdd('niveauLangue', data.niveauLangue ?? '', referentiel('niveaux_langue'), 'formation.param.parcours_presentation.add_langue_fake'|trans({}, 'formation')) }}
-        </div>
-
-        {{ fld.divider('formation.param.presentation.divider_rythme'|trans({}, 'formation')) }}
-
-        <div>
-            {{ fld.label('formation.param.parcours_presentation.rythme_label'|trans({}, 'formation'), false, 'formation.param.presentation.rythme_help'|trans({}, 'formation')) }}
-            {{ fld.select('rythme', data.rythme ?? '', referentiel('rythmes')) }}
-        </div>
-        <div>
-            {{ fld.label('formation.param.presentation.rythme_precision_label'|trans({}, 'formation'), false) }}
-            {{ fld.textarea('rythmePrecision', data.rythmePrecision ?? '') }}
-        </div>
-
-        {{ fld.divider('formation.param.parcours_presentation.divider_contacts'|trans({}, 'formation')) }}
-
-        <div>
-            {{ fld.label('formation.param.parcours_presentation.contacts_label'|trans({}, 'formation'), false) }}
-            {{ fld.textarea('contacts', data.contacts ?? '') }}
-        </div>
-
-        {{ fld.divider('formation.param.parcours_presentation.divider_after'|trans({}, 'formation')) }}
-
-        <div>
-            {{ fld.label('formation.view.plabel.poursuite_etudes'|trans({}, 'formation'), true, 'formation.param.parcours_presentation.poursuite_etudes_help'|trans({}, 'formation')) }}
-            {{ fld.textarea('poursuiteEtudes', data.poursuiteEtudes ?? '') }}
-        </div>
-        <div>
-            {{ fld.label('formation.view.plabel.debouches'|trans({}, 'formation'), true, 'formation.param.parcours_presentation.debouches_help'|trans({}, 'formation')) }}
-            {{ fld.textarea('debouches', data.debouches ?? '') }}
-        </div>
-        <div>
-            {{ fld.label('formation.param.parcours_presentation.codes_rome_label'|trans({}, 'formation'), true, 'formation.param.parcours_presentation.codes_rome_help'|trans({}, 'formation')) }}
-            {{ fld.selectAdd('codesRome', data.codesRome ?? '', referentiel('codes_rome'), 'formation.param.parcours_presentation.add_rome_fake'|trans({}, 'formation')) }}
-        </div>
+        {% for f in fields %}
+            {% if f.type == 'separator' %}
+                {{ fld.divider(f.label) }}
+            {% else %}
+                <div>{{ fld.field(f.key, f, data) }}</div>
+            {% endif %}
+        {% endfor %}
 
         <div class="pt-2 border-t" style="border-color:var(--c-border)">
             <button class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>

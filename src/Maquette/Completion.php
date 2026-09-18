@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace App\Maquette;
 
+use App\Entity\FieldDef;
+use App\Entity\Formation;
 use App\Maquette\Doc\MaquetteDoc;
 use App\Maquette\Doc\TreeNode;
+use App\Repository\FieldDefRepository;
+use App\Repository\NodeTypeRepository;
 
 /**
  * Comptage des champs requis remplis / total, par nœud et remonté sur l'arbre.
@@ -16,8 +20,11 @@ use App\Maquette\Doc\TreeNode;
  */
 final class Completion
 {
-    public function __construct(private readonly AttributeCatalog $catalog)
-    {
+    public function __construct(
+        private readonly AttributeCatalog $catalog,
+        private readonly NodeTypeRepository $types,
+        private readonly FieldDefRepository $fields,
+    ) {
     }
 
     /**
@@ -113,6 +120,101 @@ final class Completion
             'filled' => $overall['filled'],
             'parcours' => $parcours,
         ];
+    }
+
+    /**
+     * Statut d'une section « Paramètre de la formation » (pastille de l'arbre) :
+     * « empty » si aucun champ requis n'est rempli, « ok » si tous le sont,
+     * « incomplete » sinon. Pilotée par les FieldDef.required actifs sur le
+     * NodeType `param_{key}_formation` — plus de liste de clés codée en dur.
+     */
+    public function formationParamStatus(Formation $formation, string $key): string
+    {
+        if ('structure' === $key) {
+            return [] === $formation->getStructure() ? 'empty' : 'ok';
+        }
+
+        $type = $this->types->findOneByKey('param_'.$key.'_formation');
+        if (null === $type) {
+            return 'empty';
+        }
+
+        $required = array_values(array_filter($this->fields->activeOrderedFor($type), static fn (FieldDef $f) => $f->isRequired()));
+        if ([] === $required) {
+            return 'ok';
+        }
+
+        $data = $formation->getParametre($key);
+        $filled = 0;
+        foreach ($required as $f) {
+            $filled += $this->isFilled($this->formationFieldValue($formation, $f->getKey(), $data)) ? 1 : 0;
+        }
+
+        return match (true) {
+            0 === $filled => 'empty',
+            $filled === \count($required) => 'ok',
+            default => 'incomplete',
+        };
+    }
+
+    /**
+     * Valeur d'un champ « Paramètre de la formation » : lue sur l'entité pour les
+     * quelques champs verrouillés qui lui sont propres (cf. FieldDef::isLocked()),
+     * sinon dans le blob générique `parametres[section]`. Réutilisé à la fois pour
+     * le calcul de complétion et pour le rendu lecture seule (formation/view.html.twig).
+     *
+     * @param array<string, mixed> $data
+     */
+    public function formationFieldValue(Formation $formation, string $key, array $data): mixed
+    {
+        return match ($key) {
+            'name' => $formation->getName(),
+            'diplome' => $formation->getDiplome(),
+            'domaine' => $formation->getDomaine(),
+            'composante' => $formation->getComposante(),
+            default => $data[$key] ?? null,
+        };
+    }
+
+    /** Équivalent de formationParamStatus() pour une section « Paramètre du parcours ». */
+    public function parcoursParamStatus(TreeNode $parcours, string $key): string
+    {
+        $type = $this->types->findOneByKey('param_'.$key.'_parcours');
+        if (null === $type) {
+            return 'empty';
+        }
+
+        $required = array_values(array_filter($this->fields->activeOrderedFor($type), static fn (FieldDef $f) => $f->isRequired()));
+        if ([] === $required) {
+            return 'ok';
+        }
+
+        $data = $parcours->getParametre($key);
+        $filled = 0;
+        foreach ($required as $f) {
+            $filled += $this->isFilled($this->parcoursFieldValue($parcours, $f->getKey(), $data)) ? 1 : 0;
+        }
+
+        return match (true) {
+            0 === $filled => 'empty',
+            $filled === \count($required) => 'ok',
+            default => 'incomplete',
+        };
+    }
+
+    /** Équivalent de formationFieldValue() pour une section « Paramètre du parcours ». @param array<string, mixed> $data */
+    public function parcoursFieldValue(TreeNode $parcours, string $key, array $data): mixed
+    {
+        return match ($key) {
+            'nom' => $parcours->getLabel(),
+            'ectsTotal' => $parcours->getAttribute('ects'),
+            default => $data[$key] ?? null,
+        };
+    }
+
+    private function isFilled(mixed $v): bool
+    {
+        return !(null === $v || '' === $v || [] === $v);
     }
 
     /**

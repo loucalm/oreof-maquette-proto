@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\FieldDef;
+use App\Entity\NodeType;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -32,5 +33,14 @@ class FieldDefRepository extends ServiceEntityRepository
     public function findOneByKey(string $key): ?FieldDef
     {
         return $this->findOneBy(['key' => $key]);
+    }
+
+    /** Champs actifs (capacité ON) pour ce type, déjà dans l'ordre d'affichage. @return list<FieldDef> */
+    public function activeOrderedFor(NodeType $type): array
+    {
+        return array_values(array_filter(
+            $this->allOrdered(),
+            static fn (FieldDef $f) => $type->hasCapability($f->getKey()) && ($type->getCapabilities()[$f->getKey()] ?? false),
+        ));
     }
 }

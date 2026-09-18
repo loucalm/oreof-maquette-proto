@@ -184,6 +184,14 @@
                                             <button class="text-xs text-red-600 hover:underline">{{ 'common.remove'|trans({}, 'common') }}</button>
                                         </form>
                                     </div>
+                                {% elseif f.locked %}
+                                    <div class="flex items-center gap-2 rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border);background:#fafafa">
+                                        <span class="flex-1">{{ f.label }} <code class="text-xs" style="color:var(--c-muted)">{{ f.key }}</code>
+                                            {% if f.required %}<span class="pill ml-1" style="background:#fee2e2;color:#dc2626">{{ 'node_type.edit.field_required_badge'|trans({}, 'node_type') }}</span>{% endif %}
+                                        </span>
+                                        <span class="text-xs" style="color:var(--c-muted)">{{ fieldTypes[f.type] }}</span>
+                                        <span class="pill" title="{{ 'node_type.edit.field_locked_title'|trans({}, 'node_type') }}">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }}</span>
+                                    </div>
                                 {% else %}
                                     {% set togglableDefault = not nodeType.isCapabilityLocked(f.key) %}
                                     <details class="rounded-md border" style="border-color:var(--c-border)">

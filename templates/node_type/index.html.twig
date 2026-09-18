@@ -22,7 +22,7 @@
                     </td>
                     <td class="px-4 py-3" style="color:var(--c-muted)">{{ t.kind.label }}</td>
                     <td class="px-4 py-3 text-right whitespace-nowrap">
-                        {% if t.family.value == 'parameter' %}
+                        {% if t.family.value == 'parameter' and not node_type_param_editable(t) %}
                             <span class="text-xs" style="color:var(--c-muted)" title="{{ 'node_type.index.readonly_title'|trans({}, 'node_type') }}">{{ 'node_type.index.readonly_label'|trans({}, 'node_type') }}</span>
                         {% else %}
                             <a href="{{ path('node_type_edit', {id: t.id}) }}" data-turbo-frame="_top" class="text-xs hover:underline">{{ 'common.edit'|trans({}, 'common') }}</a>

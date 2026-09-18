@@ -11,31 +11,13 @@
     <form method="post" action="{{ path('formation_param_save', {id: formation.id, key: key}) }}" data-turbo-frame="_top"
           class="panel-card space-y-5">
 
-        {{ fld.divider('formation.param.presentation.divider_info'|trans({}, 'formation')) }}
-
-        <div>
-            {{ fld.label('formation.view.plabel.objectif'|trans({}, 'formation'), true) }}
-            {{ fld.textarea('objectif', data.objectif ?? '', 'formation.param.presentation.objectif_help'|trans({}, 'formation')) }}
-        </div>
-        <div>
-            {{ fld.label('formation.view.plabel.resultats'|trans({}, 'formation'), true) }}
-            {{ fld.textarea('resultats', data.resultats ?? '', 'formation.param.presentation.resultats_help'|trans({}, 'formation')) }}
-        </div>
-        <div>
-            {{ fld.label('formation.view.plabel.contenu'|trans({}, 'formation'), true) }}
-            {{ fld.textarea('contenu', data.contenu ?? '', 'formation.param.presentation.contenu_help'|trans({}, 'formation')) }}
-        </div>
-
-        {{ fld.divider('formation.param.presentation.divider_rythme'|trans({}, 'formation')) }}
-
-        <div>
-            {{ fld.label('formation.view.plabel.rythme'|trans({}, 'formation'), false, 'formation.param.presentation.rythme_help'|trans({}, 'formation')) }}
-            {{ fld.select('rythme', data.rythme ?? '', referentiel('rythmes')) }}
-        </div>
-        <div>
-            {{ fld.label('formation.param.presentation.rythme_precision_label'|trans({}, 'formation'), false) }}
-            {{ fld.textarea('rythmePrecision', data.rythmePrecision ?? '') }}
-        </div>
+        {% for f in fields %}
+            {% if f.type == 'separator' %}
+                {{ fld.divider(f.label) }}
+            {% else %}
+                <div>{{ fld.field(f.key, f, data) }}</div>
+            {% endif %}
+        {% endfor %}
 
         <div class="pt-2 border-t" style="border-color:var(--c-border)">
             <button class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>

@@ -96,42 +96,17 @@
                 {{ 'formation.graph.period_range'|trans({'%unit%': unit, '%start%': n.periodeDebut, '%end%': n.periodeFin}, 'formation') }}
                 {%- if n.parcoursParent %} · {{ 'formation.index.parcours_specialization_of'|trans({'%parent%': n.parcoursParent.label ?: '—'}, 'formation') }}{% endif -%}
             </div>
-            {% set plabels = {
-                'modalitesEnseignement': "formation.view.plabel.modalites_enseignement"|trans({}, 'formation'),
-                'composante': "formation.view.plabel.composante_inscription"|trans({}, 'formation'),
-                'modalitesAlternance': "formation.view.plabel.modalites_alternance"|trans({}, 'formation'),
-                'lieu': "formation.view.plabel.lieu"|trans({}, 'formation'),
-                'codeApogee': "formation.view.plabel.code_apogee"|trans({}, 'formation'),
-                'respParcours': "formation.view.plabel.resp_parcours"|trans({}, 'formation'),
-                'coRespParcours': "formation.view.plabel.co_resp_parcours"|trans({}, 'formation'),
-                'objectif': "formation.view.plabel.objectif"|trans({}, 'formation'),
-                'motsCles': "formation.view.plabel.mots_cles"|trans({}, 'formation'),
-                'resultats': "formation.view.plabel.resultats"|trans({}, 'formation'),
-                'contenu': "formation.view.plabel.contenu"|trans({}, 'formation'),
-                'langue': "formation.view.plabel.langue"|trans({}, 'formation'),
-                'niveauLangue': "formation.view.plabel.niveau_langue"|trans({}, 'formation'),
-                'rythme': "formation.view.plabel.rythme"|trans({}, 'formation'),
-                'rythmePrecision': "formation.view.plabel.rythme_precision"|trans({}, 'formation'),
-                'contacts': "formation.view.plabel.contacts"|trans({}, 'formation'),
-                'poursuiteEtudes': "formation.view.plabel.poursuite_etudes"|trans({}, 'formation'),
-                'debouches': "formation.view.plabel.debouches"|trans({}, 'formation'),
-                'codesRome': "formation.view.plabel.codes_rome"|trans({}, 'formation')
-            } %}
             {% for sect, slabel in {'organisation': 'formation.view.section_organisation'|trans({}, 'formation'), 'presentation': 'formation.view.section_presentation'|trans({}, 'formation')} %}
                 {% set pd = n.getParametre(sect) %}
-                {% set shown = pd|filter((v, k) => v is not empty and k != 'regimes') %}
-                {% if shown is not empty or (pd.regimes ?? []) %}
+                {% set pfields = parcours_param_active_fields(sect)|filter(f => f.type != 'separator') %}
+                {% set shown = pfields|filter(f => parcours_field_value(n, f.key, pd) is not empty) %}
+                {% if shown is not empty %}
                     <div class="fld-cat">{{ slabel }}</div>
-                    {% if pd.regimes ?? [] %}
+                    {% for f in shown %}
+                        {% set v = parcours_field_value(n, f.key, pd) %}
                         <div class="flex flex-wrap gap-x-2 text-sm py-0.5">
-                            <span class="text-gray-400">{{ 'formation.view.plabel.regimes'|trans({}, 'formation') }} :</span>
-                            <span class="text-gray-800">{{ pd.regimes|join(', ') }}</span>
-                        </div>
-                    {% endif %}
-                    {% for k, v in shown %}
-                        <div class="flex flex-wrap gap-x-2 text-sm py-0.5">
-                            <span class="text-gray-400">{{ plabels[k] ?? k }} :</span>
-                            <span class="text-gray-800 whitespace-pre-line">{{ v }}</span>
+                            <span class="text-gray-400">{{ f.label }} :</span>
+                            <span class="text-gray-800 whitespace-pre-line">{{ v is iterable ? v|join(', ') : v }}</span>
                         </div>
                     {% endfor %}
                 {% endif %}
@@ -279,17 +254,18 @@
                     {% endif %}
                 </dl>
             {% else %}
-                {% set present = param_fields(key)|filter(f => ((f.entity ?? false) ? attribute(formation, f.key) : (data[f.key] ?? null)) is not empty) %}
+                {% set allFields = param_active_fields(key)|filter(f => f.type != 'separator') %}
+                {% set present = allFields|filter(f => param_field_value(formation, f.key, data) is not empty) %}
                 {% if present is empty %}
                     <p class="text-sm text-gray-400 italic">{{ 'formation.view.section_empty'|trans({}, 'formation') }}</p>
                 {% else %}
                     <dl class="divide-y" style="border-color:var(--c-border)">
                         {% for f in present %}
-                            {% set val = (f.entity ?? false) ? attribute(formation, f.key) : data[f.key] %}
+                            {% set val = param_field_value(formation, f.key, data) %}
                             {% if f.key == 'rncp' %}{% set val = val|capitalize %}{% endif %}
                             <div class="grid gap-1 py-2 sm:grid-cols-[240px_1fr]">
                                 <dt class="text-sm text-gray-400">{{ f.label }}</dt>
-                                <dd class="text-sm text-gray-800 {{ f.long ?? false ? 'whitespace-pre-line' }}">{{ val }}</dd>
+                                <dd class="text-sm text-gray-800 {{ f.type == 'textarea' ? 'whitespace-pre-line' }}">{{ val is iterable ? val|join(', ') : val }}</dd>
                             </div>
                         {% endfor %}
                     </dl>

@@ -42,14 +42,53 @@
 {% endmacro %}
 
 {# groupe de cases à cocher. `current` = liste des valeurs cochées. #}
-{% macro checkgroup(name, current, choices) %}
+{% macro checkgroup(name, current, choices, prefix) %}
     <div class="grid gap-2 sm:grid-cols-2 mt-2 text-sm">
         {% for cv, cl in choices %}
             <label class="flex items-center gap-2">
-                <input type="checkbox" name="{{ name }}[]" value="{{ cv }}" {{ cv in current ? 'checked' }}> {{ cl }}
+                <input type="checkbox" name="{{ prefix|default('p') }}[{{ name }}][]" value="{{ cv }}" {{ cv in current ? 'checked' }}> {{ cl }}
             </label>
         {% endfor %}
     </div>
+{% endmacro %}
+
+{# choix unique en boutons radio. `options` = { valeur: libellé }. #}
+{% macro radio(name, value, options, prefix) %}
+    <div class="flex flex-wrap gap-6 mt-2 text-sm">
+        {% for v, l in options %}
+            <label class="flex items-center gap-2"><input type="radio" name="{{ prefix|default('p') }}[{{ name }}]" value="{{ v }}" {{ value == v ? 'checked' }}> {{ l }}</label>
+        {% endfor %}
+    </div>
+{% endmacro %}
+
+{#
+ Champ générique piloté par un FieldDef (constructeur de formulaire « Organisation »/
+ « Présentation », cf. NodeTypeController) : rend le bon widget selon def.type, lit sa
+ valeur dans `data` (blob p[]), pose son libellé/aide/obligatoire via label().
+ N'est JAMAIS appelé pour un champ verrouillé (def.locked) — ceux-là gardent leur
+ markup dédié, écrit à la main, dans le gabarit appelant.
+#}
+{% macro field(key, def, data) %}
+    {% import _self as fld %}
+    {{ fld.label(def.label, def.required, def.help) }}
+    {% set opts = def.referentielKey ? referentiel(def.referentielKey) : def.options %}
+    {% if def.type == 'textarea' %}
+        {{ fld.textarea(key, data[key] ?? '') }}
+    {% elseif def.type == 'number' %}
+        <input type="number" name="p[{{ key }}]" value="{{ data[key] ?? '' }}" class="fld mt-1">
+    {% elseif def.type == 'radio' %}
+        {{ fld.radio(key, data[key] ?? '', opts) }}
+    {% elseif def.type == 'checkbox' %}
+        {{ fld.checkgroup(key, data[key] ?? [], opts) }}
+    {% elseif def.type == 'choice' %}
+        {% if def.allowExtra %}
+            {{ fld.selectAdd(key, data[key] ?? '', opts, 'formation.param.generic_add_hint'|trans({}, 'formation')) }}
+        {% else %}
+            {{ fld.select(key, data[key] ?? '', opts) }}
+        {% endif %}
+    {% else %}
+        {{ fld.text(key, data[key] ?? '') }}
+    {% endif %}
 {% endmacro %}
 
 {% macro textarea(name, value, help, prefix) %}

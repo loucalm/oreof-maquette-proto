@@ -14,50 +14,26 @@
     <div class="panel-scroll">
     <form method="post" action="{{ saveUrl }}" data-turbo-frame="_top" class="panel-card space-y-5">
 
-        {{ fld.divider('formation.param.organisation.divider_global'|trans({}, 'formation')) }}
-
-        <div>
-            {{ fld.label('formation.param.parcours_organisation.nom_label'|trans({}, 'formation'), true, 'formation.param.parcours_organisation.nom_help'|trans({}, 'formation')) }}
-            <input name="nom" value="{{ parcours.label }}" class="fld mt-1">
-        </div>
-        <div>
-            {{ fld.label('formation.param.parcours_organisation.ects_label'|trans({}, 'formation'), true, 'formation.param.parcours_organisation.ects_help'|trans({}, 'formation')) }}
-            <input type="number" name="ects" value="{{ parcours.getAttribute('ects') }}" class="fld mt-1">
-        </div>
-        <div>
-            {{ fld.label('formation.param.parcours_organisation.modalites_enseignement_label'|trans({}, 'formation'), true) }}
-            {{ fld.select('modalitesEnseignement', data.modalitesEnseignement ?? '', referentiel('modalites_enseignement')) }}
-        </div>
-        <div>
-            {{ fld.label('formation.view.plabel.composante_inscription'|trans({}, 'formation'), true, 'formation.param.parcours_organisation.composante_help'|trans({}, 'formation')) }}
-            {{ fld.selectAdd('composante', data.composante ?? '', [formation.composante ?: 'formation.editor.meta_composante_default'|trans({}, 'formation'), 'formation.param.parcours_organisation.other_composante'|trans({}, 'formation')], 'formation.param.parcours_organisation.add_composante_fake'|trans({}, 'formation')) }}
-        </div>
-        <div>
-            {{ fld.label('formation.view.plabel.regimes'|trans({}, 'formation'), true, 'formation.param.parcours_organisation.multi_choice'|trans({}, 'formation')) }}
-            {{ fld.checkgroup('regimes', data.regimes ?? [], referentiel('regimes_inscription')) }}
-        </div>
-        <div>
-            {{ fld.label('formation.param.parcours_organisation.modalites_alternance_label'|trans({}, 'formation'), true) }}
-            {{ fld.textarea('modalitesAlternance', data.modalitesAlternance ?? '', 'formation.param.parcours_organisation.modalites_alternance_help'|trans({}, 'formation')) }}
-        </div>
-
-        <div>
-            {{ fld.label('formation.param.organisation.code_apogee_label'|trans({}, 'formation'), false, 'formation.param.organisation.code_apogee_help'|trans({}, 'formation')) }}
-            {{ fld.text('codeApogee', data.codeApogee ?? '', 'formation.param.organisation.code_apogee_placeholder'|trans({}, 'formation')) }}
-        </div>
-
-        {{ fld.divider('formation.param.organisation.divider_responsables'|trans({}, 'formation')) }}
-
-        <div class="grid gap-5 md:grid-cols-2">
-            <div>
-                {{ fld.label('formation.param.parcours_organisation.resp_label'|trans({}, 'formation'), true, 'formation.param.parcours_organisation.resp_help'|trans({}, 'formation')) }}
-                {{ fld.selectAdd('respParcours', data.respParcours ?? '', referentiel('responsables'), 'formation.param.organisation.create_new_fake'|trans({}, 'formation'), 'formation.param.parcours_organisation.resp_select_placeholder'|trans({}, 'formation')) }}
-            </div>
-            <div>
-                {{ fld.label('formation.param.parcours_organisation.co_resp_label'|trans({}, 'formation'), false, 'formation.param.parcours_organisation.co_resp_help'|trans({}, 'formation')) }}
-                {{ fld.selectAdd('coRespParcours', data.coRespParcours ?? '', referentiel('responsables'), 'formation.param.organisation.create_new_fake'|trans({}, 'formation'), 'formation.param.parcours_organisation.resp_select_placeholder'|trans({}, 'formation')) }}
-            </div>
-        </div>
+        {% for f in fields %}
+            {% if f.type == 'separator' %}
+                {{ fld.divider(f.label) }}
+            {% elseif f.locked %}
+                {# champs verrouillés : ils écrivent directement sur le nœud parcours, markup dédié inchangé #}
+                {% if f.key == 'nom' %}
+                    <div>
+                        {{ fld.label('formation.param.parcours_organisation.nom_label'|trans({}, 'formation'), true, 'formation.param.parcours_organisation.nom_help'|trans({}, 'formation')) }}
+                        <input name="nom" value="{{ parcours.label }}" class="fld mt-1">
+                    </div>
+                {% elseif f.key == 'ectsTotal' %}
+                    <div>
+                        {{ fld.label('formation.param.parcours_organisation.ects_label'|trans({}, 'formation'), true, 'formation.param.parcours_organisation.ects_help'|trans({}, 'formation')) }}
+                        <input type="number" name="ects" value="{{ parcours.getAttribute('ects') }}" class="fld mt-1">
+                    </div>
+                {% endif %}
+            {% else %}
+                <div>{{ fld.field(f.key, f, data) }}</div>
+            {% endif %}
+        {% endfor %}
 
         {{ fld.divider('formation.param.parcours_organisation.divider_relations'|trans({}, 'formation')) }}
 

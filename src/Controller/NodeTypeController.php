@@ -35,6 +35,20 @@ final class NodeTypeController extends AbstractController
      */
     private const INTERNAL_KEYS = ['bloc_choix'];
 
+    /**
+     * Les 4 sections « Parameter » réellement pilotées par ce catalogue (cf.
+     * FormationController::param()/parcoursParam()) — les 4 autres (les 2 types
+     * « Configuration de la structure », UI de squelette totalement différente, et
+     * les 2 types BCC, qui ont leur propre éditeur dédié BccController) restent
+     * bloqués par assertEditable().
+     */
+    public const EDITABLE_PARAM_KEYS = [
+        'param_organisation_formation',
+        'param_presentation_formation',
+        'param_organisation_parcours',
+        'param_presentation_parcours',
+    ];
+
     #[Route('/node-types', name: 'node_type_index', methods: ['GET'])]
     public function index(NodeTypeRepository $repo): Response
     {
@@ -50,15 +64,17 @@ final class NodeTypeController extends AbstractController
     }
 
     /**
-     * Les types « Parameter » (sections fixes Organisation/Présentation/BCC…) ne pilotent
-     * pas réellement de formulaire : les pages formation correspondantes utilisent des
-     * libellés et des champs codés en dur (FormationController::PARAM_SECTIONS /
-     * PARCOURS_PARAM_SECTIONS), pas ce catalogue. Toute modification ici serait acceptée
-     * sans jamais avoir d'effet visible — bloqué plutôt que silencieusement inopérant.
+     * Certains types « Parameter » (Configuration de la structure, BCC) ne pilotent
+     * toujours pas réellement de formulaire depuis ce catalogue : « Configuration de
+     * la structure » a sa propre UI de squelette (rien à voir avec une liste de
+     * champs), BCC a son propre éditeur dédié (BccController). Toute modification
+     * ici serait acceptée sans jamais avoir d'effet visible — bloqué plutôt que
+     * silencieusement inopérant. Organisation/Présentation (formation + parcours),
+     * elles, sont réellement pilotées par ce catalogue (cf. EDITABLE_PARAM_KEYS).
      */
     private function assertEditable(NodeType $nodeType): ?Response
     {
-        if (NodeFamily::Parameter !== $nodeType->getFamily()) {
+        if (NodeFamily::Parameter !== $nodeType->getFamily() || \in_array($nodeType->getKey(), self::EDITABLE_PARAM_KEYS, true)) {
             return null;
         }
         $this->addFlash('warning', sprintf(
@@ -67,6 +83,20 @@ final class NodeTypeController extends AbstractController
         ));
 
         return $this->redirectToRoute('node_type_index');
+    }
+
+    /** Champ verrouillé (cf. FieldDef::isLocked()) : visible/déplaçable dans le constructeur, jamais éditable ni retirable depuis là. */
+    private function assertFieldEditable(FieldDef $field, NodeType $nodeType): ?Response
+    {
+        if (!$field->isLocked()) {
+            return null;
+        }
+        $this->addFlash('warning', sprintf(
+            '« %s » est un champ verrouillé : il écrit directement sur une propriété dédiée, sa définition ne peut pas être modifiée ici.',
+            $field->getLabel(),
+        ));
+
+        return $this->redirectToRoute('node_type_edit', ['id' => $nodeType->getId()]);
     }
 
     #[Route('/node-types/new', name: 'node_type_new', methods: ['GET', 'POST'])]
@@ -199,6 +229,9 @@ final class NodeTypeController extends AbstractController
         if (null === $field || !$nodeType->hasCapability($field->getKey())) {
             throw $this->createNotFoundException();
         }
+        if (null !== ($blocked = $this->assertFieldEditable($field, $nodeType))) {
+            return $blocked;
+        }
 
         $field->setLabel(trim((string) $request->request->get('label')) ?: $field->getLabel());
 
@@ -292,6 +325,9 @@ final class NodeTypeController extends AbstractController
         if (null === $field) {
             throw $this->createNotFoundException();
         }
+        if (null !== ($blocked = $this->assertFieldEditable($field, $nodeType))) {
+            return $blocked;
+        }
 
         $key = $field->getKey();
         $this->setCapability($nodeType, $key, false, false);
@@ -368,10 +404,8 @@ final class NodeTypeController extends AbstractController
     private function formBuilderData(NodeType $nodeType, FieldDefRepository $fields): array
     {
         $out = [];
-        foreach ($fields->allOrdered() as $f) {
-            if ($nodeType->hasCapability($f->getKey()) && ($nodeType->getCapabilities()[$f->getKey()] ?? false)) {
-                $out[$f->getTab()][] = $f;
-            }
+        foreach ($fields->activeOrderedFor($nodeType) as $f) {
+            $out[$f->getTab()][] = $f;
         }
 
         return $out;

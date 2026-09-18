@@ -223,7 +223,7 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
             $nid['Parcours Informatique'] => [
                 'organisation' => [
                     'modalitesEnseignement' => 'En présentiel',
-                    'composante' => 'UFR Sciences Exactes et Naturelles',
+                    'composanteInscription' => 'UFR Sciences Exactes et Naturelles',
                     'regimes' => ['FI', 'FI_APP'],
                     'modalitesAlternance' => 'Rythme 3 semaines entreprise / 2 semaines université en L3.',
                     'lieu' => 'Campus principal',
