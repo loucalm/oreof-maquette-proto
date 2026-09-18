@@ -18,7 +18,7 @@
             <span class="type-badge">{{ meta ? ux_icon(meta.icon, {class: 'icon'}) }} [{{ meta ? meta.label : n.type }}]</span>
             {% if rigid %}<span class="tree-lock" title="{{ 'template.edit.rigid_hint'|trans({}, 'template') }}">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }}</span>{% endif %}
 
-            <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'rename'}) }}" class="inline flex items-center gap-1">
+            <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'rename'}) }}" class="flex items-center gap-1">
                 <input name="label" value="{{ n.label ?? '' }}" placeholder="{{ 'template.edit.label_placeholder'|trans({}, 'template') }}"
                        class="rounded border border-transparent px-2 py-0.5 text-sm hover:border-gray-200 focus:border-gray-300 focus:bg-white" style="width:220px">
                 <button class="template-mini opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity" title="{{ 'template.edit.rename_button'|trans({}, 'template') }}">{{ ux_icon('ph:check', {class: 'icon'}) }}</button>
