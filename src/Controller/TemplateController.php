@@ -57,6 +57,14 @@ final class TemplateController extends AbstractController
     #[Route('/administration/templates/{id}', name: 'template_edit', methods: ['GET'])]
     public function edit(StructureTemplate $template, NodeTypeRepository $types, MccTypeRepository $mccTypes): Response
     {
+        // migration douce : les arbres de fixtures écrits avant l'introduction du pliage
+        // persisté (par uid, cf. tpltree_controller.js) n'ont pas encore de uid par nœud.
+        $tree = new TemplateTree($template->getTree());
+        if ($tree->ensureUids()) {
+            $template->setTree($tree->tree);
+            $this->em->flush();
+        }
+
         return $this->render('template/edit.html.twig', [
             'template' => $template,
             'types' => $types->forTree(),

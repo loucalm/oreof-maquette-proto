@@ -33,7 +33,7 @@ final class TemplateTree
      */
     public function addChild(array $path, string $type, string $label): void
     {
-        $node = ['type' => $type, 'label' => $label, 'locked' => ['add', 'delete', 'duplicate']];
+        $node = ['type' => $type, 'label' => $label, 'locked' => ['add', 'delete', 'duplicate'], 'uid' => self::newUid()];
         if ($path === []) {
             $this->tree[] = $node;
 
@@ -63,7 +63,7 @@ final class TemplateTree
      */
     public function duplicate(array $path): void
     {
-        $this->withParent($path, static function (array &$sibs, int $i): void {
+        $this->withParent($path, function (array &$sibs, int $i): void {
             if (!isset($sibs[$i]) || \in_array('duplicate', (array) ($sibs[$i]['locked'] ?? []), true)) {
                 return;
             }
@@ -71,6 +71,9 @@ final class TemplateTree
             if (($copy['label'] ?? '') !== '') {
                 $copy['label'] .= ' (copie)';
             }
+            // uid propre sur toute la branche copiée : sinon le pliage persisté (par uid, cf.
+            // ensureUids()) confondrait l'original et la copie.
+            [$copy] = $this->regenerateUids([$copy]);
             array_splice($sibs, $i + 1, 0, [$copy]);
         });
     }
@@ -166,6 +169,68 @@ final class TemplateTree
         $this->tree = $this->walk($this->tree, $path, static function (array &$n) use ($label): void {
             $n['label'] = $label;
         });
+    }
+
+    /**
+     * Attribue un `uid` stable à tout nœud qui n'en a pas encore (arbres de
+     * fixtures écrits à la main avant l'introduction du pliage persisté côté
+     * éditeur — ce uid n'a aucun autre usage dans l'appli). Idempotent :
+     * n'écrit rien si tous les nœuds en ont déjà un.
+     *
+     * @return bool true si au moins un uid a été généré (donc à persister)
+     */
+    public function ensureUids(): bool
+    {
+        $changed = false;
+        $this->tree = $this->assignMissingUids($this->tree, $changed);
+
+        return $changed;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $nodes
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function assignMissingUids(array $nodes, bool &$changed): array
+    {
+        foreach ($nodes as &$n) {
+            if (!\is_string($n['uid'] ?? null) || '' === $n['uid']) {
+                $n['uid'] = self::newUid();
+                $changed = true;
+            }
+            if (\is_array($n['children'] ?? null)) {
+                $n['children'] = $this->assignMissingUids($n['children'], $changed);
+            }
+        }
+
+        return $nodes;
+    }
+
+    /**
+     * Régénère (sans condition, contrairement à assignMissingUids()) le uid de
+     * toute une branche — utilisé par duplicate() pour que la copie n'hérite
+     * d'aucun uid de l'original.
+     *
+     * @param list<array<string, mixed>> $nodes
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function regenerateUids(array $nodes): array
+    {
+        foreach ($nodes as &$n) {
+            $n['uid'] = self::newUid();
+            if (\is_array($n['children'] ?? null)) {
+                $n['children'] = $this->regenerateUids($n['children']);
+            }
+        }
+
+        return $nodes;
+    }
+
+    private static function newUid(): string
+    {
+        return bin2hex(random_bytes(4));
     }
 
     // ─── interne ───

@@ -14,7 +14,7 @@
     {% set temporel = meta and meta.temporel %}
     {% set displayLabel = temporel ? meta.label ~ ' ' ~ ((p|split('.')|last) + 1) : (n.label ?: (meta ? meta.label : n.type)) %}
     {% set hasChildren = n.children is defined and n.children is not empty %}
-    <li class="template-node" data-node-index="{{ p|split('.')|last }}">
+    <li class="template-node" data-node-index="{{ p|split('.')|last }}" data-node-uid="{{ n.uid ?? '' }}">
         <div class="group flex flex-wrap items-center gap-1.5 py-1 px-1 -mx-1 rounded-md hover:bg-gray-50">
             <span class="drag-handle shrink-0" title="{{ 'template.edit.drag_title'|trans({}, 'template') }}">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>
 
@@ -61,7 +61,8 @@
         {% if hasChildren %}
             <ul class="template-branch" data-controller="tpltree"
                 data-tpltree-save-url-value="{{ path('template_node_reorder', {id: template.id}) }}"
-                data-tpltree-parent-path-value="{{ p }}">
+                data-tpltree-parent-path-value="{{ p }}"
+                data-tpltree-template-id-value="{{ template.id }}">
                 {% for c in n.children %}
                     {{ m.node(c, p ~ '.' ~ loop.index0, template, types) }}
                 {% endfor %}
@@ -299,7 +300,8 @@
         {% else %}
             <ul class="template-branch template-branch--root" data-controller="tpltree"
                 data-tpltree-save-url-value="{{ path('template_node_reorder', {id: template.id}) }}"
-                data-tpltree-parent-path-value="">
+                data-tpltree-parent-path-value=""
+                data-tpltree-template-id-value="{{ template.id }}">
                 {% for n in template.tree %}
                     {{ m.node(n, loop.index0 ~ '', template, types) }}
                 {% endfor %}

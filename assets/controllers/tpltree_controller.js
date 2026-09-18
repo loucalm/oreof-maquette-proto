@@ -4,10 +4,13 @@ import Sortable from 'sortablejs';
 /**
  * Arbre du template : réordonne par glisser-déposer les enfants directs
  * d'un même nœud (chaque <ul> — racine ou branche — a sa propre instance,
- * sans groupe partagé, donc on ne peut réordonner qu'entre frères).
+ * sans groupe partagé, donc on ne peut réordonner qu'entre frères), et
+ * plie/déplie les branches — état persisté par `uid` de nœud (localStorage,
+ * scopé par template) pour survivre au rechargement complet de l'arbre
+ * qui suit chaque modification (rename, verrou, glisser-déposer...).
  */
 export default class extends Controller {
-    static values = { saveUrl: String, parentPath: String };
+    static values = { saveUrl: String, parentPath: String, templateId: String };
 
     connect() {
         this.sortable = new Sortable(this.element, {
@@ -19,6 +22,7 @@ export default class extends Controller {
             ghostClass: 'sortable-ghost',
             onEnd: () => this.save(),
         });
+        this.restoreCollapsed();
     }
 
     disconnect() {
@@ -26,10 +30,44 @@ export default class extends Controller {
         this.sortable = null;
     }
 
-    /** Plie/déplie la branche du nœud cliqué (état non persisté — les chemins ne sont pas stables). */
     toggle(event) {
         event.preventDefault();
-        event.target.closest('li.template-node')?.classList.toggle('collapsed');
+        const li = event.target.closest('li.template-node');
+        if (!li) return;
+        const collapsed = li.classList.toggle('collapsed');
+        if (li.dataset.nodeUid) this.setCollapsed(li.dataset.nodeUid, collapsed);
+    }
+
+    // ─── pliage persisté (par uid, pas par chemin — un chemin bouge dès qu'on
+    // réordonne/ajoute/supprime ailleurs dans l'arbre) ───
+
+    get storeKey() {
+        return `tpltree-collapsed-${this.templateIdValue}`;
+    }
+
+    get collapsedSet() {
+        try {
+            return new Set(JSON.parse(localStorage.getItem(this.storeKey) || '[]'));
+        } catch {
+            return new Set();
+        }
+    }
+
+    restoreCollapsed() {
+        const set = this.collapsedSet;
+        if (set.size === 0) return;
+        [...this.element.children].forEach((li) => {
+            if (li.dataset.nodeUid && set.has(li.dataset.nodeUid)) li.classList.add('collapsed');
+        });
+    }
+
+    setCollapsed(uid, collapsed) {
+        const set = this.collapsedSet;
+        if (collapsed) set.add(uid);
+        else set.delete(uid);
+        try {
+            localStorage.setItem(this.storeKey, JSON.stringify([...set]));
+        } catch { /* ignore */ }
     }
 
     async save() {
