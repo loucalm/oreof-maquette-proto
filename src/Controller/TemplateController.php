@@ -229,7 +229,7 @@ final class TemplateController extends AbstractController
         return $this->redirectToRoute('template_edit', ['id' => $template->getId()]);
     }
 
-    #[Route('/administration/templates/{id}/nodes/{path}/{op}', name: 'template_node_op', methods: ['POST'], requirements: ['path' => '[0-9.]+', 'op' => 'up|down|toggle-rigid|toggle-move|delete|rename'])]
+    #[Route('/administration/templates/{id}/nodes/{path}/{op}', name: 'template_node_op', methods: ['POST'], requirements: ['path' => '[0-9.]+', 'op' => 'up|down|toggle-rigid|toggle-move|delete|duplicate|rename'])]
     public function nodeOp(StructureTemplate $template, string $path, string $op, Request $request): Response
     {
         $tree = new TemplateTree($template->getTree());
@@ -241,6 +241,7 @@ final class TemplateController extends AbstractController
             'toggle-rigid' => $tree->toggleRigid($p),
             'toggle-move' => $tree->toggleMove($p),
             'delete' => $tree->remove($p),
+            'duplicate' => $tree->duplicate($p),
             'rename' => $tree->rename($p, trim((string) $request->request->get('label'))),
         };
 

@@ -26,6 +26,12 @@ export default class extends Controller {
         this.sortable = null;
     }
 
+    /** Plie/déplie la branche du nœud cliqué (état non persisté — les chemins ne sont pas stables). */
+    toggle(event) {
+        event.preventDefault();
+        event.target.closest('li.template-node')?.classList.toggle('collapsed');
+    }
+
     async save() {
         const order = [...this.element.children]
             .filter((el) => el.matches('[data-node-index]'))

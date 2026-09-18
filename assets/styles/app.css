@@ -339,8 +339,11 @@ body {
     font-size: 12px; cursor: pointer;
 }
 .template-mini:hover { background: #f0f1f3; }
+.template-mini:disabled { opacity: .35; cursor: not-allowed; }
 .template-mini--danger { border-color: #fecaca; color: #dc2626; }
 .template-mini--danger:hover { background: #fee2e2; }
+.template-node.collapsed > .template-branch { display: none; }
+.template-node:not(.collapsed) > div > .tree-chevron { transform: rotate(90deg); }
 
 /* aperçu JSON (export) */
 .json-view {

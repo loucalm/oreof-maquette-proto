@@ -53,6 +53,28 @@ final class TemplateTree
         });
     }
 
+    /**
+     * Duplique un nœud (et toute sa branche) juste après lui-même, même
+     * parent — même convention que MaquetteDoc::duplicateNode() côté
+     * formation (« (copie) » suffixé au libellé s'il n'est pas vide). No-op
+     * si le nœud est figé (jeton `duplicate` dans `locked`).
+     *
+     * @param list<int> $path
+     */
+    public function duplicate(array $path): void
+    {
+        $this->withParent($path, static function (array &$sibs, int $i): void {
+            if (!isset($sibs[$i]) || \in_array('duplicate', (array) ($sibs[$i]['locked'] ?? []), true)) {
+                return;
+            }
+            $copy = $sibs[$i];
+            if (($copy['label'] ?? '') !== '') {
+                $copy['label'] .= ' (copie)';
+            }
+            array_splice($sibs, $i + 1, 0, [$copy]);
+        });
+    }
+
     /** @param list<int> $path */
     public function move(array $path, int $dir): void
     {

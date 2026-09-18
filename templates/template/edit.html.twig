@@ -13,6 +13,7 @@
     {% set meta = types_by_key()[n.type] %}
     {% set temporel = meta and meta.temporel %}
     {% set displayLabel = temporel ? meta.label ~ ' ' ~ ((p|split('.')|last) + 1) : (n.label ?: (meta ? meta.label : n.type)) %}
+    {% set hasChildren = n.children is defined and n.children is not empty %}
     <li class="template-node" data-node-index="{{ p|split('.')|last }}">
         <div class="group flex flex-wrap items-center gap-1.5 py-1 px-1 -mx-1 rounded-md hover:bg-gray-50">
             <span class="drag-handle shrink-0" title="{{ 'template.edit.drag_title'|trans({}, 'template') }}">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>
@@ -41,14 +42,23 @@
                     <button title="{{ moveLocked ? 'template.edit.unlock_move_title'|trans({}, 'template') : 'template.edit.lock_move_title'|trans({}, 'template') }}"
                             class="template-mini" style="{{ moveLocked ? 'background:#fee2e2' }}">{{ ux_icon('ph:arrows-out-cardinal', {class: 'icon'}) }}</button>
                 </form>
+                <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'duplicate'}) }}" class="inline">
+                    <button class="template-mini" title="{{ 'template.edit.duplicate_button'|trans({}, 'template') }}" {{ rigid ? 'disabled' }}>{{ ux_icon('ph:copy', {class: 'icon'}) }}</button>
+                </form>
                 <form method="post" action="{{ path('template_node_op', {id: template.id, path: p, op: 'delete'}) }}" class="inline"
                       data-controller="confirm" data-confirm-message-value="{{ 'template.edit.delete_node_confirm'|trans({'%label%': displayLabel}, 'template') }}">
                     <button class="template-mini template-mini--danger" title="{{ 'common.delete'|trans({}, 'common') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
                 </form>
             </div>
+
+            {% if hasChildren %}
+                <button type="button" class="tree-chevron" data-action="tpltree#toggle" aria-label="{{ 'template.edit.toggle_aria'|trans({}, 'template') }}">{{ ux_icon('ph:caret-right', {class: 'icon'}) }}</button>
+            {% else %}
+                <span class="tree-chevron-spacer"></span>
+            {% endif %}
         </div>
 
-        {% if n.children is defined and n.children is not empty %}
+        {% if hasChildren %}
             <ul class="template-branch" data-controller="tpltree"
                 data-tpltree-save-url-value="{{ path('template_node_reorder', {id: template.id}) }}"
                 data-tpltree-parent-path-value="{{ p }}">
