@@ -22,6 +22,7 @@ final class Completion
 {
     public function __construct(
         private readonly AttributeCatalog $catalog,
+        private readonly McccValidator $mcccValidator,
         private readonly NodeTypeRepository $types,
         private readonly FieldDefRepository $fields,
     ) {
@@ -34,33 +35,70 @@ final class Completion
      */
     public function node(TreeNode $node): array
     {
-        $caps = $node->effectiveCapabilities();
-        $req = 0;
-        $filled = 0;
-        // libellé requis partout, sauf types temporels (nom calculé, jamais saisi)
-        if (!$node->getType()->isTemporel()) {
-            $req = 1;
-            $filled = trim($node->getLabel()) !== '' ? 1 : 0;
-        }
+        $missing = $this->missing($node);
+        $req = $this->requiredCount($node);
 
-        if (($caps['code'] ?? false) && 'ec' === $node->getType()->getKey()) {
-            ++$req;
-            $filled += trim((string) $node->getCode()) !== '' ? 1 : 0;
+        return ['req' => $req, 'filled' => $req - \count($missing)];
+    }
+
+    /**
+     * Champs requis manquants (ou invalides) de CE nœud seul, dans l'ordre
+     * d'affichage : source unique pour le statut, « Vérifier la saisie » et la
+     * liste « À compléter » du panneau.
+     *
+     * @return list<array{key: string, label: string, tab: string, detail?: string}>
+     */
+    public function missing(TreeNode $node): array
+    {
+        $caps = $node->effectiveCapabilities();
+        $out = [];
+
+        // libellé requis partout, sauf types temporels (nom calculé, jamais saisi)
+        if (!$node->getType()->isTemporel() && trim($node->getLabel()) === '') {
+            $out[] = ['key' => 'label', 'label' => 'libellé', 'tab' => 'props'];
+        }
+        if (($caps['code'] ?? false) && 'ec' === $node->getType()->getKey() && trim((string) $node->getCode()) === '') {
+            $out[] = ['key' => 'code', 'label' => "code de l'EC", 'tab' => 'props'];
         }
 
         foreach ($this->catalog->all() as $key => $def) {
             if (!($caps[$key] ?? false) || !($def['required'] ?? false)) {
                 continue;
             }
-            ++$req;
             $v = $node->getAttribute($key);
-            $ok = $key === 'hours'
+            $provided = $key === 'hours'
                 ? AttributeCatalog::hoursProvided($v)
                 : !($v === null || $v === '' || $v === []);
-            $filled += $ok ? 1 : 0;
+            if (!$provided) {
+                $out[] = ['key' => $key, 'label' => mb_strtolower($def['label']), 'tab' => $def['domain']];
+            } elseif ($key === 'mccc' && $this->mcccValidator->hasError($node)) {
+                $out[] = [
+                    'key' => $key,
+                    'label' => 'MCCC non conformes',
+                    'tab' => $def['domain'],
+                    'detail' => implode(' · ', $this->mcccValidator->errorMessages($node)),
+                ];
+            }
         }
 
-        return ['req' => $req, 'filled' => $filled];
+        return $out;
+    }
+
+    /** Nombre de champs requis de CE nœud seul. */
+    private function requiredCount(TreeNode $node): int
+    {
+        $caps = $node->effectiveCapabilities();
+        $req = $node->getType()->isTemporel() ? 0 : 1;
+        if (($caps['code'] ?? false) && 'ec' === $node->getType()->getKey()) {
+            ++$req;
+        }
+        foreach ($this->catalog->all() as $key => $def) {
+            if (($caps[$key] ?? false) && ($def['required'] ?? false)) {
+                ++$req;
+            }
+        }
+
+        return $req;
     }
 
     /**

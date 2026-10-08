@@ -3,6 +3,9 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        {# Après une action qui redirige vers la même page : rafraîchissement par morphing, défilement conservé. #}
+        <meta name="turbo-refresh-method" content="morph">
+        <meta name="turbo-refresh-scroll" content="preserve">
         <title>{% block title %}{{ 'layout.default_title'|trans({}, 'layout') }}{% endblock %}</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.1em%22 font-size=%22104%22>🧩</text></svg>">
         {# Tailwind au runtime (prototype). Le build standalone ne scannait pas les templates dans ce conteneur. #}
@@ -22,12 +25,12 @@
                 </a>
                 {% set _route = app.request.attributes.get('_route') ?? '' %}
                 <nav class="hidden lg:flex items-center gap-6 text-sm text-gray-600">
-                    <span class="fake-link cursor-default">{{ 'layout.nav.dashboard'|trans({}, 'layout') }}</span>
+                    <span class="fake-link cursor-default" aria-disabled="true" title="{{ 'common.coming_soon'|trans({}, 'common') }}">{{ 'layout.nav.dashboard'|trans({}, 'layout') }}</span>
                     <a href="{{ path('formation_index') }}"
                        class="hover:text-gray-900 {{ _route matches '/^(formation_|node_|bcc_|parcours_)/' ? 'font-semibold text-gray-900' }}">{{ 'layout.nav.offer'|trans({}, 'layout') }}</a>
-                    <span class="fake-link cursor-default">{{ 'layout.nav.steering'|trans({}, 'layout') }} {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>
-                    <span class="fake-link cursor-default">{{ 'layout.nav.councils'|trans({}, 'layout') }} {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>
-                    <span class="fake-link cursor-default">{{ 'layout.nav.users_rights'|trans({}, 'layout') }} {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>
+                    <span class="fake-link cursor-default" aria-disabled="true" title="{{ 'common.coming_soon'|trans({}, 'common') }}">{{ 'layout.nav.steering'|trans({}, 'layout') }} {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>
+                    <span class="fake-link cursor-default" aria-disabled="true" title="{{ 'common.coming_soon'|trans({}, 'common') }}">{{ 'layout.nav.councils'|trans({}, 'layout') }} {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>
+                    <span class="fake-link cursor-default" aria-disabled="true" title="{{ 'common.coming_soon'|trans({}, 'common') }}">{{ 'layout.nav.users_rights'|trans({}, 'layout') }} {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>
                     {% if is_admin() %}
                         <a href="{{ path('admin_index') }}"
                            class="hover:text-gray-900 {{ _route matches '/^(admin_|node_type_|field_|template_)/' ? 'font-semibold text-gray-900' }}">{{ 'layout.nav.administration'|trans({}, 'layout') }}</a>
@@ -88,7 +91,7 @@
                     {% if is_admin() %} · <a href="{{ path('admin_index') }}" class="hover:underline">{{ 'layout.nav.administration'|trans({}, 'layout') }}</a>{% endif %}
                 </div>
                 <div class="ml-auto flex items-center gap-3 text-gray-400">
-                    {% for item in ['layout.footer.documents', 'layout.footer.help', 'layout.footer.faq', 'layout.footer.contact', 'layout.footer.github'] %}<span class="fake-link cursor-default">{{ item|trans({}, 'layout') }}</span>{% endfor %}
+                    {% for item in ['layout.footer.documents', 'layout.footer.help', 'layout.footer.faq', 'layout.footer.contact', 'layout.footer.github'] %}<span class="fake-link cursor-default" aria-disabled="true" title="{{ 'common.coming_soon'|trans({}, 'common') }}">{{ item|trans({}, 'layout') }}</span>{% endfor %}
                 </div>
             </div>
         </footer>

@@ -64,6 +64,7 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('param_nav', $this->paramNav(...)),
             new TwigFunction('capability_labels', $this->capabilityLabels(...)),
             new TwigFunction('node_tab_status', $this->nodeTabStatus(...)),
+            new TwigFunction('node_missing', fn (TreeNode $n) => $this->completion->missing($n)),
             new TwigFunction('bcc_competences', $this->bccCompetences(...)),
             new TwigFunction('period_unit', $this->periodUnit(...)),
             new TwigFunction('param_sections', static fn () => FormationController::PARAM_SECTIONS),
@@ -369,48 +370,26 @@ final class MaquetteExtension extends AbstractExtension
     public function nodeTabStatus(TreeNode $node, string $tab): string
     {
         $caps = $node->effectiveCapabilities();
-
-        if ($tab === 'props') {
-            $missing = trim($node->getLabel()) === '';
-            if (($caps['code'] ?? false) && 'ec' === $node->getType()->getKey() && trim((string) $node->getCode()) === '') {
-                $missing = true;
-            }
-            foreach ($this->catalog->all() as $key => $def) {
-                if (($def['domain'] ?? null) !== 'props' || !($caps[$key] ?? false) || !($def['required'] ?? false)) {
-                    continue;
-                }
-                $v = $node->getAttribute($key);
-                if ($v === null || $v === '' || $v === []) {
-                    $missing = true;
-                }
-            }
-
-            return $missing ? 'incomplete' : 'ok';
-        }
-
-        $required = 0;
-        $filled = 0;
+        $hasData = false;
         foreach ($this->catalog->all() as $key => $def) {
             if (($def['domain'] ?? null) !== $tab || !($caps[$key] ?? false)) {
                 continue;
             }
             $v = $node->getAttribute($key);
-            $has = $key === 'hours'
-                ? AttributeCatalog::hoursProvided($v)
-                : !($v === null || $v === '' || $v === []);
-            if ($def['required'] ?? false) {
-                ++$required;
-                $filled += $has ? 1 : 0;
-            } elseif ($has) {
-                ++$filled;
+            if ($key === 'hours' ? AttributeCatalog::hoursProvided($v) : !($v === null || $v === '' || $v === [])) {
+                $hasData = true;
+                break;
             }
         }
 
-        if ($filled === 0) {
-            return 'empty';
+        // même source que l'arbre et « Vérifier » : champs requis manquants ET MCCC non conformes
+        foreach ($this->completion->missing($node) as $m) {
+            if ($m['tab'] === $tab) {
+                return ($hasData || $tab === 'props') ? 'incomplete' : 'empty';
+            }
         }
 
-        return ($required > 0 && $filled < $required) ? 'incomplete' : 'ok';
+        return ($hasData || $tab === 'props') ? 'ok' : 'empty';
     }
 
     /**

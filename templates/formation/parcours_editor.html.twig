@@ -12,54 +12,39 @@
 
 {% block body %}
 
-{# ─── bandeau titre ─── #}
-<div class="rounded-2xl border bg-white px-7 py-6 mb-4" style="border-color:var(--c-border)">
-    <div class="flex items-start justify-between gap-4">
-        <div>
-            <h1 class="text-3xl font-extrabold tracking-tight">{{ parcours.displayLabel }}</h1>
-            <p class="text-sm text-gray-500">{{ 'formation.parcours_editor.page_subtitle'|trans({}, 'formation') }}</p>
+{# ─── en-tête compact ─── #}
+<div class="editor-header rounded-2xl border bg-white px-6 py-4 mb-4" style="border-color:var(--c-border)">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+        <div class="min-w-0">
+            <div class="text-xs text-gray-400">
+                <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.editor.breadcrumb_list'|trans({}, 'formation') }}</a> ›
+                <a href="{{ path('formation_editor', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
+            </div>
+            <h1 class="text-2xl font-extrabold tracking-tight">{{ parcours.displayLabel }}</h1>
+            <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
+                <span>{{ formation.diplome ?: '—' }}</span>
+                {% if formation.composante %}<span>· {{ formation.composante }}</span>{% endif %}
+                <span>· {{ period_unit(formation)|lower }}s {{ parcours.periodeDebut }}–{{ parcours.periodeFin }}</span>
+                {% if parcours.parcoursParent %}<span>· {{ 'formation.parcours_editor.meta_parent'|trans({}, 'formation') }} : {{ parcours.parcoursParent.displayLabel }}</span>{% endif %}
+            </div>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
             <form method="post" action="{{ path('formation_undo', {id: formation.id}) }}" data-turbo-frame="_top">
                 <button type="submit" {{ canUndo ? '' : 'disabled' }} title="{{ 'formation.editor.undo_title'|trans({}, 'formation') }}" class="quickbar-icon-btn">{{ ux_icon('ph:arrow-counter-clockwise', {class: 'icon'}) }}</button>
             </form>
             <form method="post" action="{{ path('formation_redo', {id: formation.id}) }}" data-turbo-frame="_top">
                 <button type="submit" {{ canRedo ? '' : 'disabled' }} title="{{ 'formation.editor.redo_title'|trans({}, 'formation') }}" class="quickbar-icon-btn">{{ ux_icon('ph:arrow-clockwise', {class: 'icon'}) }}</button>
             </form>
-            <a href="{{ path('formation_view', {id: formation.id}) }}" class="fake-btn">{{ ux_icon('ph:eye', {class: 'icon'}) }} {{ 'formation.editor.view_sheet'|trans({}, 'formation') }}</a>
-            <a href="{{ path('formation_index') }}" class="rounded-lg border px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-50" style="border-color:#bbf7d0">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'formation.editor.back_to_list'|trans({}, 'formation') }}</a>
+            <a href="{{ path('formation_check', {id: formation.id}) }}" class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:check-square-offset', {class: 'icon'}) }} {{ 'formation.editor.check_link'|trans({}, 'formation') }}</a>
+            <a href="{{ path('formation_view', {id: formation.id}) }}" class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:eye', {class: 'icon'}) }} {{ 'formation.editor.view_sheet'|trans({}, 'formation') }}</a>
         </div>
     </div>
-    <div class="mt-3 text-sm text-gray-400">
-        {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">{{ 'formation.index.breadcrumb_home'|trans({}, 'formation') }}</span> ›
-        <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.editor.breadcrumb_list'|trans({}, 'formation') }}</a> ›
-        <a href="{{ path('formation_editor', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
-        <span class="rounded bg-gray-100 px-2 py-0.5 text-gray-600">{{ parcours.displayLabel }}</span>
-    </div>
-</div>
-
-{# ─── méta (fictif) ─── #}
-<div class="rounded-2xl border bg-white px-7 py-5 grid grid-cols-2 md:grid-cols-5 gap-4 mb-4" style="border-color:var(--c-border)">
-    {% for k, v in {
-        (('formation.parcours_editor.meta_formation'|trans({}, 'formation'))): formation.name,
-        (('formation.editor.meta_diplome'|trans({}, 'formation'))): formation.diplome ?: 'Licence',
-        (('formation.editor.meta_composante'|trans({}, 'formation'))): formation.composante ?: 'formation.editor.meta_composante_default'|trans({}, 'formation'),
-        (('formation.parcours_editor.meta_periods'|trans({}, 'formation'))): period_unit(formation)|lower ~ 's ' ~ parcours.periodeDebut ~ '–' ~ parcours.periodeFin,
-        (('formation.parcours_editor.meta_parent'|trans({}, 'formation'))): parcours.parcoursParent ? parcours.parcoursParent.displayLabel : '—'
-    } %}
-        <div>
-            <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{{ k }}</div>
-            <div class="text-sm mt-1">{{ v }}</div>
-        </div>
-    {% endfor %}
 </div>
 
 {# ═══ éditeur ═══ #}
-<div class="rounded-2xl border bg-white p-7" style="border-color:var(--c-border)">
-    <h2 class="text-2xl font-extrabold tracking-tight">{{ 'formation.parcours_editor.heading'|trans({}, 'formation')|upper }}</h2>
-    <p class="text-sm text-gray-500 mb-5">{{ 'formation.parcours_editor.description'|trans({}, 'formation') }}</p>
+<div class="rounded-2xl border bg-white p-3" style="border-color:var(--c-border)">
 
-    <div class="editor-shell grid lg:grid-cols-[380px_1fr] lg:h-[calc(100vh-9rem)] min-h-[560px]">
+    <div class="editor-shell grid lg:grid-cols-[440px_1fr] lg:h-[calc(100vh-11rem)] min-h-[560px]">
 
         {# ─── panneau structure ─── #}
         <div class="editor-aside flex flex-col overflow-hidden"
@@ -131,6 +116,7 @@
                       class="flex-1" data-tree-target="addForm">
                     <input type="hidden" name="parentId" value="{{ parcours.id }}" data-tree-target="addParent">
                     <input type="hidden" name="typeKey" value="{{ formation.getChildTypeKey('parcours') }}" data-tree-target="addType">
+                        <input type="hidden" name="afterId" value="" data-tree-target="addAfter">
                     <button data-tree-target="addButton" class="tree-add-btn">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'common.add'|trans({}, 'common') }} {{ bodyRoot ? ux_icon(bodyRoot.icon, {class: 'icon'}) }} {{ bodyRoot ? bodyRoot.label }}</button>
                 </form>
 
@@ -173,7 +159,7 @@
         </div>
 
         {# ─── panneau d'édition ─── #}
-        <turbo-frame id="node-panel" class="panel-frame"
+        <turbo-frame id="node-panel" class="panel-frame" refresh="morph"
                      {% if frameSrc %}src="{{ frameSrc }}"{% endif %}>
             {% if not frameSrc %}
                 <div class="panel-empty">{{ 'formation.editor.select_prompt'|trans({}, 'formation') }}</div>

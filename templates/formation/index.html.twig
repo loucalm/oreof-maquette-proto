@@ -12,7 +12,7 @@
                 <p class="text-sm text-gray-500">{{ 'formation.index.subheading'|trans({}, 'formation') }}</p>
             </div>
             <div class="flex items-center gap-2">
-                <span class="fake-btn" style="color:#15803d;border-color:#bbf7d0">{{ ux_icon('ph:check-bold', {class: 'icon'}) }} {{ 'formation.index.check_lheo'|trans({}, 'formation') }}</span>
+                <span class="fake-btn" style="color:#15803d;border-color:#bbf7d0" aria-disabled="true" title="{{ 'common.coming_soon'|trans({}, 'common') }}">{{ ux_icon('ph:check-bold', {class: 'icon'}) }} {{ 'formation.index.check_lheo'|trans({}, 'formation') }}</span>
                 <button type="button" data-action="modal#open"
                         class="rounded-lg border px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50" style="border-color:#bbf7d0">
                     {{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.index.add_button'|trans({}, 'formation') }}
@@ -20,7 +20,7 @@
             </div>
         </div>
         <div class="mt-3 text-sm text-gray-400">
-            {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">{{ 'formation.index.breadcrumb_home'|trans({}, 'formation') }}</span> › <span class="fake-link">{{ 'formation.index.breadcrumb_offer'|trans({}, 'formation') }}</span> ›
+            {{ ux_icon('ph:house', {class: 'icon'}) }} <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.index.breadcrumb_home'|trans({}, 'formation') }}</a> › <span class="fake-link">{{ 'formation.index.breadcrumb_offer'|trans({}, 'formation') }}</span> ›
             <span class="rounded bg-gray-100 px-2 py-0.5 text-gray-600">{{ 'formation.index.heading'|trans({}, 'formation') }}</span>
         </div>
     </div>

@@ -14,7 +14,7 @@ import Sortable from 'sortablejs';
  */
 export default class extends Controller {
     static values = { moveUrl: String, dupUrl: String, delUrl: String, chain: Array, typeMeta: Object, rootKey: String, baseParent: String };
-    static targets = ['addForm', 'addParent', 'addType', 'addButton', 'addChoiceButton', 'dupForm', 'dupButton', 'delForm', 'delButton', 'derogNodeId', 'derogContext'];
+    static targets = ['addForm', 'addParent', 'addType', 'addAfter', 'addButton', 'addChoiceButton', 'dupForm', 'dupButton', 'delForm', 'delButton', 'derogNodeId', 'derogContext'];
 
     connect() {
         this.storeKey = 'tree-collapsed';
@@ -230,10 +230,19 @@ export default class extends Controller {
 
         this.addParentTarget.value = activeId;
         this.addTypeTarget.value = childKey || 'auto';
+        if (this.hasAddAfterTarget) this.addAfterTarget.value = '';
 
         if (idx >= 0 && !childKey) {
-            this.addButtonTarget.disabled = true;
-            this.addButtonTarget.textContent = `« ${name} » ne peut pas contenir d'enfant`;
+            // feuille (ex. EC) : on propose d'ajouter un élément du même type juste après
+            const ownType = activeLi.dataset.nodeType;
+            this.addParentTarget.value = activeLi.parentElement?.dataset.parentId
+                || (this.hasBaseParentValue ? this.baseParentValue : '');
+            this.addTypeTarget.value = ownType;
+            if (this.hasAddAfterTarget) this.addAfterTarget.value = activeId;
+            this.addButtonTarget.disabled = activeLi.dataset.lockedAdd === '1';
+            this.addButtonTarget.textContent = meta[ownType]
+                ? `Ajouter ${meta[ownType].label} après`
+                : 'Ajouter un ELP après';
             return;
         }
 

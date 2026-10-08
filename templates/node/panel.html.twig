@@ -9,17 +9,36 @@
 {% set hasMccc = caps.mccc ?? false %}
 
 <turbo-frame id="node-panel">
-<div class="panel-body" data-controller="tabs modal" data-panel-active="node:{{ node.id }}">
+<div class="panel-body" data-controller="tabs modal" data-tabs-key-value="{{ formation.id }}:{{ node.id }}" data-panel-active="node:{{ node.id }}">
 
     <div class="panel-head">
         <h2 class="text-xl font-bold">{{ 'node.panel.title'|trans({}, 'node') }}</h2>
         <div class="text-sm text-gray-400">
             {{ T }}{% if view.ref %} <span class="font-bold" style="color:var(--c-primary)">{{ view.ref }}</span>{% endif %}
-            {%- if node.isLocked('delete') %} · <span title="{{ 'node.panel.locked_title'|trans({}, 'node') }}">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ 'node.panel.locked_badge'|trans({}, 'node') }}</span>{% endif -%}
+            {%- if node.isLocked('delete') %} <span class="imposed-badge" title="{{ 'node.panel.locked_title'|trans({}, 'node') }}">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ 'node.panel.imposed_badge'|trans({}, 'node') }}</span>{% endif -%}
         </div>
         <div class="text-sm text-gray-400 mt-1">
             {{ formation.name }}
             {%- for p in node_path(node) %} › {{ p.label ?: p.type.label }}{% endfor -%}
+        </div>
+        {# actions du nœud : à portée de main, accessibles au clavier (alternative au glisser-déposer) #}
+        <div class="panel-node-actions" role="toolbar" aria-label="{{ 'node.panel.actions_aria'|trans({}, 'node') }}">
+            {% for dir in ['up', 'down'] %}
+            <form method="post" action="{{ path('node_shift', {fid: formation.id, nid: node.id, dir: dir}) }}" data-turbo-frame="_top">
+                <button class="icon-btn" title="{{ ('node.panel.shift_' ~ dir)|trans({}, 'node') }}" aria-label="{{ ('node.panel.shift_' ~ dir)|trans({}, 'node') }}">{{ ux_icon(dir == 'up' ? 'ph:arrow-up' : 'ph:arrow-down', {class: 'icon'}) }}</button>
+            </form>
+            {% endfor %}
+            {% if not node.isLocked('duplicate') %}
+            <form method="post" action="{{ node_url(node, 'node_duplicate') }}" data-turbo-frame="_top">
+                <button class="icon-btn" title="{{ 'node.panel.duplicate'|trans({}, 'node') }}" aria-label="{{ 'node.panel.duplicate'|trans({}, 'node') }}">{{ ux_icon('ph:copy', {class: 'icon'}) }}</button>
+            </form>
+            {% endif %}
+            {% if not node.isLocked('delete') %}
+            <form method="post" action="{{ node_url(node, 'node_delete') }}" data-turbo-frame="_top"
+                  data-controller="confirm" data-confirm-message-value="{{ 'node.panel.delete_confirm'|trans({'%label%': node.getDisplayLabel()}, 'node') }}">
+                <button class="icon-btn icon-btn--danger" title="{{ 'node.panel.delete'|trans({}, 'node') }}" aria-label="{{ 'node.panel.delete'|trans({}, 'node') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
+            </form>
+            {% endif %}
         </div>
     </div>
 
@@ -33,14 +52,27 @@
             {% set nodeTabs = nodeTabs|merge([def.domain]) %}
         {% endif %}
     {% endfor %}
-    <div class="flex flex-wrap gap-2">
+    <div class="flex flex-wrap gap-2" role="tablist">
         {% for tk in nodeTabs %}
-            <button type="button" data-tabs-target="tab" data-tab="{{ tk }}" class="tab-pill">
+            <button type="button" role="tab" data-tabs-target="tab" data-tab="{{ tk }}" class="tab-pill">
                 <span class="status-dot" data-status="{{ node_tab_status(node, tk) }}"></span>
                 {{ domains[tk] ?? tk }}
             </button>
         {% endfor %}
     </div>
+
+    {# champs requis manquants / non conformes : un clic ouvre l'onglet et place le curseur dans le champ #}
+    {% set missing = node_missing(node) %}
+    {% if missing is not empty %}
+        <div class="issues-box" role="status">
+            <span class="font-semibold">{{ 'node.panel.missing_title'|trans({'%count%': missing|length}, 'node') }}</span>
+            {% for m in missing %}
+                <button type="button" class="issue-chip" data-action="tabs#focusField"
+                        data-tabs-tab-param="{{ m.tab }}" data-tabs-field-param="{{ m.key }}"
+                        {% if m.detail is defined %}title="{{ m.detail }}"{% endif %}>{{ m.label }}</button>
+            {% endfor %}
+        </div>
+    {% endif %}
 
     {# tuiles + actions #}
     <div class="flex flex-wrap items-stretch gap-2">
@@ -80,7 +112,8 @@
     </div>
 
     {# ── formulaire ── #}
-    <form method="post" action="{{ node_url(node, 'node_save') }}" data-turbo-frame="_top" class="space-y-5">
+    <form method="post" action="{{ node_url(node, 'node_save') }}" data-turbo-frame="_top" class="space-y-5"
+          id="node-form" data-controller="dirty-form">
 
         {% for tk in nodeTabs %}
         <div data-tabs-target="panel" data-tab="{{ tk }}" class="space-y-5" {{ not loop.first ? 'hidden' }}>
@@ -91,23 +124,6 @@
             </div>
 
             {% if tk == 'props' %}
-                {% set parents = valid_parents(node) %}
-                {% set lockedMove = node.isLocked('move') %}
-                {{ ui.label('node.panel.parent_label'|trans({}, 'node'), true, 'node.panel.parent_help'|trans({}, 'node')) }}
-                <select name="parentId" class="fld" {{ lockedMove ? 'disabled' }}>
-                    {% if can_be_root(node) %}<option value="">{{ 'node.panel.root_option'|trans({}, 'node') }}</option>{% endif %}
-                    {% for cand in parents %}
-                        <option value="{{ cand.id }}" {{ node.parent and node.parent.id == cand.id ? 'selected' }}>
-                            [{{ cand.type.label }}] {{ cand.label ?: '—' }}
-                        </option>
-                    {% endfor %}
-                </select>
-                {% if lockedMove %}
-                    <div class="fld-help">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ 'node.panel.parent_locked_help'|trans({}, 'node') }}</div>
-                {% elseif parents is empty and not can_be_root(node) %}
-                    <div class="fld-help text-amber-600">{{ 'node.panel.no_location_help'|trans({}, 'node') }}</div>
-                {% endif %}
-
                 {% if node.type.temporel %}
                     {{ ui.label('node.panel.label_field'|trans({}, 'node'), false, 'node.panel.temporel_label_help'|trans({}, 'node')) }}
                     <div class="fld flex items-center" style="background:#f8f9fb;color:var(--c-muted)">{{ node_display_label(node, view.ref) }}</div>
@@ -133,6 +149,30 @@
                     {% endif %}
                 {% endif %}
             {% endfor %}
+
+            {% if tk == 'props' %}
+                {% set parents = valid_parents(node) %}
+                {% set lockedMove = node.isLocked('move') %}
+                <details class="move-box">
+                <summary class="fld-label cursor-pointer">{{ ux_icon('ph:arrows-out-cardinal', {class: 'icon'}) }} {{ 'node.panel.move_summary'|trans({}, 'node') }}</summary>
+                <div class="mt-2 space-y-1">
+                <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'node.panel.parent_help'|trans({}, 'node') }}</div>
+                <select name="parentId" class="fld" {{ lockedMove ? 'disabled' }}>
+                    {% if can_be_root(node) %}<option value="">{{ 'node.panel.root_option'|trans({}, 'node') }}</option>{% endif %}
+                    {% for cand in parents %}
+                        <option value="{{ cand.id }}" {{ node.parent and node.parent.id == cand.id ? 'selected' }}>
+                            [{{ cand.type.label }}] {{ cand.label ?: '—' }}
+                        </option>
+                    {% endfor %}
+                </select>
+                {% if lockedMove %}
+                    <div class="fld-help">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ 'node.panel.parent_locked_help'|trans({}, 'node') }}</div>
+                {% elseif parents is empty and not can_be_root(node) %}
+                    <div class="fld-help text-amber-600">{{ 'node.panel.no_location_help'|trans({}, 'node') }}</div>
+                {% endif %}
+                </div>
+                </details>
+            {% endif %}
 
             {% if tk == 'props' and node.isParcours %}
                 {% set unit = period_unit(formation) %}
@@ -162,11 +202,23 @@
         </div>
         {% endfor %}
 
-        <div class="flex items-center gap-2 pt-2 border-t" style="border-color:var(--c-border)">
+        <div class="panel-savebar">
             <button class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
-            <span class="text-xs text-gray-400">{{ 'node.panel.duplicate_delete_hint'|trans({}, 'node') }}</span>
+            <span class="text-xs font-medium text-amber-700" data-dirty-form-target="indicator" hidden>{{ ux_icon('ph:circle-fill', {class: 'icon'}) }} {{ 'node.panel.unsaved'|trans({}, 'node') }}</span>
+            <span class="ml-auto text-xs text-gray-400"><span class="text-red-500">*</span> {{ 'common.required_legend'|trans({}, 'common') }}</span>
         </div>
     </form>
+
+    {# formulaires « ajout rapide au référentiel » : HORS du formulaire principal (pas de formulaire imbriqué),
+       leurs champs y sont rattachés par l'attribut form="…" #}
+    {% for key, def in catalog %}
+        {% if (caps[key] ?? false) and def.quickAdd and def.referentielKey %}
+            <form id="qa-{{ key }}" method="post" action="{{ path('referentiel_quick_add', {key: def.referentielKey}) }}" data-turbo-frame="node-panel" hidden>
+                <input type="hidden" name="fid" value="{{ formation.id }}">
+                <input type="hidden" name="nid" value="{{ node.id }}">
+            </form>
+        {% endif %}
+    {% endfor %}
 
     {# ── modale « Paramètre du nœud » ── #}
     <dialog data-modal-target="dialog" data-action="click->modal#clickOutside"
@@ -176,7 +228,20 @@
         </turbo-frame>
     </dialog>
 
-    {# ── ajouter un enfant ── #}
+    {# ── ajouter un enfant (ou, sur une feuille, un élément du même type juste après) ── #}
+    {% if childTypes is empty and node.getParent() is not null and not node.isLocked('add') %}
+    <form method="post" action="{{ path('node_add', {fid: formation.id}) }}" data-turbo-frame="_top"
+          class="rounded-xl border p-3 flex flex-wrap items-end gap-2" style="border-color:var(--c-border)">
+        <input type="hidden" name="parentId" value="{{ node.getParent().id }}">
+        <input type="hidden" name="typeKey" value="{{ node.type.key }}">
+        <input type="hidden" name="afterId" value="{{ node.id }}">
+        <div class="flex-1 min-w-[180px]">
+            <label class="fld-label" for="add-sibling-label">{{ 'node.panel.add_sibling_label'|trans({'%type%': T}, 'node') }}</label>
+            <input id="add-sibling-label" name="label" placeholder="{{ 'node.panel.label_field'|trans({}, 'node') }}" class="fld mt-1">
+        </div>
+        <button class="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'common.add'|trans({}, 'common') }}</button>
+    </form>
+    {% endif %}
     {% if childTypes is not empty %}
     <form method="post" action="{{ path('node_add', {fid: formation.id}) }}" data-turbo-frame="_top"
           class="rounded-xl border p-3 flex flex-wrap items-end gap-2" style="border-color:var(--c-border)">
@@ -202,8 +267,7 @@
 {% macro label(text, required, help) %}
     <div>
         <div class="flex items-center justify-between">
-            <span class="fld-label">{{ text }}</span>
-            {% if required %}<span class="text-[11px] font-semibold text-red-500 uppercase tracking-wide">{{ 'common.required_badge'|trans({}, 'common') }}</span>{% endif %}
+            <span class="fld-label">{{ text }}{% if required %} <span class="text-red-500" aria-hidden="true">*</span><span class="sr-only">{{ 'common.required_badge'|trans({}, 'common') }}</span>{% endif %}</span>
         </div>
         {% if help %}<div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ help }}</div>{% endif %}
     </div>
@@ -238,7 +302,7 @@
                 <input type="text" name="attr_{{ key }}_autre" value="{{ (val and val not in opts|keys) ? val : '' }}" class="fld flex-1" placeholder="{{ 'node.panel.other_placeholder'|trans({}, 'node') }}">
             </div>
         {% endif %}
-        {% if def.quickAdd and def.referentielKey %}{{ ui.quickAdd(def.referentielKey, node.formation, node) }}{% endif %}
+        {% if def.quickAdd and def.referentielKey %}{{ ui.quickAdd(def.referentielKey, node.formation, node, key) }}{% endif %}
     {% elseif def.field == 'checkbox' %}
         {% set cur = val is iterable ? val : [] %}
         <div class="mt-1 flex flex-wrap gap-x-6 gap-y-2">
@@ -248,7 +312,7 @@
                 </label>
             {% endfor %}
         </div>
-        {% if def.quickAdd and def.referentielKey %}{{ ui.quickAdd(def.referentielKey, node.formation, node) }}{% endif %}
+        {% if def.quickAdd and def.referentielKey %}{{ ui.quickAdd(def.referentielKey, node.formation, node, key) }}{% endif %}
     {% elseif def.field == 'radio' %}
         <div class="mt-1 flex flex-wrap gap-x-6 gap-y-2">
             {% for ov, ol in opts %}
@@ -298,7 +362,6 @@
                 </div>
                 <div class="mt-1 flex items-center justify-between">
                     <span class="text-xs text-gray-400" data-cbxfilter-target="count"></span>
-                    <span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'node.panel.add_competency_fake'|trans({}, 'node') }}</span>
                 </div>
             </div>
         {% endif %}
@@ -309,7 +372,6 @@
             {% for f in fiches %}<option value="{{ f }}" {{ val == f ? 'selected' }}>{{ f }}</option>{% endfor %}
             {% if val and val not in fiches %}<option value="{{ val }}" selected>{{ val }}</option>{% endif %}
         </select>
-        <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'node.panel.create_fiche_fake'|trans({}, 'node') }}</span></div>
     {% elseif def.field == 'hours' %}
         {% set mods = referentiel('modalites_heure')|filter((l, k) => k != 'te') %}
         <div data-controller="hours" class="space-y-4">
@@ -325,7 +387,7 @@
                     <div class="rounded-xl border p-4" style="border-color:var(--c-border)">
                         <div class="flex items-center justify-between gap-2">
                             <div class="fld-label">{{ 'node.panel.hours_volume_label'|trans({'%place%': plabel}, 'node') }}</div>
-                            <span class="text-[11px] font-semibold text-red-500 uppercase tracking-wide shrink-0">{{ 'common.required_badge'|trans({}, 'common') }}</span>
+                            <span class="text-red-500 shrink-0" aria-hidden="true">*</span>
                         </div>
                         <div class="mt-2 grid gap-3 sm:grid-cols-3">
                             {% for m, mlabel in mods %}
@@ -344,7 +406,7 @@
                 <div class="rounded-xl border p-4" style="border-color:var(--c-border)">
                     <div class="flex items-center justify-between gap-2">
                         <div class="fld-label">{{ 'node.panel.hours_te_label'|trans({}, 'node') }}</div>
-                        <span class="text-[11px] font-semibold text-red-500 uppercase tracking-wide shrink-0">{{ 'common.required_badge'|trans({}, 'common') }}</span>
+                        <span class="text-red-500 shrink-0" aria-hidden="true">*</span>
                     </div>
                     <div class="relative mt-2">
                         <input type="number" min="0" step="0.5" placeholder="0"
@@ -364,7 +426,7 @@
         <div data-controller="mccc">
             <div class="flex items-center gap-2">
                 <span class="fld-label">{{ 'node.panel.mccc_type_label'|trans({}, 'node') }}</span>
-                <span class="text-[11px] font-semibold text-red-500 uppercase tracking-wide">{{ 'common.required_badge'|trans({}, 'common') }}</span>
+                <span class="text-red-500" aria-hidden="true">*</span>
             </div>
             {% if mtypes is empty %}
                 <p class="fld-help mt-1">{{ 'node.panel.no_mccc_types'|trans({}, 'node') }}</p>
@@ -442,11 +504,9 @@
     </div>
 {% endmacro %}
 
-{% macro quickAdd(referentielKey, formation, node) %}
-    <form method="post" action="{{ path('referentiel_quick_add', {key: referentielKey}) }}" data-turbo-frame="node-panel" class="mt-1.5 flex items-center gap-2">
-        <input type="hidden" name="fid" value="{{ formation.id }}">
-        <input type="hidden" name="nid" value="{{ node.id }}">
-        <input type="text" name="value" placeholder="{{ 'node.panel.quick_add_placeholder'|trans({}, 'node') }}" class="fld flex-1 text-xs">
-        <button class="shrink-0 rounded-lg border px-2.5 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'common.add'|trans({}, 'common') }}</button>
-    </form>
+{% macro quickAdd(referentielKey, formation, node, key) %}
+    <div class="mt-1.5 flex items-center gap-2">
+        <input type="text" name="value" form="qa-{{ key }}" aria-label="{{ 'node.panel.quick_add_placeholder'|trans({}, 'node') }}" placeholder="{{ 'node.panel.quick_add_placeholder'|trans({}, 'node') }}" class="fld flex-1 text-xs">
+        <button form="qa-{{ key }}" class="shrink-0 rounded-lg border px-2.5 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'common.add'|trans({}, 'common') }}</button>
+    </div>
 {% endmacro %}

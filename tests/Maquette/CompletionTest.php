@@ -83,4 +83,29 @@ final class CompletionTest extends DatabaseTestCase
         self::assertGreaterThan(0, $stats['req']);
         self::assertLessThanOrEqual($stats['req'], $stats['filled']);
     }
+
+    public function testInvalidMcccCountsAsMissing(): void
+    {
+        $doc = $this->maquette->open($this->factory->fromTemplate('licence_lmd'));
+        $ec = $this->factory->first($doc, 'ec');
+        // profil CCI Licence : au moins 3 épreuves, somme = 100
+        $ec->setAttribute('mccc', ['type' => 'CCI', 'evaluations' => [['type' => 'ecrit', 'weight' => 100]]]);
+
+        $keys = array_column($this->completion->missing($ec), 'key');
+
+        self::assertContains('mccc', $keys, 'une MCCC non conforme ne compte pas comme remplie');
+    }
+
+    public function testValidMcccIsNotMissing(): void
+    {
+        $doc = $this->maquette->open($this->factory->fromTemplate('licence_lmd'));
+        $ec = $this->factory->first($doc, 'ec');
+        $ec->setAttribute('mccc', ['type' => 'CCI', 'evaluations' => [
+            ['type' => 'ecrit', 'weight' => 40, 'duree' => 60],
+            ['type' => 'oral', 'weight' => 30, 'duree' => 30],
+            ['type' => 'ecrit', 'weight' => 30, 'duree' => 60],
+        ]]);
+
+        self::assertNotContains('mccc', array_column($this->completion->missing($ec), 'key'));
+    }
 }

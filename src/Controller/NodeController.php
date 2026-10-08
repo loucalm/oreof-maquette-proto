@@ -46,6 +46,13 @@ final class NodeController extends AbstractController
         ]);
     }
 
+    /** Ouvre l'éditeur (formation ou parcours) sur ce nœud — lien partageable, ex. depuis « Vérifier ». */
+    #[Route('/formations/{fid}/nodes/{nid}/ouvrir', name: 'node_open', methods: ['GET'])]
+    public function open(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid): Response
+    {
+        return $this->editorRedirect($this->pick($this->maquette->open($formation), $nid));
+    }
+
     #[Route('/formations/{fid}/nodes/{nid}/parametres', name: 'node_params_form', methods: ['GET'])]
     public function paramsForm(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid): Response
     {
@@ -215,6 +222,15 @@ final class NodeController extends AbstractController
         }
 
         $node = $doc->addNode($parent?->getId(), $typeKey, trim((string) $request->request->get('label')));
+        // « ajouter après » (depuis une feuille) : placé juste derrière le frère de référence
+        $after = $doc->node(trim((string) $request->request->get('afterId')));
+        if (null !== $after && $after->getParent() === $parent) {
+            $siblings = $parent?->getChildren() ?? $doc->roots;
+            $index = array_search($after, $siblings, true);
+            if (false !== $index) {
+                $doc->moveNode($node, $parent, $index + 1);
+            }
+        }
         $this->applyChoiceNature($node, $parent);
         $this->maquette->save($formation, $doc);
         $this->addFlash('success', sprintf('%s ajouté.', $type->getLabel()));
@@ -250,6 +266,37 @@ final class NodeController extends AbstractController
         $this->maquette->save($formation, $doc);
 
         return new JsonResponse(['ok' => true]);
+    }
+
+    /**
+     * Monte / descend un nœud d'un cran parmi ses frères de même famille
+     * (alternative clavier au glisser-déposer). Autorisé sur un nœud imposé :
+     * seul le changement de parent lui est interdit.
+     */
+    #[Route('/formations/{fid}/nodes/{nid}/shift/{dir}', name: 'node_shift', methods: ['POST'], requirements: ['dir' => 'up|down'])]
+    public function shift(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid, string $dir): Response
+    {
+        $doc = $this->maquette->open($formation);
+        $node = $this->pick($doc, $nid);
+        $parent = $node->getParent();
+        $all = $parent?->getChildren() ?? $doc->roots;
+        $peers = array_values(array_filter(
+            $all,
+            static fn (TreeNode $n) => $n->isCompetenceNode() === $node->isCompetenceNode(),
+        ));
+
+        $pos = array_search($node, $peers, true);
+        $target = $peers[$pos + ('up' === $dir ? -1 : 1)] ?? null;
+        if (null === $target) {
+            return $this->editorRedirect($node);
+        }
+
+        // index dans la liste complète AVANT détachement : monter = prendre la place
+        // du précédent ; descendre = se poser après le suivant (qui recule d'un cran)
+        $doc->moveNode($node, $parent, (int) array_search($target, $all, true));
+        $this->maquette->save($formation, $doc);
+
+        return $this->editorRedirect($node);
     }
 
     #[Route('/formations/{fid}/nodes/{nid}/duplicate', name: 'node_duplicate', methods: ['POST'])]

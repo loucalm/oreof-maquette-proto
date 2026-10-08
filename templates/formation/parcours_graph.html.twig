@@ -19,7 +19,7 @@
     <div class="panel-head">
         {% if standalone %}
             <div class="mb-2 text-xs text-gray-400">
-                {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">{{ 'formation.index.breadcrumb_home'|trans({}, 'formation') }}</span> ›
+                {{ ux_icon('ph:house', {class: 'icon'}) }} <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.index.breadcrumb_home'|trans({}, 'formation') }}</a> ›
                 <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.graph.breadcrumb_list'|trans({}, 'formation') }}</a> ›
                 <a href="{{ path('formation_view', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
                 {{ 'formation.graph.heading'|trans({}, 'formation') }}

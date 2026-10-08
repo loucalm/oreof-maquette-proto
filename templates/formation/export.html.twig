@@ -7,7 +7,7 @@
         <div class="flex items-start justify-between gap-4">
             <div>
                 <div class="text-xs text-gray-400">
-                    {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">{{ 'formation.index.breadcrumb_home'|trans({}, 'formation') }}</span> ›
+                    {{ ux_icon('ph:house', {class: 'icon'}) }} <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.index.breadcrumb_home'|trans({}, 'formation') }}</a> ›
                     <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.editor.breadcrumb_list'|trans({}, 'formation') }}</a> ›
                     <a href="{{ path('formation_editor', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
                     {{ 'formation.export.title_prefix'|trans({}, 'formation') }}

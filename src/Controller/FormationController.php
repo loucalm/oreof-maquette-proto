@@ -309,13 +309,53 @@ final class FormationController extends AbstractController
     }
 
     #[Route('/formations/{id}/verifier', name: 'formation_check', methods: ['GET'])]
-    public function check(Formation $formation, MaquetteBuilder $builder): Response
+    public function check(Formation $formation, MaquetteBuilder $builder, \App\Maquette\Completion $completion): Response
     {
         $roots = $builder->build($formation);
+        $doc = $this->maquette->open($formation);
+
+        // sections de paramètres incomplètes (formation, puis chaque parcours)
+        $sections = [];
+        foreach (self::PARAM_SECTIONS as $key => $def) {
+            $status = $completion->formationParamStatus($formation, $key);
+            if ('ok' !== $status) {
+                $sections[] = ['label' => $def['label'], 'context' => null, 'status' => $status,
+                    'url' => $this->generateUrl('formation_editor', ['id' => $formation->getId(), 'param' => $key])];
+            }
+        }
+        if (!$formation->isAvecParcours()) {
+            $status = $completion->bccStatus($doc->competenceBlocs());
+            if ('ok' !== $status) {
+                $sections[] = ['label' => 'Référentiel de compétences (BCC)', 'context' => null, 'status' => $status,
+                    'url' => $this->generateUrl('formation_editor', ['id' => $formation->getId(), 'bcc' => 1])];
+            }
+        }
+        foreach ($doc->parcoursNodes() as $p) {
+            foreach (self::PARCOURS_PARAM_SECTIONS as $key => $label) {
+                $status = $completion->parcoursParamStatus($p, $key);
+                if ('ok' !== $status) {
+                    $sections[] = ['label' => $label, 'context' => $p->getDisplayLabel(), 'status' => $status,
+                        'url' => $this->generateUrl('parcours_editor', ['fid' => $formation->getId(), 'nid' => $p->getId(), 'param' => $key])];
+                }
+            }
+            $status = $completion->bccStatus($p->getBccBlocs());
+            if ('ok' !== $status) {
+                $sections[] = ['label' => 'Référentiel de compétences (BCC)', 'context' => $p->getDisplayLabel(), 'status' => $status,
+                    'url' => $this->generateUrl('parcours_editor', ['fid' => $formation->getId(), 'nid' => $p->getId(), 'bcc' => 1])];
+            }
+        }
+
+        // anomalies regroupées par contexte (ex. « Année 1 › Semestre 1 »)
+        $groups = [];
+        foreach ($builder->collectIssues($roots) as $issue) {
+            $groups[$issue['path'] ?: $formation->getName()][] = $issue;
+        }
 
         return $this->render('formation/check.html.twig', [
             'formation' => $formation,
-            'issues' => $builder->collectIssues($roots),
+            'groups' => $groups,
+            'issueCount' => array_sum(array_map('count', $groups)),
+            'sections' => $sections,
             'progress' => $builder->progress($roots),
         ]);
     }

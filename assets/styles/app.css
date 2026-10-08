@@ -80,12 +80,12 @@ body {
 }
 
 /* éléments de chrome fictifs (non fonctionnels) */
-.fake-link { color: var(--c-muted); }
+.fake-link { color: var(--c-muted); opacity: .6; cursor: not-allowed !important; }
 .fake-btn {
     display: inline-flex; align-items: center; gap: 6px;
     border: 1px solid var(--c-border); border-radius: 8px;
     padding: 8px 12px; font-size: 13px; color: #4b5563; background: #fff;
-    cursor: default; white-space: nowrap;
+    cursor: not-allowed; white-space: nowrap; opacity: .55;
 }
 
 /* ─── coquille éditeur : latéral + central fusionnés visuellement ─── */
@@ -360,12 +360,12 @@ body {
 .json-view .j-null { color: #94a3b8; }
 .tree-label {
     font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    max-width: 150px;
+    flex: 1 1 auto; min-width: 0;
 }
 /* onglets de section (paramètres, BCC) : nom complet, retour à la ligne si besoin */
 .tree-label.tree-label-full { max-width: none; overflow: visible; text-overflow: clip; white-space: normal; }
 .tree-label:hover { text-decoration: underline; }
-.tree-ects { font-size: 11px; margin-left: auto; }
+.tree-ects { font-size: 11px; margin-left: auto; white-space: nowrap; flex: 0 0 auto; }
 .tree-chevron {
     margin-left: auto; width: 18px; height: 18px; display: grid; place-items: center;
     color: #9aa1ac; font-size: 13px; border-radius: 6px; background: none; border: 0; cursor: pointer;
@@ -437,3 +437,37 @@ li:not(.collapsed) > .tree-row > .tree-chevron { transform: rotate(90deg); }
     background: #fef2f2;
     box-shadow: inset 3px 0 0 #ef4444;
 }
+
+/* ── panneau d'ELP : actions, champs manquants, enregistrement ── */
+.panel-node-actions { display: flex; gap: 6px; margin-top: 10px; }
+.panel-node-actions form { display: contents; }
+.icon-btn {
+    display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 8px;
+    border: 1px solid var(--c-border); background: #fff; color: #4b5563;
+}
+.icon-btn:hover { background: #f3f4f6; }
+.icon-btn:focus-visible, .issue-chip:focus-visible, .tab-pill:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; }
+.icon-btn--danger:hover { color: #b91c1c; border-color: #fecaca; background: #fef2f2; }
+.imposed-badge {
+    display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; padding: 1px 8px; border-radius: 9999px;
+    font-size: 11px; font-weight: 600; background: #f1f5f9; color: #475569;
+}
+.issues-box {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 10px 12px; border-radius: 10px;
+    background: #fffbeb; border: 1px solid #fde68a; color: #92400e; font-size: 13px;
+}
+.issue-chip {
+    border: 1px solid #fcd34d; background: #fff; color: #92400e; border-radius: 9999px; padding: 2px 10px;
+    font-size: 12px; cursor: pointer;
+}
+.issue-chip:hover { background: #fef3c7; }
+.field-flash { box-shadow: 0 0 0 3px #fcd34d; border-radius: 8px; transition: box-shadow .3s; }
+.move-box { border: 1px dashed var(--c-border); border-radius: 10px; padding: 10px 12px; }
+.panel-savebar {
+    position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; gap: 12px;
+    margin: 0 -4px; padding: 12px 4px; background: #fff; border-top: 1px solid var(--c-border);
+}
+form.is-dirty .panel-savebar { box-shadow: 0 -6px 12px -10px rgba(180, 83, 9, .5); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+.tree-gap { font-size: 10px; font-weight: 600; }

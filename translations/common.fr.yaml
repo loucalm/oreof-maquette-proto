@@ -9,4 +9,6 @@ common:
   add: Ajouter
   badge_socle: socle
   required_badge: Champs requis
+  required_legend: champ requis
+  coming_soon: Bientôt disponible (non fonctionnel dans le prototype)
   loading: Chargement…

@@ -61,6 +61,9 @@ formation:
     annee_help: Surtout utile pour une consolidation.
     create_button: Créer
   tree:
+    hours_title: '%h% h au total (heures présentielles, distancielles et travail personnel)'
+    ects_missing_title: 'Il manque %gap% ECTS pour atteindre la cible'
+    ects_excess_title: '%gap% ECTS de plus que la cible'
     drag_title: Glisser pour déplacer
     locked_title: ELP imposé par le diplôme
     ref_title: Référence calculée
@@ -73,7 +76,8 @@ formation:
     page_subtitle: Page de modification de la formation
     view_sheet: Voir la fiche descriptive
     back_to_list: Retour à la liste des formation
-    breadcrumb_list: Liste des formation
+    breadcrumb_list: Liste des formations
+    check_link: Vérifier la saisie
     meta_domaine: Domaine
     meta_domaine_default: Non défini
     meta_diplome: Type diplôme
@@ -89,7 +93,7 @@ formation:
       Passer « %name% » en construction ? Elle sortira de l'onglet « Consolidation de l'offre ».
     switch_to_construction_button: Basculer en construction
     open_banner_title: Formation ouverte
-    open_banner_text: Vous pouvez modifiez la formation
+    open_banner_text: Vous pouvez modifier la formation
     quick_actions_label: Actions rapide
     change_manager_fake: Changer co/resp. formation
     extra_action_fake: Action complémentaire
@@ -257,6 +261,7 @@ formation:
     copy_button: Copier
     download_button: Télécharger .json
   check:
+    sections_title: Paramètres à compléter
     title_prefix: Vérifier la saisie
     subtitle: '%name% — %progress%% complété'
     edit_structure_button: Modifier la structure

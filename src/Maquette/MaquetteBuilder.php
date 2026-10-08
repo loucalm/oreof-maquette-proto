@@ -142,25 +142,34 @@ final class MaquetteBuilder
      *
      * @param list<NodeView> $roots
      *
-     * @return list<array{node: TreeNode, missing: list<string>}>
+     * @return list<array{node: TreeNode, missing: list<string>, ref: string, path: string}>
      */
     public function collectIssues(array $roots): array
     {
         $issues = [];
-        $walk = function (array $views) use (&$walk, &$issues): void {
+        $walk = function (array $views, string $path) use (&$walk, &$issues): void {
             foreach ($views as $view) {
                 $missing = $this->missingFields($view->node);
                 $node = $view->node;
                 if (!$node->isLeaf() && $view->children === []) {
                     $missing[] = 'aucun enfant';
                 }
-                if ($missing !== []) {
-                    $issues[] = ['node' => $view->node, 'missing' => $missing];
+                // écart à la cible d'ECTS du type (30 par semestre, 60 par année…)
+                $target = $view->ectsTarget();
+                if (null !== $target && !$view->ectsReached() && $view->children !== []) {
+                    $gap = $view->totalEcts - $target;
+                    $missing[] = sprintf('ECTS : %s / %d (%s%s)', round($view->totalEcts, 1), $target, $gap > 0 ? '+' : '', round($gap, 1));
                 }
-                $walk($view->children);
+                $label = $node->getType()->isTemporel()
+                    ? trim($node->getType()->getLabel().' '.$view->ref)
+                    : $node->getDisplayLabel();
+                if ($missing !== []) {
+                    $issues[] = ['node' => $view->node, 'missing' => $missing, 'ref' => $view->ref, 'path' => $path];
+                }
+                $walk($view->children, '' === $path ? $label : $path.' › '.$label);
             }
         };
-        $walk($roots);
+        $walk($roots, '');
 
         return $issues;
     }
@@ -168,28 +177,10 @@ final class MaquetteBuilder
     /** @return list<string> intitulés des champs requis manquants */
     private function missingFields(TreeNode $node): array
     {
-        $missing = [];
-        if (!$node->getType()->isTemporel() && trim($node->getLabel()) === '') {
-            $missing[] = 'libellé';
-        }
-        $caps = $node->effectiveCapabilities();
-        if (($caps['code'] ?? false) && 'ec' === $node->getType()->getKey() && trim((string) $node->getCode()) === '') {
-            $missing[] = "code de l'ec";
-        }
-        foreach ($this->catalog->all() as $key => $def) {
-            if (!($caps[$key] ?? false) || !($def['required'] ?? false)) {
-                continue;
-            }
-            $value = $node->getAttribute($key);
-            $empty = $key === 'hours'
-                ? !AttributeCatalog::hoursProvided($value)
-                : ($value === null || $value === '' || $value === []);
-            if ($empty) {
-                $missing[] = mb_strtolower($def['label']);
-            }
-        }
-
-        return $missing;
+        return array_map(
+            static fn (array $m) => isset($m['detail']) ? $m['label'].' ('.$m['detail'].')' : $m['label'],
+            $this->completion->missing($node),
+        );
     }
 
     /**

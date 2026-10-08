@@ -9,6 +9,7 @@ use App\Repository\MccTypeRepository;
 use App\Repository\StructureTemplateRepository;
 use App\Rules\RuleEvaluator;
 use App\Rules\RuleResult;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * Colle entre l'attribut `mccc` d'un nœud et le moteur de règles générique
@@ -24,8 +25,14 @@ use App\Rules\RuleResult;
  * cette application ne bloque déjà un enregistrement sur un champ requis
  * manquant.
  */
-final class McccValidator
+final class McccValidator implements ResetInterface
 {
+    /** @var array<string, \App\Entity\MccType> mémo par requête (évite 2 requêtes par nœud affiché) */
+    private array $typeCache = [];
+
+    /** @var array<string, \App\Entity\StructureTemplate> */
+    private array $templateCache = [];
+
     public function __construct(
         private readonly MccTypeRepository $types,
         private readonly RuleEvaluator $evaluator,
@@ -42,13 +49,17 @@ final class McccValidator
         }
 
         $typeKey = (string) ($mccc['type'] ?? '');
-        $type = $this->types->findOneByKey($typeKey);
+        // seuls les résultats trouvés sont mémorisés : une absence peut cesser de l'être (fixtures, admin)
+        $type = $this->typeCache[$typeKey] ??= $this->types->findOneByKey($typeKey);
         if (null === $type) {
             return [];
         }
 
         $diplome = $node->getFormation()?->getDiplome();
-        $template = null !== $diplome ? $this->templates->findOneByDiplome($diplome) : null;
+        $template = null;
+        if (null !== $diplome) {
+            $template = $this->templateCache[$diplome] ??= $this->templates->findOneByDiplome($diplome);
+        }
         $profileKey = $template?->getMcccProfiles()[$typeKey] ?? null;
         $rules = $type->getProfileRules($profileKey);
         if ([] === $rules) {
@@ -58,5 +69,40 @@ final class McccValidator
         $evaluations = \is_array($mccc['evaluations'] ?? null) ? array_values($mccc['evaluations']) : [];
 
         return $this->evaluator->evaluateAll($rules, ['evaluations' => $evaluations]);
+    }
+
+    /**
+     * Les MCCC saisies violent-elles une règle de gravité « error » ? Une MCCC
+     * non conforme ne compte pas comme remplie (statut, onglet, progression).
+     */
+    public function hasError(TreeNode $node): bool
+    {
+        foreach ($this->forNode($node) as $r) {
+            if (!$r->valid && 'error' === $r->severity) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** @return list<string> messages des règles en erreur */
+    public function errorMessages(TreeNode $node): array
+    {
+        $out = [];
+        foreach ($this->forNode($node) as $r) {
+            if (!$r->valid && 'error' === $r->severity) {
+                $out[] = $r->message;
+            }
+        }
+
+        return $out;
+    }
+
+    /** Vide le mémo entre deux requêtes (service « kernel.reset »). */
+    public function reset(): void
+    {
+        $this->typeCache = [];
+        $this->templateCache = [];
     }
 }

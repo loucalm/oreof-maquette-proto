@@ -13,74 +13,33 @@
 
 {% block body %}
 
-{# ─── bandeau titre (fictif) ─── #}
-<div class="rounded-2xl border bg-white px-7 py-6 mb-4" style="border-color:var(--c-border)">
-    <div class="flex items-start justify-between gap-4">
-        <div>
-            <h1 class="text-3xl font-extrabold tracking-tight">{{ formation.name }}</h1>
-            <p class="text-sm text-gray-500">{{ 'formation.editor.page_subtitle'|trans({}, 'formation') }}</p>
-        </div>
-        <div class="flex items-center gap-2">
-            <a href="{{ path('formation_view', {id: formation.id}) }}" class="fake-btn">{{ ux_icon('ph:eye', {class: 'icon'}) }} {{ 'formation.editor.view_sheet'|trans({}, 'formation') }}</a>
-            <a href="{{ path('formation_index') }}" class="rounded-lg border px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-50" style="border-color:#bbf7d0">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'formation.editor.back_to_list'|trans({}, 'formation') }}</a>
-        </div>
-    </div>
-    <div class="mt-3 text-sm text-gray-400">
-        {{ ux_icon('ph:house', {class: 'icon'}) }} <span class="fake-link">{{ 'formation.index.breadcrumb_home'|trans({}, 'formation') }}</span> › <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.editor.breadcrumb_list'|trans({}, 'formation') }}</a> ›
-        <span class="rounded bg-gray-100 px-2 py-0.5 text-gray-600">{{ formation.name }}</span>
-    </div>
-</div>
-
-{# ─── méta + process (fictif) ─── #}
-<div class="grid gap-4 lg:grid-cols-[1fr_360px] mb-4">
-    <div class="rounded-2xl border bg-white px-7 py-5 grid grid-cols-2 md:grid-cols-5 gap-4" style="border-color:var(--c-border)">
-        {% for k, v in {
-            (('formation.editor.meta_domaine'|trans({}, 'formation'))): formation.domaine ?: 'formation.editor.meta_domaine_default'|trans({}, 'formation'),
-            (('formation.editor.meta_diplome'|trans({}, 'formation'))): formation.diplome ?: 'Licence',
-            (('formation.editor.meta_composante'|trans({}, 'formation'))): formation.composante ?: 'formation.editor.meta_composante_default'|trans({}, 'formation'),
-            (('formation.editor.meta_mention'|trans({}, 'formation'))): formation.name,
-            (('formation.editor.meta_parcours'|trans({}, 'formation'))): multi ? 'formation.index.parcours_count'|trans({'%count%': parcours_nodes(formation)|length}, 'formation') : 'formation.editor.meta_mono_parcours'|trans({}, 'formation')
-        } %}
-            <div>
-                <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{{ k }}</div>
-                <div class="text-sm mt-1">{{ v }}</div>
+{# ─── en-tête compact : identité + statut + actions (l'éditeur reste visible sans défiler) ─── #}
+<div class="editor-header rounded-2xl border bg-white px-6 py-4 mb-4" style="border-color:var(--c-border)">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+        <div class="min-w-0">
+            <div class="text-xs text-gray-400">
+                <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.editor.breadcrumb_list'|trans({}, 'formation') }}</a> ›
             </div>
-        {% endfor %}
-    </div>
-    <div class="rounded-2xl border bg-white px-6 py-5" style="border-color:var(--c-border)">
-        <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-3">{{ 'formation.editor.process_progress'|trans({}, 'formation') }}</div>
-        <div class="flex items-center justify-between">
-            {% for i in 1..5 %}
-                <div class="grid h-9 w-9 place-items-center rounded-full text-white text-xs
-                     {{ i <= 3 ? '' : 'opacity-40' }}" style="background:{{ i == 4 ? 'var(--st-ok)' : '#94a3b8' }}">{{ ux_icon('ph:check-bold', {class: 'icon'}) }}</div>
-                {% if not loop.last %}<div class="h-px flex-1 bg-gray-200 mx-1"></div>{% endif %}
-            {% endfor %}
+            <h1 class="text-2xl font-extrabold tracking-tight">{{ formation.name }}</h1>
+            <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
+                <span>{{ formation.diplome ?: '—' }}</span>
+                {% if formation.domaine %}<span>· {{ formation.domaine }}</span>{% endif %}
+                {% if formation.composante %}<span>· {{ formation.composante }}</span>{% endif %}
+                <span>· {{ multi ? 'formation.index.parcours_count'|trans({'%count%': parcours_nodes(formation)|length}, 'formation') : 'formation.editor.meta_mono_parcours'|trans({}, 'formation') }}</span>
+                {% if formation.phase.value == 'consolidation' %}
+                    <span class="pill" style="background:#fef3c7;color:#b45309">{{ ux_icon('ph:hourglass-medium', {class: 'icon'}) }} {{ 'formation.editor.consolidation_banner_title'|trans({}, 'formation') }}{{ formation.anneeUniversitaire ? ' — ' ~ formation.anneeUniversitaire }}</span>
+                {% else %}
+                    <span class="pill" style="background:#dcfce7;color:#166534">{{ 'formation.editor.open_banner_title'|trans({}, 'formation') }}</span>
+                {% endif %}
+            </div>
         </div>
-    </div>
-</div>
-
-{# ─── bannière + actions rapides ─── #}
-<div class="flex flex-wrap items-center gap-3 mb-6">
-    {% if formation.phase.value == 'consolidation' %}
-        <div class="rounded-xl border px-5 py-3 text-sm" style="border-color:#fcd34d;background:#fffbeb">
-            <div class="font-semibold text-amber-800">{{ ux_icon('ph:hourglass-medium', {class: 'icon'}) }} {{ 'formation.editor.consolidation_banner_title'|trans({}, 'formation') }}{{ formation.anneeUniversitaire ? ' — ' ~ formation.anneeUniversitaire }}</div>
-            <div class="text-amber-700">{{ 'formation.editor.consolidation_banner_text'|trans({}, 'formation') }}</div>
-        </div>
-        <form method="post" action="{{ path('formation_phase_save', {id: formation.id}) }}" data-turbo-frame="_top"
-              data-controller="confirm" data-confirm-message-value="{{ 'formation.editor.switch_to_construction_confirm'|trans({'%name%': formation.name}, 'formation') }}">
-            <input type="hidden" name="phase" value="construction">
-            <button class="rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-right', {class: 'icon'}) }} {{ 'formation.editor.switch_to_construction_button'|trans({}, 'formation') }}</button>
-        </form>
-    {% else %}
-        <div class="rounded-xl border px-5 py-3 text-sm" style="border-color:#bbf7d0;background:#f0fdf4">
-            <div class="font-semibold text-green-800">{{ 'formation.editor.open_banner_title'|trans({}, 'formation') }}</div>
-            <div class="text-green-700">{{ 'formation.editor.open_banner_text'|trans({}, 'formation') }}</div>
-        </div>
-    {% endif %}
-    <div class="ml-auto flex items-center gap-2">
-        <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mr-1">{{ 'formation.editor.quick_actions_label'|trans({}, 'formation') }}</span>
-        <span class="fake-btn" style="color:#b45309;border-color:#fcd34d">{{ ux_icon('ph:arrows-left-right', {class: 'icon'}) }} {{ 'formation.editor.change_manager_fake'|trans({}, 'formation') }}</span>
-        <span class="fake-btn">{{ ux_icon('ph:gear', {class: 'icon'}) }} {{ 'formation.editor.extra_action_fake'|trans({}, 'formation') }} {{ ux_icon('ph:caret-down', {class: 'icon'}) }}</span>
+        <div class="flex flex-wrap items-center gap-2">
+            <a href="{{ path('formation_check', {id: formation.id}) }}"
+               class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+               style="border-color:var(--c-border)">{{ ux_icon('ph:check-square-offset', {class: 'icon'}) }} {{ 'formation.editor.check_link'|trans({}, 'formation') }}</a>
+            <a href="{{ path('formation_view', {id: formation.id}) }}"
+               class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+               style="border-color:var(--c-border)">{{ ux_icon('ph:eye', {class: 'icon'}) }} {{ 'formation.editor.view_sheet'|trans({}, 'formation') }}</a>
         <form method="post" action="{{ path('formation_undo', {id: formation.id}) }}" data-turbo-frame="_top">
             <button type="submit" {{ canUndo ? '' : 'disabled' }} title="{{ 'formation.editor.undo_title'|trans({}, 'formation') }}"
                     class="quickbar-icon-btn">{{ ux_icon('ph:arrow-counter-clockwise', {class: 'icon'}) }}</button>
@@ -114,18 +73,24 @@
             </div>
         </div>
         {% endif %}
+        </div>
     </div>
+    {% if formation.phase.value == 'consolidation' %}
+        <div class="mt-3 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-2.5 text-sm" style="border-color:#fcd34d;background:#fffbeb">
+            <span class="text-amber-800">{{ 'formation.editor.consolidation_banner_text'|trans({}, 'formation') }}</span>
+            <form method="post" action="{{ path('formation_phase_save', {id: formation.id}) }}" data-turbo-frame="_top" class="ml-auto"
+                  data-controller="confirm" data-confirm-message-value="{{ 'formation.editor.switch_to_construction_confirm'|trans({'%name%': formation.name}, 'formation') }}">
+                <input type="hidden" name="phase" value="construction">
+                <button class="rounded-lg border bg-white px-3 py-1.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-right', {class: 'icon'}) }} {{ 'formation.editor.switch_to_construction_button'|trans({}, 'formation') }}</button>
+            </form>
+        </div>
+    {% endif %}
 </div>
 
 {# ═══ éditeur ═══ #}
-<div class="rounded-2xl border bg-white p-7" style="border-color:var(--c-border)">
-    <h2 class="text-2xl font-extrabold tracking-tight">{{ 'formation.editor.heading'|trans({}, 'formation')|upper }}</h2>
-    <p class="text-sm text-gray-500 mb-5">
-        {{ multi ? 'formation.editor.description_multi'|trans({}, 'formation')
-                 : 'formation.editor.description_mono'|trans({}, 'formation') }}
-    </p>
+<div class="rounded-2xl border bg-white p-3" style="border-color:var(--c-border)">
 
-    <div class="editor-shell grid lg:grid-cols-[380px_1fr] lg:h-[calc(100vh-9rem)] min-h-[560px]">
+    <div class="editor-shell grid lg:grid-cols-[440px_1fr] lg:h-[calc(100vh-11rem)] min-h-[560px]">
 
         {# ─── panneau gauche ─── #}
         <div class="editor-aside flex flex-col overflow-hidden"
@@ -225,6 +190,7 @@
                           class="flex-1" data-tree-target="addForm">
                         <input type="hidden" name="parentId" value="" data-tree-target="addParent">
                         <input type="hidden" name="typeKey" value="{{ rootType.key }}" data-tree-target="addType">
+                        <input type="hidden" name="afterId" value="" data-tree-target="addAfter">
                         <button data-tree-target="addButton" class="tree-add-btn">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'common.add'|trans({}, 'common') }} {{ ux_icon(rootType.icon, {class: 'icon'}) }} {{ rootType.label }}</button>
                     </form>
                     <button type="button" data-tree-target="addChoiceButton" data-action="tree#addChoiceBloc" hidden
@@ -271,7 +237,7 @@
         </div>
 
         {# ─── panneau d'édition ─── #}
-        <turbo-frame id="node-panel" class="panel-frame"
+        <turbo-frame id="node-panel" class="panel-frame" refresh="morph"
                      {% if frameSrc %}src="{{ frameSrc }}"{% endif %}>
             {% if not frameSrc %}
                 <div class="panel-empty">{{ 'formation.editor.select_prompt'|trans({}, 'formation') }}</div>

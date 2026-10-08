@@ -3,6 +3,17 @@ node:
     title: Gestion de la structure
     locked_title: Cet ELP fait partie de la structure imposée par le diplôme
     locked_badge: imposé
+    imposed_badge: Imposé par le diplôme
+    actions_aria: Actions sur l’élément
+    shift_up: Monter d’un cran
+    shift_down: Descendre d’un cran
+    duplicate: Dupliquer
+    delete: Supprimer
+    delete_confirm: Supprimer « %label% » et tout ce qu’il contient ?
+    missing_title: '{1}1 champ à compléter :|]1,Inf[%count% champs à compléter :'
+    move_summary: Déplacer vers un autre élément…
+    unsaved: Modifications non enregistrées
+    add_sibling_label: Ajouter un(e) %type% juste après
     total_hours_label: 'Total heures :'
     ects_target: '/ %target%'
     ects_unit: ECTS
