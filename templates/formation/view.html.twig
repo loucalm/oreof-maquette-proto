@@ -396,12 +396,12 @@
                 {% for key, section in param_sections() %}
                     <div class="tree-row" data-action="click->rotree#select" data-rotree-id-param="param:{{ key }}">
                         <span class="status-dot" data-status="{{ param_status(formation, key) }}"></span>
-                        <span class="tree-label">{{ section.label }}</span>
+                        <span class="tree-label tree-label-full">{{ section.label }}</span>
                     </div>
                 {% endfor %}
                 <div class="tree-row" data-action="click->rotree#select" data-rotree-id-param="bcc">
                     <span class="status-dot" data-status="{{ bcc_status(formation) }}"></span>
-                    <span class="tree-label">{{ 'formation.editor.bcc_section_label'|trans({}, 'formation') }}</span>
+                    <span class="tree-label tree-label-full">{{ 'formation.editor.bcc_section_label'|trans({}, 'formation') }}</span>
                 </div>
                 {% if formation.avecParcours %}
                     <a href="{{ path('formation_parcours_graph', {id: formation.id}) }}" class="block rounded-md px-2 py-1.5 text-sm hover:bg-gray-50" style="color:var(--c-primary)">{{ ux_icon('ph:map-trifold', {class: 'icon'}) }} {{ 'formation.editor.ramification_section_label'|trans({}, 'formation') }}</a>

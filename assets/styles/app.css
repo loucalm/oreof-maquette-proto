@@ -362,6 +362,8 @@ body {
     font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     max-width: 150px;
 }
+/* onglets de section (paramètres, BCC) : nom complet, retour à la ligne si besoin */
+.tree-label.tree-label-full { max-width: none; overflow: visible; text-overflow: clip; white-space: normal; }
 .tree-label:hover { text-decoration: underline; }
 .tree-ects { font-size: 11px; margin-left: auto; }
 .tree-chevron {
