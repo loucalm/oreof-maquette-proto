@@ -5,7 +5,7 @@ import { Controller } from '@hotwired/stimulus';
  * recherche qui masque les lignes hors correspondance + compteur de sélection.
  */
 export default class extends Controller {
-    static targets = ['input', 'row', 'group', 'count', 'empty'];
+    static targets = ['input', 'row', 'group', 'count', 'empty', 'chips'];
 
     connect() {
         this.updateCount();
@@ -31,8 +31,28 @@ export default class extends Controller {
     }
 
     updateCount() {
-        if (!this.hasCountTarget) return;
-        const n = this.rowTargets.filter((r) => r.querySelector('input')?.checked).length;
-        this.countTarget.textContent = n > 0 ? `${n} sélectionnée${n > 1 ? 's' : ''}` : '';
+        const checked = this.rowTargets.map((r) => r.querySelector('input')).filter((i) => i?.checked);
+        if (this.hasCountTarget) {
+            const n = checked.length;
+            this.countTarget.textContent = n > 0 ? `${n} sélectionnée${n > 1 ? 's' : ''}` : '';
+        }
+        if (this.hasChipsTarget) this.renderChips(checked);
+    }
+
+    /** Étiquettes des éléments cochés, avec une croix pour décocher sans chercher dans la liste. */
+    renderChips(checked) {
+        this.chipsTarget.replaceChildren(...checked.map((input) => {
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'cbx-chip';
+            chip.textContent = `${input.value} ×`;
+            chip.setAttribute('aria-label', `Retirer « ${input.value} »`);
+            chip.addEventListener('click', () => {
+                input.checked = false;
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+            return chip;
+        }));
+        this.chipsTarget.hidden = checked.length === 0;
     }
 }

@@ -534,3 +534,9 @@ form.is-dirty .panel-savebar { box-shadow: 0 -6px 12px -10px rgba(180, 83, 9, .5
 .help-drawer::backdrop { background: rgba(15, 23, 42, .25); }
 
 .tree-comments { display: inline-flex; align-items: center; gap: 2px; font-size: 11px; color: #6366f1; flex: 0 0 auto; }
+
+.cbx-chip {
+    border: 1px solid #c7d2fe; background: var(--c-primary-soft); color: var(--c-primary); border-radius: 9999px;
+    padding: 2px 10px; font-size: 12px; font-weight: 500;
+}
+.cbx-chip:hover { background: #e0e7ff; }

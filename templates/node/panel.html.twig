@@ -378,6 +378,7 @@
             <p class="fld-help">{{ 'node.panel.no_competencies'|trans({}, 'node') }}</p>
         {% else %}
             <div data-controller="cbxfilter" class="mt-1">
+                <div data-cbxfilter-target="chips" class="mb-2 flex flex-wrap gap-1.5" hidden></div>
                 <div class="rounded-lg border overflow-hidden" style="border-color:var(--c-border)">
                     <div class="border-b bg-gray-50 px-2 py-1.5" style="border-color:var(--c-border)">
                         <input type="search" placeholder="{{ 'node.panel.filter_competencies_placeholder'|trans({}, 'node') }}" data-cbxfilter-target="input"
