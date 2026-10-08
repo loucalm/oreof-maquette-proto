@@ -41,6 +41,14 @@
             </a>
         </div>
 
+        {% if consolidationTab and rows is not empty %}
+            <form id="phase-batch" method="post" action="{{ path('formation_phase_batch') }}" data-turbo-frame="_top"
+                  data-controller="confirm" data-confirm-message-value="{{ 'formation.index.batch_construction_confirm'|trans({}, 'formation') }}"
+                  class="mb-3 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-2.5 text-sm" style="border-color:#fcd34d;background:#fffbeb">
+                <span class="text-amber-800">{{ 'formation.index.batch_construction_help'|trans({}, 'formation') }}</span>
+                <button class="ml-auto rounded-lg border bg-white px-3 py-1.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-right', {class: 'icon'}) }} {{ 'formation.index.batch_construction_button'|trans({}, 'formation') }}</button>
+            </form>
+        {% endif %}
         <div class="rounded-xl border" style="border-color:var(--c-border)">
             <table class="w-full text-sm">
                 <thead>
@@ -57,7 +65,10 @@
                 <tbody {{ row.parcours ? 'data-controller=disclosure' }}>
                     <tr class="border-t" style="border-color:var(--c-border)">
                         <td class="px-4 py-4 align-top">
-                            <div class="font-medium">{{ f.name }}</div>
+                            <div class="font-medium">
+                                {% if consolidationTab %}<input type="checkbox" form="phase-batch" name="ids[]" value="{{ f.id }}" class="mr-2 align-middle" aria-label="{{ 'formation.index.batch_select_aria'|trans({'%name%': f.name}, 'formation') }}">{% endif %}
+                                {{ f.name }}
+                            </div>
                             <div class="text-xs text-gray-400">
                                 {{ f.diplome ?: '—' }} · {{ f.avecParcours ? 'formation.index.parcours_count'|trans({'%count%': row.parcours|length}, 'formation') : 'formation.index.mono_parcours'|trans({}, 'formation') }}
                             </div>

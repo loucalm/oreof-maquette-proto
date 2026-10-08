@@ -27,6 +27,7 @@ final class AdminAccessSubscriber
         'formation_structure_save',
         'formation_apply_template',
         'formation_reset',
+        'formation_template_propagate',
     ];
 
     /** Routes à prefixe admin mais accessibles au responsable (action côté formation). */

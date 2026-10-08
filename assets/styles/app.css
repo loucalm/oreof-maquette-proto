@@ -501,3 +501,36 @@ form.is-dirty .panel-savebar { box-shadow: 0 -6px 12px -10px rgba(180, 83, 9, .5
 .qg-status[data-state="error"] { background: #ef4444; }
 .qg-status[data-state="error"]::after { content: '!'; color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; height: 100%; }
 @keyframes qg-spin { to { transform: rotate(360deg); } }
+
+.flash-undo {
+    margin-left: 4px; padding: 2px 10px; border-radius: 6px; border: 1px solid currentColor; background: transparent;
+    font-size: 12px; font-weight: 600; white-space: nowrap;
+}
+.flash-undo:hover { background: rgba(255,255,255,.5); }
+
+.count-badge {
+    display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 4px;
+    border-radius: 9999px; background: #dc2626; color: #fff; font-size: 11px; font-weight: 700;
+}
+
+/* ── recherche / filtre dans l'arbre ── */
+.tree-search { padding: 10px 12px 4px; }
+.tf-mode { border: 1px solid var(--c-border); border-radius: 9999px; padding: 2px 10px; background: #fff; color: #4b5563; }
+.tf-mode[aria-pressed="true"] { border-color: var(--c-primary); color: var(--c-primary); background: var(--c-primary-soft); font-weight: 600; }
+.tree-list li.collapsed.tf-force-open > .tree-children { display: block; }
+.tree-list li.tf-match > .tree-row .tree-label { background: #fef9c3; border-radius: 4px; }
+
+/* ── aide contextuelle ── */
+.help-fab {
+    position: fixed; bottom: 20px; right: 20px; z-index: 40; display: grid; place-items: center;
+    width: 44px; height: 44px; border-radius: 9999px; color: #fff; font-size: 18px; font-weight: 700;
+    box-shadow: 0 10px 20px -8px rgba(0,0,0,.35);
+}
+.help-fab:focus-visible { outline: 3px solid #a5b4fc; outline-offset: 2px; }
+.help-drawer {
+    margin: 0 0 0 auto; height: 100vh; max-height: 100vh; width: min(440px, 100vw); border: 0; padding: 0;
+    box-shadow: -10px 0 30px -12px rgba(0,0,0,.3);
+}
+.help-drawer::backdrop { background: rgba(15, 23, 42, .25); }
+
+.tree-comments { display: inline-flex; align-items: center; gap: 2px; font-size: 11px; color: #6366f1; flex: 0 0 auto; }

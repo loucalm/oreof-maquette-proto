@@ -471,4 +471,28 @@ final class Maquette
             && $top->getLabel() === $label
             && $top->getCreatedAt() > new \DateTimeImmutable('-10 minutes');
     }
+
+    /**
+     * Source d'un nœud raccroché (mutualisé depuis une autre formation) et
+     * état de synchronisation : la source a-t-elle changé depuis la copie ?
+     *
+     * @return array{formation: ?Formation, node: ?\App\Maquette\Doc\TreeNode, changed: bool}|null
+     */
+    public function mutualizationSource(\App\Maquette\Doc\TreeNode $node): ?array
+    {
+        $from = $node->getMutualizedFrom();
+        if (null === $from || !str_contains($from, ':')) {
+            return null;
+        }
+        [$fid, $nid] = explode(':', $from, 2);
+        $formation = $this->formations->find((int) $fid);
+        $source = null !== $formation ? $this->open($formation)->node($nid) : null;
+        $stored = $node->getAttribute('_sourceHash');
+
+        return [
+            'formation' => $formation,
+            'node' => $source,
+            'changed' => null !== $source && \is_string($stored) && $stored !== $source->contentHash(),
+        ];
+    }
 }

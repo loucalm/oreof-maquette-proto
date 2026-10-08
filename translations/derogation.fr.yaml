@@ -1,5 +1,11 @@
 derogation:
+  tracking:
+    pending: '{1}1 dérogation en attente|]1,Inf[%count% dérogations en attente'
+    decided: '{1}1 décision|]1,Inf[%count% décisions'
+    node_status: 'Dérogation %status% le %date%'
   index:
+    unlock_label: Lever le verrou de l’élément (le responsable pourra le modifier)
+    pending_badge_title: Demandes en attente
     title: Dérogations
     heading: Demandes de dérogation
     description: >-

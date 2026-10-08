@@ -22,7 +22,7 @@
                     <div class="min-w-0">
                         <div class="flex flex-wrap items-center gap-2">
                             <a href="{{ path('formation_editor', {id: d.formation.id}) }}" target="_blank" class="font-medium hover:underline">{{ d.formation.name }}</a>
-                            {% if d.nodeLabel %}<span class="type-badge">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ d.nodeLabel }}</span>
+                            {% if d.nodeLabel %}<a href="{{ path('node_open', {fid: d.formation.id, nid: d.nodeId}) }}" target="_blank" class="type-badge hover:underline">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ d.nodeLabel }}</a>
                             {% else %}<span class="text-xs" style="color:var(--c-muted)">{{ 'derogation.index.general_request'|trans({}, 'derogation') }}</span>{% endif %}
                             <span class="pill" style="{{ d.status.value == 'pending' ? 'background:#fef3c7;color:#b45309' : (d.status.value == 'approved' ? 'background:#dcfce7;color:#15803d' : 'background:#fee2e2;color:#b91c1c') }}">{{ d.status.label }}</span>
                         </div>
@@ -41,6 +41,9 @@
                             <form method="post" action="{{ path('admin_derogation_resolve', {id: d.id}) }}" class="space-y-1.5">
                                 <input type="hidden" name="status" value="approved">
                                 <input name="adminNote" placeholder="{{ 'derogation.index.approve_note_placeholder'|trans({}, 'derogation') }}" class="fld text-xs">
+                                {% if d.nodeId %}
+                                    <label class="flex items-center gap-2 text-xs"><input type="checkbox" name="unlock" value="1" checked> {{ 'derogation.index.unlock_label'|trans({}, 'derogation') }}</label>
+                                {% endif %}
                                 <button class="w-full rounded-lg px-3 py-1.5 text-xs font-semibold text-white" style="background:var(--st-ok)">{{ ux_icon('ph:check-bold', {class: 'icon'}) }} {{ 'derogation.index.approve_button'|trans({}, 'derogation') }}</button>
                             </form>
                             <form method="post" action="{{ path('admin_derogation_resolve', {id: d.id}) }}" class="space-y-1.5">

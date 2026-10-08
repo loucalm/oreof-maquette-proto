@@ -47,11 +47,11 @@
 {# ═══ éditeur ═══ #}
 <div class="rounded-2xl border bg-white p-3" style="border-color:var(--c-border)">
 
-    <div class="editor-shell grid lg:grid-cols-[440px_1fr] lg:h-[calc(100vh-11rem)] min-h-[560px]">
+    <div class="editor-shell grid lg:grid-cols-[340px_minmax(0,1fr)] xl:grid-cols-[420px_minmax(0,1fr)] lg:h-[calc(100vh-11rem)] min-h-[560px]">
 
         {# ─── panneau structure ─── #}
         <div class="editor-aside flex flex-col overflow-hidden"
-             data-controller="tree modal"
+             data-controller="tree modal treefilter"
              data-tree-move-url-value="{{ path('node_move', {fid: formation.id, nid: '__ID__'}) }}"
              data-tree-dup-url-value="{{ path('node_duplicate', {fid: formation.id, nid: '__ID__'}) }}"
              data-tree-del-url-value="{{ path('node_delete', {fid: formation.id, nid: '__ID__'}) }}"
@@ -102,7 +102,17 @@
                     {{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'formation.parcours_editor.back_to_formation'|trans({}, 'formation') }}
                 </a>
 
-                <div class="p-2">
+                <div class="tree-search" role="search">
+                    <input type="search" data-treefilter-target="input" placeholder="{{ 'formation.tree.search_placeholder'|trans({}, 'formation') }}"
+                           aria-label="{{ 'formation.tree.search_aria'|trans({}, 'formation') }}" class="fld text-sm">
+                    <div class="mt-1.5 flex items-center gap-1.5 text-xs">
+                        <button type="button" data-treefilter-target="mode" data-mode="all" class="tf-mode">{{ 'formation.tree.filter_all'|trans({}, 'formation') }}</button>
+                        <button type="button" data-treefilter-target="mode" data-mode="todo" class="tf-mode">{{ 'formation.tree.filter_todo'|trans({}, 'formation') }}</button>
+                        <span class="ml-auto text-gray-400" data-treefilter-target="count" aria-live="polite"></span>
+                    </div>
+                    <p data-treefilter-target="empty" hidden class="mt-2 text-xs text-gray-400">{{ 'formation.tree.search_empty'|trans({}, 'formation') }}</p>
+                </div>
+                <div class="p-2" data-treefilter-target="tree">
                     {% if roots is not empty %}
                         {{ include('formation/_tree.html.twig', {views: roots, parentId: parcours.id, focus: focus, parentIsChoice: false, parentChoiceLabel: null}) }}
                     {% else %}
@@ -162,7 +172,7 @@
         </div>
 
         {# ─── panneau d'édition ─── #}
-        <turbo-frame id="node-panel" class="panel-frame" refresh="morph"
+        <turbo-frame id="node-panel" class="panel-frame min-w-0" refresh="morph"
                      {% if frameSrc %}src="{{ frameSrc }}"{% endif %}>
             {% if not frameSrc %}
                 <div class="panel-empty">{{ 'formation.editor.select_prompt'|trans({}, 'formation') }}</div>

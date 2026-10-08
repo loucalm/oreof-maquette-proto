@@ -82,7 +82,22 @@ final class DerogationController extends AbstractController
         $derogation->resolve($status, $request->request->get('adminNote'));
         $em->flush();
 
-        $this->addFlash('success', DerogationStatus::Approved === $status ? 'Demande approuvée.' : 'Demande refusée.');
+        // approbation avec levée du verrou : l'élément imposé redevient modifiable pour le responsable
+        $unlocked = null;
+        if (DerogationStatus::Approved === $status && $request->request->getBoolean('unlock') && null !== $derogation->getNodeId()) {
+            $formation = $derogation->getFormation();
+            $doc = $this->maquette->open($formation);
+            $node = $doc->node($derogation->getNodeId());
+            if (null !== $node && [] !== $node->locked) {
+                $node->locked = [];
+                $this->maquette->save($formation, $doc, sprintf('Dérogation accordée : verrou levé sur « %s »', $node->getDisplayLabel()));
+                $unlocked = $node->getDisplayLabel();
+            }
+        }
+
+        $this->addFlash('success', DerogationStatus::Approved === $status
+            ? (null !== $unlocked ? sprintf('Demande approuvée, verrou levé sur « %s ».', $unlocked) : 'Demande approuvée.')
+            : 'Demande refusée.');
 
         return $this->redirectToRoute('admin_derogations');
     }

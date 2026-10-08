@@ -1,4 +1,10 @@
 layout:
+  help_button: Aide sur cet écran
+  help_empty: Pas encore d’aide pour cet écran.
+  help_edit: Modifier l’aide de cet écran
+  help_title_label: Titre
+  help_body_label: Texte de l’aide
+  undo: Annuler
   default_title: Prototype maquette
   close: Fermer
   help_fake: Aide (fictif)

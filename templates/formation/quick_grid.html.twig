@@ -30,6 +30,10 @@
     {% endif %}
 </div>
 
+{% set readonly = formation.phase.value == 'consolidation' %}
+{% if readonly %}
+    <p class="issues-box mb-4">{{ ux_icon('ph:hourglass-medium', {class: 'icon'}) }} {{ 'formation.editor.consolidation_readonly'|trans({}, 'formation') }}</p>
+{% endif %}
 <div class="rounded-2xl border bg-white overflow-auto" style="border-color:var(--c-border)">
     {% if rows is empty %}
         <p class="p-10 text-center text-sm text-gray-400">{{ 'formation.quick_grid.empty'|trans({}, 'formation') }}</p>
@@ -80,7 +84,7 @@
                     <td>
                         {% if caps.ects ?? false %}
                             <input type="number" min="0" step="0.5" name="ects" value="{{ n.getAttribute('ects') }}" data-col="ects"
-                                   data-quick-grid-target="input" class="qg-input" aria-label="ECTS — {{ label }}">
+                                   data-quick-grid-target="input" class="qg-input" {{ readonly ? 'disabled' }} aria-label="ECTS — {{ label }}">
                         {% else %}<span class="qg-na">—</span>{% endif %}
                     </td>
                     {% for pk, pl in places %}
@@ -88,7 +92,7 @@
                             <td>
                                 {% if caps.hours ?? false %}
                                     <input type="number" min="0" step="0.5" name="hours[{{ pk }}][{{ mk }}]" value="{{ h[pk][mk] ?? '' }}"
-                                           data-col="{{ pk }}_{{ mk }}" data-quick-grid-target="input" class="qg-input"
+                                           data-col="{{ pk }}_{{ mk }}" data-quick-grid-target="input" class="qg-input" {{ readonly ? 'disabled' }}
                                            aria-label="{{ ml }} {{ pl|lower }} — {{ label }}">
                                 {% else %}<span class="qg-na">—</span>{% endif %}
                             </td>
@@ -97,7 +101,7 @@
                     <td>
                         {% if caps.hours ?? false %}
                             <input type="number" min="0" step="0.5" name="hours[te]" value="{{ h.te ?? '' }}" data-col="te"
-                                   data-quick-grid-target="input" class="qg-input" aria-label="TE — {{ label }}">
+                                   data-quick-grid-target="input" class="qg-input" {{ readonly ? 'disabled' }} aria-label="TE — {{ label }}">
                         {% else %}<span class="qg-na">—</span>{% endif %}
                     </td>
                     <td class="qg-total" data-total="hours">{{ v.totalHours|round(1) }} h</td>

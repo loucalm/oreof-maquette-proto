@@ -26,6 +26,17 @@
                 {% if formation.domaine %}<span>· {{ formation.domaine }}</span>{% endif %}
                 {% if formation.composante %}<span>· {{ formation.composante }}</span>{% endif %}
                 <span>· {{ multi ? 'formation.index.parcours_count'|trans({'%count%': parcours_nodes(formation)|length}, 'formation') : 'formation.editor.meta_mono_parcours'|trans({}, 'formation') }}</span>
+                {% set derogs = formation_derogations(formation) %}
+                {% set derogPending = derogs|filter(d => d.isPending)|length %}
+                {% set derogDecided = derogs|length - derogPending %}
+                {% if derogs is not empty %}
+                    <a href="{{ path('formation_editor', {id: formation.id, param: 'structure'}) }}#derogations" class="pill hover:underline" style="background:#f1f5f9;color:#475569">
+                        {{ ux_icon('ph:flag', {class: 'icon'}) }}
+                        {% if derogPending %}{{ 'derogation.tracking.pending'|trans({'%count%': derogPending}, 'derogation') }}{% endif %}
+                        {% if derogPending and derogDecided %} · {% endif %}
+                        {% if derogDecided %}{{ 'derogation.tracking.decided'|trans({'%count%': derogDecided}, 'derogation') }}{% endif %}
+                    </a>
+                {% endif %}
                 {% if formation.phase.value == 'consolidation' %}
                     <span class="pill" style="background:#fef3c7;color:#b45309">{{ ux_icon('ph:hourglass-medium', {class: 'icon'}) }} {{ 'formation.editor.consolidation_banner_title'|trans({}, 'formation') }}{{ formation.anneeUniversitaire ? ' — ' ~ formation.anneeUniversitaire }}</span>
                 {% else %}
@@ -93,11 +104,11 @@
 {# ═══ éditeur ═══ #}
 <div class="rounded-2xl border bg-white p-3" style="border-color:var(--c-border)">
 
-    <div class="editor-shell grid lg:grid-cols-[440px_1fr] lg:h-[calc(100vh-11rem)] min-h-[560px]">
+    <div class="editor-shell grid lg:grid-cols-[340px_minmax(0,1fr)] xl:grid-cols-[420px_minmax(0,1fr)] lg:h-[calc(100vh-11rem)] min-h-[560px]">
 
         {# ─── panneau gauche ─── #}
         <div class="editor-aside flex flex-col overflow-hidden"
-             data-controller="tree modal"
+             data-controller="tree modal treefilter"
              {% if not multi %}
              data-tree-move-url-value="{{ path('node_move', {fid: formation.id, nid: '__ID__'}) }}"
              data-tree-dup-url-value="{{ path('node_duplicate', {fid: formation.id, nid: '__ID__'}) }}"
@@ -167,7 +178,17 @@
                     </div>
                 {% else %}
                     {% set rootType = root_type(formation) %}
-                    <div class="p-2">
+                    <div class="tree-search" role="search">
+                        <input type="search" data-treefilter-target="input" placeholder="{{ 'formation.tree.search_placeholder'|trans({}, 'formation') }}"
+                               aria-label="{{ 'formation.tree.search_aria'|trans({}, 'formation') }}" class="fld text-sm">
+                        <div class="mt-1.5 flex items-center gap-1.5 text-xs">
+                            <button type="button" data-treefilter-target="mode" data-mode="all" class="tf-mode">{{ 'formation.tree.filter_all'|trans({}, 'formation') }}</button>
+                            <button type="button" data-treefilter-target="mode" data-mode="todo" class="tf-mode">{{ 'formation.tree.filter_todo'|trans({}, 'formation') }}</button>
+                            <span class="ml-auto text-gray-400" data-treefilter-target="count" aria-live="polite"></span>
+                        </div>
+                        <p data-treefilter-target="empty" hidden class="mt-2 text-xs text-gray-400">{{ 'formation.tree.search_empty'|trans({}, 'formation') }}</p>
+                    </div>
+                    <div class="p-2" data-treefilter-target="tree">
                         {% if roots is not empty %}
                             {{ include('formation/_tree.html.twig', {views: roots, parentId: null, focus: focus, parentIsChoice: false, parentChoiceLabel: null}) }}
                         {% elseif not rootType %}
@@ -240,7 +261,7 @@
         </div>
 
         {# ─── panneau d'édition ─── #}
-        <turbo-frame id="node-panel" class="panel-frame" refresh="morph"
+        <turbo-frame id="node-panel" class="panel-frame min-w-0" refresh="morph"
                      {% if frameSrc %}src="{{ frameSrc }}"{% endif %}>
             {% if not frameSrc %}
                 <div class="panel-empty">{{ 'formation.editor.select_prompt'|trans({}, 'formation') }}</div>

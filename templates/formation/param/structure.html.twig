@@ -251,6 +251,28 @@
             {{ 'formation.param.structure.node_count_note'|trans({'%count%': nodeCount, '%link_open%': '<a href="' ~ path('node_type_index') ~ '" target="_blank" class="underline">', '%link_close%': '</a>'}, 'formation')|raw }}
         </p>
 
+        {# ── Écarts au template du diplôme ── #}
+        {% if templateDiff %}
+            {% set d = templateDiff %}
+            {% set gaps = d.missing|length + d.unlocked|length + d.overrides|length %}
+            {{ fld.divider('formation.param.structure.divider_template_diff'|trans({'%template%': d.template.label}, 'formation')) }}
+            {% if gaps == 0 %}
+                <p class="text-sm text-green-700">{{ ux_icon('ph:check-circle', {class: 'icon'}) }} {{ 'formation.param.structure.template_in_sync'|trans({}, 'formation') }}</p>
+            {% else %}
+                <ul class="space-y-1 text-sm">
+                    {% if d.missing is not empty %}<li class="text-amber-700">{{ ux_icon('ph:warning', {class: 'icon'}) }} {{ 'formation.param.structure.template_missing'|trans({'%list%': d.missing|join(', ')}, 'formation') }}</li>{% endif %}
+                    {% if d.unlocked is not empty %}<li class="text-gray-600">{{ ux_icon('ph:lock-simple-open', {class: 'icon'}) }} {{ 'formation.param.structure.template_unlocked'|trans({'%list%': d.unlocked|join(', ')}, 'formation') }}</li>{% endif %}
+                    {% if d.overrides is not empty %}<li class="text-gray-600">{{ ux_icon('ph:sliders', {class: 'icon'}) }} {{ 'formation.param.structure.template_overrides'|trans({'%list%': d.overrides|join(', ')}, 'formation') }}</li>{% endif %}
+                </ul>
+                <form method="post" action="{{ path('formation_template_propagate', {id: formation.id}) }}" data-turbo-frame="_top"
+                      class="flex flex-wrap items-center gap-3"
+                      data-controller="confirm" data-confirm-message-value="{{ 'formation.param.structure.template_propagate_confirm'|trans({}, 'formation') }}">
+                    <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="relock" value="1"> {{ 'formation.param.structure.template_relock_label'|trans({}, 'formation') }}</label>
+                    <button class="rounded-lg border px-3 py-2 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:arrows-clockwise', {class: 'icon'}) }} {{ 'formation.param.structure.template_propagate_button'|trans({}, 'formation') }}</button>
+                </form>
+            {% endif %}
+        {% endif %}
+
         {# ── Charger un template ── #}
         {{ fld.divider('formation.param.structure.divider_load_template'|trans({}, 'formation')) }}
         <form method="post" action="{{ path('formation_apply_template', {id: formation.id}) }}" data-turbo-frame="_top"
@@ -281,7 +303,7 @@
         {% endif %}
 
         {# ── Demandes de dérogation ── #}
-        {{ fld.divider('derogation.index.heading'|trans({}, 'derogation')) }}
+        <div id="derogations"></div>{{ fld.divider('derogation.index.heading'|trans({}, 'derogation')) }}
         <p class="text-xs text-gray-500 -mt-2">
             {{ 'formation.param.structure.derogation_note'|trans({'%flag_icon%': ux_icon('ph:flag', {class: 'icon'})}, 'formation')|raw }}
         </p>

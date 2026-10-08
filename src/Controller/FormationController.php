@@ -194,10 +194,22 @@ final class FormationController extends AbstractController
 
     /** Vue arborescence des parcours (ramification) — formations multi-parcours. */
     #[Route('/formations/{id}/parcours', name: 'formation_parcours_graph', methods: ['GET'])]
-    public function parcoursGraph(Request $request, Formation $formation, \App\Maquette\ParcoursGraph $graph): Response
+    public function parcoursGraph(Request $request, Formation $formation, \App\Maquette\ParcoursGraph $graph, MaquetteBuilder $builder): Response
     {
+        // progression et ECTS de chaque parcours, affichés dans sa boîte
+        $parcoursViews = [];
+        $progress = [];
+        foreach ($builder->build($formation) as $view) {
+            if ($view->node->isParcours()) {
+                $parcoursViews[$view->node->getId()] = $view;
+                $progress[$view->node->getId()] = $builder->progress([$view]);
+            }
+        }
+
         return $this->render('formation/parcours_graph.html.twig', [
             'formation' => $formation,
+            'parcoursViews' => $parcoursViews,
+            'parcoursProgress' => $progress,
             'graph' => $graph->build($formation),
             // Parcours d'où l'on vient (lien depuis son propre panneau « Positionnement
             // & ramification ») — mis en surbrillance dans l'arborescence.
@@ -476,6 +488,26 @@ final class FormationController extends AbstractController
         return $this->redirectToRoute('formation_editor', ['id' => $formation->getId()]);
     }
 
+    /** Passe en construction toutes les formations cochées (onglet « Consolidation de l'offre »). */
+    #[Route('/formations/phase/construction', name: 'formation_phase_batch', methods: ['POST'], priority: 10)]
+    public function phaseBatch(Request $request, FormationRepository $formations, EntityManagerInterface $em): Response
+    {
+        $ids = array_map('intval', $request->request->all('ids'));
+        $count = 0;
+        foreach ($ids === [] ? [] : $formations->findBy(['id' => $ids]) as $formation) {
+            if (FormationPhase::Consolidation === $formation->getPhase()) {
+                $formation->setPhase(FormationPhase::Construction);
+                ++$count;
+            }
+        }
+        $em->flush();
+        $this->addFlash($count > 0 ? 'success' : 'warning', $count > 0
+            ? sprintf('%d formation(s) passée(s) en construction.', $count)
+            : 'Aucune formation cochée.');
+
+        return $this->redirectToRoute('formation_index', ['phase' => 'consolidation']);
+    }
+
     /**
      * Réorganise l'arbre JSON lors du passage mono ↔ multi-parcours.
      *
@@ -586,6 +618,7 @@ final class FormationController extends AbstractController
         \App\Repository\DerogationRequestRepository $derogations,
         NodeTypeRepository $types,
         FieldDefRepository $fields,
+        \App\Maquette\TemplateDiff $templateDiff,
     ): Response {
         if (!isset(self::PARAM_SECTIONS[$key])) {
             throw $this->createNotFoundException();
@@ -602,7 +635,20 @@ final class FormationController extends AbstractController
             'nodeCount' => $key === 'structure' ? \count($this->maquette->open($formation)->allNodes()) : 0,
             'templates' => $templates->findAllOrdered(),
             'derogations' => $key === 'structure' ? $derogations->findByFormation($formation) : [],
+            'templateDiff' => $key === 'structure' ? $templateDiff->diff($formation) : null,
         ]);
+    }
+
+    /** Réapplique aux nœuds existants les réglages (et, au choix, les verrous) du template du diplôme. */
+    #[Route('/formations/{id}/template/propager', name: 'formation_template_propagate', methods: ['POST'])]
+    public function propagateTemplate(Formation $formation, Request $request, \App\Maquette\TemplateDiff $templateDiff): Response
+    {
+        $count = $templateDiff->propagate($formation, $request->request->getBoolean('relock'));
+        $this->addFlash($count > 0 ? 'success' : 'info', $count > 0
+            ? sprintf('Réglages du template réappliqués sur %d élément(s).', $count)
+            : 'Rien à réappliquer : la formation suit déjà son template.');
+
+        return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);
     }
 
     #[Route('/formations/{id}/parametre/{key}', name: 'formation_param_save', methods: ['POST'])]

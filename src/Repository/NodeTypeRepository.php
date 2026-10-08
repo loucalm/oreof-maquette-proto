@@ -8,12 +8,19 @@ use App\Entity\NodeType;
 use App\Enum\NodeFamily;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * @extends ServiceEntityRepository<NodeType>
  */
-class NodeTypeRepository extends ServiceEntityRepository
+class NodeTypeRepository extends ServiceEntityRepository implements ResetInterface
 {
+    /** @var array<string, NodeType>|null mémo par requête : le métamodèle est relu à chaque nœud affiché */
+    private ?array $indexed = null;
+
+    /** @var list<NodeType>|null */
+    private ?array $ordered = null;
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, NodeType::class);
@@ -21,13 +28,13 @@ class NodeTypeRepository extends ServiceEntityRepository
 
     public function findOneByKey(string $key): ?NodeType
     {
-        return $this->findOneBy(['key' => $key]);
+        return $this->findAllIndexed()[$key] ?? null;
     }
 
     /** @return list<NodeType> */
     public function findAllOrdered(): array
     {
-        return $this->createQueryBuilder('t')
+        return $this->ordered ??= $this->createQueryBuilder('t')
             ->orderBy('t.position', 'ASC')
             ->addOrderBy('t.label', 'ASC')
             ->getQuery()
@@ -41,12 +48,20 @@ class NodeTypeRepository extends ServiceEntityRepository
      */
     public function findAllIndexed(): array
     {
-        $map = [];
-        foreach ($this->findAll() as $type) {
-            $map[$type->getKey()] = $type;
+        if (null === $this->indexed) {
+            $this->indexed = [];
+            foreach ($this->findAll() as $type) {
+                $this->indexed[$type->getKey()] = $type;
+            }
         }
 
-        return $map;
+        return $this->indexed;
+    }
+
+    public function reset(): void
+    {
+        $this->indexed = null;
+        $this->ordered = null;
     }
 
     /**

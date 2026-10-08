@@ -89,7 +89,9 @@ final class NodeController extends AbstractController
 
         $attrs = $node->getAttributes();
         $caps = $node->effectiveCapabilities();
-        foreach ($this->catalog->all() as $key => $def) {
+        // consolidation : squelette seulement (noms, codes, emplacement) — le contenu attend la construction
+        $catalog = $formation->getPhase() === \App\Enum\FormationPhase::Consolidation ? [] : $this->catalog->all();
+        foreach ($catalog as $key => $def) {
             if (!($caps[$key] ?? false)) {
                 unset($attrs[$key]);
                 continue;
@@ -234,6 +236,7 @@ final class NodeController extends AbstractController
         $this->applyChoiceNature($node, $parent);
         $this->maquette->save($formation, $doc);
         $this->addFlash('success', sprintf('%s ajouté.', $type->getLabel()));
+        $this->offerUndo($formation);
 
         return $this->editorRedirect($node);
     }
@@ -295,6 +298,8 @@ final class NodeController extends AbstractController
         // du précédent ; descendre = se poser après le suivant (qui recule d'un cran)
         $doc->moveNode($node, $parent, (int) array_search($target, $all, true));
         $this->maquette->save($formation, $doc);
+        $this->addFlash('success', sprintf('« %s » déplacé.', $node->getDisplayLabel()));
+        $this->offerUndo($formation);
 
         return $this->editorRedirect($node);
     }
@@ -316,6 +321,8 @@ final class NodeController extends AbstractController
 
         $copy = $doc->duplicateNode($node);
         $this->maquette->save($formation, $doc);
+        $this->addFlash('success', sprintf('« %s » dupliqué.', $node->getDisplayLabel()));
+        $this->offerUndo($formation);
 
         return $this->editorRedirect($copy);
     }
@@ -346,6 +353,7 @@ final class NodeController extends AbstractController
         }
         $this->maquette->save($formation, $doc);
         $this->addFlash('info', 'ELP supprimé.');
+        $this->offerUndo($formation);
 
         return $parcours !== null && $parcours !== $node
             ? $this->redirectToRoute('parcours_editor', ['fid' => $formation->getId(), 'nid' => $parcours->getId()])
@@ -416,6 +424,10 @@ final class NodeController extends AbstractController
 
         $copy = $doc->importSubtree($source, $target);
         $copy->setMutualizedFrom($sourceFormation->getId().':'.$snid);
+        $copy->setAttribute('_sourceHash', $source->contentHash());
+        if (\App\Enum\FormationPhase::Consolidation === $formation->getPhase()) {
+            $this->stripContent($copy); // consolidation : squelette seulement
+        }
         $this->applyChoiceNature($copy, $target);
         $this->maquette->save($formation, $doc);
         $this->addFlash('success', sprintf('« %s » raccroché depuis « %s ».', $source->getDisplayLabel(), $sourceFormation->getName()));
@@ -430,6 +442,62 @@ final class NodeController extends AbstractController
      * responsable de formation en cochant « À choix restreint » sur un ELP
      * déjà en place — la case seule ne crée aucune structure, ce geste le fait.
      */
+    /**
+     * Remplace une copie mutualisée par l'état actuel de sa source (même
+     * emplacement). Les modifications locales de la copie sont perdues.
+     */
+    #[Route('/formations/{fid}/nodes/{nid}/resynchroniser', name: 'node_attach_refresh', methods: ['POST'])]
+    public function refreshFromSource(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid): Response
+    {
+        $doc = $this->maquette->open($formation);
+        $node = $this->pick($doc, $nid);
+        $info = $this->maquette->mutualizationSource($node);
+        if (null === $info || null === $info['node']) {
+            $this->addFlash('warning', 'La source de cet élément est introuvable (supprimée ?).');
+
+            return $this->editorRedirect($node);
+        }
+
+        $parent = $node->getParent();
+        $siblings = $parent?->getChildren() ?? $doc->roots;
+        $index = (int) array_search($node, $siblings, true);
+        $from = $node->getMutualizedFrom();
+
+        $copy = $doc->importSubtree($info['node'], $parent);
+        $copy->setMutualizedFrom($from);
+        $copy->setAttribute('_sourceHash', $info['node']->contentHash());
+        $copy->locked = $node->locked; // un emplacement imposé le reste après mise à jour
+        $doc->moveNode($copy, $parent, $index);
+        $doc->removeNode($node, true);
+        $this->applyChoiceNature($copy, $parent);
+        $this->maquette->save($formation, $doc, sprintf('« %s » mis à jour depuis sa source', $copy->getDisplayLabel()));
+
+        return $this->backToEditor($copy, 'Copie mise à jour depuis la source.');
+    }
+
+    /** Commentaire sur un élément (fil de discussion responsable ↔ SES), rangé dans le nœud. */
+    #[Route('/formations/{fid}/nodes/{nid}/commentaires', name: 'node_comment_add', methods: ['POST'])]
+    public function addComment(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid, Request $request, \App\Twig\RoleExtension $roles): Response
+    {
+        $doc = $this->maquette->open($formation);
+        $node = $this->pick($doc, $nid);
+        $text = trim((string) $request->request->get('text'));
+        if ('' === $text) {
+            return $this->editorRedirect($node);
+        }
+
+        $comments = \is_array($node->getAttribute('_comments')) ? $node->getAttribute('_comments') : [];
+        $comments[] = [
+            'by' => \App\Twig\RoleExtension::ROLES[$roles->role()] ?? $roles->role(),
+            'at' => (new \DateTimeImmutable())->format(\DATE_ATOM),
+            'text' => mb_substr($text, 0, 2000),
+        ];
+        $node->setAttribute('_comments', $comments);
+        $this->maquette->save($formation, $doc, sprintf('Commentaire sur « %s »', $node->getDisplayLabel()));
+
+        return $this->backToEditor($node, 'Commentaire ajouté.');
+    }
+
     #[Route('/formations/{fid}/nodes/{nid}/convertir-choix', name: 'node_convert_choice', methods: ['POST'])]
     public function convertToChoice(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid): Response
     {
@@ -514,9 +582,27 @@ final class NodeController extends AbstractController
     {
         if ($message !== '') {
             $this->addFlash('success', $message);
+            $this->offerUndo($node->getFormation());
         }
 
         return $this->editorRedirect($node);
+    }
+
+    /** Retire les attributs de contenu (ECTS, heures, MCCC…) d'un sous-arbre ; garde les attributs internes « _… ». */
+    private function stripContent(TreeNode $node): void
+    {
+        $node->setAttributes(array_filter($node->getAttributes(), static fn ($k) => str_starts_with((string) $k, '_'), \ARRAY_FILTER_USE_KEY));
+        foreach ($node->getChildren() as $child) {
+            $this->stripContent($child);
+        }
+    }
+
+    /** Le toast de confirmation proposera « Annuler » (dernière révision de cette formation). */
+    private function offerUndo(?Formation $formation): void
+    {
+        if (null !== $formation?->getId()) {
+            $this->addFlash('undo', (string) $formation->getId());
+        }
     }
 
     private function reparentAllowed(TreeNode $node, ?TreeNode $newParent): bool

@@ -4,6 +4,14 @@ node:
     locked_title: Cet ELP fait partie de la structure imposée par le diplôme
     locked_badge: imposé
     imposed_badge: Imposé par le diplôme
+    comments_title: '{0}Commentaires|{1}1 commentaire|]1,Inf[%count% commentaires'
+    comment_placeholder: Écrire un commentaire (visible par le responsable et le SES)…
+    comment_send: Envoyer
+    copied_from: 'Copie de « %node% » (%formation%).'
+    source_changed: La source a changé depuis la copie.
+    refresh_from_source: Mettre à jour depuis la source
+    refresh_confirm: Remplacer cette copie par l’état actuel de la source ? Les modifications faites ici seront perdues.
+    source_missing: Copie d’un élément mutualisé dont la source n’existe plus.
     actions_aria: Actions sur l’élément
     shift_up: Monter d’un cran
     shift_down: Descendre d’un cran

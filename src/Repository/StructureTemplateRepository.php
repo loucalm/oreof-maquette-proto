@@ -7,12 +7,16 @@ namespace App\Repository;
 use App\Entity\StructureTemplate;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * @extends ServiceEntityRepository<StructureTemplate>
  */
-class StructureTemplateRepository extends ServiceEntityRepository
+class StructureTemplateRepository extends ServiceEntityRepository implements ResetInterface
 {
+    /** @var array<string, StructureTemplate> mémo par requête (seulement les résultats trouvés) */
+    private array $byDiplome = [];
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, StructureTemplate::class);
@@ -25,7 +29,12 @@ class StructureTemplateRepository extends ServiceEntityRepository
 
     public function findOneByDiplome(string $diplome): ?StructureTemplate
     {
-        return $this->findOneBy(['diplome' => $diplome]);
+        return $this->byDiplome[$diplome] ??= $this->findOneBy(['diplome' => $diplome]);
+    }
+
+    public function reset(): void
+    {
+        $this->byDiplome = [];
     }
 
     /** @return list<StructureTemplate> */

@@ -21,6 +21,8 @@
                 {% if view.ref %}<span class="tree-ref" title="{{ 'formation.tree.ref_title'|trans({}, 'formation') }}">{{ view.ref }}</span>{% endif %}
                 <a href="{{ node_url(node) }}" data-turbo-frame="node-panel"
                    class="tree-label">{{ node.type.temporel ? node_display_label(node, view.ref) : (node.label ?: '—') }}</a>
+                {% set nComments = (node.getAttribute('_comments') ?? [])|length %}
+                {% if nComments %}<span class="tree-comments" title="{{ 'formation.tree.comments_title'|trans({'%count%': nComments}, 'formation') }}">{{ ux_icon('ph:chat-circle-text', {class: 'icon'}) }}{{ nComments }}</span>{% endif %}
                 {% if isChoice %}
                     <span class="choice-count" title="{{ 'formation.tree.choice_count_title'|trans({}, 'formation') }}">{{ 'formation.tree.choice_count'|trans({'%chosen%': node.getAttribute('choiceCount') ?: '?', '%total%': view.children|length}, 'formation') }}</span>
                 {% elseif parentIsChoice %}

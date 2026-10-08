@@ -8,12 +8,16 @@ use App\Entity\MccType;
 use App\Entity\StructureTemplate;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * @extends ServiceEntityRepository<MccType>
  */
-class MccTypeRepository extends ServiceEntityRepository
+class MccTypeRepository extends ServiceEntityRepository implements ResetInterface
 {
+    /** @var array<string, MccType> mémo par requête (seulement les résultats trouvés) */
+    private array $byKey = [];
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, MccType::class);
@@ -31,7 +35,12 @@ class MccTypeRepository extends ServiceEntityRepository
 
     public function findOneByKey(string $key): ?MccType
     {
-        return $this->findOneBy(['key' => $key]);
+        return $this->byKey[$key] ??= $this->findOneBy(['key' => $key]);
+    }
+
+    public function reset(): void
+    {
+        $this->byKey = [];
     }
 
     /**

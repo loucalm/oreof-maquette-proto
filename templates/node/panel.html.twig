@@ -5,6 +5,7 @@
 {% set childTypes = types_allowed_for(node) %}
 {% set T = node.type.label %}
 
+{% set consolidation = node.formation.phase.value == 'consolidation' %}
 {% set hasHours = caps.hours ?? false %}
 {% set hasMccc = caps.mccc ?? false %}
 
@@ -21,6 +22,29 @@
             {{ formation.name }}
             {%- for p in node_path(node) %} › {{ p.label ?: p.type.label }}{% endfor -%}
         </div>
+        {% set src = mutualization_source(node) %}
+        {% if src %}
+            <div class="mt-2 rounded-lg px-3 py-2 text-xs" style="background:{{ src.changed ? '#fffbeb' : '#f1f5f9' }};color:{{ src.changed ? '#92400e' : '#475569' }}">
+                {{ ux_icon('ph:share-network', {class: 'icon'}) }}
+                {% if src.node %}
+                    {{ 'node.panel.copied_from'|trans({'%formation%': src.formation.name, '%node%': src.node.displayLabel}, 'node') }}
+                    {% if src.changed %}
+                        <strong>{{ 'node.panel.source_changed'|trans({}, 'node') }}</strong>
+                        <form method="post" action="{{ node_url(node, 'node_attach_refresh') }}" data-turbo-frame="_top" class="inline"
+                              data-controller="confirm" data-confirm-message-value="{{ 'node.panel.refresh_confirm'|trans({}, 'node') }}">
+                            <button class="ml-1 underline font-semibold">{{ 'node.panel.refresh_from_source'|trans({}, 'node') }}</button>
+                        </form>
+                    {% endif %}
+                {% else %}
+                    {{ 'node.panel.source_missing'|trans({}, 'node') }}
+                {% endif %}
+            </div>
+        {% endif %}
+        {% for d in node_derogations(formation, node.id) %}
+            <div class="mt-1 text-xs" style="color:{{ d.isPending ? '#b45309' : (d.status.value == 'approved' ? '#15803d' : '#b91c1c') }}">
+                {{ ux_icon('ph:flag', {class: 'icon'}) }} {{ 'derogation.tracking.node_status'|trans({'%status%': d.status.label|lower, '%date%': (d.resolvedAt ?? d.createdAt)|date('d/m/Y')}, 'derogation') }}{% if d.adminNote %} — {{ d.adminNote }}{% endif %}
+            </div>
+        {% endfor %}
         {# actions du nœud : à portée de main, accessibles au clavier (alternative au glisser-déposer) #}
         <div class="panel-node-actions" role="toolbar" aria-label="{{ 'node.panel.actions_aria'|trans({}, 'node') }}">
             {% for dir in ['up', 'down'] %}
@@ -47,7 +71,7 @@
 
     {# onglets présents sur ce nœud (déduits des champs actifs) #}
     {% set nodeTabs = ['props'] %}
-    {% for key, def in catalog %}
+    {% for key, def in (consolidation ? {} : catalog) %}
         {% if (caps[key] ?? false) and def.domain not in nodeTabs %}
             {% set nodeTabs = nodeTabs|merge([def.domain]) %}
         {% endif %}
@@ -139,8 +163,11 @@
                 {% endif %}
             {% endif %}
 
+            {% if consolidation and tk == 'props' %}
+                <p class="issues-box">{{ ux_icon('ph:hourglass-medium', {class: 'icon'}) }} {{ 'formation.editor.consolidation_readonly'|trans({}, 'formation') }}</p>
+            {% endif %}
             {# champs (et séparateurs) du catalogue pour cet onglet, dans l'ordre #}
-            {% for key, def in catalog %}
+            {% for key, def in (consolidation ? {} : catalog) %}
                 {% if def.domain == tk and (caps[key] ?? false) %}
                     {% if def.field == 'separator' %}
                         <div class="fld-cat">{{ def.label }}</div>
@@ -219,6 +246,24 @@
             </form>
         {% endif %}
     {% endfor %}
+
+    {# ── commentaires (fil responsable ↔ SES) ── #}
+    {% set comments = node.getAttribute('_comments') ?? [] %}
+    <details class="move-box" {{ comments is not empty ? 'open' }}>
+        <summary class="fld-label cursor-pointer">{{ ux_icon('ph:chat-circle-text', {class: 'icon'}) }} {{ 'node.panel.comments_title'|trans({'%count%': comments|length}, 'node') }}</summary>
+        <ol class="mt-2 space-y-2">
+            {% for c in comments %}
+                <li class="rounded-lg px-3 py-2 text-sm" style="background:#f8f9fb">
+                    <div class="text-[11px] text-gray-400">{{ c.by }} · {{ c.at|date('d/m/Y H:i') }}</div>
+                    <div class="whitespace-pre-line">{{ c.text }}</div>
+                </li>
+            {% endfor %}
+        </ol>
+        <form method="post" action="{{ node_url(node, 'node_comment_add') }}" data-turbo-frame="_top" class="mt-2 flex items-end gap-2">
+            <textarea name="text" rows="2" required maxlength="2000" class="fld flex-1" aria-label="{{ 'node.panel.comment_placeholder'|trans({}, 'node') }}" placeholder="{{ 'node.panel.comment_placeholder'|trans({}, 'node') }}"></textarea>
+            <button class="rounded-lg border px-3 py-2 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'node.panel.comment_send'|trans({}, 'node') }}</button>
+        </form>
+    </details>
 
     {# ── modale « Paramètre du nœud » ── #}
     <dialog data-modal-target="dialog" data-action="click->modal#clickOutside"

@@ -98,6 +98,10 @@ final class TemplateApplier
             capabilityOverrides: $this->fieldOverrides[$typeKey] ?? null,
             locked: array_values(array_filter((array) ($spec['locked'] ?? []), 'is_string')),
         );
+        // identité stable vers le nœud du template (écarts / propagation, cf. TemplateDiff)
+        if ('' !== (string) ($spec['uid'] ?? '')) {
+            $node->setAttribute('_tpl', (string) $spec['uid']);
+        }
         $node->bindType($type);
         $node->doc = $doc;
         $doc->index[$node->nid] = $node;

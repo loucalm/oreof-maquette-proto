@@ -7,12 +7,16 @@ namespace App\Repository;
 use App\Entity\Referentiel;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * @extends ServiceEntityRepository<Referentiel>
  */
-class ReferentielRepository extends ServiceEntityRepository
+class ReferentielRepository extends ServiceEntityRepository implements ResetInterface
 {
+    /** @var array<string, array<string, string>> mémo par requête des valeurs (un appel par champ affiché) */
+    private array $valuesCache = [];
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Referentiel::class);
@@ -36,6 +40,11 @@ class ReferentielRepository extends ServiceEntityRepository
     /** @return array<string, string> */
     public function values(string $key): array
     {
-        return $this->findOneByKey($key)?->getValues() ?? [];
+        return $this->valuesCache[$key] ??= $this->findOneByKey($key)?->getValues() ?? [];
+    }
+
+    public function reset(): void
+    {
+        $this->valuesCache = [];
     }
 }

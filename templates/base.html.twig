@@ -65,12 +65,19 @@
         {# messages flash — toasts détachés, fixés en haut de l'écran (hors du flux,
            retirés du cache Turbo pour ne pas réapparaître lors d'une navigation) #}
         {% set _flashes = app.flashes %}
-        {% if _flashes %}
+        {# « undo » : id de la formation dont la dernière modification peut être annulée depuis le toast #}
+        {% set _undo = _flashes.undo ?? [] %}
+        {% if _flashes|filter((m, l) => l != 'undo') is not empty %}
             <div class="flash-stack" role="status" aria-live="polite" data-turbo-temporary>
-                {% for label, messages in _flashes %}
+                {% for label, messages in _flashes|filter((m, l) => l != 'undo') %}
                     {% for message in messages %}
                         <div class="flash flash--{{ label ?: 'info' }}" data-controller="flash">
                             <span class="flash-msg">{{ message }}</span>
+                            {% if _undo is not empty and label in ['success', 'info'] and loop.first %}
+                                <form method="post" action="{{ path('formation_undo', {id: _undo|first}) }}" data-turbo-frame="_top">
+                                    <button class="flash-undo">{{ ux_icon('ph:arrow-counter-clockwise', {class: 'icon'}) }} {{ 'layout.undo'|trans({}, 'layout') }}</button>
+                                </form>
+                            {% endif %}
                             <button type="button" class="flash-x" data-action="flash#dismiss" aria-label="{{ 'layout.close'|trans({}, 'layout') }}">{{ ux_icon('ph:x', {class: 'icon'}) }}</button>
                         </div>
                     {% endfor %}
@@ -96,9 +103,38 @@
             </div>
         </footer>
 
-        {# bouton d'aide flottant (fictif) #}
-        <div class="fixed bottom-5 right-5 grid h-11 w-11 place-items-center rounded-full text-white text-lg shadow-lg cursor-default"
-             style="background:var(--c-primary)" title="{{ 'layout.help_fake'|trans({}, 'layout') }}">?</div>
+        {# aide contextuelle de l'écran (textes : translations/help.fr.yaml, éditables par l'admin) #}
+        {% set _help = page_help() %}
+        {% if _help.route and (_help.body or is_admin()) %}
+        <div data-controller="modal">
+            <button type="button" data-action="modal#open" aria-haspopup="dialog"
+                    class="help-fab" style="background:var(--c-primary)" title="{{ 'layout.help_button'|trans({}, 'layout') }}" aria-label="{{ 'layout.help_button'|trans({}, 'layout') }}">?</button>
+            <dialog data-modal-target="dialog" data-action="click->modal#clickOutside" class="help-drawer" aria-labelledby="help-title">
+                <div class="p-6 space-y-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <h2 id="help-title" class="text-lg font-bold">{{ ux_icon('ph:question', {class: 'icon'}) }} {{ _help.title ?? 'layout.help_button'|trans({}, 'layout') }}</h2>
+                        <button type="button" data-action="modal#close" class="icon-btn" aria-label="{{ 'layout.close'|trans({}, 'layout') }}">{{ ux_icon('ph:x', {class: 'icon'}) }}</button>
+                    </div>
+                    {% if _help.body %}
+                        <div class="help-body text-sm text-gray-700">{{ _help.body|nl2br }}</div>
+                    {% else %}
+                        <p class="text-sm text-gray-400">{{ 'layout.help_empty'|trans({}, 'layout') }}</p>
+                    {% endif %}
+                    {% if is_admin() %}
+                        <details class="move-box">
+                            <summary class="fld-label cursor-pointer">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'layout.help_edit'|trans({}, 'layout') }}</summary>
+                            <form method="post" action="{{ path('admin_help_save', {route: _help.route}) }}" data-turbo-frame="_top" class="mt-2 space-y-2">
+                                <input type="hidden" name="back" value="{{ app.request.requestUri }}">
+                                <input name="title" value="{{ _help.title }}" class="fld" aria-label="{{ 'layout.help_title_label'|trans({}, 'layout') }}" placeholder="{{ 'layout.help_title_label'|trans({}, 'layout') }}">
+                                <textarea name="body" rows="8" class="fld" aria-label="{{ 'layout.help_body_label'|trans({}, 'layout') }}">{{ _help.body }}</textarea>
+                                <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
+                            </form>
+                        </details>
+                    {% endif %}
+                </div>
+            </dialog>
+        </div>
+        {% endif %}
 
         {# ─────────── modale de confirmation globale (remplace window.confirm) ─────────── #}
         <dialog data-controller="confirm-dialog" data-confirm-dialog-target="dialog"

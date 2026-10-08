@@ -65,6 +65,7 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('capability_labels', $this->capabilityLabels(...)),
             new TwigFunction('node_tab_status', $this->nodeTabStatus(...)),
             new TwigFunction('node_missing', fn (TreeNode $n) => $this->completion->missing($n)),
+            new TwigFunction('mutualization_source', fn (TreeNode $n) => $this->maquette->mutualizationSource($n)),
             new TwigFunction('bcc_competences', $this->bccCompetences(...)),
             new TwigFunction('period_unit', $this->periodUnit(...)),
             new TwigFunction('param_sections', static fn () => FormationController::PARAM_SECTIONS),

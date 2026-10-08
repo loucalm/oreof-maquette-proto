@@ -1,5 +1,9 @@
 formation:
   index:
+    batch_construction_help: Cochez les formations dont la structure est prête, puis passez-les en construction (le contenu devient saisissable).
+    batch_construction_button: Passer la sélection en construction
+    batch_construction_confirm: Passer les formations cochées en construction ?
+    batch_select_aria: Sélectionner « %name% »
     page_title: Détails des mentions/spécialités · Prototype maquette
     heading: Détails des mentions/spécialités
     subheading: Ici vous pouvez voir l'ensemble de vos formations créées
@@ -61,6 +65,12 @@ formation:
     annee_help: Surtout utile pour une consolidation.
     create_button: Créer
   tree:
+    comments_title: '{1}1 commentaire|]1,Inf[%count% commentaires'
+    search_placeholder: 'Rechercher un élément…  ( / )'
+    search_aria: Rechercher dans la structure (libellé, référence, type)
+    search_empty: Aucun élément ne correspond.
+    filter_all: Tout
+    filter_todo: À compléter
     hours_title: '%h% h au total (heures présentielles, distancielles et travail personnel)'
     ects_missing_title: 'Il manque %gap% ECTS pour atteindre la cible'
     ects_excess_title: '%gap% ECTS de plus que la cible'
@@ -78,6 +88,7 @@ formation:
     back_to_list: Retour à la liste des formation
     breadcrumb_list: Liste des formations
     check_link: Vérifier la saisie
+    consolidation_readonly: 'Phase de consolidation : seuls la structure et les noms sont modifiables. Passez en construction pour saisir ECTS, heures, MCCC…'
     quick_grid_link: Saisie rapide
     meta_domaine: Domaine
     meta_domaine_default: Non défini
@@ -144,6 +155,8 @@ formation:
     no_root_note: "Ce parcours n'a pas encore de %type%. Ajoutez-en une ci-dessous."
     generic_level: niveau
   graph:
+    box_stats: '%pct% % saisi · %ects% / %target% ECTS'
+    box_stats_no_target: '%pct% % saisi · %ects% ECTS'
     title_suffix: arborescence des parcours
     breadcrumb_list: Liste des formations
     heading: Arborescence des parcours
@@ -397,6 +410,14 @@ formation:
       codes_rome_help: Ajoutez les codes ROME pour préciser les métiers accessibles aux diplômés.
       add_rome_fake: Ajouter un code ROME
     structure:
+      divider_template_diff: 'Écarts au template « %template% »'
+      template_in_sync: La formation suit son template (éléments imposés présents, verrous et réglages identiques).
+      template_missing: 'Éléments imposés absents : %list%'
+      template_unlocked: 'Verrous levés (dérogation) : %list%'
+      template_overrides: 'Réglages de champs différents du template : %list%'
+      template_relock_label: Remettre aussi les verrous levés
+      template_propagate_button: Réappliquer les réglages du template
+      template_propagate_confirm: Réappliquer les réglages de champs du template aux éléments existants ?
       divider_parcours_count: Nombre de parcours
       has_parcours_label: La formation contient-elle des parcours ?
       has_parcours_help: >-

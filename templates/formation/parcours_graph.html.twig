@@ -105,7 +105,12 @@
                         {% endif %}
                         <rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ g.boxH }}" rx="10"
                               fill="{{ isCurrent ? '#c7d2fe' : '#eef2ff' }}" stroke="{{ isCurrent ? '#4f46e5' : '#c7d2fe' }}" stroke-width="{{ isCurrent ? 2.5 : 1.5 }}"/>
-                        <text x="{{ b.x + b.w / 2 }}" y="{{ b.cy + 4 }}" text-anchor="middle" font-size="13" font-weight="{{ isCurrent ? 700 : 600 }}" fill="#3730a3">{{ r.node.label ?: 'formation.graph.parcours_fallback'|trans({}, 'formation') }}</text>
+                        {% set pv = parcoursViews[r.node.id] ?? null %}
+                        <text x="{{ b.x + b.w / 2 }}" y="{{ b.cy - (pv ? 3 : -4) }}" text-anchor="middle" font-size="13" font-weight="{{ isCurrent ? 700 : 600 }}" fill="#3730a3">{{ r.node.label ?: 'formation.graph.parcours_fallback'|trans({}, 'formation') }}</text>
+                        {% if pv %}
+                            {% set pct = parcoursProgress[r.node.id] ?? 0 %}
+                            <text x="{{ b.x + b.w / 2 }}" y="{{ b.cy + 14 }}" text-anchor="middle" font-size="11" fill="{{ pct == 100 ? '#15803d' : '#6b7280' }}">{% set target = pv.node.getAttribute('ects') %}{{ (target ? 'formation.graph.box_stats' : 'formation.graph.box_stats_no_target')|trans({'%pct%': pct, '%ects%': pv.totalEcts|round(1), '%target%': target}, 'formation') }}</text>
+                        {% endif %}
                     </a>
                 {% endfor %}
 

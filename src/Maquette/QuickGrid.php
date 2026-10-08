@@ -76,6 +76,9 @@ final class QuickGrid
      */
     public function apply(Formation $formation, string $nid, array $input): array
     {
+        if (\App\Enum\FormationPhase::Consolidation === $formation->getPhase()) {
+            return ['ok' => false, 'error' => 'Formation en consolidation : passez-la en construction pour saisir ECTS et heures.'];
+        }
         $doc = $this->maquette->open($formation);
         $node = $doc->node($nid);
         if (null === $node) {

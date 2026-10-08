@@ -34,5 +34,7 @@ trait ResetsDatabase
         }
         (new ORMExecutor($this->em, new ORMPurger($this->em)))->execute($loader->getFixtures());
         $this->em->clear();
+        // les mémos par requête (dépôts, validateurs) ont vu l'état pendant le chargement : on les vide
+        static::getContainer()->get('services_resetter')->reset();
     }
 }

@@ -292,6 +292,11 @@ final class TreeNode
         return $this;
     }
 
+    public function getMutualizedFrom(): ?string
+    {
+        return $this->mutualizedFrom;
+    }
+
     public function setMutualizedFrom(?string $ref): self
     {
         $this->mutualizedFrom = $ref;
@@ -416,6 +421,32 @@ final class TreeNode
             mutualized: (bool) ($raw['mutualized'] ?? false),
             mutualizedFrom: isset($raw['mutualizedFrom']) && $raw['mutualizedFrom'] !== '' ? (string) $raw['mutualizedFrom'] : null,
         );
+    }
+
+    /**
+     * Empreinte du CONTENU du sous-arbre (types, libellés, codes, attributs),
+     * indépendante des identifiants : sert à détecter qu'une source mutualisée
+     * a changé depuis sa copie.
+     */
+    public function contentHash(): string
+    {
+        return md5((string) json_encode($this->contentArray()));
+    }
+
+    /** @return array<string, mixed> */
+    private function contentArray(): array
+    {
+        $attributes = $this->attributes;
+        unset($attributes['_sourceHash']);
+        ksort($attributes);
+
+        return [
+            't' => $this->typeKey,
+            'l' => $this->label,
+            'c' => $this->code,
+            'a' => $attributes,
+            'k' => array_map(static fn (TreeNode $c) => $c->contentArray(), $this->children),
+        ];
     }
 
     /** @return array<string, mixed> */
