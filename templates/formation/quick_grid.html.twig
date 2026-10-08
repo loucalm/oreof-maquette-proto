@@ -1,0 +1,113 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ 'formation.quick_grid.title'|trans({}, 'formation') }} · {{ formation.name }}{% endblock %}
+
+{% set places = columns.places %}
+{% set mods = columns.mods %}
+{% set colCount = 2 + places|length * mods|length + 3 %}
+
+{% block body %}
+<div class="editor-header rounded-2xl border bg-white px-6 py-4 mb-4" style="border-color:var(--c-border)">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+            <div class="text-xs text-gray-400">
+                <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.editor.breadcrumb_list'|trans({}, 'formation') }}</a> ›
+                <a href="{{ path('formation_editor', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
+            </div>
+            <h1 class="text-2xl font-extrabold tracking-tight">{{ 'formation.quick_grid.title'|trans({}, 'formation') }}</h1>
+            <p class="text-sm text-gray-500">{{ 'formation.quick_grid.subtitle'|trans({}, 'formation') }}</p>
+        </div>
+        <a href="{{ path('formation_editor', {id: formation.id}) }}"
+           class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+           style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'formation.quick_grid.back'|trans({}, 'formation') }}</a>
+    </div>
+    {% if parcoursList is not empty %}
+        <nav class="mt-3 flex flex-wrap gap-2" aria-label="{{ 'formation.quick_grid.parcours_nav'|trans({}, 'formation') }}">
+            {% for p in parcoursList %}
+                <a href="{{ path('formation_quick_grid', {id: formation.id, parcours: p.id}) }}"
+                   class="tab-pill {{ p.id == parcoursNid ? 'tab-active' }}" {{ p.id == parcoursNid ? 'aria-current="page"' }}>{{ p.displayLabel }}</a>
+            {% endfor %}
+        </nav>
+    {% endif %}
+</div>
+
+<div class="rounded-2xl border bg-white overflow-auto" style="border-color:var(--c-border)">
+    {% if rows is empty %}
+        <p class="p-10 text-center text-sm text-gray-400">{{ 'formation.quick_grid.empty'|trans({}, 'formation') }}</p>
+    {% else %}
+    <table class="qg-table" data-controller="quick-grid">
+        <caption class="sr-only">{{ 'formation.quick_grid.caption'|trans({}, 'formation') }}</caption>
+        <thead>
+            <tr>
+                <th rowspan="2" class="qg-name">{{ 'formation.quick_grid.col_element'|trans({}, 'formation') }}</th>
+                <th rowspan="2">ECTS</th>
+                {% for pk, pl in places %}<th colspan="{{ mods|length }}" class="qg-place">{{ pl }}</th>{% endfor %}
+                <th rowspan="2">TE</th>
+                <th rowspan="2">{{ 'formation.quick_grid.col_total'|trans({}, 'formation') }}</th>
+                <th rowspan="2"><span class="sr-only">{{ 'formation.quick_grid.col_status'|trans({}, 'formation') }}</span></th>
+            </tr>
+            <tr>
+                {% for pk, pl in places %}{% for mk, ml in mods %}<th class="qg-mod">{{ ml }}</th>{% endfor %}{% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+        {% for r in rows %}
+            {% set v = r.view %}
+            {% set n = v.node %}
+            {% set label = n.type.temporel ? node_display_label(n, v.ref) : (n.label ?: '—') %}
+            {% if r.kind == 'group' %}
+                <tr class="qg-group qg-depth-{{ min(r.depth, 3) }}">
+                    <th scope="rowgroup" class="qg-name" style="padding-left: {{ 12 + r.depth * 16 }}px">
+                        <span class="status-dot" data-total="status:{{ n.id }}" data-status="{{ v.status }}"></span>
+                        <span class="type-badge">[{{ n.type.label }}]</span>
+                        {% if v.ref and not n.type.temporel %}<span class="tree-ref">{{ v.ref }}</span>{% endif %}
+                        {{ label }}
+                    </th>
+                    <td class="qg-total" data-total="ects:{{ n.id }}" data-state="{{ v.ectsTarget ? (v.ectsReached ? 'ok' : 'gap') }}">{{ v.totalEcts|round(1) }}{{ v.ectsTarget ? ' / ' ~ v.ectsTarget }}</td>
+                    <td colspan="{{ places|length * mods|length + 1 }}"></td>
+                    <td class="qg-total" data-total="hours:{{ n.id }}">{{ v.totalHours|round(1) }} h</td>
+                    <td></td>
+                </tr>
+            {% else %}
+                {% set caps = n.effectiveCapabilities() %}
+                {% set h = n.getAttribute('hours') ?? {} %}
+                <tr data-quick-grid-target="row" data-url="{{ path('formation_quick_grid_save', {fid: formation.id, nid: n.id}) }}">
+                    <th scope="row" class="qg-name" style="padding-left: {{ 12 + r.depth * 16 }}px">
+                        <span class="status-dot" data-total="status:{{ n.id }}" data-status="{{ v.status }}"></span>
+                        <span class="type-badge">[{{ n.type.label }}]</span>
+                        {% if v.ref %}<span class="tree-ref">{{ v.ref }}</span>{% endif %}
+                        <a href="{{ path('node_open', {fid: formation.id, nid: n.id}) }}" class="hover:underline">{{ label }}</a>
+                    </th>
+                    <td>
+                        {% if caps.ects ?? false %}
+                            <input type="number" min="0" step="0.5" name="ects" value="{{ n.getAttribute('ects') }}" data-col="ects"
+                                   data-quick-grid-target="input" class="qg-input" aria-label="ECTS — {{ label }}">
+                        {% else %}<span class="qg-na">—</span>{% endif %}
+                    </td>
+                    {% for pk, pl in places %}
+                        {% for mk, ml in mods %}
+                            <td>
+                                {% if caps.hours ?? false %}
+                                    <input type="number" min="0" step="0.5" name="hours[{{ pk }}][{{ mk }}]" value="{{ h[pk][mk] ?? '' }}"
+                                           data-col="{{ pk }}_{{ mk }}" data-quick-grid-target="input" class="qg-input"
+                                           aria-label="{{ ml }} {{ pl|lower }} — {{ label }}">
+                                {% else %}<span class="qg-na">—</span>{% endif %}
+                            </td>
+                        {% endfor %}
+                    {% endfor %}
+                    <td>
+                        {% if caps.hours ?? false %}
+                            <input type="number" min="0" step="0.5" name="hours[te]" value="{{ h.te ?? '' }}" data-col="te"
+                                   data-quick-grid-target="input" class="qg-input" aria-label="TE — {{ label }}">
+                        {% else %}<span class="qg-na">—</span>{% endif %}
+                    </td>
+                    <td class="qg-total" data-total="hours">{{ v.totalHours|round(1) }} h</td>
+                    <td><span class="qg-status" data-quick-grid-target="status" role="status" aria-live="polite"></span></td>
+                </tr>
+            {% endif %}
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+<p class="mt-3 text-xs text-gray-400">{{ 'formation.quick_grid.keyboard_help'|trans({}, 'formation') }}</p>
+{% endblock %}

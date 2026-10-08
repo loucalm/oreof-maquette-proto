@@ -36,6 +36,9 @@
                 <button type="submit" {{ canRedo ? '' : 'disabled' }} title="{{ 'formation.editor.redo_title'|trans({}, 'formation') }}" class="quickbar-icon-btn">{{ ux_icon('ph:arrow-clockwise', {class: 'icon'}) }}</button>
             </form>
             <a href="{{ path('formation_check', {id: formation.id}) }}" class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:check-square-offset', {class: 'icon'}) }} {{ 'formation.editor.check_link'|trans({}, 'formation') }}</a>
+            <a href="{{ path('formation_quick_grid', {id: formation.id}|merge({parcours: parcours.id})) }}"
+               class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+               style="border-color:var(--c-border)">{{ ux_icon('ph:table', {class: 'icon'}) }} {{ 'formation.editor.quick_grid_link'|trans({}, 'formation') }}</a>
             <a href="{{ path('formation_view', {id: formation.id}) }}" class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:eye', {class: 'icon'}) }} {{ 'formation.editor.view_sheet'|trans({}, 'formation') }}</a>
         </div>
     </div>

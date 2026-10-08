@@ -78,6 +78,7 @@ formation:
     back_to_list: Retour à la liste des formation
     breadcrumb_list: Liste des formations
     check_link: Vérifier la saisie
+    quick_grid_link: Saisie rapide
     meta_domaine: Domaine
     meta_domaine_default: Non défini
     meta_diplome: Type diplôme
@@ -260,6 +261,17 @@ formation:
     enriched_note: 'libellés de type résolus, référence hiérarchique, agrégats heures / ECTS, statut'
     copy_button: Copier
     download_button: Télécharger .json
+  quick_grid:
+    title: Saisie rapide ECTS et heures
+    subtitle: Tout se saisit sur une page ; chaque ligne s’enregistre seule, une seconde après la frappe.
+    back: Retour à l’éditeur
+    parcours_nav: Parcours
+    empty: Aucun élément pédagogique à saisir. Construisez d’abord la structure.
+    caption: ECTS et volumes horaires par élément pédagogique
+    col_element: Élément pédagogique
+    col_total: Total
+    col_status: Enregistrement
+    keyboard_help: 'Clavier : Entrée ou ↓ ligne suivante, ↑ ligne précédente, ← → cellule voisine. Les totaux et écarts aux cibles se mettent à jour à chaque enregistrement.'
   check:
     sections_title: Paramètres à compléter
     title_prefix: Vérifier la saisie

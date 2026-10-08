@@ -64,7 +64,11 @@ final class Maquette
      *                                              révision-cible restaurée, pour que l'historique
      *                                              puisse reconstituer le chemin actuel.
      */
-    public function save(Formation $formation, MaquetteDoc $doc, ?string $label = null, ?FormationRevision $restoredFrom = null): void
+    /**
+     * @param bool $coalesce une rafale de modifications de même libellé (ex. saisie rapide, enregistrée
+     *                       ligne à ligne) ne crée qu'UNE révision : l'état d'avant la rafale
+     */
+    public function save(Formation $formation, MaquetteDoc $doc, ?string $label = null, ?FormationRevision $restoredFrom = null, bool $coalesce = false): void
     {
         $doc->reindex();
         $id = $formation->getId() ?? spl_object_id($formation);
@@ -78,6 +82,9 @@ final class Maquette
         if ($before !== null && $formation->getId() !== null) {
             $after = $this->snapshotOf($formation);
             $label ??= $this->describeChange($before, $after);
+            if ($label !== null && $coalesce && $this->continuesBurst($formation, $label)) {
+                $label = null; // la révision de début de rafale couvre déjà cet état
+            }
             if ($label !== null) {
                 $revision = new FormationRevision($formation, $label, $before);
                 if ($restoredFrom !== null) {
@@ -453,5 +460,15 @@ final class Maquette
         }
 
         return $node;
+    }
+
+    /** La dernière révision porte-t-elle ce libellé et date-t-elle de moins de 10 minutes ? */
+    private function continuesBurst(Formation $formation, string $label): bool
+    {
+        $top = $this->revisions->findRecentFor($formation, 1)[0] ?? null;
+
+        return null !== $top
+            && $top->getLabel() === $label
+            && $top->getCreatedAt() > new \DateTimeImmutable('-10 minutes');
     }
 }
