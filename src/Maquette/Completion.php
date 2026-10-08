@@ -35,8 +35,13 @@ final class Completion
     public function node(TreeNode $node): array
     {
         $caps = $node->effectiveCapabilities();
-        $req = 1; // libellé, requis partout
-        $filled = trim($node->getLabel()) !== '' ? 1 : 0;
+        $req = 0;
+        $filled = 0;
+        // libellé requis partout, sauf types temporels (nom calculé, jamais saisi)
+        if (!$node->getType()->isTemporel()) {
+            $req = 1;
+            $filled = trim($node->getLabel()) !== '' ? 1 : 0;
+        }
 
         if (($caps['code'] ?? false) && 'ec' === $node->getType()->getKey()) {
             ++$req;

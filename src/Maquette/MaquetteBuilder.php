@@ -169,7 +169,7 @@ final class MaquetteBuilder
     private function missingFields(TreeNode $node): array
     {
         $missing = [];
-        if (trim($node->getLabel()) === '') {
+        if (!$node->getType()->isTemporel() && trim($node->getLabel()) === '') {
             $missing[] = 'libellé';
         }
         $caps = $node->effectiveCapabilities();

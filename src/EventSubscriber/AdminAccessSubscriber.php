@@ -18,10 +18,16 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 final class AdminAccessSubscriber
 {
     /** @var list<string> */
-    private const ADMIN_PREFIXES = ['admin_', 'node_type_', 'field_', 'template_', 'role_', 'referentiel_'];
+    private const ADMIN_PREFIXES = ['admin_', 'node_type_', 'field_', 'template_', 'role_', 'referentiel_', 'mcctype_'];
 
     /** Routes hors prefixe mais réservées à l'admin (édition du métamodèle par nœud). */
-    private const ADMIN_ROUTES = ['node_params', 'node_params_form'];
+    private const ADMIN_ROUTES = [
+        'node_params',
+        'node_params_form',
+        'formation_structure_save',
+        'formation_apply_template',
+        'formation_reset',
+    ];
 
     /** Routes à prefixe admin mais accessibles au responsable (action côté formation). */
     private const ALLOWED = ['template_from_formation', 'role_switch', 'referentiel_quick_add'];

@@ -298,11 +298,24 @@ final class TemplateController extends AbstractController
         $template = (new StructureTemplate($key, $label))
             ->setDescription('Créé depuis la formation « '.$formation->getName().' ».')
             ->setAvecParcours($formation->isAvecParcours())
+            ->setStructure($formation->getStructure())
+            ->setCalendarUnit($formation->getCalendarUnit())
+            ->setCalendarSpan($formation->getCalendarSpan())
             ->setTree($this->serialize($this->maquette->open($formation)->pedagogicalRoots()));
+
+        // un seul template par diplôme : on ne rattache que si le diplôme est encore libre
+        $diplome = $formation->getDiplome();
+        $diplomeFree = null !== $diplome && null === $repo->findOneByDiplome($diplome);
+        if ($diplomeFree) {
+            $template->setDiplome($diplome);
+        }
 
         $this->em->persist($template);
         $this->em->flush();
         $this->addFlash('success', sprintf('Template « %s » créé à partir de cette structure.', $label));
+        if (null !== $diplome && !$diplomeFree) {
+            $this->addFlash('warning', sprintf('Un template existe déjà pour le diplôme « %s » : le nouveau n\'y est pas rattaché.', $diplome));
+        }
 
         return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);
     }

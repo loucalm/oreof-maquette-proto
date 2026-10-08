@@ -14,6 +14,7 @@ use App\Repository\FieldDefRepository;
 use App\Repository\FormationRepository;
 use App\Repository\NodeTypeRepository;
 use App\Repository\StructureTemplateRepository;
+use App\Twig\RoleExtension;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -25,6 +26,8 @@ final class FormationController extends AbstractController
 {
     public function __construct(
         private readonly Maquette $maquette,
+        private readonly RoleExtension $roles,
+        private readonly StructureTemplateRepository $templates,
     ) {
     }
 
@@ -355,6 +358,14 @@ final class FormationController extends AbstractController
         $wasMulti = $formation->isAvecParcours();
         $willMulti = $request->request->getBoolean('avecParcours');
 
+        // hors admin, un template imposé pour le diplôme fige avec/sans parcours et la dimension temporelle
+        $lockedByTemplate = 'admin' !== $this->roles->role()
+            && null !== $formation->getDiplome()
+            && null !== $this->templates->findOneByDiplome($formation->getDiplome());
+        if ($lockedByTemplate) {
+            $willMulti = $wasMulti;
+        }
+
         $doc = $this->maquette->open($formation);
 
         $formation
@@ -371,10 +382,10 @@ final class FormationController extends AbstractController
                 ? $request->request->getInt('ectsTotal') : null);
         }
 
-        if ($request->request->has('calendarUnit')) {
+        if (!$lockedByTemplate && $request->request->has('calendarUnit')) {
             $formation->setCalendarUnit($request->request->get('calendarUnit'));
         }
-        if ($request->request->has('calendarSpan')) {
+        if (!$lockedByTemplate && $request->request->has('calendarSpan')) {
             $formation->setCalendarSpan($request->request->get('calendarSpan') !== ''
                 ? $request->request->getInt('calendarSpan') : null);
         }
@@ -476,7 +487,7 @@ final class FormationController extends AbstractController
             foreach ($p->getChildren() as $child) { // snapshot : moveNode reconstruit children
                 $doc->moveNode($child, null, PHP_INT_MAX);
             }
-            $doc->removeNode($p);
+            $doc->removeNode($p, true); // contenu déjà remonté : un parcours imposé ne doit pas rester orphelin
         }
 
         return true;
@@ -583,11 +594,19 @@ final class FormationController extends AbstractController
     public function reset(Formation $formation): Response
     {
         $doc = $this->maquette->open($formation);
+        $kept = 0;
         foreach ($doc->pedagogicalRoots() as $root) {
-            $doc->removeNode($root);
+            if (!$doc->removeNode($root)) {
+                ++$kept;
+            }
         }
         $this->maquette->save($formation, $doc);
-        $this->addFlash('info', 'Structure vidée.');
+        $this->addFlash(
+            $kept > 0 ? 'warning' : 'info',
+            $kept > 0
+                ? sprintf('Structure vidée, sauf %d élément(s) imposé(s) par le template (non supprimables).', $kept)
+                : 'Structure vidée.',
+        );
 
         return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);
     }

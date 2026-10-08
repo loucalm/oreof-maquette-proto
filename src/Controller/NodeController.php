@@ -63,7 +63,10 @@ final class NodeController extends AbstractController
         $doc = $this->maquette->open($formation);
         $node = $this->pick($doc, $nid);
 
-        $node->setLabel(trim((string) $request->request->get('label')));
+        // le libellé d'un type temporel est calculé (jamais saisi) : ne pas l'écraser
+        if (!$node->getType()->isTemporel()) {
+            $node->setLabel(trim((string) $request->request->get('label')));
+        }
         $node->setCode(trim((string) $request->request->get('code')) ?: null);
 
         if ($request->request->has('parentId')) {
@@ -286,7 +289,14 @@ final class NodeController extends AbstractController
         }
 
         $parcours = $this->parcoursAncestor($node);
-        $doc->removeNode($node);
+        if (!$doc->removeNode($node)) {
+            $this->addFlash('warning', sprintf(
+                '« %s » contient un élément imposé par le diplôme : il ne peut pas être supprimé.',
+                $node->getDisplayLabel(),
+            ));
+
+            return $this->editorRedirect($node);
+        }
         $this->maquette->save($formation, $doc);
         $this->addFlash('info', 'ELP supprimé.');
 
