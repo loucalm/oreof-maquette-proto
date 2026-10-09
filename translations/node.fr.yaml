@@ -15,9 +15,6 @@ node:
     actions_aria: Actions sur l’élément
     shift_up: Monter d’un cran
     shift_down: Descendre d’un cran
-    duplicate: Dupliquer
-    delete: Supprimer
-    delete_confirm: Supprimer « %label% » et tout ce qu’il contient ?
     missing_title: '{1}1 champ à compléter :|]1,Inf[%count% champs à compléter :'
     move_summary: Déplacer vers un autre élément…
     unsaved: Modifications non enregistrées

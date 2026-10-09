@@ -459,8 +459,14 @@ li:not(.collapsed) > .tree-row > .tree-chevron { transform: rotate(90deg); }
 }
 
 /* ── panneau d'ELP : actions, champs manquants, enregistrement ── */
-.panel-node-actions { display: flex; gap: 6px; margin-top: 10px; }
-.panel-node-actions form { display: contents; }
+/* titre du panneau + monter / descendre, joints en un seul bloc à droite */
+.panel-head-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.panel-move { display: inline-flex; flex: 0 0 auto; border: 1px solid var(--c-border); border-radius: 8px; background: #fff; overflow: hidden; }
+.panel-move form { display: contents; }
+.panel-move-btn { display: grid; place-items: center; width: 32px; height: 30px; color: #4b5563; }
+.panel-move form + form .panel-move-btn { border-left: 1px solid var(--c-border); }
+.panel-move-btn:hover { background: #f3f4f6; color: var(--c-primary); }
+.panel-move-btn:focus-visible { outline: 2px solid var(--c-primary); outline-offset: -2px; }
 .icon-btn {
     display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 8px;
     border: 1px solid var(--c-border); background: #fff; color: #4b5563;
@@ -484,7 +490,9 @@ li:not(.collapsed) > .tree-row > .tree-chevron { transform: rotate(90deg); }
 .field-flash { box-shadow: 0 0 0 3px #fcd34d; border-radius: 8px; transition: box-shadow .3s; }
 .move-box { border: 1px dashed var(--c-border); border-radius: 10px; padding: 10px 12px; }
 .panel-savebar {
-    position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; gap: 12px;
+    /* bottom négatif = padding bas de .panel-scroll (28px) : la barre colle au bord réel du panneau,
+       sinon le contenu défile encore visible sous elle */
+    position: sticky; bottom: -28px; z-index: 5; display: flex; align-items: center; gap: 12px;
     margin: 0 -4px; padding: 12px 4px; background: #fff; border-top: 1px solid var(--c-border);
 }
 form.is-dirty .panel-savebar { box-shadow: 0 -6px 12px -10px rgba(180, 83, 9, .5); }

@@ -13,7 +13,18 @@
 <div class="panel-body" data-controller="tabs modal" data-tabs-key-value="{{ formation.id }}:{{ node.id }}" data-panel-active="node:{{ node.id }}">
 
     <div class="panel-head">
-        <h2 class="text-xl font-bold">{{ 'node.panel.title'|trans({}, 'node') }}</h2>
+        <div class="panel-head-top">
+            <h2 class="text-xl font-bold">{{ 'node.panel.title'|trans({}, 'node') }}</h2>
+            {# déplacer l'élément parmi ses frères : alternative au glisser-déposer, accessible au clavier.
+               Dupliquer / supprimer sont dans la barre de l'arbre. #}
+            <div class="panel-move" role="group" aria-label="{{ 'node.panel.actions_aria'|trans({}, 'node') }}">
+                {% for dir in ['up', 'down'] %}
+                    <form method="post" action="{{ path('node_shift', {fid: formation.id, nid: node.id, dir: dir}) }}" data-turbo-frame="_top">
+                        <button class="panel-move-btn" title="{{ ('node.panel.shift_' ~ dir)|trans({}, 'node') }}" aria-label="{{ ('node.panel.shift_' ~ dir)|trans({}, 'node') }}">{{ ux_icon(dir == 'up' ? 'ph:arrow-up' : 'ph:arrow-down', {class: 'icon'}) }}</button>
+                    </form>
+                {% endfor %}
+            </div>
+        </div>
         <div class="text-sm text-gray-400">
             {{ T }}{% if view.ref %} <span class="font-bold" style="color:var(--c-primary)">{{ view.ref }}</span>{% endif %}
             {%- if node.isLocked('delete') %} <span class="imposed-badge" title="{{ 'node.panel.locked_title'|trans({}, 'node') }}">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ 'node.panel.imposed_badge'|trans({}, 'node') }}</span>{% endif -%}
@@ -45,25 +56,6 @@
                 {{ ux_icon('ph:flag', {class: 'icon'}) }} {{ 'derogation.tracking.node_status'|trans({'%status%': d.status.label|lower, '%date%': (d.resolvedAt ?? d.createdAt)|date('d/m/Y')}, 'derogation') }}{% if d.adminNote %} — {{ d.adminNote }}{% endif %}
             </div>
         {% endfor %}
-        {# actions du nœud : à portée de main, accessibles au clavier (alternative au glisser-déposer) #}
-        <div class="panel-node-actions" role="toolbar" aria-label="{{ 'node.panel.actions_aria'|trans({}, 'node') }}">
-            {% for dir in ['up', 'down'] %}
-            <form method="post" action="{{ path('node_shift', {fid: formation.id, nid: node.id, dir: dir}) }}" data-turbo-frame="_top">
-                <button class="icon-btn" title="{{ ('node.panel.shift_' ~ dir)|trans({}, 'node') }}" aria-label="{{ ('node.panel.shift_' ~ dir)|trans({}, 'node') }}">{{ ux_icon(dir == 'up' ? 'ph:arrow-up' : 'ph:arrow-down', {class: 'icon'}) }}</button>
-            </form>
-            {% endfor %}
-            {% if not node.isLocked('duplicate') %}
-            <form method="post" action="{{ node_url(node, 'node_duplicate') }}" data-turbo-frame="_top">
-                <button class="icon-btn" title="{{ 'node.panel.duplicate'|trans({}, 'node') }}" aria-label="{{ 'node.panel.duplicate'|trans({}, 'node') }}">{{ ux_icon('ph:copy', {class: 'icon'}) }}</button>
-            </form>
-            {% endif %}
-            {% if not node.isLocked('delete') %}
-            <form method="post" action="{{ node_url(node, 'node_delete') }}" data-turbo-frame="_top"
-                  data-controller="confirm" data-confirm-message-value="{{ 'node.panel.delete_confirm'|trans({'%label%': node.getDisplayLabel()}, 'node') }}">
-                <button class="icon-btn icon-btn--danger" title="{{ 'node.panel.delete'|trans({}, 'node') }}" aria-label="{{ 'node.panel.delete'|trans({}, 'node') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
-            </form>
-            {% endif %}
-        </div>
     </div>
 
     <div class="panel-scroll">
