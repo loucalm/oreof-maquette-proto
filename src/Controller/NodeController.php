@@ -10,6 +10,7 @@ use App\Maquette\Doc\MaquetteDoc;
 use App\Maquette\Doc\TreeNode;
 use App\Maquette\Maquette;
 use App\Maquette\MaquetteBuilder;
+use App\Maquette\NodeClipboard;
 use App\Repository\NodeTypeRepository;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -473,6 +474,48 @@ final class NodeController extends AbstractController
         $this->maquette->save($formation, $doc, sprintf('« %s » mis à jour depuis sa source', $copy->getDisplayLabel()));
 
         return $this->backToEditor($copy, 'Copie mise à jour depuis la source.');
+    }
+
+    /**
+     * « Copier » : retient les données remplies de l'élément (hors libellé et code) pour les
+     * coller sur un autre élément du même type. Ne modifie rien : pas d'historique ni d'annulation.
+     */
+    #[Route('/formations/{fid}/nodes/{nid}/copier', name: 'node_copy', methods: ['POST'])]
+    public function copy(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid, NodeClipboard $clipboard): Response
+    {
+        $node = $this->pick($this->maquette->open($formation), $nid);
+        $clip = $clipboard->copy($node);
+        $this->addFlash('info', [] === $clip['attributes']
+            ? sprintf('« %s » ne contient encore aucune donnée à copier.', $node->getDisplayLabel())
+            : sprintf('Données de « %s » copiées (%d champ(s)). Ouvrir un autre %s et « Coller ».', $node->getDisplayLabel(), \count($clip['attributes']), $clip['typeLabel']));
+
+        return $this->editorRedirect($node);
+    }
+
+    /** « Coller » : applique les données copiées sur cet élément (même type d'ELP seulement). */
+    #[Route('/formations/{fid}/nodes/{nid}/coller', name: 'node_paste', methods: ['POST'])]
+    public function paste(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid, NodeClipboard $clipboard): Response
+    {
+        $doc = $this->maquette->open($formation);
+        $node = $this->pick($doc, $nid);
+
+        if (null !== ($reason = $clipboard->blockedReason($node))) {
+            $this->addFlash('warning', match ($reason) {
+                NodeClipboard::BLOCKED_EMPTY => 'Rien à coller : copier d\'abord les données d\'un élément.',
+                NodeClipboard::BLOCKED_TYPE => sprintf('Les données copiées viennent d\'un « %s » : elles ne se collent que sur le même type d\'élément.', $clipboard->get()['typeLabel'] ?? '?'),
+                NodeClipboard::BLOCKED_PHASE => 'Consolidation de l\'offre : seul le squelette est modifiable, le contenu se colle à la construction.',
+                NodeClipboard::BLOCKED_SELF => 'Ce sont les données de cet élément : rien à coller.',
+                default => 'Aucun champ copié n\'est utilisé par cet élément.',
+            });
+
+            return $this->editorRedirect($node);
+        }
+
+        $from = $clipboard->get()['label'] ?? '';
+        $count = $clipboard->paste($node);
+        $this->maquette->save($formation, $doc, sprintf('Données de « %s » collées sur « %s »', $from, $node->getDisplayLabel()));
+
+        return $this->backToEditor($node, sprintf('%d champ(s) collé(s) depuis « %s ».', $count, $from));
     }
 
     #[Route('/formations/{fid}/nodes/{nid}/convertir-choix', name: 'node_convert_choice', methods: ['POST'])]

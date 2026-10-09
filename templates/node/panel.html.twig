@@ -15,14 +15,29 @@
     <div class="panel-head">
         <div class="panel-head-top">
             <h2 class="text-xl font-bold">{{ 'node.panel.title'|trans({}, 'node') }}</h2>
-            {# déplacer l'élément parmi ses frères : alternative au glisser-déposer, accessible au clavier.
-               Dupliquer / supprimer sont dans la barre de l'arbre. #}
-            <div class="panel-move" role="group" aria-label="{{ 'node.panel.actions_aria'|trans({}, 'node') }}">
-                {% for dir in ['up', 'down'] %}
-                    <form method="post" action="{{ path('node_shift', {fid: formation.id, nid: node.id, dir: dir}) }}" data-turbo-frame="_top">
-                        <button class="panel-move-btn" title="{{ ('node.panel.shift_' ~ dir)|trans({}, 'node') }}" aria-label="{{ ('node.panel.shift_' ~ dir)|trans({}, 'node') }}">{{ ux_icon(dir == 'up' ? 'ph:arrow-up' : 'ph:arrow-down', {class: 'icon'}) }}</button>
+            {# déplacer l'élément parmi ses frères (alternative au glisser-déposer, accessible au clavier) puis
+               copier / coller ses données. Dupliquer et supprimer sont dans la barre de l'arbre. #}
+            {% set clipboard = node_clipboard(node) %}
+            <div class="panel-tools">
+                <div class="panel-move" role="group" aria-label="{{ 'node.panel.actions_aria'|trans({}, 'node') }}">
+                    {% for dir in ['up', 'down'] %}
+                        <form method="post" action="{{ path('node_shift', {fid: formation.id, nid: node.id, dir: dir}) }}" data-turbo-frame="_top">
+                            <button class="panel-move-btn" title="{{ ('node.panel.shift_' ~ dir)|trans({}, 'node') }}" aria-label="{{ ('node.panel.shift_' ~ dir)|trans({}, 'node') }}">{{ ux_icon(dir == 'up' ? 'ph:arrow-up' : 'ph:arrow-down', {class: 'icon'}) }}</button>
+                        </form>
+                    {% endfor %}
+                </div>
+                <div class="panel-move" role="group" aria-label="{{ 'node.panel.clipboard_aria'|trans({}, 'node') }}">
+                    <form method="post" action="{{ node_url(node, 'node_copy') }}" data-turbo-frame="_top">
+                        <button class="panel-move-btn" title="{{ 'node.panel.copy_title'|trans({'%type%': T}, 'node') }}" aria-label="{{ 'node.panel.copy_title'|trans({'%type%': T}, 'node') }}">{{ ux_icon('ph:copy', {class: 'icon'}) }}</button>
                     </form>
-                {% endfor %}
+                    {% set blocked = clipboard.blocked %}
+                    <form method="post" action="{{ node_url(node, 'node_paste') }}" data-turbo-frame="_top">
+                        {% set pasteTitle = blocked
+                            ? ('node.panel.paste_blocked_' ~ blocked)|trans({'%type%': clipboard.clip.typeLabel ?? '', '%current%': T}, 'node')
+                            : 'node.panel.paste_title'|trans({'%label%': clipboard.clip.label ?? '', '%count%': (clipboard.clip.attributes ?? [])|length}, 'node') %}
+                        <button class="panel-move-btn {{ blocked ? '' : 'panel-move-btn--ready' }}" {{ blocked ? 'disabled' }} title="{{ pasteTitle }}" aria-label="{{ pasteTitle }}">{{ ux_icon('ph:clipboard-text', {class: 'icon'}) }}</button>
+                    </form>
+                </div>
             </div>
         </div>
         <div class="text-sm text-gray-400">

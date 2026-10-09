@@ -38,6 +38,7 @@ final class MaquetteExtension extends AbstractExtension
         private readonly FieldDefRepository $fields,
         private readonly \App\Validation\TabValidator $validator,
         private readonly \App\Maquette\BccReferences $bccRefs,
+        private readonly \App\Maquette\NodeClipboard $clipboard,
     ) {
     }
 
@@ -68,6 +69,8 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('node_tab_status', $this->nodeTabStatus(...)),
             new TwigFunction('node_missing', fn (TreeNode $n) => $this->completion->missing($n)),
             new TwigFunction('mutualization_source', fn (TreeNode $n) => $this->maquette->mutualizationSource($n)),
+            // presse-papiers « Copier / Coller » : contenu copié + raison du blocage éventuel pour ce nœud
+            new TwigFunction('node_clipboard', fn (TreeNode $n) => ['clip' => $this->clipboard->get(), 'blocked' => $this->clipboard->blockedReason($n)]),
             new TwigFunction('bcc_competences', $this->bccCompetences(...)),
             new TwigFunction('bcc_competence_titles', $this->bccCompetenceTitles(...)),
             new TwigFunction('period_unit', $this->periodUnit(...)),

@@ -1,6 +1,14 @@
 node:
   panel:
     title: Gestion de la structure
+    clipboard_aria: Copier et coller les données de cet élément
+    copy_title: 'Copier les données enregistrées de cet élément (%type%) — sans le libellé ni le code'
+    paste_title: 'Coller les données de « %label% » (%count% champ(s)) sur cet élément ; le libellé et le code ne changent pas'
+    paste_blocked_empty: "Rien à coller : copier d'abord les données d'un élément du même type"
+    paste_blocked_type: 'Les données copiées sont celles d''un « %type% » : elles ne se collent que sur le même type d''élément (ici : %current%)'
+    paste_blocked_phase: "Consolidation de l'offre : seul le squelette est modifiable"
+    paste_blocked_self: "Ce sont les données de cet élément : rien à coller"
+    paste_blocked_no_field: Aucun champ copié n'est utilisé par cet élément
     locked_title: Cet ELP fait partie de la structure imposée par le diplôme
     locked_badge: imposé
     imposed_badge: Imposé par le diplôme
