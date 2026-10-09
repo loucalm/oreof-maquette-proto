@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\FieldDef;
 use App\Enum\RefCategory;
 use App\Repository\DerogationRequestRepository;
+use App\Repository\FieldDefRepository;
 use App\Repository\MccTypeRepository;
 use App\Repository\NodeTypeRepository;
 use App\Repository\ReferentielRepository;
 use App\Repository\StructureTemplateRepository;
 use App\Service\TranslationFileManager;
+use App\Validation\TabValidator;
+use App\Validation\ValidationRule;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -28,6 +32,7 @@ final class AdminController extends AbstractController
         'templates' => ['label' => 'Templates de structure', 'route' => 'template_index', 'icon' => 'ph:folders'],
         'referentiels' => ['label' => 'Référentiels', 'route' => 'admin_referentiels', 'icon' => 'ph:books'],
         'mcctypes' => ['label' => 'Types de MCCC', 'route' => 'admin_mcctypes', 'icon' => 'ph:list-checks'],
+        'validations' => ['label' => 'Règles de validation', 'route' => 'admin_validations', 'icon' => 'ph:check-square-offset'],
         'derogations' => ['label' => 'Dérogations', 'route' => 'admin_derogations', 'icon' => 'ph:flag'],
         'traductions' => ['label' => 'Traductions', 'route' => 'admin_traductions', 'icon' => 'ph:translate'],
     ];
@@ -86,6 +91,30 @@ final class AdminController extends AbstractController
                 ],
             ],
         ]);
+    }
+
+    /**
+     * Toutes les règles de validation des onglets, type par type : la vue
+     * d'ensemble de ce qui pilote les pastilles. Elles se modifient dans
+     * l'éditeur de chaque type (au plus près de ses champs).
+     */
+    #[Route('/administration/regles-de-validation', name: 'admin_validations', methods: ['GET'])]
+    public function validations(NodeTypeRepository $types, FieldDefRepository $fields, TabValidator $validator): Response
+    {
+        $rows = [];
+        foreach ($types->findAllOrdered() as $type) {
+            $bounded = array_values(array_filter(
+                $fields->activeOrderedFor($type),
+                static fn (FieldDef $f) => null !== $f->getMin() || null !== $f->getMax(),
+            ));
+            $rules = array_map(static fn (ValidationRule $r) => ['tab' => $r->tab, 'text' => $validator->describe($r)], $type->getValidationRules());
+            if ([] === $rules && [] === $bounded) {
+                continue;
+            }
+            $rows[] = ['type' => $type, 'rules' => $rules, 'bounded' => $bounded];
+        }
+
+        return $this->render('admin/validations.html.twig', ['rows' => $rows]);
     }
 
     #[Route('/administration/referentiels', name: 'admin_referentiels', methods: ['GET'])]

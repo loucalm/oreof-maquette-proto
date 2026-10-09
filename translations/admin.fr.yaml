@@ -17,6 +17,15 @@ admin:
     where_common: >-
       Ici on définit ce qui est <strong>commun</strong> : les types, les champs, les squelettes et les
       listes de valeurs.
+  validations:
+    title: Règles de validation
+    heading: Règles de validation
+    description: >-
+      Ce qui s’ajoute aux champs obligatoires pour colorer les pastilles des onglets : règles
+      « obligatoire sous condition » et « au moins un parmi », bornes des champs. Elles se modifient
+      dans l’éditeur de chaque type, sous chaque onglet.
+    bounds_label: 'Bornes :'
+    empty: Aucune règle pour l’instant. Les ajouter depuis l’éditeur d’un type d’élément pédagogique.
   referentiels:
     title: Référentiel
     heading: Référentiel

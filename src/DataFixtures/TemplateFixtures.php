@@ -32,7 +32,9 @@ final class TemplateFixtures extends Fixture implements DependentFixtureInterfac
             ->setStructure(['annee', 'semestre', 'ue', 'ec'])
             ->setCalendarUnit('Année')
             ->setCalendarSpan(3)
-            ->setTree($this->butTree());
+            ->setTree($this->butTree())
+            ->setBccFormat(StructureTemplate::BCC_BUT)
+            ->setBccReferentiel($this->butReferentiel());
         $manager->persist($but);
 
         $licence = (new StructureTemplate('licence_lmd', 'Licence LMD'))
@@ -58,6 +60,45 @@ final class TemplateFixtures extends Fixture implements DependentFixtureInterfac
         $manager->persist($master);
 
         $manager->flush();
+    }
+
+    /**
+     * Référentiel national BUT de démonstration (dans ORéOF : synchronisé depuis
+     * l'API des référentiels) — 2 compétences, 3 niveaux (BUT1 à BUT3), quelques AC.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function butReferentiel(): array
+    {
+        $niveau = static fn (int $c, int $n, string $libelle, array $acs) => [
+            'ordre' => $n,
+            'annee' => 'BUT'.$n,
+            'libelle' => $libelle,
+            'acs' => array_map(
+                static fn (int $i, string $l) => ['code' => sprintf('AC%d%d.%02d', $n, $c, $i + 1), 'libelle' => $l],
+                array_keys($acs),
+                $acs,
+            ),
+        ];
+
+        return [
+            [
+                'numero' => 1, 'nomCourt' => 'Réaliser', 'libelle' => 'Réaliser un développement d’application',
+                'niveaux' => [
+                    $niveau(1, 1, 'Développer des applications simples', ['Implémenter une conception simple', 'Tester le bon fonctionnement d’un programme']),
+                    $niveau(1, 2, 'Partir des exigences et aller jusqu’à une application complète', ['Concevoir une application à partir d’un cahier des charges', 'Intégrer des composants existants']),
+                    $niveau(1, 3, 'Adapter des applications sur un ensemble de supports', ['Choisir une architecture adaptée au support', 'Assurer la maintenance évolutive']),
+                ],
+            ],
+            [
+                'numero' => 2, 'nomCourt' => 'Optimiser', 'libelle' => 'Optimiser des applications',
+                'niveaux' => [
+                    $niveau(2, 1, 'Appréhender et construire des algorithmes', ['Analyser un problème avec méthode', 'Comparer des algorithmes pour un même problème']),
+                    $niveau(2, 2, 'Sélectionner les algorithmes adéquats', ['Choisir des structures de données adaptées', 'Mesurer la performance d’un programme']),
+                    $niveau(2, 3, 'Analyser et optimiser des applications', ['Profiler une application', 'Justifier les choix d’optimisation']),
+                ],
+            ],
+        ];
     }
 
     /** @return list<array<string, mixed>> */

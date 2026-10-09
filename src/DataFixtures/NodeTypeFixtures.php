@@ -7,6 +7,7 @@ namespace App\DataFixtures;
 use App\Entity\NodeType;
 use App\Enum\NodeFamily;
 use App\Enum\NodeKind;
+use App\Validation\ValidationRule;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 
@@ -87,13 +88,26 @@ final class NodeTypeFixtures extends Fixture
             ['param_presentation_parcours', 'Présentation', 'ph:notepad', 122, $presParcours],
             ['param_bcc_parcours', 'BCC', 'ph:graduation-cap', 124, []],
         ];
+        // règles d'onglet de démonstration (cf. App\Validation\ValidationRule)
+        $rules = [
+            'param_organisation_formation' => [
+                new ValidationRule('rncp_code', ValidationRule::REQUIRED_IF, 'organisation', ['codeRncp'], 'rncp', 'eq', 'oui'),
+            ],
+            'param_organisation_parcours' => [
+                new ValidationRule('alternance', ValidationRule::REQUIRED_IF, 'organisation', ['modalitesAlternance'], 'regimes', 'contains', 'FI_APP'),
+            ],
+        ];
         foreach ($paramDefs as [$key, $label, $icon, $position, $fieldKeys]) {
-            $manager->persist((new NodeType($key, $label))
+            $type = (new NodeType($key, $label))
                 ->setIcon($icon)
                 ->setFamily(NodeFamily::Parameter)
                 ->setPosition($position)
                 ->setCapabilities(array_fill_keys($fieldKeys, true))
-                ->setSystem(true));
+                ->setSystem(true);
+            foreach ($rules[$key] ?? [] as $rule) {
+                $type->addValidationRule($rule);
+            }
+            $manager->persist($type);
         }
 
         $manager->flush();

@@ -13,11 +13,13 @@
     <form method="post" action="{{ saveUrl }}" data-turbo-frame="_top"
           data-controller="autosave" data-autosave-key-value="{{ key }}" class="panel-card space-y-5">
 
+        {% set issues = parcours_param_issues(parcours, key) %}
+        {% set hints = field_rule_hints('param_' ~ key ~ '_parcours') %}
         {% for f in fields %}
             {% if f.type == 'separator' %}
                 {{ fld.divider(f.label) }}
             {% else %}
-                <div>{{ fld.field(f.key, f, data) }}</div>
+                <div>{{ fld.field(f.key, f, data, issues[f.key] ?? [], hints[f.key] ?? null) }}</div>
             {% endif %}
         {% endfor %}
 

@@ -41,18 +41,18 @@ final class ReferentielController extends AbstractController
                 $referentiel->setKey($key)->setLabel($label);
             }
 
-            // valeurs : une paire "valeur|libellé" par ligne (libellé optionnel)
+            // valeurs : une ligne par valeur (values_label[] / values_code[]), l'ordre du DOM fait foi
+            $labels = $request->request->all('values_label');
+            $codes = $request->request->all('values_code');
             $values = [];
-            foreach (preg_split('/\r?\n/', (string) $request->request->get('values')) ?: [] as $line) {
-                $line = trim($line);
-                if ($line === '') {
+            foreach ($labels as $i => $label) {
+                $label = trim((string) $label);
+                if ($label === '') {
                     continue;
                 }
-                [$v, $l] = array_pad(explode('|', $line, 2), 2, null);
-                $v = trim((string) $v);
-                if ($v !== '') {
-                    $values[$v] = trim((string) ($l ?? $v)) ?: $v;
-                }
+                $code = trim((string) ($codes[$i] ?? ''));
+                // code facultatif : vide = identique au libellé ; un code en doublon est écrasé par la dernière ligne
+                $values[$code !== '' ? $code : $label] = $label;
             }
 
             $referentiel

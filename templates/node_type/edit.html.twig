@@ -2,17 +2,20 @@
 {% block title %}{{ isNew ? 'node_type.edit.new_title'|trans({}, 'node_type') : nodeType.label }}{% endblock %}
 
 {# ─── formulaire partagé pour ajouter/éditer un champ du formulaire associé ─── #}
-{% macro fieldForm(action, field, referentiels, referentielCapableTypes, fieldTypes, submitLabel, togglableDefault) %}
+{# Les réglages affichés dépendent du type choisi : c'est le registre des types
+   (App\FieldType, cf. fieldTypesConfig) qui dit lesquels, pas ce gabarit. #}
+{% macro fieldForm(action, field, referentiels, fieldTypes, fieldTypesConfig, submitLabel, togglableDefault) %}
     <form method="post" action="{{ action }}" class="grid grid-cols-2 gap-x-3 gap-y-2 rounded-md border p-3" style="border-color:var(--c-border)"
-          data-controller="field-bounds"
-          data-field-bounds-labels-value="{{ {
-              number: ['node_type.edit.field_min_value'|trans({}, 'node_type'), 'node_type.edit.field_max_value'|trans({}, 'node_type'), 'node_type.edit.field_bounds_help_number'|trans({}, 'node_type')],
-              text: ['node_type.edit.field_min_length'|trans({}, 'node_type'), 'node_type.edit.field_max_length'|trans({}, 'node_type'), 'node_type.edit.field_bounds_help_text'|trans({}, 'node_type')],
-              textarea: ['node_type.edit.field_min_length'|trans({}, 'node_type'), 'node_type.edit.field_max_length'|trans({}, 'node_type'), 'node_type.edit.field_bounds_help_text'|trans({}, 'node_type')],
+          data-controller="field-config"
+          data-field-config-types-value="{{ fieldTypesConfig|json_encode }}"
+          data-field-config-bounds-labels-value="{{ {
+              value: ['node_type.edit.field_min_value'|trans({}, 'node_type'), 'node_type.edit.field_max_value'|trans({}, 'node_type'), 'node_type.edit.field_bounds_help_number'|trans({}, 'node_type')],
+              length: ['node_type.edit.field_min_length'|trans({}, 'node_type'), 'node_type.edit.field_max_length'|trans({}, 'node_type'), 'node_type.edit.field_bounds_help_text'|trans({}, 'node_type')],
+              count: ['node_type.edit.field_min_count'|trans({}, 'node_type'), 'node_type.edit.field_max_count'|trans({}, 'node_type'), 'node_type.edit.field_bounds_help_count'|trans({}, 'node_type')],
           }|json_encode }}">
         <label class="block">
             <span class="text-xs font-medium">{{ 'node_type.edit.field_type_field'|trans({}, 'node_type') }}</span>
-            <select name="type" data-field-bounds-target="type" data-action="field-bounds#update" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
+            <select name="type" data-field-config-target="type" data-action="field-config#update" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
                 {% for k, lbl in fieldTypes %}<option value="{{ k }}" {{ (field.type ?? 'text') == k ? 'selected' }}>{{ lbl }}</option>{% endfor %}
             </select>
         </label>
@@ -38,7 +41,7 @@
             <span class="text-xs font-medium">{{ 'node_type.edit.field_help_field'|trans({}, 'node_type') }}</span>
             <input name="help" value="{{ field.help ?? '' }}" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
         </label>
-        <label class="block">
+        <label class="block" data-field-config-target="setting" data-setting="referentiel">
             <span class="text-xs font-medium">{{ 'node_type.edit.field_referentiel_field'|trans({}, 'node_type') }}</span>
             <select name="referentielKey" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
                 <option value="">{{ 'node_type.edit.field_referentiel_none'|trans({}, 'node_type') }}</option>
@@ -47,29 +50,29 @@
             <span class="text-[11px]" style="color:var(--c-muted)">{{ 'node_type.edit.field_referentiel_help'|trans({}, 'node_type') }}</span>
         </label>
         <div class="flex flex-col gap-1 justify-end pb-1">
-            <label class="flex items-center gap-2 text-sm">
+            <label class="flex items-center gap-2 text-sm" data-field-config-target="setting" data-setting="allowExtra">
                 <input type="checkbox" name="allowExtra" value="1" {{ (field.allowExtra ?? false) ? 'checked' }}>
                 {{ 'node_type.edit.field_allow_extra_label'|trans({}, 'node_type') }}
             </label>
-            <label class="flex items-center gap-2 text-sm">
+            <label class="flex items-center gap-2 text-sm" data-field-config-target="setting" data-setting="quickAdd">
                 <input type="checkbox" name="quickAdd" value="1" {{ (field.quickAdd ?? false) ? 'checked' }}>
                 {{ 'node_type.edit.field_quick_add_label'|trans({}, 'node_type') }}
             </label>
         </div>
-        {# bornes : leur sens dépend du type (valeur pour un nombre, longueur pour un texte) ; masquées sinon #}
-        <div class="col-span-2 grid grid-cols-2 gap-x-3" data-field-bounds-target="bounds">
+        {# bornes : leur sens dépend du type (valeur, longueur, nombre de choix) ; masquées si le type n'en a pas #}
+        <div class="col-span-2 grid grid-cols-2 gap-x-3" data-field-config-target="bounds">
             <label class="block">
-                <span class="text-xs font-medium" data-field-bounds-target="minLabel">{{ 'node_type.edit.field_min_field'|trans({}, 'node_type') }}</span>
+                <span class="text-xs font-medium" data-field-config-target="minLabel">{{ 'node_type.edit.field_min_field'|trans({}, 'node_type') }}</span>
                 <input type="number" step="any" name="min" value="{{ field.min ?? '' }}" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
             </label>
             <label class="block">
-                <span class="text-xs font-medium" data-field-bounds-target="maxLabel">{{ 'node_type.edit.field_max_field'|trans({}, 'node_type') }}</span>
+                <span class="text-xs font-medium" data-field-config-target="maxLabel">{{ 'node_type.edit.field_max_field'|trans({}, 'node_type') }}</span>
                 <input type="number" step="any" name="max" value="{{ field.max ?? '' }}" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
             </label>
-            <span class="col-span-2 text-[11px]" style="color:var(--c-muted)" data-field-bounds-target="help"></span>
+            <span class="col-span-2 text-[11px]" style="color:var(--c-muted)" data-field-config-target="boundsHelp"></span>
         </div>
         {% if field is null %}
-            <label class="block col-span-2">
+            <label class="block col-span-2" data-field-config-target="setting" data-setting="options">
                 <span class="text-xs font-medium">{{ 'node_type.edit.field_options_field'|trans({}, 'node_type')|raw }}</span>
                 <textarea name="options" rows="3" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm font-mono" style="border-color:var(--c-border)"></textarea>
             </label>
@@ -82,6 +85,87 @@
             <button class="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ submitLabel }}</button>
         </div>
     </form>
+{% endmacro %}
+
+{# ─── règles de validation d'un onglet : s'ajoutent aux champs obligatoires, pilotent la pastille de l'onglet ─── #}
+{% macro tabRules(nodeType, tab, fields, form, tabRules) %}
+    {% set inputs = fields|filter(f => f.type != 'separator') %}
+    {% set allInputs = [] %}
+    {% for t, fs in form %}{% set allInputs = allInputs|merge(fs|filter(f => f.type != 'separator')) %}{% endfor %}
+    {% set fld = 'mt-1 w-full rounded-md border px-2 py-1.5 text-sm' %}
+    <details class="mt-3 rounded-md border" style="border-color:var(--c-border)" {{ tabRules is not empty ? 'open' }}>
+        <summary class="cursor-pointer px-3 py-2 text-sm font-medium" style="color:var(--c-primary)">
+            {{ ux_icon('ph:check-square-offset', {class: 'icon'}) }} {{ 'node_type.edit.rules_title'|trans({'%count%': tabRules|length}, 'node_type') }}
+        </summary>
+        <div class="space-y-3 border-t p-3" style="border-color:var(--c-border)">
+            <p class="text-[11px]" style="color:var(--c-muted)">{{ 'node_type.edit.rules_help'|trans({}, 'node_type') }}</p>
+            {% for r in tabRules %}
+                <div class="flex items-start gap-2 rounded-md px-3 py-2 text-sm" style="background:#f8f9fb">
+                    <span class="flex-1">{{ r.text }}{% if r.message %}<span class="block text-xs" style="color:var(--c-muted)">{{ 'node_type.edit.rule_message_shown'|trans({'%message%': r.message}, 'node_type') }}</span>{% endif %}</span>
+                    <form method="post" action="{{ path('node_type_rule_remove', {id: nodeType.id, ruleId: r.id}) }}">
+                        <button class="text-xs text-red-600 hover:underline">{{ 'common.remove'|trans({}, 'common') }}</button>
+                    </form>
+                </div>
+            {% endfor %}
+
+            {# obligatoire sous condition #}
+            <form method="post" action="{{ path('node_type_rule_add', {id: nodeType.id}) }}" class="grid grid-cols-2 gap-x-3 gap-y-2 rounded-md border p-3" style="border-color:var(--c-border)">
+                <input type="hidden" name="kind" value="required_if">
+                <input type="hidden" name="tab" value="{{ tab }}">
+                <div class="col-span-2 text-xs font-semibold">{{ 'node_type.edit.rule_required_if_title'|trans({}, 'node_type') }}</div>
+                <label class="block col-span-2">
+                    <span class="text-xs font-medium">{{ 'node_type.edit.rule_field'|trans({}, 'node_type') }}</span>
+                    <select name="field" class="{{ fld }}" style="border-color:var(--c-border)">
+                        {% for f in inputs|filter(f => not f.required) %}<option value="{{ f.key }}">{{ f.label }}</option>{% endfor %}
+                    </select>
+                </label>
+                <label class="block">
+                    <span class="text-xs font-medium">{{ 'node_type.edit.rule_when_field'|trans({}, 'node_type') }}</span>
+                    <select name="whenField" class="{{ fld }}" style="border-color:var(--c-border)">
+                        {% for f in allInputs %}<option value="{{ f.key }}">{{ f.label }}</option>{% endfor %}
+                    </select>
+                </label>
+                <label class="block">
+                    <span class="text-xs font-medium">{{ 'node_type.edit.rule_when_op'|trans({}, 'node_type') }}</span>
+                    <select name="whenOp" class="{{ fld }}" style="border-color:var(--c-border)">
+                        {% for op, lbl in constant('App\\Validation\\ValidationRule::OPERATORS') %}<option value="{{ op }}">{{ lbl }}</option>{% endfor %}
+                    </select>
+                </label>
+                <label class="block col-span-2">
+                    <span class="text-xs font-medium">{{ 'node_type.edit.rule_when_value'|trans({}, 'node_type') }}</span>
+                    <input name="whenValue" list="rule-values-{{ tab }}" placeholder="{{ 'node_type.edit.rule_when_value_placeholder'|trans({}, 'node_type') }}" class="{{ fld }}" style="border-color:var(--c-border)">
+                    <datalist id="rule-values-{{ tab }}">
+                        {% for f in allInputs %}
+                            {% for v, l in (f.referentielKey ? referentiel(f.referentielKey) : f.options) %}<option value="{{ v }}">{{ f.label }} : {{ l }}</option>{% endfor %}
+                        {% endfor %}
+                    </datalist>
+                </label>
+                <label class="block col-span-2">
+                    <span class="text-xs font-medium">{{ 'node_type.edit.rule_message'|trans({}, 'node_type') }}</span>
+                    <input name="message" placeholder="{{ 'node_type.edit.rule_message_placeholder'|trans({}, 'node_type') }}" class="{{ fld }}" style="border-color:var(--c-border)">
+                </label>
+                <div class="col-span-2 flex justify-end">
+                    <button class="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'node_type.edit.rule_add_button'|trans({}, 'node_type') }}</button>
+                </div>
+            </form>
+
+            {# au moins un parmi #}
+            <form method="post" action="{{ path('node_type_rule_add', {id: nodeType.id}) }}" class="space-y-2 rounded-md border p-3" style="border-color:var(--c-border)">
+                <input type="hidden" name="kind" value="one_of">
+                <input type="hidden" name="tab" value="{{ tab }}">
+                <div class="text-xs font-semibold">{{ 'node_type.edit.rule_one_of_title'|trans({}, 'node_type') }}</div>
+                <div class="flex flex-wrap gap-x-5 gap-y-1">
+                    {% for f in inputs %}
+                        <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="fields[]" value="{{ f.key }}"> {{ f.label }}</label>
+                    {% endfor %}
+                </div>
+                <input name="message" placeholder="{{ 'node_type.edit.rule_message_placeholder'|trans({}, 'node_type') }}" class="{{ fld }}" style="border-color:var(--c-border)">
+                <div class="flex justify-end">
+                    <button class="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'node_type.edit.rule_add_button'|trans({}, 'node_type') }}</button>
+                </div>
+            </form>
+        </div>
+    </details>
 {% endmacro %}
 
 {% block body %}
@@ -227,7 +311,7 @@
                                             </form>
                                         </summary>
                                         <div class="p-3 border-t" style="border-color:var(--c-border)">
-                                            {{ ui.fieldForm(path('node_type_field_edit', {id: nodeType.id, fieldId: f.id}), f, referentiels, referentielCapableTypes, fieldTypes, 'common.save'|trans({}, 'common'), togglableDefault) }}
+                                            {{ ui.fieldForm(path('node_type_field_edit', {id: nodeType.id, fieldId: f.id}), f, referentiels, fieldTypes, fieldTypesConfig, 'common.save'|trans({}, 'common'), togglableDefault) }}
                                         </div>
                                     </details>
                                 {% endif %}
@@ -235,6 +319,7 @@
                         </li>
                     {% endfor %}
                 </ul>
+                {{ ui.tabRules(nodeType, tab, fields, form, rules[tab] ?? []) }}
             </div>
         {% else %}
             <p class="text-sm" style="color:var(--c-muted)">{{ 'node_type.edit.form_builder_empty'|trans({}, 'node_type') }}</p>
@@ -251,7 +336,7 @@
                     <div class="p-6 space-y-3">
                         <h3 class="text-lg font-bold">{{ 'node_type.edit.add_field_button'|trans({}, 'node_type') }}</h3>
                         <datalist id="existing-field-keys">{% for f in catalog %}<option value="{{ f.key }}">{% endfor %}</datalist>
-                        {{ ui.fieldForm(path('node_type_field_add', {id: nodeType.id}), null, referentiels, referentielCapableTypes, fieldTypes, 'node_type.edit.add_field_button'|trans({}, 'node_type'), true) }}
+                        {{ ui.fieldForm(path('node_type_field_add', {id: nodeType.id}), null, referentiels, fieldTypes, fieldTypesConfig, 'node_type.edit.add_field_button'|trans({}, 'node_type'), true) }}
                         <p class="text-[11px]" style="color:var(--c-muted)">{{ 'node_type.edit.add_field_reuse_help'|trans({}, 'node_type') }}</p>
                         <div class="flex justify-end">
                             <button type="button" data-action="modal#close" class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</button>

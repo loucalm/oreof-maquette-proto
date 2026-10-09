@@ -7,6 +7,7 @@ namespace App\Entity;
 use App\Enum\NodeFamily;
 use App\Enum\NodeKind;
 use App\Repository\NodeTypeRepository;
+use App\Validation\ValidationRule;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -72,6 +73,15 @@ class NodeType
      */
     #[ORM\Column(type: Types::JSON)]
     private array $lockedCapabilities = [];
+
+    /**
+     * Règles de validation des onglets de ce type (cf. App\Validation\ValidationRule),
+     * en plus des champs obligatoires : elles pilotent la pastille de l'onglet et les erreurs affichées.
+     *
+     * @var list<array<string, mixed>>
+     */
+    #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
+    private array $validationRules = [];
 
     /** Cible d'ECTS pour l'agrégation (30 semestre, 60 année…), ou null. */
     #[ORM\Column(nullable: true)]
@@ -316,6 +326,26 @@ class NodeType
     public function setSystem(bool $system): self
     {
         $this->system = $system;
+
+        return $this;
+    }
+
+    /** @return list<ValidationRule> */
+    public function getValidationRules(): array
+    {
+        return array_map(ValidationRule::fromArray(...), $this->validationRules);
+    }
+
+    public function addValidationRule(ValidationRule $rule): self
+    {
+        $this->validationRules[] = $rule->toArray();
+
+        return $this;
+    }
+
+    public function removeValidationRule(string $id): self
+    {
+        $this->validationRules = array_values(array_filter($this->validationRules, static fn (array $r) => ($r['id'] ?? null) !== $id));
 
         return $this;
     }

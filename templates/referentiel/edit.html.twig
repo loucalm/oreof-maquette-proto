@@ -46,13 +46,43 @@
             </label>
         </div>
 
-        <label class="block">
-            <span class="text-xs font-medium">{{ 'referentiel.edit.values_label'|trans({}, 'referentiel')|raw }}</span>
-            <textarea name="values" rows="8" class="mt-1 w-full rounded-md border px-3 py-2 text-sm font-mono" style="border-color:var(--c-border)"
-                >{% for v, l in (referentiel.values ?? {}) %}{{ v }}{{ l != v ? '|' ~ l : '' }}
-{% endfor %}</textarea>
-            <span class="text-[11px]" style="color:var(--c-muted)">{{ 'referentiel.edit.values_help'|trans({}, 'referentiel') }}</span>
-        </label>
+        <div data-controller="values-editor" class="rounded-lg border p-3 space-y-2" style="border-color:var(--c-border)">
+            <div>
+                <span class="text-xs font-medium">{{ 'referentiel.edit.values_title'|trans({}, 'referentiel') }}</span>
+                <p class="text-[11px]" style="color:var(--c-muted)">{{ 'referentiel.edit.values_help'|trans({}, 'referentiel') }}</p>
+            </div>
+
+            <div data-values-editor-target="list" class="space-y-2">
+                {% for v, l in (referentiel.values ?? {}) %}
+                    <div data-values-row class="flex items-center gap-2">
+                        <span class="drag-handle shrink-0">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>
+                        <input name="values_label[]" value="{{ l }}" placeholder="{{ 'referentiel.edit.value_label_placeholder'|trans({}, 'referentiel') }}" class="flex-1 rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                        <input name="values_code[]" value="{{ v != l ? v : '' }}" placeholder="{{ 'referentiel.edit.value_code_placeholder'|trans({}, 'referentiel') }}" class="w-36 rounded-md border px-3 py-2 text-sm font-mono" style="border-color:var(--c-border)">
+                        <button type="button" data-action="values-editor#remove" title="{{ 'referentiel.edit.value_remove_title'|trans({}, 'referentiel') }}" class="icon-btn icon-btn--danger shrink-0">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <template data-values-editor-target="template">
+                <div data-values-row class="flex items-center gap-2">
+                    <span class="drag-handle shrink-0">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>
+                    <input name="values_label[]" placeholder="{{ 'referentiel.edit.value_label_placeholder'|trans({}, 'referentiel') }}" class="flex-1 rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                    <input name="values_code[]" placeholder="{{ 'referentiel.edit.value_code_placeholder'|trans({}, 'referentiel') }}" class="w-36 rounded-md border px-3 py-2 text-sm font-mono" style="border-color:var(--c-border)">
+                    <button type="button" data-action="values-editor#remove" title="{{ 'referentiel.edit.value_remove_title'|trans({}, 'referentiel') }}" class="icon-btn icon-btn--danger shrink-0">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
+                </div>
+            </template>
+
+            <button type="button" data-action="values-editor#add" class="rounded-md border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'referentiel.edit.value_add_button'|trans({}, 'referentiel') }}</button>
+
+            <details class="rounded-md border" style="border-color:var(--c-border)">
+                <summary class="px-3 py-2 text-sm cursor-pointer">{{ 'referentiel.edit.values_bulk_summary'|trans({}, 'referentiel') }}</summary>
+                <div class="p-3 space-y-2 border-t" style="border-color:var(--c-border)">
+                    <p class="text-[11px]" style="color:var(--c-muted)">{{ 'referentiel.edit.values_bulk_help'|trans({}, 'referentiel') }}</p>
+                    <textarea data-values-editor-target="bulk" rows="4" class="w-full rounded-md border px-3 py-2 text-sm font-mono" style="border-color:var(--c-border)"></textarea>
+                    <button type="button" data-action="values-editor#importBulk" class="rounded-md border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'referentiel.edit.values_bulk_button'|trans({}, 'referentiel') }}</button>
+                </div>
+            </details>
+        </div>
 
         <div class="flex gap-2 pt-1">
             <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>

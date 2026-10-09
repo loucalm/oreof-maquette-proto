@@ -20,25 +20,6 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'field_def')]
 class FieldDef
 {
-    /** Types de saisie. Les trois avant-derniers sont « système » (rendu spécial) ; « separator » n'est pas un champ saisissable. */
-    public const TYPES = [
-        'text' => 'Texte court',
-        'textarea' => 'Texte long',
-        'number' => 'Nombre',
-        'choice' => 'Liste de choix',
-        'radio' => 'Choix unique (boutons radio)',
-        'checkbox' => 'Case à cocher (choix multiple)',
-        'competencies' => 'Compétences (référentiel)',
-        'hours' => 'Volume horaire (présentiel / distanciel / TE)',
-        'mccc' => 'MCCC (type de contrôle)',
-        'separator' => 'Séparateur (ligne d’organisation)',
-    ];
-
-    /** Types dont les options peuvent venir d'un référentiel plutôt que d'une saisie inline. */
-    public const REFERENTIEL_CAPABLE_TYPES = ['choice', 'radio', 'checkbox'];
-
-    public const SYSTEM_TYPES = ['competencies', 'hours', 'mccc'];
-
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -55,7 +36,7 @@ class FieldDef
     #[ORM\Column(length: 40)]
     private string $tab = 'props';
 
-    /** Une des clés de self::TYPES. */
+    /** Clé d'un type de saisie (App\FieldType\FieldTypeRegistry), ex. "text". */
     #[ORM\Column(length: 20)]
     private string $type = 'text';
 
@@ -68,7 +49,7 @@ class FieldDef
     #[ORM\Column(type: Types::JSON)]
     private array $options = [];
 
-    /** Si renseigné (types de REFERENTIEL_CAPABLE_TYPES), les options viennent de `referentiel(referentielKey)`. */
+    /** Si renseigné (types qui proposent le réglage « referentiel », cf. App\FieldType), les options viennent de `referentiel(referentielKey)`. */
     #[ORM\Column(length: 64, nullable: true)]
     private ?string $referentielKey = null;
 
@@ -86,7 +67,7 @@ class FieldDef
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $help = null;
 
-    /** Bornes pour type = "number" (et longueur max pour text/textarea). */
+    /** Bornes min / max ; leur sens dépend du type (FieldTypeInterface::bounds() : valeur, longueur, nombre de choix). */
     #[ORM\Column(nullable: true)]
     private ?float $min = null;
 
@@ -167,14 +148,9 @@ class FieldDef
 
     public function setType(string $type): self
     {
-        $this->type = \array_key_exists($type, self::TYPES) ? $type : 'text';
+        $this->type = $type;
 
         return $this;
-    }
-
-    public function isSystemType(): bool
-    {
-        return \in_array($this->type, self::SYSTEM_TYPES, true);
     }
 
     /** @return array<string, string> */
@@ -201,11 +177,6 @@ class FieldDef
         $this->referentielKey = trim((string) $referentielKey) ?: null;
 
         return $this;
-    }
-
-    public function isReferentielCapable(): bool
-    {
-        return \in_array($this->type, self::REFERENTIEL_CAPABLE_TYPES, true);
     }
 
     public function isAllowExtra(): bool

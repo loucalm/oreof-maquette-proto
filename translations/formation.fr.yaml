@@ -296,6 +296,14 @@ formation:
     no_label: (sans libellé)
     missing_label: 'Manquant : %fields%'
     fix_button: Corriger
+  bcc_but:
+    count: '%count% compétence(s)'
+    intro: >-
+      Référentiel national du BUT (dans ORéOF : synchronisé depuis l’API des référentiels), en lecture
+      seule. Les apprentissages critiques (AC) se cochent sur chaque EC, parmi ceux du niveau de son année.
+    niveau: 'Niveau %ordre% (%annee%)'
+    empty: Aucun référentiel national chargé pour ce diplôme.
+
   bcc:
     bloc_label_field: Libellé du bloc
     label_field: Libellé

@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Entity\FieldDef;
 use App\Entity\NodeType;
+use App\FieldType\FieldTypeRegistry;
 use App\Enum\NodeFamily;
 use App\Enum\NodeKind;
 use App\Maquette\Maquette;
@@ -13,6 +14,8 @@ use App\Repository\FieldDefRepository;
 use App\Repository\NodeTypeRepository;
 use App\Repository\ReferentielRepository;
 use App\Twig\RoleExtension;
+use App\Validation\TabValidator;
+use App\Validation\ValidationRule;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -49,6 +52,12 @@ final class NodeTypeController extends AbstractController
         'param_organisation_parcours',
         'param_presentation_parcours',
     ];
+
+    public function __construct(
+        private readonly FieldTypeRegistry $fieldTypes,
+        private readonly TabValidator $validator,
+    ) {
+    }
 
     #[Route('/node-types', name: 'node_type_index', methods: ['GET'])]
     public function index(NodeTypeRepository $repo): Response
@@ -159,10 +168,11 @@ final class NodeTypeController extends AbstractController
             'nodeType' => $nodeType,
             'isNew' => $isNew,
             'kinds' => NodeKind::cases(),
-            'fieldTypes' => FieldDef::TYPES,
-            'referentielCapableTypes' => FieldDef::REFERENTIEL_CAPABLE_TYPES,
+            'fieldTypes' => $this->fieldTypes->choices(),
+            'fieldTypesConfig' => $this->fieldTypes->editorConfig(),
             'referentiels' => $referentiels->allOrdered(),
             'form' => $isNew ? [] : $this->formBuilderData($nodeType, $fields),
+            'rules' => $isNew ? [] : $this->rulesByTab($nodeType),
             'catalog' => $fields->allOrdered(),
         ]);
     }
@@ -353,6 +363,85 @@ final class NodeTypeController extends AbstractController
         return $this->redirectToRoute('node_type_edit', ['id' => $nodeType->getId()]);
     }
 
+    /**
+     * Ajoute une règle de validation à un onglet du type : « obligatoire sous
+     * condition » (un champ + une condition sur un autre) ou « au moins un parmi ».
+     */
+    #[Route('/administration/node-types/{id}/regles', name: 'node_type_rule_add', methods: ['POST'])]
+    public function ruleAdd(NodeType $nodeType, Request $request, EntityManagerInterface $em): Response
+    {
+        if (null !== ($blocked = $this->assertEditable($nodeType))) {
+            return $blocked;
+        }
+
+        $kind = (string) $request->request->get('kind');
+        $fields = ValidationRule::ONE_OF === $kind
+            ? array_values(array_filter(array_map('strval', $request->request->all('fields'))))
+            : array_values(array_filter([(string) $request->request->get('field')]));
+        $whenOp = (string) $request->request->get('whenOp', 'eq');
+
+        $valid = match ($kind) {
+            ValidationRule::REQUIRED_IF => 1 === \count($fields)
+                && '' !== (string) $request->request->get('whenField')
+                && isset(ValidationRule::OPERATORS[$whenOp])
+                && ('filled' === $whenOp || '' !== trim((string) $request->request->get('whenValue'))),
+            ValidationRule::ONE_OF => \count($fields) >= 2,
+            default => false,
+        };
+        if (!$valid) {
+            $this->addFlash('warning', ValidationRule::ONE_OF === $kind
+                ? 'Cocher au moins deux champs pour « Au moins un parmi ».'
+                : 'Choisir le champ, le champ de la condition et la valeur attendue.');
+
+            return $this->redirectToRoute('node_type_edit', ['id' => $nodeType->getId()]);
+        }
+
+        $rule = new ValidationRule(
+            id: bin2hex(random_bytes(4)),
+            kind: $kind,
+            tab: (string) $request->request->get('tab', 'props'),
+            fields: $fields,
+            whenField: ValidationRule::REQUIRED_IF === $kind ? (string) $request->request->get('whenField') : null,
+            whenOp: ValidationRule::REQUIRED_IF === $kind ? $whenOp : null,
+            whenValue: ValidationRule::REQUIRED_IF === $kind && 'filled' !== $whenOp ? trim((string) $request->request->get('whenValue')) : null,
+            message: trim((string) $request->request->get('message')) ?: null,
+        );
+        $nodeType->addValidationRule($rule);
+        $em->flush();
+        $this->addFlash('success', 'Règle ajoutée : '.$this->validator->describe($rule));
+
+        return $this->redirectToRoute('node_type_edit', ['id' => $nodeType->getId()]);
+    }
+
+    #[Route('/administration/node-types/{id}/regles/{ruleId}/supprimer', name: 'node_type_rule_remove', methods: ['POST'])]
+    public function ruleRemove(NodeType $nodeType, string $ruleId, EntityManagerInterface $em): Response
+    {
+        if (null !== ($blocked = $this->assertEditable($nodeType))) {
+            return $blocked;
+        }
+
+        $nodeType->removeValidationRule($ruleId);
+        $em->flush();
+        $this->addFlash('info', 'Règle retirée.');
+
+        return $this->redirectToRoute('node_type_edit', ['id' => $nodeType->getId()]);
+    }
+
+    /**
+     * Règles du type groupées par onglet, avec leur phrase lisible.
+     *
+     * @return array<string, list<array{id: string, text: string, message: ?string}>>
+     */
+    private function rulesByTab(NodeType $nodeType): array
+    {
+        $out = [];
+        foreach ($nodeType->getValidationRules() as $rule) {
+            $out[$rule->tab][] = ['id' => $rule->id, 'text' => $this->validator->describe($rule), 'message' => $rule->message];
+        }
+
+        return $out;
+    }
+
     /** Clé dérivée du libellé (« Unité d'enseignement » → unite_d_enseignement), suffixée _2, _3… si déjà prise. */
     private function uniqueKey(string $label, NodeTypeRepository $types): string
     {
@@ -384,7 +473,7 @@ final class NodeTypeController extends AbstractController
         $max = $request->request->get('max');
 
         $field
-            ->setType((string) $request->request->get('type', 'text'))
+            ->setType($this->fieldTypes->has($type = (string) $request->request->get('type', 'text')) ? $type : 'text')
             ->setOptions($options)
             ->setReferentielKey($request->request->get('referentielKey'))
             ->setAllowExtra($request->request->getBoolean('allowExtra'))

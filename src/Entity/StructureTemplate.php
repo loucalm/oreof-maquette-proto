@@ -63,6 +63,23 @@ class StructureTemplate
     #[ORM\Column(type: Types::JSON)]
     private array $tree = [];
 
+    /** Format des BCC du diplôme : blocs saisis par le responsable (Licence, Master, M2E…). */
+    public const BCC_BLOCS = 'blocs';
+    /** Format des BCC du diplôme : référentiel national BUT, en lecture seule (Compétence › Niveau › AC). */
+    public const BCC_BUT = 'but';
+
+    #[ORM\Column(length: 16, options: ['default' => self::BCC_BLOCS])]
+    private string $bccFormat = self::BCC_BLOCS;
+
+    /**
+     * Référentiel national (format BUT) : dans ORéOF il est synchronisé depuis l'API
+     * des référentiels BUT ; ici, une copie de démonstration.
+     *
+     * @var list<array{numero: int, libelle: string, nomCourt?: string, niveaux: list<array{ordre: int, annee: string, libelle: string, acs: list<array{code: string, libelle: string}>}>}>
+     */
+    #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
+    private array $bccReferentiel = [];
+
     /** Unité de temps par défaut du diplôme (ex. "Année"), copiée sur la formation à l'application. */
     #[ORM\Column(length: 40, nullable: true)]
     private ?string $calendarUnit = null;
@@ -255,6 +272,37 @@ class StructureTemplate
     public function setMcccProfiles(array $mcccProfiles): self
     {
         $this->mcccProfiles = $mcccProfiles;
+
+        return $this;
+    }
+
+    public function getBccFormat(): string
+    {
+        return $this->bccFormat;
+    }
+
+    public function setBccFormat(string $bccFormat): self
+    {
+        $this->bccFormat = self::BCC_BUT === $bccFormat ? self::BCC_BUT : self::BCC_BLOCS;
+
+        return $this;
+    }
+
+    public function isBccBut(): bool
+    {
+        return self::BCC_BUT === $this->bccFormat;
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function getBccReferentiel(): array
+    {
+        return $this->bccReferentiel;
+    }
+
+    /** @param list<array<string, mixed>> $bccReferentiel */
+    public function setBccReferentiel(array $bccReferentiel): self
+    {
+        $this->bccReferentiel = $bccReferentiel;
 
         return $this;
     }

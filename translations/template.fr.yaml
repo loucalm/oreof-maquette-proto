@@ -25,7 +25,6 @@ template:
     toggle_aria: Déplier / replier cette branche
     delete_node_confirm: 'Supprimer « %label% » et sa branche du template ?'
     child_label_placeholder: libellé (optionnel)
-    add_child_button: enfant
     label_field: Libellé
     impact_note: >-
       Impact : ce template est copié dans chaque nouvelle formation du diplôme (structure, avec ou sans
@@ -41,6 +40,12 @@ template:
     calendar_help: >-
       Valeurs par défaut du diplôme, copiées sur la formation à l'application du template — visibles
       mais non modifiables côté responsable (une dérogation est nécessaire pour les changer).
+    bcc_format_field: Format des BCC
+    bcc_format_blocs: Blocs de compétences saisis (Licence, Master, M2E…)
+    bcc_format_but: Référentiel national BUT (lecture seule)
+    bcc_format_help: >-
+      BUT : compétences › niveaux (BUT1 à BUT3) › apprentissages critiques, issus du référentiel
+      national ; le responsable coche les AC sur chaque EC. Sinon, le responsable saisit ses blocs.
     structure_table_title: Tableau structurel
     structure_table_help: >-
       La hiérarchie des types de nœud de ce diplôme (« Parcours » toujours en tête, le dernier maillon
@@ -59,9 +64,22 @@ template:
     field_overrides_title: 'Champs de %type% pour ce template'
     field_overrides_pencil_title: Champs togglables de cette ligne pour ce template
     field_overrides_empty: Ce type n'a aucun champ togglable pour ce template.
-    tree_title: Arbre du template
+    tree_title: Arbre de départ (copié dans chaque nouvelle formation)
+    summary_title: Modèle générique
+    summary_help: >-
+      Ce que le diplôme impose à chaque niveau, et ce qui n’est qu’un point de départ. Un nombre
+      « imposé » est figé dans toutes les formations ; sinon le responsable ajoute ou retire librement,
+      et les libellés de l’arbre ne sont que des exemples.
+    summary_in: 'par %parent%'
+    summary_range: '%min% à %max%'
+    summary_fixed: imposé
+    summary_free: au départ · libre
+    summary_examples: 'exemples : %list%'
+    summary_next: 'peut contenir : %next%'
+    add_child_summary: '%type% dans « %parent% »'
+    add_child_any: un élément
     tree_empty: Aucun ELP. Ajoutez le premier niveau ci-dessous.
-    lock_legend: '%lock_icon% = élément pédagogique figé : le responsable de formation ne pourra ni en ajouter un autre du même type ici, ni le supprimer, ni le dupliquer.'
+    lock_legend: '%lock_icon% = élément pédagogique figé : le responsable de formation ne pourra ni en ajouter un autre du même type ici, ni le supprimer, ni le dupliquer. Libellé en italique = exemple de départ, modifiable par le responsable.'
     add_root_label: 'Ajouter un ELP racine :'
     add_root_button: racine
     delete_confirm: 'Supprimer définitivement le template « %label% » ?'

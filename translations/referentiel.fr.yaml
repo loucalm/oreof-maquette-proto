@@ -14,5 +14,12 @@ referentiel:
     entite_cible_field: Entité cible (si « Lier à des entités »)
     entite_cible_placeholder: 'ex. Établissement (annuaire ORéOF)'
     entite_cible_help: Note libre décrivant la vraie entité à laquelle ce référentiel devra se relier dans l'application finale.
-    values_label: 'Valeurs de la liste (une par ligne : <code>valeur|Libellé</code> — ou juste <code>valeur</code> si identique au libellé)'
-    values_help: L'ordre des lignes est l'ordre proposé dans les select.
+    values_title: Valeurs de la liste
+    values_help: 'Glisser ⋮⋮ pour réordonner. Le code est facultatif : vide = identique au libellé.'
+    value_label_placeholder: Libellé
+    value_code_placeholder: code (auto)
+    value_remove_title: Retirer
+    value_add_button: '+ Ajouter une valeur'
+    values_bulk_summary: Coller plusieurs valeurs
+    values_bulk_help: 'Une valeur par ligne : Libellé, ou code|Libellé.'
+    values_bulk_button: Ajouter à la liste

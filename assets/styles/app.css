@@ -170,6 +170,8 @@ body {
 .switch:checked::after { transform: translateX(18px); }
 .switch:focus-visible { outline: 2px solid #c7d2fe; outline-offset: 2px; }
 .fld-help { font-size: 12px; color: var(--c-muted); margin-top: 2px; }
+.fld-error { font-size: 12px; color: #b91c1c; margin-top: 2px; }
+.fld-error:empty { display: none; }
 /* sous-titre de catégorie dans un onglet de formulaire */
 .fld-cat {
     font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
@@ -190,6 +192,8 @@ body {
 .status-dot[data-status="empty"]      { background: var(--st-empty); }
 .status-dot[data-status="incomplete"] { background: var(--st-incomplete); }
 .status-dot[data-status="ok"]         { background: var(--st-ok); }
+/* valeur saisie invalide (bornes d'un champ) : rouge cerclé, distinct de « rien de saisi » */
+.status-dot[data-status="error"]      { background: var(--st-empty); box-shadow: 0 0 0 2px #fecaca; }
 
 .pill { font-size: 11px; padding: 2px 8px; border-radius: 9999px; background: #eef1f4; color: #4b5563; }
 
@@ -332,7 +336,18 @@ body {
 .template-branch { list-style: none; margin: 0; padding: 0; }
 .template-branch--root > .template-node { border-top: 1px solid #eceef1; }
 .template-node > .template-branch { margin-left: 16px; border-left: 2px solid #eceef1; padding-left: 10px; }
-.template-node > form.template-branch { margin-left: 16px; padding-left: 10px; }
+/* « + UE dans … » : une action, pas un élément — bouton pointillé aligné sur les enfants */
+.template-node > .template-add { margin: 2px 0 4px 28px; }
+.template-add-btn {
+    display: inline-flex; align-items: center; gap: 4px; list-style: none; cursor: pointer;
+    border: 1px dashed #cbd2dc; border-radius: 6px; padding: 1px 8px;
+    font-size: 11px; color: var(--c-muted);
+}
+.template-add-btn::-webkit-details-marker { display: none; }
+.template-add-btn:hover { color: var(--c-primary); border-color: var(--c-primary); }
+.template-add[open] > .template-add-btn { color: var(--c-primary); }
+/* nœud non figé : son libellé n'est qu'un exemple de départ */
+.template-node--example > div input[name="label"] { font-style: italic; color: #4b5563; }
 .template-mini {
     display: grid; place-items: center; width: 26px; height: 26px;
     border: 1px solid var(--c-border); border-radius: 6px; background: #fff;

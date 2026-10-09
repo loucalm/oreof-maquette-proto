@@ -37,13 +37,13 @@ final class FieldDefFixtures extends Fixture
         ['niveauEntree', "Niveau d'entrée en formation", 'organisation', 'choice', [], true, null, 'niveaux_entree', false],
         ['niveauSortie', 'Niveau de sortie de la formation', 'organisation', 'choice', [], true, null, 'niveaux_sortie', false],
         ['rncp', 'La formation est-elle inscrite au RNCP ?', 'organisation', 'radio', ['oui' => 'Oui', 'non' => 'Non'], true, null, null, false],
-        ['codeRncp', 'Code RNCP', 'organisation', 'text', [], true, 'Indiquez le code RNCP (cf. www.francecompetences.fr).', null, false],
+        ['codeRncp', 'Code RNCP', 'organisation', 'text', [], false, 'Indiquez le code RNCP (cf. www.francecompetences.fr).', null, false],
         ['nom', 'Nom du parcours', 'organisation', 'text', [], true, 'Nommer votre parcours', null, true],
         ['ectsTotal', "Volume d'ECTS total", 'organisation', 'number', [], true, 'Cela servira à vérifier le total d’ECTS de votre parcours', null, true],
         ['modalitesEnseignement', 'Modalités d’enseignement de la formation', 'organisation', 'choice', [], true, null, 'modalites_enseignement', false],
         ['composanteInscription', "Composante(s) à laquelle les étudiants pourront s'inscrire", 'organisation', 'choice', [], true, null, 'composantes', false],
         ['regimes', "Régime(s) d'inscription", 'organisation', 'checkbox', [], true, 'Choix multiples', 'regimes_inscription', false],
-        ['modalitesAlternance', "Modalités de l'alternance", 'organisation', 'textarea', [], true, 'Indiquez en 3000 caractères maximum les périodes et leurs durées en centre ou en entreprise.', null, false],
+        ['modalitesAlternance', "Modalités de l'alternance", 'organisation', 'textarea', [], false, 'Indiquez en 3000 caractères maximum les périodes et leurs durées en centre ou en entreprise.', null, false],
         ['lieu', 'Lieu(x) de la formation', 'organisation', 'text', [], false, 'Campus ou site(s) où se déroule le parcours.', null, false],
         ['codeApogee', 'Code Apogée de la mention', 'organisation', 'text', [], false, 'Code de la mention dans Apogée', null, false],
         ['sep_org_responsables', 'Responsable(s)', 'organisation', 'separator', [], false, null, null, false],
@@ -100,6 +100,8 @@ final class FieldDefFixtures extends Fixture
                 ->setHelp($help)
                 ->setPosition($position)
                 ->setLocked($locked)
+                // l'aide annonce « 3000 caractères maximum » : la borne la fait respecter
+                ->setMax(str_contains((string) $help, '3000 caractères') ? 3000 : null)
                 ->setSystem(true);
             $manager->persist($field);
         }

@@ -12,6 +12,8 @@
           data-controller="autosave" data-autosave-key-value="{{ key }}"
           class="panel-card space-y-5">
 
+        {% set issues = param_issues(formation, key) %}
+        {% set hints = field_rule_hints('param_' ~ key ~ '_formation') %}
         {% for f in fields %}
             {% if f.type == 'separator' %}
                 {{ fld.divider(f.label) }}
@@ -48,7 +50,7 @@
                     </div>
                 {% endif %}
             {% else %}
-                <div>{{ fld.field(f.key, f, data) }}</div>
+                <div>{{ fld.field(f.key, f, data, issues[f.key] ?? [], hints[f.key] ?? null) }}</div>
             {% endif %}
         {% endfor %}
 

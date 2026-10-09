@@ -14,7 +14,7 @@
     {% set temporel = meta and meta.temporel %}
     {% set displayLabel = temporel ? meta.label ~ ' ' ~ ((p|split('.')|last) + 1) : (n.label ?: (meta ? meta.label : n.type)) %}
     {% set hasChildren = n.children is defined and n.children is not empty %}
-    <li class="template-node" data-node-index="{{ p|split('.')|last }}" data-node-uid="{{ n.uid ?? '' }}">
+    <li class="template-node {{ not rigid and not temporel ? 'template-node--example' }}" data-node-index="{{ p|split('.')|last }}" data-node-uid="{{ n.uid ?? '' }}">
         <div class="group flex flex-wrap items-center gap-1.5 py-1 px-1 -mx-1 rounded-md hover:bg-gray-50">
             <span class="drag-handle shrink-0" title="{{ 'template.edit.drag_title'|trans({}, 'template') }}">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>
 
@@ -73,8 +73,11 @@
         {% set childType = template_type_at_depth(template, p) %}
         {% set pastStructureEnd = template.structure is not empty and childType is null and n.type != 'bloc_choix' %}
         {% if not pastStructureEnd %}
+        {# action, pas un élément : bouton discret aligné sur les enfants, le formulaire s'ouvre au clic #}
+        <details class="template-add">
+        <summary class="template-add-btn">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'template.edit.add_child_summary'|trans({'%type%': childType ? childType.label : 'template.edit.add_child_any'|trans({}, 'template'), '%parent%': displayLabel}, 'template') }}</summary>
         <form method="post" action="{{ path('template_node_add', {id: template.id}) }}"
-              class="template-branch mt-1 flex flex-wrap items-center gap-1.5">
+              class="mt-1 flex flex-wrap items-center gap-1.5">
             <input type="hidden" name="parent" value="{{ p }}">
             {% if childType %}
                 <input type="hidden" name="type" value="{{ childType.key }}">
@@ -87,8 +90,9 @@
             {% if not (childType and childType.temporel) %}
                 <input name="label" placeholder="{{ 'template.edit.child_label_placeholder'|trans({}, 'template') }}" class="rounded border px-2 py-1 text-xs" style="border-color:var(--c-border)">
             {% endif %}
-            <button class="rounded border px-2 py-1 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'template.edit.add_child_button'|trans({}, 'template') }}</button>
+            <button class="rounded border px-2 py-1 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'common.add'|trans({}, 'common') }}</button>
         </form>
+        </details>
         {% endif %}
     </li>
 {% endmacro %}
@@ -170,6 +174,14 @@
             </div>
         </div>
         <div class="fld-help">{{ 'template.edit.calendar_help'|trans({}, 'template') }}</div>
+        <div>
+            <div class="text-xs font-medium">{{ 'template.edit.bcc_format_field'|trans({}, 'template') }}</div>
+            <select name="bccFormat" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                <option value="blocs" {{ not template.bccBut ? 'selected' }}>{{ 'template.edit.bcc_format_blocs'|trans({}, 'template') }}</option>
+                <option value="but" {{ template.bccBut ? 'selected' }}>{{ 'template.edit.bcc_format_but'|trans({}, 'template') }}</option>
+            </select>
+            <div class="fld-help">{{ 'template.edit.bcc_format_help'|trans({}, 'template') }}</div>
+        </div>
         <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
     </form>
 
@@ -292,6 +304,35 @@
 
     {# ─── arbre ─── #}
     <div class="rounded-xl border bg-white p-4" style="border-color:var(--c-border)">
+        {# ─── modèle générique : ce que le diplôme impose, niveau par niveau ─── #}
+        {% if summary is not empty %}
+            <div class="mb-4 rounded-lg border p-3" style="border-color:var(--c-border);background:#f8f9fb">
+                <div class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">{{ 'template.edit.summary_title'|trans({}, 'template') }}</div>
+                <p class="text-[11px] mb-2" style="color:var(--c-muted)">{{ 'template.edit.summary_help'|trans({}, 'template') }}</p>
+                <table class="w-full text-sm">
+                    <tbody>
+                    {% for r in summary %}
+                        <tr class="border-t align-top" style="border-color:var(--c-border)">
+                            <td class="py-1.5 pr-3 whitespace-nowrap"><strong>{{ r.child }}</strong> <span style="color:var(--c-muted)">{{ 'template.edit.summary_in'|trans({'%parent%': r.parent}, 'template') }}</span></td>
+                            <td class="py-1.5 pr-3 whitespace-nowrap">
+                                {{ r.min == r.max ? r.min : 'template.edit.summary_range'|trans({'%min%': r.min, '%max%': r.max}, 'template') }}
+                                {% if r.fixed %}
+                                    <span class="pill" style="background:#fef3c7;color:#b45309">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ 'template.edit.summary_fixed'|trans({}, 'template') }}</span>
+                                {% else %}
+                                    <span class="pill">{{ 'template.edit.summary_free'|trans({}, 'template') }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-1.5 text-xs" style="color:var(--c-muted)">
+                                {% if r.examples is not empty and not r.fixed %}{{ 'template.edit.summary_examples'|trans({'%list%': r.examples|join(', ')}, 'template') }}{% endif %}
+                                {% if r.next %}<div>{{ 'template.edit.summary_next'|trans({'%next%': r.next}, 'template') }}</div>{% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
         <div class="flex items-center gap-2 text-xs uppercase tracking-wide mb-3" style="color:var(--c-muted)">
             <span class="h-px flex-1 bg-gray-200"></span>{{ 'template.edit.tree_title'|trans({}, 'template') }}<span class="h-px flex-1 bg-gray-200"></span>
         </div>

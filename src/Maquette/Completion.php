@@ -6,10 +6,13 @@ namespace App\Maquette;
 
 use App\Entity\FieldDef;
 use App\Entity\Formation;
+use App\Entity\NodeType;
 use App\Maquette\Doc\MaquetteDoc;
 use App\Maquette\Doc\TreeNode;
 use App\Repository\FieldDefRepository;
 use App\Repository\NodeTypeRepository;
+use App\Repository\StructureTemplateRepository;
+use App\Validation\TabValidator;
 
 /**
  * Comptage des champs requis remplis / total, par nœud et remonté sur l'arbre.
@@ -25,6 +28,8 @@ final class Completion
         private readonly McccValidator $mcccValidator,
         private readonly NodeTypeRepository $types,
         private readonly FieldDefRepository $fields,
+        private readonly TabValidator $validator,
+        private readonly StructureTemplateRepository $templates,
     ) {
     }
 
@@ -36,7 +41,7 @@ final class Completion
     public function node(TreeNode $node): array
     {
         $missing = $this->missing($node);
-        $req = $this->requiredCount($node);
+        $req = $this->requiredCount($node) + $this->ruleCheck($node)['units'];
 
         return ['req' => $req, 'filled' => $req - \count($missing)];
     }
@@ -46,7 +51,7 @@ final class Completion
      * d'affichage : source unique pour le statut, « Vérifier la saisie » et la
      * liste « À compléter » du panneau.
      *
-     * @return list<array{key: string, label: string, tab: string, detail?: string}>
+     * @return list<array{key: string, label: string, tab: string, detail?: string, invalid?: bool}>
      */
     public function missing(TreeNode $node): array
     {
@@ -81,7 +86,22 @@ final class Completion
             }
         }
 
+        // règles des onglets (obligatoire sous condition, au moins un parmi) et bornes des champs
+        foreach ($this->ruleCheck($node)['issues'] as $issue) {
+            $out[] = ['key' => $issue['key'], 'label' => $issue['label'], 'tab' => $issue['tab'], 'invalid' => 'invalid' === $issue['kind']];
+        }
+
         return $out;
+    }
+
+    /** @return array{units: int, issues: list<array{key: string, label: string, tab: string, kind: string}>} */
+    private function ruleCheck(TreeNode $node): array
+    {
+        return $this->validator->check(
+            $node->getType(),
+            static fn (string $key) => $node->getAttribute($key),
+            array_keys(array_filter($node->effectiveCapabilities())),
+        );
     }
 
     /** Nombre de champs requis de CE nœud seul. */
@@ -142,6 +162,8 @@ final class Completion
         }
 
         $parcours = [];
+        // BUT : référentiel national, rien à saisir — même règle que MaquetteExtension::bccStatus()
+        $but = true === $this->templates->forFormation($doc->formation)?->isBccBut();
         if ($doc->formation->isAvecParcours()) {
             foreach ($doc->parcoursNodes() as $p) {
                 $ps = $this->rollup($p);
@@ -152,7 +174,7 @@ final class Completion
                     'fin' => $p->getPeriodeFin(),
                     'parent' => $p->getParcoursParent()?->getDisplayLabel(),
                     'progress' => $this->pct($ps),
-                    'bcc' => $this->bccStatus($p->getBccBlocs()),
+                    'bcc' => $but ? 'ok' : $this->bccStatus($p->getBccBlocs()),
                 ];
             }
         }
@@ -178,26 +200,67 @@ final class Completion
         }
 
         $type = $this->types->findOneByKey('param_'.$key.'_formation');
-        if (null === $type) {
-            return 'empty';
-        }
-
-        $required = array_values(array_filter($this->fields->activeOrderedFor($type), static fn (FieldDef $f) => $f->isRequired()));
-        if ([] === $required) {
-            return 'ok';
-        }
-
         $data = $formation->getParametre($key);
-        $filled = 0;
+
+        return null === $type ? 'empty' : $this->paramStatus($type, fn (string $k) => $this->formationFieldValue($formation, $k, $data));
+    }
+
+    /**
+     * Problèmes d'une section « Paramètre de la formation », par champ, pour les
+     * afficher sous chaque champ (obligatoire sous condition, bornes).
+     *
+     * @return array<string, list<string>>
+     */
+    public function formationParamIssues(Formation $formation, string $key): array
+    {
+        $type = $this->types->findOneByKey('param_'.$key.'_formation');
+        $data = $formation->getParametre($key);
+
+        return null === $type ? [] : $this->paramIssues($type, fn (string $k) => $this->formationFieldValue($formation, $k, $data));
+    }
+
+    /**
+     * Statut commun aux sections Paramètre : « empty » si rien de ce qui est attendu
+     * n'est fait, « ok » si tout l'est, « error » si une valeur saisie est invalide
+     * (bornes), « incomplete » sinon. Attendu = champs obligatoires actifs + règles
+     * de l'onglet déclenchées.
+     *
+     * @param callable(string): mixed $value
+     */
+    private function paramStatus(NodeType $type, callable $value): string
+    {
+        $fields = $this->fields->activeOrderedFor($type);
+        $required = array_values(array_filter($fields, static fn (FieldDef $f) => $f->isRequired()));
+        $check = $this->validator->check($type, $value, array_map(static fn (FieldDef $f) => $f->getKey(), $fields));
+
+        $expected = \count($required) + $check['units'];
+        $done = $check['units'] - \count($check['issues']);
         foreach ($required as $f) {
-            $filled += $this->isFilled($this->formationFieldValue($formation, $f->getKey(), $data)) ? 1 : 0;
+            $done += $this->isFilled($value($f->getKey())) ? 1 : 0;
         }
 
         return match (true) {
-            0 === $filled => 'empty',
-            $filled === \count($required) => 'ok',
+            [] !== array_filter($check['issues'], static fn (array $i) => 'invalid' === $i['kind']) => 'error',
+            $done === $expected => 'ok',
+            0 === $done => 'empty',
             default => 'incomplete',
         };
+    }
+
+    /**
+     * @param callable(string): mixed $value
+     *
+     * @return array<string, list<string>>
+     */
+    private function paramIssues(NodeType $type, callable $value): array
+    {
+        $keys = array_map(static fn (FieldDef $f) => $f->getKey(), $this->fields->activeOrderedFor($type));
+        $out = [];
+        foreach ($this->validator->check($type, $value, $keys)['issues'] as $issue) {
+            $out[$issue['key']][] = $issue['label'];
+        }
+
+        return $out;
     }
 
     /**
@@ -223,26 +286,22 @@ final class Completion
     public function parcoursParamStatus(TreeNode $parcours, string $key): string
     {
         $type = $this->types->findOneByKey('param_'.$key.'_parcours');
-        if (null === $type) {
-            return 'empty';
-        }
-
-        $required = array_values(array_filter($this->fields->activeOrderedFor($type), static fn (FieldDef $f) => $f->isRequired()));
-        if ([] === $required) {
-            return 'ok';
-        }
-
         $data = $parcours->getParametre($key);
-        $filled = 0;
-        foreach ($required as $f) {
-            $filled += $this->isFilled($this->parcoursFieldValue($parcours, $f->getKey(), $data)) ? 1 : 0;
-        }
 
-        return match (true) {
-            0 === $filled => 'empty',
-            $filled === \count($required) => 'ok',
-            default => 'incomplete',
-        };
+        return null === $type ? 'empty' : $this->paramStatus($type, fn (string $k) => $this->parcoursFieldValue($parcours, $k, $data));
+    }
+
+    /**
+     * Équivalent de formationParamIssues() pour une section « Paramètre du parcours ».
+     *
+     * @return array<string, list<string>>
+     */
+    public function parcoursParamIssues(TreeNode $parcours, string $key): array
+    {
+        $type = $this->types->findOneByKey('param_'.$key.'_parcours');
+        $data = $parcours->getParametre($key);
+
+        return null === $type ? [] : $this->paramIssues($type, fn (string $k) => $this->parcoursFieldValue($parcours, $k, $data));
     }
 
     /** Équivalent de formationFieldValue() pour une section « Paramètre du parcours ». @param array<string, mixed> $data */

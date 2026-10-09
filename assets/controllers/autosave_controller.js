@@ -95,6 +95,7 @@ export default class extends Controller {
             const data = await response.json();
             this._setStatus(`Enregistré à ${this._time()}`);
             this._applyStatus(data.status);
+            this._applyIssues(data.issues ?? {});
         } catch {
             this._setStatus("Échec de l'enregistrement — réessayez");
         } finally {
@@ -118,6 +119,19 @@ export default class extends Controller {
         const minutes = String(now.getMinutes()).padStart(2, '0');
 
         return `${hours}:${minutes}`;
+    }
+
+    /** Erreurs par champ (règles de l'onglet, bornes) : remplace le contenu de chaque `[data-field-errors]` du formulaire. */
+    _applyIssues(issues) {
+        this.element.querySelectorAll('[data-field-errors]').forEach((box) => {
+            const messages = issues[box.dataset.fieldErrors] ?? [];
+            box.replaceChildren(...messages.map((text) => {
+                const line = document.createElement('div');
+                line.textContent = `⚠ ${text}`;
+
+                return line;
+            }));
+        });
     }
 
     _applyStatus(status) {

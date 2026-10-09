@@ -8,6 +8,7 @@ use App\Entity\Formation;
 use App\Entity\StructureTemplate;
 use App\Maquette\Doc\TreeNode;
 use App\Maquette\Maquette;
+use App\Maquette\TemplateSummary;
 use App\Maquette\TemplateTree;
 use App\Repository\MccTypeRepository;
 use App\Repository\NodeTypeRepository;
@@ -55,7 +56,7 @@ final class TemplateController extends AbstractController
     }
 
     #[Route('/administration/templates/{id}', name: 'template_edit', methods: ['GET'])]
-    public function edit(StructureTemplate $template, NodeTypeRepository $types, MccTypeRepository $mccTypes): Response
+    public function edit(StructureTemplate $template, NodeTypeRepository $types, MccTypeRepository $mccTypes, TemplateSummary $summary): Response
     {
         // migration douce : les arbres de fixtures écrits avant l'introduction du pliage
         // persisté (par uid, cf. tpltree_controller.js) n'ont pas encore de uid par nœud.
@@ -69,6 +70,7 @@ final class TemplateController extends AbstractController
             'template' => $template,
             'types' => $types->forTree(),
             'mccTypes' => $mccTypes->allOrdered(),
+            'summary' => $summary->rows($template),
         ]);
     }
 
@@ -82,7 +84,8 @@ final class TemplateController extends AbstractController
             ->setDiplome($request->request->get('diplome') ?: null)
             ->setAvecParcours($request->request->getBoolean('avecParcours'))
             ->setCalendarUnit($request->request->get('calendarUnit'))
-            ->setCalendarSpan('' !== $span && null !== $span ? (int) $span : null);
+            ->setCalendarSpan('' !== $span && null !== $span ? (int) $span : null)
+            ->setBccFormat((string) $request->request->get('bccFormat', $template->getBccFormat()));
         $this->em->flush();
         $this->addFlash('success', 'Template mis à jour.');
 

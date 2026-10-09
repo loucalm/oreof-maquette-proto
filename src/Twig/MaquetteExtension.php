@@ -36,6 +36,7 @@ final class MaquetteExtension extends AbstractExtension
         private readonly McccValidator $mcccValidator,
         private readonly StructureTemplateRepository $templates,
         private readonly FieldDefRepository $fields,
+        private readonly \App\Validation\TabValidator $validator,
     ) {
     }
 
@@ -70,6 +71,10 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('period_unit', $this->periodUnit(...)),
             new TwigFunction('param_sections', static fn () => FormationController::PARAM_SECTIONS),
             new TwigFunction('param_status', fn (Formation $f, string $k) => $this->completion->formationParamStatus($f, $k)),
+            new TwigFunction('param_issues', fn (Formation $f, string $k) => $this->completion->formationParamIssues($f, $k)),
+            new TwigFunction('parcours_param_issues', fn (TreeNode $p, string $k) => $this->completion->parcoursParamIssues($p, $k)),
+            // mentions « obligatoire si … » des champs d'un type (règles de ses onglets)
+            new TwigFunction('field_rule_hints', fn (string $typeKey) => null !== ($t = $this->types->findOneByKey($typeKey)) ? $this->validator->hints($t) : []),
             new TwigFunction('param_active_fields', $this->paramActiveFields(...)),
             new TwigFunction('param_field_value', fn (Formation $f, string $k, array $data) => $this->completion->formationFieldValue($f, $k, $data)),
             new TwigFunction('bcc_status', $this->bccStatus(...)),
@@ -332,6 +337,12 @@ final class MaquetteExtension extends AbstractExtension
      */
     public function bccStatus(Formation|TreeNode $context): string
     {
+        // BUT : le référentiel est national, rien à saisir côté formation
+        $formation = $context instanceof TreeNode ? $context->getFormation() : $context;
+        if (null !== $formation && true === $this->templates->forFormation($formation)?->isBccBut()) {
+            return 'ok';
+        }
+
         $blocs = $context instanceof TreeNode
             ? $context->getBccBlocs()
             : $this->maquette->open($context)->competenceBlocs();
@@ -383,11 +394,14 @@ final class MaquetteExtension extends AbstractExtension
             }
         }
 
-        // même source que l'arbre et « Vérifier » : champs requis manquants ET MCCC non conformes
-        foreach ($this->completion->missing($node) as $m) {
-            if ($m['tab'] === $tab) {
-                return ($hasData || $tab === 'props') ? 'incomplete' : 'empty';
-            }
+        // même source que l'arbre et « Vérifier » : champs requis manquants, MCCC non conformes,
+        // règles de l'onglet ; une valeur invalide (bornes) passe l'onglet en erreur
+        $inTab = array_filter($this->completion->missing($node), static fn (array $m) => $m['tab'] === $tab);
+        if ([] !== array_filter($inTab, static fn (array $m) => $m['invalid'] ?? false)) {
+            return 'error';
+        }
+        if ([] !== $inTab) {
+            return ($hasData || $tab === 'props') ? 'incomplete' : 'empty';
         }
 
         return ($hasData || $tab === 'props') ? 'ok' : 'empty';
@@ -400,6 +414,11 @@ final class MaquetteExtension extends AbstractExtension
      */
     public function bccCompetences(TreeNode $node): array
     {
+        $template = null !== $node->getFormation() ? $this->templates->forFormation($node->getFormation()) : null;
+        if (null !== $template && $template->isBccBut()) {
+            return $this->butApprentissages($template->getBccReferentiel(), $node);
+        }
+
         $parcours = null;
         for ($c = $node; $c !== null; $c = $c->getParent()) {
             if ($c->isParcours()) {
@@ -425,6 +444,43 @@ final class MaquetteExtension extends AbstractExtension
             }
             if ($items !== []) {
                 $out[] = ['bloc' => $bloc->getLabel(), 'transversal' => $bloc->isTransversalBloc(), 'items' => $items];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Format BUT : les apprentissages critiques (AC) du référentiel national, groupés
+     * par compétence, limités au niveau de l'année du nœud (1re année → BUT1…) quand
+     * le nœud est sous une année ; tous les niveaux sinon.
+     *
+     * @param list<array<string, mixed>> $referentiel
+     *
+     * @return list<array{bloc: string, transversal: bool, items: list<array{label: string, code: ?string, description: string}>}>
+     */
+    private function butApprentissages(array $referentiel, TreeNode $node): array
+    {
+        $annee = null;
+        for ($c = $node; null !== $c; $c = $c->getParent()) {
+            if ('annee' === $c->typeKey) {
+                $siblings = $c->getParent()?->getChildren() ?? $this->maquette->open($node->getFormation())->pedagogicalRoots();
+                $annee = 'BUT'.(1 + \count(array_filter($siblings, static fn (TreeNode $s) => 'annee' === $s->typeKey && $s->getPosition() < $c->getPosition())));
+                break;
+            }
+        }
+
+        $out = [];
+        foreach ($referentiel as $competence) {
+            foreach ($competence['niveaux'] ?? [] as $niveau) {
+                if (null !== $annee && ($niveau['annee'] ?? null) !== $annee) {
+                    continue;
+                }
+                $out[] = [
+                    'bloc' => sprintf('C%d %s · %s', $competence['numero'] ?? 0, $competence['nomCourt'] ?? $competence['libelle'] ?? '', $niveau['annee'] ?? ''),
+                    'transversal' => false,
+                    'items' => array_map(static fn (array $ac) => ['label' => $ac['libelle'], 'code' => $ac['code'], 'description' => ''], $niveau['acs'] ?? []),
+                ];
             }
         }
 

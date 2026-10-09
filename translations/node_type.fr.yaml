@@ -103,5 +103,24 @@ node_type:
     field_max_length: Longueur maximale (caractères)
     field_bounds_help_number: Bornes du nombre saisi (ex. ECTS entre 0 et 30). Vide = pas de borne.
     field_bounds_help_text: Nombre de caractères attendus dans la saisie. Vide = pas de limite.
+    rules_title: 'Règles de validation de l’onglet (%count%)'
+    rules_help: >-
+      Elles s’ajoutent aux champs obligatoires : la pastille de l’onglet n’est verte que si elles sont
+      respectées, et le message s’affiche sous le champ concerné. Les bornes (min / max) se règlent sur
+      chaque champ.
+    rule_message_shown: 'Message affiché : « %message% »'
+    rule_required_if_title: Obligatoire sous condition
+    rule_field: Champ qui devient obligatoire
+    rule_when_field: Si le champ
+    rule_when_op: Condition
+    rule_when_value: Valeur
+    rule_when_value_placeholder: 'ex. oui (inutile pour « est rempli »)'
+    rule_message: Message (facultatif)
+    rule_message_placeholder: 'vide = message généré (ex. « obligatoire si … »)'
+    rule_one_of_title: Au moins un parmi
+    rule_add_button: Ajouter la règle
+    field_min_count: Nombre de choix minimum
+    field_max_count: Nombre de choix maximum
+    field_bounds_help_count: Nombre de cases à cocher attendues. Vide = pas de limite.
     field_options_field: 'Options (si pas de référentiel) — une par ligne : <code>valeur|Libellé</code>'
     field_togglable_label: 'Champ togglable (activable/désactivable par diplôme, depuis le tableau structurel du template)'

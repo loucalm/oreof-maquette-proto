@@ -302,9 +302,12 @@ final class FormationController extends AbstractController
 
         $this->maquette->save($formation, $doc);
 
-        // enregistrement en direct (Stimulus) : pas de flash, le statut recalculé suffit
+        // enregistrement en direct (Stimulus) : pas de flash ; statut et erreurs par champ recalculés
         if ('json' === $request->getPreferredFormat()) {
-            return $this->json(['status' => $completion->parcoursParamStatus($node, $key)]);
+            return $this->json([
+                'status' => $completion->parcoursParamStatus($node, $key),
+                'issues' => $completion->parcoursParamIssues($node, $key),
+            ]);
         }
 
         $this->addFlash('success', sprintf('« %s » enregistré.', self::PARCOURS_PARAM_SECTIONS[$key]));
@@ -679,9 +682,12 @@ final class FormationController extends AbstractController
         $doc->setFormationParam($key, array_filter($data, static fn ($v) => $v !== '' && $v !== null));
         $this->maquette->save($formation, $doc);
 
-        // enregistrement en direct (Stimulus) : pas de flash, le statut recalculé suffit
+        // enregistrement en direct (Stimulus) : pas de flash ; statut et erreurs par champ recalculés
         if ('json' === $request->getPreferredFormat()) {
-            return $this->json(['status' => $completion->formationParamStatus($formation, $key)]);
+            return $this->json([
+                'status' => $completion->formationParamStatus($formation, $key),
+                'issues' => $completion->formationParamIssues($formation, $key),
+            ]);
         }
 
         $this->addFlash('success', sprintf('« %s » enregistré.', self::PARAM_SECTIONS[$key]['label']));

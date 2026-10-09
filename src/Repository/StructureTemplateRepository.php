@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Entity\Formation;
 use App\Entity\StructureTemplate;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -30,6 +31,12 @@ class StructureTemplateRepository extends ServiceEntityRepository implements Res
     public function findOneByDiplome(string $diplome): ?StructureTemplate
     {
         return $this->byDiplome[$diplome] ??= $this->findOneBy(['diplome' => $diplome]);
+    }
+
+    /** Template du diplôme de la formation (celui qui en fixe la structure et le format des BCC). */
+    public function forFormation(Formation $formation): ?StructureTemplate
+    {
+        return null !== $formation->getDiplome() ? $this->findOneByDiplome($formation->getDiplome()) : null;
     }
 
     public function reset(): void

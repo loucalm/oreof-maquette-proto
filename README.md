@@ -27,11 +27,14 @@ Autres : `make sh`, `make console ARGS="…"`, `make cc`, `make tw-watch`, `make
 | **Éditeur** : arbre drag&drop (SortableJS) + panneau d'attributs par onglet, gated par capacités | `templates/formation/editor.html.twig`, `templates/node/panel.html.twig` |
 | **Templates de structure** : base réutilisable (BUT, Licence, Master à parcours), instanciée puis modifiable ; « enregistrer la structure courante comme template » | `src/Entity/StructureTemplate.php` + `src/Maquette/TemplateApplier.php` + `/templates` |
 | **Opérations nœud** : ajouter (typé, filtré), déplacer / reparenter, dupliquer, supprimer, « Paramètre du nœud » (capacités par nœud), mutualiser | `src/Controller/NodeController.php` |
+| **Types de champ** : une classe par type de saisie (taguée, découverte par le registre) qui décide des réglages de l'éditeur de champ, du sens des bornes min / max et de la validation des valeurs | `src/FieldType/` |
+| **Règles de validation par onglet** : « obligatoire sous condition », « au moins un parmi », bornes des champs ; pilotent les pastilles (dont l'état « erreur ») et les messages sous les champs | `src/Validation/` + éditeur d'un type d'ELP + `/administration/regles-de-validation` |
+| **Format des BCC par diplôme** : blocs saisis (Licence, Master, M2E) ou référentiel national BUT en lecture seule (compétence › niveau › AC) | `StructureTemplate::bccFormat`, `templates/formation/bcc_but.html.twig` |
 
 ## Pas (encore) dans le prototype
 
 - Résolution d'héritage d'attributs le long de l'arbre (politique par diplôme)
-- Moteur de règles de validation composable
+- Moteur de règles de validation composable au-delà des deux formes d'onglet (formules, règles inter-onglets)
 - « Raccrocher » un nœud mutualisé d'une autre formation (le flag `mutualized` existe, l'écran de récupération non)
 - Relations inter‑parcours (ramification), workflow, exports
 

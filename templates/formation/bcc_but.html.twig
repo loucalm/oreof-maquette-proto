@@ -1,0 +1,47 @@
+{# BCC au format BUT : référentiel national en lecture seule (compétence › niveau BUT1-3 › apprentissages
+   critiques). Comme dans ORéOF, le responsable ne saisit rien ici : il coche les AC sur chaque EC. #}
+{% extends standalone ? 'base.html.twig' : '_frame.html.twig' %}
+{% block title %}{{ formation.name }} · BCC{% endblock %}
+
+{% block body %}
+<turbo-frame id="node-panel">
+<div class="panel-body" data-panel-active="bcc">
+    <div class="panel-head">
+        <h2 class="text-xl font-bold">{{ 'formation.editor.bcc_section_label'|trans({}, 'formation') }}</h2>
+        <div class="text-sm text-gray-400">{{ parcours ? parcours.displayLabel : formation.name }} · {{ 'formation.bcc_but.count'|trans({'%count%': referentiel|length}, 'formation') }}</div>
+        <p class="text-xs mt-1 rounded-md p-2" style="background:#f1f5f9;color:#475569">
+            {{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ 'formation.bcc_but.intro'|trans({}, 'formation') }}
+        </p>
+    </div>
+
+    <div class="panel-scroll space-y-4">
+        {% for c in referentiel %}
+            <div class="bcc-bloc">
+                <div class="bcc-bloc-head">
+                    <div class="min-w-0 flex-1">
+                        <div class="font-semibold"><span class="opacity-80">C{{ c.numero }} · </span>{{ c.libelle }}</div>
+                        {% if c.nomCourt is defined %}<div class="text-xs opacity-80">{{ c.nomCourt }}</div>{% endif %}
+                    </div>
+                </div>
+                <div class="bcc-bloc-body">
+                    {% for n in c.niveaux %}
+                        <div class="px-3.5 py-2 {{ not loop.first ? 'border-t' }}" style="border-color:var(--c-border)">
+                            <div class="text-xs font-semibold uppercase tracking-wide text-gray-400">{{ 'formation.bcc_but.niveau'|trans({'%ordre%': n.ordre, '%annee%': n.annee}, 'formation') }} · {{ n.libelle }}</div>
+                            <ul class="mt-1 space-y-0.5 text-sm">
+                                {% for ac in n.acs %}
+                                    <li><span class="font-mono text-xs font-bold" style="color:var(--c-primary)">{{ ac.code }}</span> {{ ac.libelle }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% else %}
+            <div class="rounded-xl border border-dashed p-8 text-center text-sm text-gray-500" style="border-color:var(--c-border)">
+                {{ 'formation.bcc_but.empty'|trans({}, 'formation') }}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+</turbo-frame>
+{% endblock %}

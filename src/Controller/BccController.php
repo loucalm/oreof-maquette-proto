@@ -9,6 +9,7 @@ use App\Maquette\Doc\MaquetteDoc;
 use App\Maquette\Doc\TreeNode;
 use App\Maquette\Maquette;
 use App\Maquette\Numbering;
+use App\Repository\StructureTemplateRepository;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -34,6 +35,7 @@ final class BccController extends AbstractController
     public function __construct(
         private readonly Maquette $maquette,
         private readonly Numbering $numbering,
+        private readonly StructureTemplateRepository $templates,
     ) {
     }
 
@@ -66,6 +68,9 @@ final class BccController extends AbstractController
     #[Route('/formations/{fid}/nodes/{nid}/bcc/competences', name: 'bcc_competence_add', methods: ['POST'])]
     public function addCompetence(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid, Request $request): Response
     {
+        if (null !== ($refused = $this->refuseIfBut($formation))) {
+            return $refused;
+        }
         $doc = $this->maquette->open($formation);
         $bloc = $this->pick($doc, $nid);
         if (!$bloc->isBloc()) {
@@ -83,6 +88,9 @@ final class BccController extends AbstractController
     #[Route('/formations/{fid}/nodes/{nid}/bcc', name: 'bcc_node_save', methods: ['POST'])]
     public function save(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid, Request $request): Response
     {
+        if (null !== ($refused = $this->refuseIfBut($formation))) {
+            return $refused;
+        }
         $doc = $this->maquette->open($formation);
         $node = $this->pick($doc, $nid);
         if (!$node->isCompetenceNode()) {
@@ -101,6 +109,9 @@ final class BccController extends AbstractController
     #[Route('/formations/{fid}/nodes/{nid}/bcc/delete', name: 'bcc_node_delete', methods: ['POST'])]
     public function delete(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid): Response
     {
+        if (null !== ($refused = $this->refuseIfBut($formation))) {
+            return $refused;
+        }
         $doc = $this->maquette->open($formation);
         $node = $this->pick($doc, $nid);
         if (!$node->isCompetenceNode()) {
@@ -119,6 +130,9 @@ final class BccController extends AbstractController
     #[Route('/formations/{fid}/nodes/{nid}/bcc/move', name: 'bcc_move', methods: ['POST'])]
     public function move(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid, Request $request): JsonResponse
     {
+        if ($this->isBut($formation)) {
+            return new JsonResponse(['ok' => false, 'error' => 'but'], 409);
+        }
         $doc = $this->maquette->open($formation);
         $node = $doc->node($nid);
         if ($node === null || !$node->isCompetenceNode()) {
@@ -153,6 +167,17 @@ final class BccController extends AbstractController
 
     private function renderEditor(Request $request, Formation $formation, ?TreeNode $parcours): Response
     {
+        // BUT : référentiel national en lecture seule (compétence › niveau › AC), pas de blocs saisis
+        $template = $this->templates->forFormation($formation);
+        if (null !== $template && $template->isBccBut()) {
+            return $this->render('formation/bcc_but.html.twig', [
+                'formation' => $formation,
+                'parcours' => $parcours,
+                'referentiel' => $template->getBccReferentiel(),
+                'standalone' => 'node-panel' !== $request->headers->get('Turbo-Frame'),
+            ]);
+        }
+
         $doc = $this->maquette->open($formation);
         $blocs = $parcours !== null ? $parcours->getBccBlocs() : $doc->competenceBlocs();
 
@@ -170,6 +195,10 @@ final class BccController extends AbstractController
 
     private function doAddBloc(Request $request, Formation $formation, ?TreeNode $parcours): Response
     {
+        if (null !== ($refused = $this->refuseIfBut($formation))) {
+            return $refused;
+        }
+
         $doc = $this->maquette->open($formation);
         $blocs = $parcours !== null ? $parcours->getBccBlocs() : $doc->competenceBlocs();
 
@@ -192,6 +221,22 @@ final class BccController extends AbstractController
         $this->addFlash('success', $transversal ? 'Bloc transversal ajouté.' : sprintf('« %s » ajouté.', $label));
 
         return $this->contextRedirect($formation, $parcours);
+    }
+
+    /** BUT : référentiel national en lecture seule, toute modification des BCC est refusée. */
+    private function isBut(Formation $formation): bool
+    {
+        return true === $this->templates->forFormation($formation)?->isBccBut();
+    }
+
+    private function refuseIfBut(Formation $formation): ?Response
+    {
+        if (!$this->isBut($formation)) {
+            return null;
+        }
+        $this->addFlash('warning', 'BUT : les compétences viennent du référentiel national, en lecture seule.');
+
+        return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'bcc' => 1]);
     }
 
     /** @param list<TreeNode> $blocs */
