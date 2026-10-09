@@ -92,11 +92,40 @@ body {
 /* .editor-shell porte l'unique cadre + arrondi ; les deux colonnes n'ont
    plus de bord propre, seule une fine séparation les distingue. */
 .editor-shell {
+    position: relative;
     border: 1px solid var(--c-border);
     border-radius: 14px;
     overflow: hidden;
     background: #fff;
+    --aside-w: 340px; /* largeur de la colonne gauche ; réglée par resizable_controller.js */
 }
+@media (min-width: 1280px) { .editor-shell { --aside-w: 420px; } }
+@media (min-width: 1024px) {
+    .editor-shell { grid-template-columns: var(--aside-w) minmax(0, 1fr); }
+}
+/* poignée posée sur la séparation des deux colonnes (invisible tant qu'on ne survole pas) */
+.editor-resizer {
+    display: none; position: absolute; z-index: 20; top: 0; bottom: 0; width: 12px;
+    left: calc(var(--aside-w) - 6px); cursor: ew-resize; touch-action: none; align-items: center; justify-content: center;
+}
+@media (min-width: 1024px) { .editor-resizer { display: flex; } }
+.editor-resizer::before {
+    content: ''; position: absolute; top: 0; bottom: 0; left: 5px; width: 2px; background: transparent; transition: background .15s;
+}
+.editor-resizer-grip {
+    position: relative; display: grid; place-items: center; width: 14px; height: 36px; border-radius: 9999px;
+    background: #fff; border: 1px solid var(--c-border); color: #9ca3af; font-size: 12px; opacity: .7;
+    transition: opacity .15s, background .15s, color .15s;
+}
+.editor-resizer:hover::before, .editor-resizer:focus-visible::before, .is-resizing .editor-resizer::before { background: var(--c-primary); }
+.editor-resizer:hover .editor-resizer-grip, .editor-resizer:focus-visible .editor-resizer-grip, .is-resizing .editor-resizer-grip {
+    opacity: 1; background: var(--c-primary); border-color: var(--c-primary); color: #fff;
+}
+.editor-resizer:focus-visible { outline: none; }
+/* pendant le glissement : pas de sélection de texte ni d'interception par le contenu */
+.editor-shell.is-resizing { user-select: none; cursor: ew-resize; }
+.editor-shell.is-resizing > * { pointer-events: none; }
+.editor-shell.is-resizing > .editor-resizer { pointer-events: auto; }
 .editor-aside {
     background: #fff;
     border-bottom: 1px solid var(--c-border);
@@ -498,7 +527,6 @@ li:not(.collapsed) > .tree-row > .tree-chevron { transform: rotate(90deg); }
 form.is-dirty .panel-savebar { box-shadow: 0 -6px 12px -10px rgba(180, 83, 9, .5); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
-.tree-gap { font-size: 10px; font-weight: 600; }
 
 /* ── grille de saisie rapide ── */
 .qg-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
@@ -561,7 +589,6 @@ form.is-dirty .panel-savebar { box-shadow: 0 -6px 12px -10px rgba(180, 83, 9, .5
 }
 .help-drawer::backdrop { background: rgba(15, 23, 42, .25); }
 
-.tree-comments { display: inline-flex; align-items: center; gap: 2px; font-size: 11px; color: #6366f1; flex: 0 0 auto; }
 
 .cbx-chip {
     border: 1px solid #c7d2fe; background: var(--c-primary-soft); color: var(--c-primary); border-radius: 9999px;

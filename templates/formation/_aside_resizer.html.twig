@@ -1,0 +1,6 @@
+{# Poignée de redimensionnement de la colonne gauche (cf. resizable_controller.js). Masquée sous lg : une seule colonne. #}
+<div data-resizable-target="handle" class="editor-resizer" role="separator" aria-orientation="vertical" tabindex="0"
+     aria-label="{{ 'formation.editor.resize_aria'|trans({}, 'formation') }}" title="{{ 'formation.editor.resize_title'|trans({}, 'formation') }}"
+     data-action="pointerdown->resizable#start keydown->resizable#key dblclick->resizable#reset">
+    <span class="editor-resizer-grip">{{ ux_icon('ph:dots-six-vertical-bold', {class: 'icon'}) }}</span>
+</div>

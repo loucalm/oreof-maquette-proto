@@ -119,7 +119,7 @@ final class MaquetteBuilder
             || \in_array(NodeView::STATUS_EMPTY, $childStatuses, true);
 
         $ownMissing = $view->missingCount;
-        // attributs techniques (« _comments », « _sourceHash »…) : pas une saisie
+        // attributs techniques (« _sourceHash »…) : pas une saisie
         $ownAttributes = array_filter($node->getAttributes(), static fn ($k) => !str_starts_with((string) $k, '_'), \ARRAY_FILTER_USE_KEY);
         $hasAnyOwnData = $ownAttributes !== [] || trim($node->getLabel()) !== '';
 

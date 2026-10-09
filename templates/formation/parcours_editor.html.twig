@@ -47,7 +47,9 @@
 {# ═══ éditeur ═══ #}
 <div class="rounded-2xl border bg-white p-3" style="border-color:var(--c-border)">
 
-    <div class="editor-shell grid lg:grid-cols-[340px_minmax(0,1fr)] xl:grid-cols-[420px_minmax(0,1fr)] lg:h-[calc(100vh-11rem)] min-h-[560px]">
+    <div class="editor-shell grid lg:h-[calc(100vh-11rem)] min-h-[560px]" data-controller="resizable">
+        {{ include('formation/_aside_resizer.html.twig') }}
+
 
         {# ─── panneau structure ─── #}
         <div class="editor-aside flex flex-col overflow-hidden"

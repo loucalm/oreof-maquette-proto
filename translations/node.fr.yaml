@@ -4,9 +4,6 @@ node:
     locked_title: Cet ELP fait partie de la structure imposée par le diplôme
     locked_badge: imposé
     imposed_badge: Imposé par le diplôme
-    comments_title: '{0}Commentaires|{1}1 commentaire|]1,Inf[%count% commentaires'
-    comment_placeholder: Écrire un commentaire (visible par le responsable et le SES)…
-    comment_send: Envoyer
     copied_from: 'Copie de « %node% » (%formation%).'
     source_changed: La source a changé depuis la copie.
     refresh_from_source: Mettre à jour depuis la source

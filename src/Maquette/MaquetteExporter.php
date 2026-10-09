@@ -88,7 +88,7 @@ final class MaquetteExporter
         $out['status'] = $v->status;
         $out['totalHours'] = round($v->totalHours, 2);
         $out['totalEcts'] = round($v->totalEcts, 2);
-        // attributs métier seulement (« _comments », « _sourceHash », « _tpl » sont internes)
+        // attributs métier seulement (« _sourceHash », « _tpl » sont internes)
         $attributes = array_filter($v->node->getAttributes(), static fn ($k) => !str_starts_with((string) $k, '_'), \ARRAY_FILTER_USE_KEY);
         if ($attributes !== []) {
             $out['attributes'] = $attributes;

@@ -475,29 +475,6 @@ final class NodeController extends AbstractController
         return $this->backToEditor($copy, 'Copie mise à jour depuis la source.');
     }
 
-    /** Commentaire sur un élément (fil de discussion responsable ↔ SES), rangé dans le nœud. */
-    #[Route('/formations/{fid}/nodes/{nid}/commentaires', name: 'node_comment_add', methods: ['POST'])]
-    public function addComment(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid, Request $request, \App\Twig\RoleExtension $roles): Response
-    {
-        $doc = $this->maquette->open($formation);
-        $node = $this->pick($doc, $nid);
-        $text = trim((string) $request->request->get('text'));
-        if ('' === $text) {
-            return $this->editorRedirect($node);
-        }
-
-        $comments = \is_array($node->getAttribute('_comments')) ? $node->getAttribute('_comments') : [];
-        $comments[] = [
-            'by' => \App\Twig\RoleExtension::ROLES[$roles->role()] ?? $roles->role(),
-            'at' => (new \DateTimeImmutable())->format(\DATE_ATOM),
-            'text' => mb_substr($text, 0, 2000),
-        ];
-        $node->setAttribute('_comments', $comments);
-        $this->maquette->save($formation, $doc, sprintf('Commentaire sur « %s »', $node->getDisplayLabel()));
-
-        return $this->backToEditor($node, 'Commentaire ajouté.');
-    }
-
     #[Route('/formations/{fid}/nodes/{nid}/convertir-choix', name: 'node_convert_choice', methods: ['POST'])]
     public function convertToChoice(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid): Response
     {

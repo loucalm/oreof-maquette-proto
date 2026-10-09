@@ -134,19 +134,6 @@ final class Lot2FeaturesTest extends WebTestCase
         self::assertSame(['UE renommée à la source'], array_values($labels));
     }
 
-    public function testCommentIsStoredOnTheNodeWithoutChangingItsStatus(): void
-    {
-        $formation = $this->factory()->fromTemplate('licence_lmd');
-        $ue = $this->factory()->first(static::getContainer()->get(Maquette::class)->open($formation), 'ue');
-
-        $this->client->request('POST', sprintf('/formations/%d/nodes/%s/commentaires', $formation->getId(), $ue->nid), ['text' => 'À revoir avec le SES']);
-
-        [, $doc] = $this->reload($formation);
-        $comments = $doc->node($ue->nid)->getAttribute('_comments');
-        self::assertCount(1, $comments);
-        self::assertSame('À revoir avec le SES', $comments[0]['text']);
-    }
-
     public function testHelpSaveIsAdminOnlyAndRejectsExternalRedirect(): void
     {
         $this->client->request('POST', '/role/responsable');

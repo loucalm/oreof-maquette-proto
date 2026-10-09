@@ -65,15 +65,11 @@ formation:
     annee_help: Surtout utile pour une consolidation.
     create_button: Créer
   tree:
-    comments_title: '{1}1 commentaire|]1,Inf[%count% commentaires'
     search_placeholder: 'Rechercher un élément…  ( / )'
     search_aria: Rechercher dans la structure (libellé, référence, type)
     search_empty: Aucun élément ne correspond.
     filter_all: Tout
     filter_todo: À compléter
-    hours_title: '%h% h au total (heures présentielles, distancielles et travail personnel)'
-    ects_missing_title: 'Il manque %gap% ECTS pour atteindre la cible'
-    ects_excess_title: '%gap% ECTS de plus que la cible'
     drag_title: Glisser pour déplacer
     locked_title: ELP imposé par le diplôme
     ref_title: Référence calculée
@@ -139,6 +135,8 @@ formation:
     derogation_message_label: Votre demande
     derogation_message_placeholder: 'Ex. : je voudrais ajouter une UE optionnelle supplémentaire au semestre 3…'
     derogation_submit_button: Envoyer la demande
+    resize_title: "Glisser pour élargir ou réduire l'arborescence (double-clic : taille d'origine)"
+    resize_aria: "Largeur de l'arborescence (flèches gauche et droite pour la régler)"
     select_prompt: Sélectionnez une section ou un ELP pour le modifier
   parcours_editor:
     title_suffix: éditeur de parcours

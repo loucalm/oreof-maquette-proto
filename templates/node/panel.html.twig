@@ -239,24 +239,6 @@
         {% endif %}
     {% endfor %}
 
-    {# ── commentaires (fil responsable ↔ SES) ── #}
-    {% set comments = node.getAttribute('_comments') ?? [] %}
-    <details class="move-box" {{ comments is not empty ? 'open' }}>
-        <summary class="fld-label cursor-pointer">{{ ux_icon('ph:chat-circle-text', {class: 'icon'}) }} {{ 'node.panel.comments_title'|trans({'%count%': comments|length}, 'node') }}</summary>
-        <ol class="mt-2 space-y-2">
-            {% for c in comments %}
-                <li class="rounded-lg px-3 py-2 text-sm" style="background:#f8f9fb">
-                    <div class="text-[11px] text-gray-400">{{ c.by }} · {{ c.at|date('d/m/Y H:i') }}</div>
-                    <div class="whitespace-pre-line">{{ c.text }}</div>
-                </li>
-            {% endfor %}
-        </ol>
-        <form method="post" action="{{ node_url(node, 'node_comment_add') }}" data-turbo-frame="_top" class="mt-2 flex items-end gap-2">
-            <textarea name="text" rows="2" required maxlength="2000" class="fld flex-1" aria-label="{{ 'node.panel.comment_placeholder'|trans({}, 'node') }}" placeholder="{{ 'node.panel.comment_placeholder'|trans({}, 'node') }}"></textarea>
-            <button class="rounded-lg border px-3 py-2 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'node.panel.comment_send'|trans({}, 'node') }}</button>
-        </form>
-    </details>
-
     {# ── modale « Paramètre du nœud » ── #}
     <dialog data-modal-target="dialog" data-action="click->modal#clickOutside"
             class="rounded-2xl border-0 p-0 w-[min(600px,94vw)] backdrop:bg-black/40">

@@ -21,21 +21,10 @@
                 {% if view.ref %}<span class="tree-ref" title="{{ 'formation.tree.ref_title'|trans({}, 'formation') }}">{{ view.ref }}</span>{% endif %}
                 <a href="{{ node_url(node) }}" data-turbo-frame="node-panel"
                    class="tree-label">{{ node.type.temporel ? node_display_label(node, view.ref) : (node.label ?: '—') }}</a>
-                {% set nComments = (node.getAttribute('_comments') ?? [])|length %}
-                {% if nComments %}<span class="tree-comments" title="{{ 'formation.tree.comments_title'|trans({'%count%': nComments}, 'formation') }}">{{ ux_icon('ph:chat-circle-text', {class: 'icon'}) }}{{ nComments }}</span>{% endif %}
                 {% if isChoice %}
                     <span class="choice-count" title="{{ 'formation.tree.choice_count_title'|trans({}, 'formation') }}">{{ 'formation.tree.choice_count'|trans({'%chosen%': node.getAttribute('choiceCount') ?: '?', '%total%': view.children|length}, 'formation') }}</span>
                 {% elseif parentIsChoice %}
                     <span class="choice-alt-tag" title="{{ 'formation.tree.choice_alt_title'|trans({'%label%': parentChoiceLabel}, 'formation') }}">{{ ux_icon('ph:shuffle', {class: 'icon'}) }} {{ parentChoiceLabel }}</span>
-                {% endif %}
-
-                {% set gap = view.ectsTarget ? view.totalEcts - view.ectsTarget : 0 %}
-                {% set hoursTitle = 'formation.tree.hours_title'|trans({'%h%': view.totalHours|round(1)}, 'formation') %}
-                {% if view.ectsTarget %}
-                    <span class="tree-ects {{ view.ectsReached ? 'text-green-600' : (view.totalEcts > 0 ? 'text-amber-600' : 'text-gray-400') }}"
-                          title="{{ view.ectsReached ? hoursTitle : (gap < 0 ? 'formation.tree.ects_missing_title' : 'formation.tree.ects_excess_title')|trans({'%gap%': gap|abs|round(1)}, 'formation') ~ ' · ' ~ hoursTitle }}">{{ view.totalEcts|round(1) }}/{{ view.ectsTarget }}{% if not view.ectsReached and view.totalEcts > 0 %} <span class="tree-gap">({{ gap > 0 ? '+' }}{{ gap|round(1) }})</span>{% endif %}</span>
-                {% elseif view.totalEcts > 0 or view.totalHours > 0 %}
-                    <span class="tree-ects text-gray-400" title="{{ hoursTitle }}">{% if view.totalEcts > 0 %}{{ view.totalEcts|round(1) }} ECTS{% endif %}{% if view.totalHours > 0 %}{{ view.totalEcts > 0 ? ' · ' }}{{ view.totalHours|round }}h{% endif %}</span>
                 {% endif %}
 
                 {% if hasChildren %}
