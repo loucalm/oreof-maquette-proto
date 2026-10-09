@@ -334,7 +334,7 @@
                {% if def.max is not null %}max="{{ def.max }}"{% endif %}
                class="fld w-44">
     {% elseif def.field == 'textarea' %}
-        <textarea name="attr_{{ key }}" rows="3" class="fld">{{ val }}</textarea>
+        <textarea name="attr_{{ key }}" rows="3" class="fld"{{ ui.lengthBounds(def) }}>{{ val }}</textarea>
     {% elseif def.field == 'choice' %}
         {% set ph = key == 'ueType' ? 'node.panel.choice_ue_type'|trans({}, 'node') : (key == 'ecType' ? 'node.panel.choice_ec_type'|trans({}, 'node') : 'node.panel.choice_default'|trans({}, 'node')) %}
         <select name="attr_{{ key }}" class="fld">
@@ -523,9 +523,15 @@
             </div>
         {% endif %}
     {% else %}
-        <input name="attr_{{ key }}" value="{{ val }}" class="fld">
+        <input name="attr_{{ key }}" value="{{ val }}" class="fld"{{ ui.lengthBounds(def) }}>
     {% endif %}
 {% endmacro %}
+
+{# Bornes min/max d'un champ texte = longueur en caractères (cf. éditeur de champ des types d'ELP). #}
+{% macro lengthBounds(def) -%}
+    {%- if def.min is not null %} minlength="{{ def.min|round }}"{% endif -%}
+    {%- if def.max is not null %} maxlength="{{ def.max|round }}"{% endif -%}
+{%- endmacro %}
 
 {% macro mcccRow(index, type, weight, duree) %}
     <div class="flex items-center gap-2" data-mccc-target="row">

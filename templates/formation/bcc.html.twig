@@ -4,14 +4,18 @@
 {% extends standalone ? 'base.html.twig' : '_frame.html.twig' %}
 {% block title %}{{ formation.name }} · BCC{% endblock %}
 
-{% macro editform(n, kind) %}
+{% macro editform(n, kind, ref) %}
     <form method="post" action="{{ node_url(n, 'bcc_node_save') }}" data-turbo-frame="_top"
           data-bcc-target="edit" hidden class="bcc-edit">
         <div class="grid gap-2 sm:grid-cols-[140px_1fr]">
             <label class="text-xs font-medium text-gray-500 sm:pt-2">{{ kind == 'bloc' ? 'formation.bcc.bloc_label_field'|trans({}, 'formation') : 'formation.bcc.label_field'|trans({}, 'formation') }}</label>
             <input name="label" value="{{ n.label }}" required class="fld">
-            <label class="text-xs font-medium text-gray-500 sm:pt-2">{{ 'formation.bcc.code_field'|trans({}, 'formation') }}</label>
-            <input name="code" value="{{ n.code }}" placeholder="{{ 'field.edit.category_placeholder'|trans({}, 'field') }}" class="fld">
+            {# code = référence calculée depuis la position (BC 2 / 2.E) : jamais saisi à la main #}
+            <span class="text-xs font-medium text-gray-500 sm:pt-2">{{ 'formation.bcc.code_field'|trans({}, 'formation') }}</span>
+            <div class="text-sm sm:pt-2">
+                <span class="font-mono">{{ ref ?: '—' }}</span>
+                <span class="text-xs text-gray-400">· {{ 'formation.bcc.code_auto_help'|trans({}, 'formation') }}</span>
+            </div>
             <label class="text-xs font-medium text-gray-500 sm:pt-2">{{ 'formation.bcc.description_field'|trans({}, 'formation') }}</label>
             <textarea name="description" rows="2" class="fld" placeholder="{{ 'formation.bcc.description_placeholder'|trans({}, 'formation') }}">{{ n.description }}</textarea>
         </div>
@@ -54,6 +58,9 @@
         <p class="text-xs text-gray-400 mt-1">
             {{ 'formation.bcc.intro'|trans({'%scope%': parcours ? 'formation.bcc.scope_parcours'|trans({}, 'formation') : 'formation.bcc.scope_mention'|trans({}, 'formation')}, 'formation') }}
         </p>
+        <p class="text-xs mt-1" style="color:var(--c-primary)">
+            {{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }} {{ 'formation.bcc.drag_hint'|trans({}, 'formation') }}
+        </p>
     </div>
 
     <div class="panel-scroll">
@@ -84,7 +91,6 @@
                     <div class="min-w-0 flex-1">
                         <div class="font-semibold">
                             {% if b.transversal %}<span class="opacity-80">{{ ux_icon('ph:graduation-cap', {class: 'icon'}) }} </span>{% endif %}{% if b.ref %}<span class="opacity-80">BC {{ b.ref }} · </span>{% endif %}{{ n.label }}
-                            {% if n.code %}<span class="ml-1 text-xs font-normal opacity-70">{{ n.code }}</span>{% endif %}
                         </div>
                         {% if n.description %}<div class="text-xs opacity-80">{{ n.description }}</div>{% endif %}
                     </div>
@@ -92,7 +98,7 @@
                 </div>
 
                 <div class="bcc-bloc-body">
-                    <div data-bcc-node="{{ n.id }}">{{ bcc.editform(n, 'bloc') }}</div>
+                    <div data-bcc-node="{{ n.id }}">{{ bcc.editform(n, 'bloc', b.ref ? 'BC ' ~ b.ref : null) }}</div>
 
                     <ul class="bcc-comp-list {{ b.competences is empty ? 'bcc-comp-list--empty' }}" data-bcc-target="compList" data-parent-id="{{ n.id }}">
                         {% for row in b.competences %}
@@ -101,12 +107,12 @@
                                 <div class="bcc-comp-row">
                                     <span class="drag-handle" data-bcc-handle title="{{ 'formation.bcc.drag_title'|trans({}, 'formation') }}">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>
                                     <div class="min-w-0 flex-1">
-                                        <div class="font-medium">{% if row.ref %}<span class="text-xs font-bold" style="color:var(--c-primary)">{{ row.ref }}</span> {% endif %}{{ c.label }}{% if c.code %}<span class="ml-1 text-xs font-normal text-gray-400">{{ c.code }}</span>{% endif %}</div>
+                                        <div class="font-medium">{% if row.ref %}<span class="text-xs font-bold" style="color:var(--c-primary)">{{ row.ref }}</span> {% endif %}{{ c.label }}</div>
                                         {% if c.description %}<div class="text-xs text-gray-500">{{ c.description }}</div>{% endif %}
                                     </div>
                                     <button type="button" class="bcc-edit-btn bcc-edit-btn--light" data-action="bcc#toggle" data-bcc-id-param="{{ c.id }}" title="{{ 'formation.bcc.edit_delete_title'|trans({}, 'formation') }}">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }}</button>
                                 </div>
-                                <div data-bcc-node="{{ c.id }}" class="px-3 pb-2">{{ bcc.editform(c, 'competence') }}</div>
+                                <div data-bcc-node="{{ c.id }}" class="px-3 pb-2">{{ bcc.editform(c, 'competence', row.ref) }}</div>
                             </li>
                         {% endfor %}
                     </ul>

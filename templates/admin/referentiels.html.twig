@@ -2,23 +2,7 @@
 {% set adminSection = 'referentiels' %}
 {% block title %}{{ 'admin.referentiels.title'|trans({}, 'admin') }}{% endblock %}
 
-{# rangée : valeurs = liste de libellés, ou map {clé: libellé} #}
-{% macro row(title, help, values) %}
-    <div>
-        <div class="fld-label">{{ title }}</div>
-        {% if help %}<div class="fld-help mb-1.5">{{ help }}</div>{% else %}<div class="mb-1.5"></div>{% endif %}
-        <div class="flex flex-wrap gap-1.5">
-            {% for k, label in values %}
-                <span class="rounded-md border px-2 py-0.5 text-xs" style="border-color:var(--c-border);background:#fff">
-                    {{ label }}{% if k is not same as(loop.index0) and k != label %}<span class="text-gray-400"> · {{ k }}</span>{% endif %}
-                </span>
-            {% endfor %}
-        </div>
-    </div>
-{% endmacro %}
-
 {% block admin_body %}
-{% import _self as ui %}
 
 <div class="mb-5">
     <h2 class="text-lg font-bold">{{ 'admin.referentiels.heading'|trans({}, 'admin') }}</h2>
@@ -28,23 +12,6 @@
 </div>
 
 <div class="space-y-4">
-
-    {# ─── métamodèle : catalogues fixes, informatifs, pas d'édition depuis cette page ─── #}
-    <div class="rounded-xl border bg-white p-5 space-y-4" style="border-color:var(--c-border)">
-        <div class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">{{ 'admin.referentiels.metamodel_title'|trans({}, 'admin') }}</div>
-        <p class="text-xs" style="color:var(--c-muted)">{{ 'admin.referentiels.metamodel_help'|trans({}, 'admin') }}</p>
-        {{ ui.row('admin.referentiels.field_types_row_title'|trans({}, 'admin'), 'admin.referentiels.field_types_row_help'|trans({}, 'admin'), fieldTypes) }}
-        {{ ui.row('admin.referentiels.node_types_row_title'|trans({}, 'admin'), 'admin.referentiels.node_types_row_help'|trans({}, 'admin'), kindPills) }}
-        <div>
-            <div class="fld-label">{{ 'admin.referentiels.competences_row_title'|trans({}, 'admin') }}</div>
-            <p class="text-xs" style="color:var(--c-muted)">
-                {{ 'admin.referentiels.competences_row_help'|trans({}, 'admin') }}
-            </p>
-        </div>
-        <p class="text-xs" style="color:var(--c-muted)">
-            {{ 'admin.referentiels.mcc_note'|trans({'%link_open%': '<a href="' ~ path('admin_mcctypes') ~ '" data-turbo-frame="_top" class="underline">', '%link_close%': '</a>'}, 'admin')|raw }}
-        </p>
-    </div>
 
     {# ─── libre : nomenclatures entièrement éditables ─── #}
     <div class="rounded-xl border bg-white p-5 space-y-4" style="border-color:var(--c-border)">

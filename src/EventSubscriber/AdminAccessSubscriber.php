@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\EventSubscriber;
 
+use App\Twig\RoleExtension;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
@@ -60,7 +61,7 @@ final class AdminAccessSubscriber
             return;
         }
 
-        if ($request->getSession()->get('proto_role', 'admin') !== 'admin') {
+        if (!\in_array($request->getSession()->get('proto_role', 'admin'), RoleExtension::ADMIN_ROLES, true)) {
             $request->getSession()->getFlashBag()->add('warning', "Page réservée à l'administrateur SES. Repassez en vue « Administrateur SES » pour y accéder.");
             $event->setController(fn () => new RedirectResponse($this->router->generate('formation_index')));
         }

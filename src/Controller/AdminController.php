@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Entity\FieldDef;
-use App\Enum\NodeKind;
 use App\Enum\RefCategory;
 use App\Repository\DerogationRequestRepository;
 use App\Repository\MccTypeRepository;
@@ -95,16 +93,9 @@ final class AdminController extends AbstractController
     {
         $all = $referentiels->allOrdered();
 
-        $kindPills = [];
-        foreach (NodeKind::cases() as $k) {
-            $kindPills[$k->value] = $k->label();
-        }
-
         return $this->render('admin/referentiels.html.twig', [
             'libres' => array_values(array_filter($all, static fn ($r) => $r->getCategory() === RefCategory::Libre)),
             'entites' => array_values(array_filter($all, static fn ($r) => $r->getCategory() === RefCategory::Entite)),
-            'fieldTypes' => FieldDef::TYPES,
-            'kindPills' => $kindPills,
         ]);
     }
 

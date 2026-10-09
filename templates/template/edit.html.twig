@@ -137,6 +137,7 @@
     <div class="space-y-4 self-start">
     <form method="post" action="{{ path('template_meta', {id: template.id}) }}"
           class="rounded-xl border bg-white p-4 space-y-3" style="border-color:var(--c-border)">
+        <div class="rounded-md p-2.5 text-xs" style="background:#f1f5f9;color:#475569">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'template.edit.impact_note'|trans({}, 'template') }}</div>
         <div>
             <div class="text-xs font-medium">{{ 'template.edit.label_field'|trans({}, 'template') }}</div>
             <input name="label" value="{{ template.label }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">

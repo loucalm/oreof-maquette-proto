@@ -304,13 +304,17 @@ formation:
     description_placeholder: Intitulé complet / précision
     delete_bloc_confirm: Supprimer ce bloc et toutes ses compétences ?
     delete_competency_confirm: Supprimer cette compétence ?
-    delete_bloc_button: le bloc
-    delete_competency_button: la compétence
+    delete_bloc_button: Supprimer le bloc
+    delete_competency_button: Supprimer la compétence
     heading: Référentiel de compétences
     intro: >-
       Blocs de connaissances et de compétences. Chaque bloc regroupe des compétences ; le bloc
       « transversales (RNCP) » porte les compétences communes %scope%.
     scope_parcours: à ce parcours
+    drag_hint: >-
+      Glisser la poignée pour réordonner les blocs, ou déplacer une compétence dans un autre bloc.
+      Les codes se recalculent.
+    code_auto_help: généré automatiquement selon la position
     scope_mention: à la mention
     structure_title: Structure BCC
     add_transversal_button: Ajouter des compétences transversales (RNCP)

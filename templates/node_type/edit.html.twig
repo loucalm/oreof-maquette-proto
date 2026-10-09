@@ -3,10 +3,16 @@
 
 {# ─── formulaire partagé pour ajouter/éditer un champ du formulaire associé ─── #}
 {% macro fieldForm(action, field, referentiels, referentielCapableTypes, fieldTypes, submitLabel, togglableDefault) %}
-    <form method="post" action="{{ action }}" class="grid grid-cols-2 gap-x-3 gap-y-2 rounded-md border p-3" style="border-color:var(--c-border)">
+    <form method="post" action="{{ action }}" class="grid grid-cols-2 gap-x-3 gap-y-2 rounded-md border p-3" style="border-color:var(--c-border)"
+          data-controller="field-bounds"
+          data-field-bounds-labels-value="{{ {
+              number: ['node_type.edit.field_min_value'|trans({}, 'node_type'), 'node_type.edit.field_max_value'|trans({}, 'node_type'), 'node_type.edit.field_bounds_help_number'|trans({}, 'node_type')],
+              text: ['node_type.edit.field_min_length'|trans({}, 'node_type'), 'node_type.edit.field_max_length'|trans({}, 'node_type'), 'node_type.edit.field_bounds_help_text'|trans({}, 'node_type')],
+              textarea: ['node_type.edit.field_min_length'|trans({}, 'node_type'), 'node_type.edit.field_max_length'|trans({}, 'node_type'), 'node_type.edit.field_bounds_help_text'|trans({}, 'node_type')],
+          }|json_encode }}">
         <label class="block">
             <span class="text-xs font-medium">{{ 'node_type.edit.field_type_field'|trans({}, 'node_type') }}</span>
-            <select name="type" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
+            <select name="type" data-field-bounds-target="type" data-action="field-bounds#update" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
                 {% for k, lbl in fieldTypes %}<option value="{{ k }}" {{ (field.type ?? 'text') == k ? 'selected' }}>{{ lbl }}</option>{% endfor %}
             </select>
         </label>
@@ -50,14 +56,18 @@
                 {{ 'node_type.edit.field_quick_add_label'|trans({}, 'node_type') }}
             </label>
         </div>
-        <label class="block">
-            <span class="text-xs font-medium">{{ 'node_type.edit.field_min_field'|trans({}, 'node_type') }}</span>
-            <input type="number" step="any" name="min" value="{{ field.min ?? '' }}" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
-        </label>
-        <label class="block">
-            <span class="text-xs font-medium">{{ 'node_type.edit.field_max_field'|trans({}, 'node_type') }}</span>
-            <input type="number" step="any" name="max" value="{{ field.max ?? '' }}" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
-        </label>
+        {# bornes : leur sens dépend du type (valeur pour un nombre, longueur pour un texte) ; masquées sinon #}
+        <div class="col-span-2 grid grid-cols-2 gap-x-3" data-field-bounds-target="bounds">
+            <label class="block">
+                <span class="text-xs font-medium" data-field-bounds-target="minLabel">{{ 'node_type.edit.field_min_field'|trans({}, 'node_type') }}</span>
+                <input type="number" step="any" name="min" value="{{ field.min ?? '' }}" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
+            </label>
+            <label class="block">
+                <span class="text-xs font-medium" data-field-bounds-target="maxLabel">{{ 'node_type.edit.field_max_field'|trans({}, 'node_type') }}</span>
+                <input type="number" step="any" name="max" value="{{ field.max ?? '' }}" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
+            </label>
+            <span class="col-span-2 text-[11px]" style="color:var(--c-muted)" data-field-bounds-target="help"></span>
+        </div>
         {% if field is null %}
             <label class="block col-span-2">
                 <span class="text-xs font-medium">{{ 'node_type.edit.field_options_field'|trans({}, 'node_type')|raw }}</span>
@@ -98,13 +108,25 @@
             </label>
         </div>
         <div class="grid grid-cols-2 gap-3">
-            <label class="block">
-                <span class="text-xs font-medium">{{ 'node_type.edit.key_field'|trans({}, 'node_type') }}</span>
-                <input name="key" value="{{ nodeType.key ?? '' }}" placeholder="{{ 'node_type.edit.key_placeholder'|trans({}, 'node_type') }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
-            </label>
+            {# Clé = identifiant technique (référencé par les formations, templates, champs) : générée
+               depuis le libellé et unique ; seul le super-administrateur peut la saisir ou la changer. #}
+            {% if is_super_admin() %}
+                <label class="block">
+                    <span class="text-xs font-medium">{{ 'node_type.edit.key_field'|trans({}, 'node_type') }}</span>
+                    <input name="key" value="{{ nodeType.key ?? '' }}" placeholder="{{ 'node_type.edit.key_placeholder'|trans({}, 'node_type') }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm font-mono" style="border-color:var(--c-border)">
+                    <span class="text-[11px]" style="color:var(--c-muted)">{{ 'node_type.edit.key_help_superadmin'|trans({}, 'node_type') }}</span>
+                </label>
+            {% else %}
+                <div class="block">
+                    <span class="text-xs font-medium">{{ 'node_type.edit.key_field'|trans({}, 'node_type') }}</span>
+                    <div class="mt-1 rounded-md border bg-gray-50 px-3 py-2 text-sm font-mono" style="border-color:var(--c-border);color:var(--c-muted)">{{ isNew ? 'node_type.edit.key_auto'|trans({}, 'node_type') : nodeType.key }}</div>
+                    <span class="text-[11px]" style="color:var(--c-muted)">{{ 'node_type.edit.key_help'|trans({}, 'node_type') }}</span>
+                </div>
+            {% endif %}
             <label class="block">
                 <span class="text-xs font-medium">{{ 'node_type.edit.position_field'|trans({}, 'node_type') }}</span>
                 <input type="number" name="position" value="{{ nodeType.position ?? 0 }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                <span class="text-[11px]" style="color:var(--c-muted)">{{ 'node_type.edit.position_help'|trans({}, 'node_type') }}</span>
             </label>
         </div>
 

@@ -36,7 +36,17 @@ node_type:
     icon_help: "Nom d'icône %link% (ex. %example%)"
     key_field: Clé
     key_placeholder: auto depuis le libellé
+    key_auto: générée à l’enregistrement
+    key_help: >-
+      Identifiant technique, généré depuis le libellé et unique. Il est référencé par les formations
+      et les templates : seul le super-administrateur peut le modifier.
+    key_help_superadmin: >-
+      Vide = générée depuis le libellé. Attention : changer la clé d’un type déjà utilisé le détache
+      des formations et templates qui la référencent.
     position_field: Position
+    position_help: >-
+      Ordre d’affichage du type dans les listes (administration, menus d’ajout, navigation). Plus petit =
+      plus haut. Sans effet sur le contenu des formations.
     kind_field: Type d'ELP
     kind_help: >-
       Temporel : le nom est calculé (type + numéro, ex. « Année 1 »), aucun libellé n'est demandé côté
@@ -87,5 +97,11 @@ node_type:
     field_quick_add_label: Autoriser l’ajout au référentiel depuis le formulaire
     field_min_field: Minimum
     field_max_field: Maximum
+    field_min_value: Valeur minimale
+    field_max_value: Valeur maximale
+    field_min_length: Longueur minimale (caractères)
+    field_max_length: Longueur maximale (caractères)
+    field_bounds_help_number: Bornes du nombre saisi (ex. ECTS entre 0 et 30). Vide = pas de borne.
+    field_bounds_help_text: Nombre de caractères attendus dans la saisie. Vide = pas de limite.
     field_options_field: 'Options (si pas de référentiel) — une par ligne : <code>valeur|Libellé</code>'
     field_togglable_label: 'Champ togglable (activable/désactivable par diplôme, depuis le tableau structurel du template)'

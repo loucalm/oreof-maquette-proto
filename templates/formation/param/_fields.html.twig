@@ -16,9 +16,16 @@
     {% if help %}<div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ help }}</div>{% endif %}
 {% endmacro %}
 
-{% macro text(name, value, placeholder, prefix) %}
-    <input name="{{ prefix|default('p') }}[{{ name }}]" value="{{ value }}" placeholder="{{ placeholder|default('') }}" class="fld mt-1">
+{% macro text(name, value, placeholder, prefix, def) %}
+    {% import _self as fld %}
+    <input name="{{ prefix|default('p') }}[{{ name }}]" value="{{ value }}" placeholder="{{ placeholder|default('') }}" class="fld mt-1"{{ fld.lengthBounds(def|default(null)) }}>
 {% endmacro %}
+
+{# Bornes min/max d'un FieldDef texte = longueur en caractères (cf. éditeur de champ des types d'ELP). #}
+{% macro lengthBounds(def) -%}
+    {%- if def and def.min is not null %} minlength="{{ def.min|round }}"{% endif -%}
+    {%- if def and def.max is not null %} maxlength="{{ def.max|round }}"{% endif -%}
+{%- endmacro %}
 
 {# options : liste simple de libellés (valeur = libellé). #}
 {% macro select(name, value, options, placeholder, prefix) %}
@@ -73,9 +80,10 @@
     {{ fld.label(def.label, def.required, def.help) }}
     {% set opts = def.referentielKey ? referentiel(def.referentielKey) : def.options %}
     {% if def.type == 'textarea' %}
-        {{ fld.textarea(key, data[key] ?? '') }}
+        {{ fld.textarea(key, data[key] ?? '', null, null, def) }}
     {% elseif def.type == 'number' %}
-        <input type="number" name="p[{{ key }}]" value="{{ data[key] ?? '' }}" class="fld mt-1">
+        <input type="number" name="p[{{ key }}]" value="{{ data[key] ?? '' }}" class="fld mt-1"
+               {% if def.min is not null %}min="{{ def.min }}"{% endif %} {% if def.max is not null %}max="{{ def.max }}"{% endif %}>
     {% elseif def.type == 'radio' %}
         {{ fld.radio(key, data[key] ?? '', opts) }}
     {% elseif def.type == 'checkbox' %}
@@ -87,11 +95,12 @@
             {{ fld.select(key, data[key] ?? '', opts) }}
         {% endif %}
     {% else %}
-        {{ fld.text(key, data[key] ?? '') }}
+        {{ fld.text(key, data[key] ?? '', null, null, def) }}
     {% endif %}
 {% endmacro %}
 
-{% macro textarea(name, value, help, prefix) %}
+{% macro textarea(name, value, help, prefix, def) %}
+    {% import _self as fld %}
     <div class="mt-1 rounded-lg border overflow-hidden" style="border-color:var(--c-border)">
         <div class="flex items-center gap-1 border-b bg-gray-50 px-2 py-1.5" style="border-color:var(--c-border)">
             {% for b in ['tx', 'ph:link', '<>', 'ph:list', 'ph:image'] %}
@@ -103,7 +112,7 @@
             </span>
         </div>
         <textarea name="{{ prefix|default('p') }}[{{ name }}]" rows="4"
-                  class="w-full resize-y px-3 py-2 text-sm outline-none" placeholder="…">{{ value }}</textarea>
+                  class="w-full resize-y px-3 py-2 text-sm outline-none" placeholder="…"{{ fld.lengthBounds(def|default(null)) }}>{{ value }}</textarea>
     </div>
     {% if help %}<div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ help }}</div>{% endif %}
 {% endmacro %}

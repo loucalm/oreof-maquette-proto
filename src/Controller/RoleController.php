@@ -12,7 +12,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class RoleController extends AbstractController
 {
-    #[Route('/role/{role}', name: 'role_switch', methods: ['POST'], requirements: ['role' => 'admin|responsable'])]
+    #[Route('/role/{role}', name: 'role_switch', methods: ['POST'], requirements: ['role' => 'superadmin|admin|responsable'])]
     public function switch(string $role, Request $request): Response
     {
         $request->getSession()->set('proto_role', $role);

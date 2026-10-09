@@ -139,11 +139,11 @@
                     {% set sections = param_sections() %}
                     <a href="{{ path('formation_param', {id: formation.id, key: 'organisation'}) }}" data-turbo-frame="node-panel"
                        class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ param == 'organisation' ? 'is-active' }}">
-                        <span class="status-dot" data-status="{{ param_status(formation, 'organisation') }}"></span>1 | {{ sections.organisation.label }}
+                        <span class="status-dot" data-status="{{ param_status(formation, 'organisation') }}" data-param-status-key="organisation"></span>1 | {{ sections.organisation.label }}
                     </a>
                     <a href="{{ path('formation_param', {id: formation.id, key: 'presentation'}) }}" data-turbo-frame="node-panel"
                        class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ param == 'presentation' ? 'is-active' }}">
-                        <span class="status-dot" data-status="{{ param_status(formation, 'presentation') }}"></span>2 | {{ sections.presentation.label }}
+                        <span class="status-dot" data-status="{{ param_status(formation, 'presentation') }}" data-param-status-key="presentation"></span>2 | {{ sections.presentation.label }}
                     </a>
                     {% if not multi %}
                         <a href="{{ path('bcc_editor', {fid: formation.id}) }}" data-turbo-frame="node-panel"

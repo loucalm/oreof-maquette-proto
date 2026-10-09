@@ -106,7 +106,8 @@ class FieldDef
      * Sert aux quelques champs qui écrivent sur une propriété d'entité dédiée plutôt
      * que sur le blob générique d'attributs (ex. nom/diplôme d'une formation) — leur
      * redéfinir label/type/etc. depuis ce formulaire casserait la logique de
-     * sauvegarde qui leur est propre. Sans rapport avec NodeType::lockedCapabilities
+     * sauvegarde qui leur est propre —, et au « minimum requis » métier (responsables
+     * RF / RP, stockés eux dans le blob). Sans rapport avec NodeType::lockedCapabilities
      * (qui empêche de désactiver une capacité en aval, pas d'éditer sa définition).
      */
     #[ORM\Column]

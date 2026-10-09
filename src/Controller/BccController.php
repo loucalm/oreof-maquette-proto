@@ -90,7 +90,6 @@ final class BccController extends AbstractController
         }
 
         $node->setLabel(trim((string) $request->request->get('label')) ?: $node->getDisplayLabel());
-        $node->setCode(trim((string) $request->request->get('code')) ?: null);
         $node->setAttribute('description', trim((string) $request->request->get('description')));
 
         $this->maquette->save($formation, $doc);

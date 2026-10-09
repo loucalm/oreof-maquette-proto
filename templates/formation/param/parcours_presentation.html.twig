@@ -10,7 +10,8 @@
     </div>
 
     <div class="panel-scroll">
-    <form method="post" action="{{ saveUrl }}" data-turbo-frame="_top" class="panel-card space-y-5">
+    <form method="post" action="{{ saveUrl }}" data-turbo-frame="_top"
+          data-controller="autosave" data-autosave-key-value="{{ key }}" class="panel-card space-y-5">
 
         {% for f in fields %}
             {% if f.type == 'separator' %}
@@ -21,7 +22,8 @@
         {% endfor %}
 
         <div class="pt-2 border-t" style="border-color:var(--c-border)">
-            <button class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
+            <button data-autosave-target="submit" class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
+            <span data-autosave-target="status" class="text-xs" style="color:var(--c-muted)" aria-live="polite"></span>
         </div>
     </form>
     </div>

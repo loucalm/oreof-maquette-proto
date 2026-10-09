@@ -81,11 +81,11 @@
                     {% set psections = parcours_param_sections() %}
                     <a href="{{ path('parcours_param', {fid: formation.id, nid: parcours.id, key: 'organisation'}) }}" data-turbo-frame="node-panel"
                        class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ param == 'organisation' ? 'is-active' }}">
-                        <span class="status-dot" data-status="{{ parcours_param_status(parcours, 'organisation') }}"></span>1 | {{ psections.organisation }}
+                        <span class="status-dot" data-status="{{ parcours_param_status(parcours, 'organisation') }}" data-param-status-key="organisation"></span>1 | {{ psections.organisation }}
                     </a>
                     <a href="{{ path('parcours_param', {fid: formation.id, nid: parcours.id, key: 'presentation'}) }}" data-turbo-frame="node-panel"
                        class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ param == 'presentation' ? 'is-active' }}">
-                        <span class="status-dot" data-status="{{ parcours_param_status(parcours, 'presentation') }}"></span>2 | {{ psections.presentation }}
+                        <span class="status-dot" data-status="{{ parcours_param_status(parcours, 'presentation') }}" data-param-status-key="presentation"></span>2 | {{ psections.presentation }}
                     </a>
                     <a href="{{ path('bcc_parcours_editor', {fid: formation.id, nid: parcours.id}) }}" data-turbo-frame="node-panel"
                        class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ bcc ? 'is-active' }}">

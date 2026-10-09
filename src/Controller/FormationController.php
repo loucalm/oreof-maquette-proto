@@ -270,6 +270,7 @@ final class FormationController extends AbstractController
         string $nid,
         string $key,
         Request $request,
+        \App\Maquette\Completion $completion,
     ): Response {
         if (!isset(self::PARCOURS_PARAM_SECTIONS[$key])) {
             throw $this->createNotFoundException();
@@ -300,6 +301,12 @@ final class FormationController extends AbstractController
         }
 
         $this->maquette->save($formation, $doc);
+
+        // enregistrement en direct (Stimulus) : pas de flash, le statut recalculé suffit
+        if ('json' === $request->getPreferredFormat()) {
+            return $this->json(['status' => $completion->parcoursParamStatus($node, $key)]);
+        }
+
         $this->addFlash('success', sprintf('« %s » enregistré.', self::PARCOURS_PARAM_SECTIONS[$key]));
 
         return $this->redirectToRoute('parcours_editor', ['fid' => $formation->getId(), 'nid' => $nid, 'param' => $key]);
@@ -411,7 +418,7 @@ final class FormationController extends AbstractController
         $willMulti = $request->request->getBoolean('avecParcours');
 
         // hors admin, un template imposé pour le diplôme fige avec/sans parcours et la dimension temporelle
-        $lockedByTemplate = 'admin' !== $this->roles->role()
+        $lockedByTemplate = !$this->roles->isAdmin()
             && null !== $formation->getDiplome()
             && null !== $this->templates->findOneByDiplome($formation->getDiplome());
         if ($lockedByTemplate) {
@@ -652,7 +659,7 @@ final class FormationController extends AbstractController
     }
 
     #[Route('/formations/{id}/parametre/{key}', name: 'formation_param_save', methods: ['POST'])]
-    public function paramSave(Formation $formation, string $key, Request $request): Response
+    public function paramSave(Formation $formation, string $key, Request $request, \App\Maquette\Completion $completion): Response
     {
         if (!isset(self::PARAM_SECTIONS[$key])) {
             throw $this->createNotFoundException();
@@ -671,6 +678,12 @@ final class FormationController extends AbstractController
         $data = $request->request->all('p');
         $doc->setFormationParam($key, array_filter($data, static fn ($v) => $v !== '' && $v !== null));
         $this->maquette->save($formation, $doc);
+
+        // enregistrement en direct (Stimulus) : pas de flash, le statut recalculé suffit
+        if ('json' === $request->getPreferredFormat()) {
+            return $this->json(['status' => $completion->formationParamStatus($formation, $key)]);
+        }
+
         $this->addFlash('success', sprintf('« %s » enregistré.', self::PARAM_SECTIONS[$key]['label']));
 
         return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => $key]);

@@ -12,6 +12,7 @@ use App\Maquette\Maquette;
 use App\Repository\FieldDefRepository;
 use App\Repository\NodeTypeRepository;
 use App\Repository\ReferentielRepository;
+use App\Twig\RoleExtension;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -101,7 +102,7 @@ final class NodeTypeController extends AbstractController
 
     #[Route('/node-types/new', name: 'node_type_new', methods: ['GET', 'POST'])]
     #[Route('/node-types/{id}/edit', name: 'node_type_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, EntityManagerInterface $em, ReferentielRepository $referentiels, FieldDefRepository $fields, ?NodeType $nodeType = null): Response
+    public function edit(Request $request, EntityManagerInterface $em, ReferentielRepository $referentiels, FieldDefRepository $fields, NodeTypeRepository $types, RoleExtension $roles, ?NodeType $nodeType = null): Response
     {
         $isNew = $nodeType === null;
         if (!$isNew && null !== ($blocked = $this->assertEditable($nodeType))) {
@@ -110,8 +111,17 @@ final class NodeTypeController extends AbstractController
 
         if ($request->isMethod('POST')) {
             $label = trim((string) $request->request->get('label')) ?: 'Type';
-            $key = trim((string) $request->request->get('key'))
-                ?: (new AsciiSlugger())->slug($label)->lower()->toString();
+            // la clé n'est saisie que par le super-admin ; sinon générée (création) ou conservée (édition)
+            $key = $roles->isSuperAdmin() ? trim((string) $request->request->get('key')) : '';
+            if ('' === $key) {
+                $key = $isNew ? $this->uniqueKey($label, $types) : $nodeType->getKey();
+            }
+            $owner = $types->findOneByKey($key);
+            if (null !== $owner && $owner !== $nodeType) {
+                $this->addFlash('warning', sprintf('La clé « %s » est déjà prise par « %s ».', $key, $owner->getLabel()));
+
+                return $isNew ? $this->redirectToRoute('node_type_new') : $this->redirectToRoute('node_type_edit', ['id' => $nodeType->getId()]);
+            }
 
             if ($isNew) {
                 $nodeType = new NodeType($key, $label);
@@ -341,6 +351,18 @@ final class NodeTypeController extends AbstractController
         $this->addFlash('info', 'Champ retiré du formulaire.');
 
         return $this->redirectToRoute('node_type_edit', ['id' => $nodeType->getId()]);
+    }
+
+    /** Clé dérivée du libellé (« Unité d'enseignement » → unite_d_enseignement), suffixée _2, _3… si déjà prise. */
+    private function uniqueKey(string $label, NodeTypeRepository $types): string
+    {
+        $base = (new AsciiSlugger())->slug($label, '_')->lower()->toString() ?: 'type';
+        $key = $base;
+        for ($i = 2; null !== $types->findOneByKey($key); ++$i) {
+            $key = $base.'_'.$i;
+        }
+
+        return $key;
     }
 
     private function applyFieldRequest(FieldDef $field, Request $request): void

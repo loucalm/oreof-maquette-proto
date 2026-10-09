@@ -27,6 +27,10 @@ template:
     child_label_placeholder: libellé (optionnel)
     add_child_button: enfant
     label_field: Libellé
+    impact_note: >-
+      Impact : ce template est copié dans chaque nouvelle formation du diplôme (structure, avec ou sans
+      parcours, durée, verrous). Le modifier ne change pas les formations déjà créées ; pour elles,
+      utiliser « Réappliquer les réglages du template » depuis la formation (Configuration de la structure).
     diplome_field: Diplôme imposé
     diplome_none: — aucun (template libre) —
     diplome_help: Un seul template par diplôme. Appliqué automatiquement à la création d'une formation.

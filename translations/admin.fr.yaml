@@ -21,18 +21,6 @@ admin:
     title: Référentiel
     heading: Référentiel
     description: Les listes de valeurs (select, choix) proposées dans les formulaires.
-    metamodel_title: Métamodèle
-    metamodel_help: Catalogues fixes de l’application — informatifs, non modifiables depuis cette page.
-    field_types_row_title: Type de saisie d’un champ
-    field_types_row_help: Choisis à la création d’un champ, depuis l’éditeur d’un type d’ELP.
-    node_types_row_title: Type d’élément pédagogique
-    node_types_row_help: Structurel ou temporel — cf. « Types d’élément pédagogique » pour les types concrets (UE, EC, Année…).
-    competences_row_title: Compétences (BCC)
-    competences_row_help: >-
-      Les blocs/compétences se créent directement dans l’éditeur BCC de chaque formation (pas depuis un
-      formulaire d’admin — ce ne sont pas des ELP) ; ils s’attribuent à un ELP via le champ « Compétence(s)
-      associée(s) ».
-    mcc_note: 'Les types de MCCC (CCI, CT…) ont leur propre page — %link_open%Types de MCCC%link_close%.'
     libre_title: Libre
     libre_description: >-
       Nomenclatures entièrement éditables, sans équivalent réel dans une autre application : modalités

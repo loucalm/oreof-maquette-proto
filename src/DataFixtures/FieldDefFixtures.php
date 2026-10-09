@@ -18,9 +18,10 @@ final class FieldDefFixtures extends Fixture
     /**
      * Champs des sections « Organisation »/« Présentation » (formation ET parcours —
      * un champ dont le contenu est identique aux deux niveaux est UNE seule ligne
-     * partagée, cf. NodeTypeFixtures pour qui active quoi). `locked` = champ qui
-     * écrit sur une propriété d'entité dédiée (Formation ou TreeNode), pas sur le
-     * blob générique — cf. FieldDef::isLocked().
+     * partagée, cf. NodeTypeFixtures pour qui active quoi). `locked` = minimum
+     * requis, ni modifiable ni retirable depuis le constructeur de formulaire :
+     * les propriétés d'entité dédiées (Formation ou TreeNode) et les
+     * responsables RF / RP (stockés eux dans le blob générique) — cf. FieldDef::isLocked().
      *
      * [key, label, tab, type, options, required, help, referentielKey, locked]
      */
@@ -46,9 +47,9 @@ final class FieldDefFixtures extends Fixture
         ['lieu', 'Lieu(x) de la formation', 'organisation', 'text', [], false, 'Campus ou site(s) où se déroule le parcours.', null, false],
         ['codeApogee', 'Code Apogée de la mention', 'organisation', 'text', [], false, 'Code de la mention dans Apogée', null, false],
         ['sep_org_responsables', 'Responsable(s)', 'organisation', 'separator', [], false, null, null, false],
-        ['respMention', 'Responsable de la mention', 'organisation', 'choice', [], true, 'Responsable principale de la mention', 'responsables', false],
+        ['respMention', 'Responsable de la mention', 'organisation', 'choice', [], true, 'Responsable principale de la mention', 'responsables', true],
         ['coRespMention', 'Co-responsable de la mention', 'organisation', 'choice', [], false, 'Co-responsable de la mention', 'responsables', false],
-        ['respParcours', 'Responsable du parcours', 'organisation', 'choice', [], true, 'Responsable principale du parcours', 'responsables', false],
+        ['respParcours', 'Responsable du parcours', 'organisation', 'choice', [], true, 'Responsable principale du parcours', 'responsables', true],
         ['coRespParcours', 'Co-responsable du parcours', 'organisation', 'choice', [], false, 'Co-Responsable du parcours', 'responsables', false],
         // ─── présentation ───
         ['objectif', 'Objectif', 'presentation', 'textarea', [], true, 'Expliquez brièvement les objectifs de cet élément.', null, false],
