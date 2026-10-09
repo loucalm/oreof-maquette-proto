@@ -20,6 +20,7 @@ final class MaquetteExporter
     public function __construct(
         private readonly Maquette $maquette,
         private readonly MaquetteBuilder $builder,
+        private readonly BccReferences $bccRefs,
     ) {
     }
 
@@ -109,20 +110,18 @@ final class MaquetteExporter
         foreach ($contexts as $ctx) {
             $blocs = $ctx !== null ? $ctx->getBccBlocs() : $doc->competenceBlocs();
             $entry = ['contexte' => $ctx?->getDisplayLabel() ?? $formation->getName(), 'blocs' => []];
-            foreach ($blocs as $bloc) {
+            foreach ($this->bccRefs->tree($blocs) as $bloc) {
                 $comps = [];
-                foreach ($bloc->getChildren() as $c) {
-                    if ($c->getType()->getKey() === 'competence') {
-                        $comps[] = array_filter([
-                            'label' => $c->getLabel(),
-                            'code' => $c->getCode(),
-                            'description' => $c->getDescription() ?: null,
-                        ]);
-                    }
+                foreach ($bloc['competences'] as $row) {
+                    $comps[] = array_filter([
+                        'code' => $row['ref'] ?: null,
+                        'description' => $row['node']->getDescription() ?: null,
+                    ]);
                 }
                 $entry['blocs'][] = [
-                    'label' => $bloc->getLabel(),
-                    'transversal' => $bloc->isTransversalBloc(),
+                    'code' => $bloc['ref'] ?: null,
+                    'label' => $bloc['node']->getLabel(),
+                    'transversal' => $bloc['transversal'],
                     'competences' => $comps,
                 ];
             }

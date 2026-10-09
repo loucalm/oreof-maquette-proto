@@ -6,7 +6,7 @@ import Sortable from 'sortablejs';
  *  - glisser-déposer des blocs entre eux et des compétences (y compris d'un
  *    bloc à l'autre) ;
  *  - édition en ligne : le crayon d'un bloc / d'une compétence déplie son
- *    formulaire (libellé, code, description) + son bouton de suppression.
+ *    formulaire (libellé du bloc ou description de la compétence ; le code est calculé) + son bouton de suppression.
  */
 export default class extends Controller {
     static values = { moveUrl: String };
@@ -19,9 +19,11 @@ export default class extends Controller {
             this.sortables.push(new Sortable(this.blocListTarget, {
                 group: 'bcc-blocs',
                 handle: '.drag-handle',
-                draggable: '.bcc-bloc',
+                draggable: '.bcc-bloc:not(.bcc-bloc--transversal)',
                 animation: 150,
                 ghostClass: 'sortable-ghost',
+                // le bloc transversal (RNCP) reste en tête : rien ne se dépose avant lui
+                onMove: (evt) => !evt.related.classList.contains('bcc-bloc--transversal'),
                 onEnd: (evt) => this.persist(evt, null),
             }));
         }
@@ -53,7 +55,7 @@ export default class extends Controller {
         const forms = holder.querySelectorAll('[data-bcc-target="edit"]');
         const show = forms[0]?.hidden;
         forms.forEach((f) => { f.hidden = !show; });
-        if (show) holder.querySelector('input[name="label"]')?.focus();
+        if (show) holder.querySelector('input[name="label"], textarea[name="description"]')?.focus();
     }
 
     cancel(event) {
@@ -67,7 +69,10 @@ export default class extends Controller {
         if (evt.from === evt.to && evt.oldIndex === evt.newIndex) return;
 
         const nodeId = evt.item.dataset.nodeId;
-        const index = Array.from(evt.to.children).indexOf(evt.item);
+        // l'index se compte hors bloc transversal : il est épinglé en tête et ne participe pas à l'ordre
+        const index = Array.from(evt.to.children)
+            .filter((el) => !el.classList.contains('bcc-bloc--transversal'))
+            .indexOf(evt.item);
 
         try {
             const res = await fetch(this.moveUrlValue.replace('__ID__', nodeId), {

@@ -393,11 +393,10 @@
                                     {% for c in g.items %}
                                         <label class="flex items-center gap-2 text-sm cursor-pointer rounded px-1 py-1 hover:bg-gray-50"
                                                data-cbxfilter-target="row"
-                                               data-text="{{ (c.label ~ ' ' ~ c.code ~ ' ' ~ c.description ~ ' ' ~ g.bloc)|lower }}">
-                                            <input type="checkbox" name="attr_competencies[]" value="{{ c.label }}" {{ c.label in cur ? 'checked' }}>
-                                            <span class="font-medium shrink-0">{{ c.label }}</span>
-                                            {% if c.code %}<span class="text-xs text-gray-400 shrink-0">{{ c.code }}</span>{% endif %}
-                                            {% if c.description %}<span class="min-w-0 truncate text-xs text-gray-400">· {{ c.description }}</span>{% endif %}
+                                               data-text="{{ (c.ref ~ ' ' ~ c.description ~ ' ' ~ g.bloc)|lower }}">
+                                            <input type="checkbox" name="attr_competencies[]" value="{{ c.id }}" data-chip="{{ c.title }}" {{ (c.id in cur or c.label in cur) ? 'checked' }}>
+                                            {% if c.ref %}<span class="font-mono text-xs font-bold shrink-0" style="color:var(--c-primary)">{{ c.ref }}</span>{% endif %}
+                                            <span class="min-w-0 truncate">{{ c.description ?: c.label }}</span>
                                         </label>
                                     {% endfor %}
                                 </div>

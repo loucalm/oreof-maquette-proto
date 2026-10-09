@@ -45,8 +45,10 @@ export default class extends Controller {
             const chip = document.createElement('button');
             chip.type = 'button';
             chip.className = 'cbx-chip';
-            chip.textContent = `${input.value} ×`;
-            chip.setAttribute('aria-label', `Retirer « ${input.value} »`);
+            // data-chip : intitulé lisible quand la valeur envoyée est un identifiant
+            const text = input.dataset.chip || input.value;
+            chip.textContent = `${text} ×`;
+            chip.setAttribute('aria-label', `Retirer « ${text} »`);
             chip.addEventListener('click', () => {
                 input.checked = false;
                 input.dispatchEvent(new Event('change', { bubbles: true }));

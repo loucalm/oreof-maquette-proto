@@ -7,6 +7,7 @@ namespace App\Tests\Controller;
 use App\Entity\FieldDef;
 use App\Entity\NodeType;
 use App\Maquette\Maquette;
+use App\Twig\MaquetteExtension;
 use App\Tests\Support\FormationFactory;
 use App\Tests\Support\ResetsDatabase;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -27,6 +28,13 @@ final class PrototypeFeedbackTest extends WebTestCase
     {
         $this->client = static::createClient();
         $this->resetDatabase();
+    }
+
+    private function reloadDoc(int $formationId): \App\Maquette\Doc\MaquetteDoc
+    {
+        $this->em->clear();
+
+        return static::getContainer()->get(Maquette::class)->open($this->em->find(\App\Entity\Formation::class, $formationId));
     }
 
     private function nodeType(string $label): ?NodeType
@@ -128,5 +136,47 @@ final class PrototypeFeedbackTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertContains(json_decode((string) $this->client->getResponse()->getContent(), true)['status'] ?? null, ['empty', 'incomplete', 'ok']);
+    }
+
+    public function testCompetenceHasNoLabelFieldAndIsReferencedByIdentifier(): void
+    {
+        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $id = $formation->getId();
+        $this->client->request('POST', '/formations/'.$id.'/bcc/blocs');
+        $bloc = $this->reloadDoc($id)->competenceBlocs()[0];
+        $this->client->request('POST', sprintf('/formations/%d/nodes/%s/bcc/competences', $id, $bloc->getId()));
+        $doc = $this->reloadDoc($id);
+        $formation = $doc->formation;
+
+        $crawler = $this->client->request('GET', '/formations/'.$formation->getId().'/bcc');
+        // formulaire d'une compétence : description seule (pas de champ libellé), celui du bloc garde le sien
+        self::assertSame(1, $crawler->filter('li.bcc-comp form.bcc-edit [name="description"]')->count());
+        self::assertSame(0, $crawler->filter('li.bcc-comp form.bcc-edit [name="label"]')->count());
+        self::assertGreaterThan(0, $crawler->filter('.bcc-bloc-head ~ .bcc-bloc-body form.bcc-edit [name="label"]')->count());
+
+        $maquette = static::getContainer()->get(Maquette::class);
+        $ec = FormationFactory::create(static::getContainer())->first($maquette->open($formation), 'ec');
+        $groups = static::getContainer()->get(MaquetteExtension::class)->bccCompetences($ec);
+        $item = $groups[0]['items'][0];
+        self::assertSame('1.A', $item['ref']);
+        self::assertSame($doc->competenceBlocs()[0]->getChildren()[0]->getId(), $item['id']);
+        self::assertSame([$item['title']], static::getContainer()->get(MaquetteExtension::class)->bccCompetenceTitles($ec, [$item['id']]));
+    }
+
+    public function testTransversalBlocStaysFirstWhenOthersAreReordered(): void
+    {
+        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        foreach (['1', null, null] as $transversal) {
+            $this->client->request('POST', '/formations/'.$formation->getId().'/bcc/blocs', null !== $transversal ? ['transversal' => '1'] : []);
+        }
+        [$t, $a, $b] = $this->reloadDoc($formation->getId())->competenceBlocs();
+        self::assertTrue($t->isTransversalBloc());
+
+        // index 0 = premier bloc régulier (le transversal ne compte pas) : B passe devant A, le transversal reste en tête
+        $this->client->request('POST', sprintf('/formations/%d/nodes/%s/bcc/move', $formation->getId(), $b->getId()), [], [], [], json_encode(['parentId' => null, 'index' => 0]));
+        $this->client->request('POST', sprintf('/formations/%d/nodes/%s/bcc/move', $formation->getId(), $t->getId()), [], [], [], json_encode(['parentId' => null, 'index' => 2]));
+
+        $order = array_map(static fn ($n) => $n->getId(), $this->reloadDoc($formation->getId())->competenceBlocs());
+        self::assertSame([$t->getId(), $b->getId(), $a->getId()], $order);
     }
 }

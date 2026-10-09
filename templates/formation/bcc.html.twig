@@ -8,8 +8,11 @@
     <form method="post" action="{{ node_url(n, 'bcc_node_save') }}" data-turbo-frame="_top"
           data-bcc-target="edit" hidden class="bcc-edit">
         <div class="grid gap-2 sm:grid-cols-[140px_1fr]">
-            <label class="text-xs font-medium text-gray-500 sm:pt-2">{{ kind == 'bloc' ? 'formation.bcc.bloc_label_field'|trans({}, 'formation') : 'formation.bcc.label_field'|trans({}, 'formation') }}</label>
-            <input name="label" value="{{ n.label }}" required class="fld">
+            {# une compétence n'a pas de libellé : son code (auto) + sa description la désignent #}
+            {% if kind == 'bloc' %}
+                <label class="text-xs font-medium text-gray-500 sm:pt-2">{{ 'formation.bcc.bloc_label_field'|trans({}, 'formation') }}</label>
+                <input name="label" value="{{ n.label }}" required class="fld">
+            {% endif %}
             {# code = référence calculée depuis la position (BC 2 / 2.E) : jamais saisi à la main #}
             <span class="text-xs font-medium text-gray-500 sm:pt-2">{{ 'formation.bcc.code_field'|trans({}, 'formation') }}</span>
             <div class="text-sm sm:pt-2">
@@ -17,7 +20,7 @@
                 <span class="text-xs text-gray-400">· {{ 'formation.bcc.code_auto_help'|trans({}, 'formation') }}</span>
             </div>
             <label class="text-xs font-medium text-gray-500 sm:pt-2">{{ 'formation.bcc.description_field'|trans({}, 'formation') }}</label>
-            <textarea name="description" rows="2" class="fld" placeholder="{{ 'formation.bcc.description_placeholder'|trans({}, 'formation') }}">{{ n.description }}</textarea>
+            <textarea name="description" rows="{{ kind == 'bloc' ? 2 : 3 }}" {{ kind == 'bloc' ? '' : 'required' }} class="fld" placeholder="{{ 'formation.bcc.description_placeholder'|trans({}, 'formation') }}">{{ n.description }}</textarea>
         </div>
         <div class="mt-2 flex items-center gap-2">
             <button class="rounded-lg px-3 py-1.5 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
@@ -87,7 +90,11 @@
             {% set n = b.node %}
             <div class="bcc-bloc {{ b.transversal ? 'bcc-bloc--transversal' }}" data-node-id="{{ n.id }}">
                 <div class="bcc-bloc-head">
-                    <span class="drag-handle" data-bcc-handle title="{{ 'formation.bcc.reorder_title'|trans({}, 'formation') }}">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>
+                    {% if b.transversal %}
+                        <span class="bcc-pin" title="{{ 'formation.bcc.pinned_title'|trans({}, 'formation') }}">{{ ux_icon('ph:push-pin-fill', {class: 'icon'}) }}</span>
+                    {% else %}
+                        <span class="drag-handle" data-bcc-handle title="{{ 'formation.bcc.reorder_title'|trans({}, 'formation') }}">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>
+                    {% endif %}
                     <div class="min-w-0 flex-1">
                         <div class="font-semibold">
                             {% if b.transversal %}<span class="opacity-80">{{ ux_icon('ph:graduation-cap', {class: 'icon'}) }} </span>{% endif %}{% if b.ref %}<span class="opacity-80">BC {{ b.ref }} · </span>{% endif %}{{ n.label }}
@@ -107,8 +114,7 @@
                                 <div class="bcc-comp-row">
                                     <span class="drag-handle" data-bcc-handle title="{{ 'formation.bcc.drag_title'|trans({}, 'formation') }}">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>
                                     <div class="min-w-0 flex-1">
-                                        <div class="font-medium">{% if row.ref %}<span class="text-xs font-bold" style="color:var(--c-primary)">{{ row.ref }}</span> {% endif %}{{ c.label }}</div>
-                                        {% if c.description %}<div class="text-xs text-gray-500">{{ c.description }}</div>{% endif %}
+                                        <div class="font-medium">{% if row.ref %}<span class="text-xs font-bold" style="color:var(--c-primary)">{{ row.ref }}</span> {% endif %}{% if c.description %}{{ c.description }}{% else %}<span class="italic font-normal text-gray-400">{{ 'formation.bcc.competence_no_description'|trans({}, 'formation') }}</span>{% endif %}</div>
                                     </div>
                                     <button type="button" class="bcc-edit-btn bcc-edit-btn--light" data-action="bcc#toggle" data-bcc-id-param="{{ c.id }}" title="{{ 'formation.bcc.edit_delete_title'|trans({}, 'formation') }}">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }}</button>
                                 </div>

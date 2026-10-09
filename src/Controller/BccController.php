@@ -8,7 +8,7 @@ use App\Entity\Formation;
 use App\Maquette\Doc\MaquetteDoc;
 use App\Maquette\Doc\TreeNode;
 use App\Maquette\Maquette;
-use App\Maquette\Numbering;
+use App\Maquette\BccReferences;
 use App\Repository\StructureTemplateRepository;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -34,7 +34,7 @@ final class BccController extends AbstractController
 
     public function __construct(
         private readonly Maquette $maquette,
-        private readonly Numbering $numbering,
+        private readonly BccReferences $refs,
         private readonly StructureTemplateRepository $templates,
     ) {
     }
@@ -77,7 +77,7 @@ final class BccController extends AbstractController
             throw $this->createNotFoundException();
         }
 
-        $label = trim((string) $request->request->get('label')) ?: 'Nouvelle compétence';
+        $label = trim((string) $request->request->get('label')) ?: 'Compétence';
         $doc->addNode($bloc->getId(), self::COMPETENCE, $label);
         $this->maquette->save($formation, $doc);
         $this->addFlash('success', 'Compétence ajoutée.');
@@ -97,7 +97,10 @@ final class BccController extends AbstractController
             throw $this->createNotFoundException();
         }
 
-        $node->setLabel(trim((string) $request->request->get('label')) ?: $node->getDisplayLabel());
+        // une compétence n'a pas de libellé saisi : son code (auto) + sa description la désignent
+        if ($node->isBloc()) {
+            $node->setLabel(trim((string) $request->request->get('label')) ?: $node->getDisplayLabel());
+        }
         $node->setAttribute('description', trim((string) $request->request->get('description')));
 
         $this->maquette->save($formation, $doc);
@@ -184,7 +187,7 @@ final class BccController extends AbstractController
         return $this->render('formation/bcc.html.twig', [
             'formation' => $formation,
             'parcours' => $parcours,
-            'blocs' => $this->buildTree($blocs),
+            'blocs' => $this->refs->tree($blocs),
             'hasTransversal' => $this->hasTransversal($blocs),
             'addBlocUrl' => $parcours !== null
                 ? $this->generateUrl('bcc_parcours_bloc_add', ['fid' => $formation->getId(), 'nid' => $parcours->getId()])
@@ -261,41 +264,6 @@ final class BccController extends AbstractController
         }
 
         return null;
-    }
-
-    /**
-     * @param list<TreeNode> $blocs
-     *
-     * @return list<array{node: TreeNode, ref: string, transversal: bool, competences: list<array{node: TreeNode, ref: string}>}>
-     */
-    private function buildTree(array $blocs): array
-    {
-        $out = [];
-        $regularIdx = 0;
-        foreach ($blocs as $bloc) {
-            $transversal = $bloc->isTransversalBloc();
-            $blocRef = '';
-            if (!$transversal && $bloc->getType()->isNumbered()) {
-                $blocRef = $this->numbering->format(++$regularIdx, $bloc->getType()->getNumberStyle());
-            }
-
-            $comps = [];
-            $ci = 0;
-            foreach ($bloc->getChildren() as $c) {
-                if ($c->getType()->getKey() !== self::COMPETENCE) {
-                    continue;
-                }
-                $ref = '';
-                if ($blocRef !== '' && $c->getType()->isNumbered()) {
-                    $ref = $blocRef.'.'.$this->numbering->format(++$ci, $c->getType()->getNumberStyle());
-                }
-                $comps[] = ['node' => $c, 'ref' => $ref];
-            }
-
-            $out[] = ['node' => $bloc, 'ref' => $blocRef, 'transversal' => $transversal, 'competences' => $comps];
-        }
-
-        return $out;
     }
 
     private function ownerRedirect(TreeNode $bccNode): Response

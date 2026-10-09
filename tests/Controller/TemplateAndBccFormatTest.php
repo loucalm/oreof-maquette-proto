@@ -97,7 +97,8 @@ final class TemplateAndBccFormatTest extends WebTestCase
         foreach ($groups as $g) {
             self::assertStringEndsWith('BUT1', $g['bloc']);
         }
-        self::assertSame('AC11.01', $groups[0]['items'][0]['code']);
+        self::assertSame('AC11.01', $groups[0]['items'][0]['ref']);
+        self::assertSame('AC11.01', $groups[0]['items'][0]['id']);
     }
 
     public function testLicenceKeepsEditableBlocs(): void

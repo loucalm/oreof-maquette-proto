@@ -321,8 +321,10 @@ formation:
     scope_parcours: à ce parcours
     drag_hint: >-
       Glisser la poignée pour réordonner les blocs, ou déplacer une compétence dans un autre bloc.
-      Les codes se recalculent.
+      Les codes se recalculent. Le bloc transversal (RNCP) reste toujours en tête.
     code_auto_help: généré automatiquement selon la position
+    competence_no_description: description à saisir
+    pinned_title: Le bloc des compétences transversales reste toujours en tête
     scope_mention: à la mention
     structure_title: Structure BCC
     add_transversal_button: Ajouter des compétences transversales (RNCP)

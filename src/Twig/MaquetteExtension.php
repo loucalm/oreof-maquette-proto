@@ -37,6 +37,7 @@ final class MaquetteExtension extends AbstractExtension
         private readonly StructureTemplateRepository $templates,
         private readonly FieldDefRepository $fields,
         private readonly \App\Validation\TabValidator $validator,
+        private readonly \App\Maquette\BccReferences $bccRefs,
     ) {
     }
 
@@ -68,6 +69,7 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('node_missing', fn (TreeNode $n) => $this->completion->missing($n)),
             new TwigFunction('mutualization_source', fn (TreeNode $n) => $this->maquette->mutualizationSource($n)),
             new TwigFunction('bcc_competences', $this->bccCompetences(...)),
+            new TwigFunction('bcc_competence_titles', $this->bccCompetenceTitles(...)),
             new TwigFunction('period_unit', $this->periodUnit(...)),
             new TwigFunction('param_sections', static fn () => FormationController::PARAM_SECTIONS),
             new TwigFunction('param_status', fn (Formation $f, string $k) => $this->completion->formationParamStatus($f, $k)),
@@ -410,7 +412,7 @@ final class MaquetteExtension extends AbstractExtension
     /**
      * Compétences du référentiel (BCC) proposables sur ce nœud, groupées par bloc.
      *
-     * @return list<array{bloc: string, transversal: bool, items: list<array{label: string, code: ?string, description: string}>}>
+     * @return list<array{bloc: string, transversal: bool, items: list<array{id: string, ref: string, label: string, description: string, title: string}>}>
      */
     public function bccCompetences(TreeNode $node): array
     {
@@ -431,23 +433,46 @@ final class MaquetteExtension extends AbstractExtension
             : ($node->getFormation() !== null ? $this->maquette->open($node->getFormation())->competenceBlocs() : []);
 
         $out = [];
-        foreach ($blocs as $bloc) {
+        foreach ($this->bccRefs->tree($blocs) as $bloc) {
             $items = [];
-            foreach ($bloc->getChildren() as $comp) {
-                if ($comp->getType()->getKey() === 'competence') {
-                    $items[] = [
-                        'label' => $comp->getLabel(),
-                        'code' => $comp->getCode(),
-                        'description' => $comp->getDescription(),
-                    ];
-                }
+            foreach ($bloc['competences'] as $row) {
+                $c = $row['node'];
+                $items[] = [
+                    'id' => $c->getId(),
+                    'ref' => $row['ref'],
+                    // ancien identifiant (libellé) : les EC déjà liées avant le passage aux identifiants restent cochées
+                    'label' => $c->getLabel(),
+                    'description' => $c->getDescription(),
+                    'title' => trim($row['ref'].' '.mb_strimwidth($c->getDescription(), 0, 60, '…')) ?: $c->getLabel(),
+                ];
             }
             if ($items !== []) {
-                $out[] = ['bloc' => $bloc->getLabel(), 'transversal' => $bloc->isTransversalBloc(), 'items' => $items];
+                $out[] = ['bloc' => trim($bloc['ref'].' '.$bloc['node']->getLabel()), 'transversal' => $bloc['transversal'], 'items' => $items];
             }
         }
 
         return $out;
+    }
+
+    /**
+     * Intitulés lisibles des compétences liées à un nœud (valeurs stockées : identifiants,
+     * ou anciens libellés) ; une valeur qui ne correspond plus à rien est affichée telle quelle.
+     *
+     * @param list<string> $values
+     *
+     * @return list<string>
+     */
+    public function bccCompetenceTitles(TreeNode $node, array $values): array
+    {
+        $byKey = [];
+        foreach ($this->bccCompetences($node) as $group) {
+            foreach ($group['items'] as $item) {
+                $byKey[$item['id']] = $item['title'];
+                $byKey[$item['label']] ??= $item['title'];
+            }
+        }
+
+        return array_map(static fn (string $v) => $byKey[$v] ?? $v, array_values(array_map('strval', $values)));
     }
 
     /**
@@ -457,7 +482,7 @@ final class MaquetteExtension extends AbstractExtension
      *
      * @param list<array<string, mixed>> $referentiel
      *
-     * @return list<array{bloc: string, transversal: bool, items: list<array{label: string, code: ?string, description: string}>}>
+     * @return list<array{bloc: string, transversal: bool, items: list<array{id: string, ref: string, label: string, description: string, title: string}>}>
      */
     private function butApprentissages(array $referentiel, TreeNode $node): array
     {
@@ -479,7 +504,13 @@ final class MaquetteExtension extends AbstractExtension
                 $out[] = [
                     'bloc' => sprintf('C%d %s · %s', $competence['numero'] ?? 0, $competence['nomCourt'] ?? $competence['libelle'] ?? '', $niveau['annee'] ?? ''),
                     'transversal' => false,
-                    'items' => array_map(static fn (array $ac) => ['label' => $ac['libelle'], 'code' => $ac['code'], 'description' => ''], $niveau['acs'] ?? []),
+                    'items' => array_map(static fn (array $ac) => [
+                        'id' => $ac['code'],
+                        'ref' => $ac['code'],
+                        'label' => $ac['libelle'],
+                        'description' => $ac['libelle'],
+                        'title' => $ac['code'].' '.mb_strimwidth($ac['libelle'], 0, 60, '…'),
+                    ], $niveau['acs'] ?? []),
                 ];
             }
         }

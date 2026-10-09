@@ -7,7 +7,7 @@
     {%- set v = n.getAttribute(key) -%}
     {%- if def.field in ['choice', 'radio'] -%}{{ def.options[v] ?? v }}
     {%- elseif def.field == 'competencies' -%}
-        <span class="inline-flex flex-wrap gap-1">{% for c in v %}<span class="pill">{{ c }}</span>{% endfor %}</span>
+        <span class="inline-flex flex-wrap gap-1">{% for c in bcc_competence_titles(n, v) %}<span class="pill">{{ c }}</span>{% endfor %}</span>
     {%- elseif def.field == 'textarea' -%}<span class="whitespace-pre-line">{{ v }}</span>
     {%- else -%}{{ v }}
     {%- endif -%}
