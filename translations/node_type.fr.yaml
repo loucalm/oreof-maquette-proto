@@ -34,6 +34,9 @@ node_type:
     label_field: Libellé
     icon_field: Icône associé
     icon_help: "Nom d'icône %link% (ex. %example%)"
+    icon_pick: Choisir une icône
+    icon_search: Rechercher (en anglais)…
+    icon_weight: Graisse de l’icône
     key_field: Clé
     key_placeholder: auto depuis le libellé
     key_auto: générée à l’enregistrement

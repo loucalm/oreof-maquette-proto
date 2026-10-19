@@ -185,11 +185,31 @@
                 <span class="text-xs font-medium">{{ 'node_type.edit.label_field'|trans({}, 'node_type') }}</span>
                 <input name="label" required value="{{ nodeType.label ?? '' }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
             </label>
-            <label class="block">
-                <span class="text-xs font-medium">{{ 'node_type.edit.icon_field'|trans({}, 'node_type') }}</span>
-                <input name="icon" value="{{ nodeType.icon ?? '' }}" placeholder="ph:puzzle-piece" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+            <div class="block relative" data-controller="icon-picker">
+                <label for="node-type-icon" class="text-xs font-medium">{{ 'node_type.edit.icon_field'|trans({}, 'node_type') }}</label>
+                <div class="mt-1 flex items-stretch gap-1">
+                    <button type="button" class="icon-picker-trigger" data-action="icon-picker#toggle" title="{{ 'node_type.edit.icon_pick'|trans({}, 'node_type') }}" aria-label="{{ 'node_type.edit.icon_pick'|trans({}, 'node_type') }}">
+                        <span data-icon-picker-target="preview"></span>
+                    </button>
+                    <input id="node-type-icon" name="icon" value="{{ nodeType.icon ?? '' }}" placeholder="ph:puzzle-piece" data-icon-picker-target="input" data-action="input->icon-picker#refreshPreview" class="min-w-0 flex-1 rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                </div>
                 <span class="text-[11px]" style="color:var(--c-muted)">{{ 'node_type.edit.icon_help'|trans({'%link%': '<a href="https://icones.js.org/collection/ph" target="_blank" class="underline">Phosphor</a>', '%example%': '<code>ph:calendar</code>'}, 'node_type')|raw }}</span>
-            </label>
+                <div class="icon-picker-panel" data-icon-picker-target="panel" data-action="keydown->icon-picker#keydown" hidden>
+                    <div class="flex gap-2">
+                        <input type="search" data-icon-picker-target="search" data-action="input->icon-picker#search" placeholder="{{ 'node_type.edit.icon_search'|trans({}, 'node_type') }}" class="min-w-0 flex-1 rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
+                        <select data-icon-picker-target="weight" data-action="icon-picker#render" class="rounded-md border px-1 py-1.5 text-xs" style="border-color:var(--c-border)" aria-label="{{ 'node_type.edit.icon_weight'|trans({}, 'node_type') }}">
+                            <option value="">Normal</option>
+                            <option value="-bold">Gras</option>
+                            <option value="-fill">Plein</option>
+                            <option value="-duotone">Duotone</option>
+                            <option value="-light">Fin</option>
+                            <option value="-thin">Très fin</option>
+                        </select>
+                    </div>
+                    <div class="mt-2 text-[11px]" style="color:var(--c-muted)" data-icon-picker-target="status"></div>
+                    <div class="icon-picker-grid mt-1" data-icon-picker-target="grid"></div>
+                </div>
+            </div>
         </div>
         <div class="grid grid-cols-2 gap-3">
             {# Clé = identifiant technique (référencé par les formations, templates, champs) : générée
