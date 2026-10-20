@@ -30,6 +30,8 @@ final class NodeTypeFixtures extends Fixture
             // « Semestre » numéroté en comptage global (1, 2, 3, 4… sur toute la formation, pas
             // réinitialisé par année) : ses enfants (UE) restent numérotés contextuellement (2.1 sous Semestre 2).
             ['semestre',    'Semestre',  'ph:calendar-blank',     NodeFamily::Structural,     30,       ['mutualisable' => true],                                                                  30,         [],              true,     'decimal', NodeKind::Temporel,   true,      false, false],
+            // niveau structurel intermédiaire des diplômes sans semestre (ex. M2E : année › bloc de formation › EC)
+            ['bloc_formation', 'Bloc de formation', 'ph:stack',    NodeFamily::Structural,     45,       ['ects' => true, 'competencies' => true],                                                  null,       [],              true,     'decimal', NodeKind::Structurel, false,     false, false],
             // autres unités de temps possibles pour le 1er niveau du squelette
             ['trimestre',   'Trimestre', 'ph:calendar-dots',      NodeFamily::Structural,     34,       ['mutualisable' => true],                                                                  20,         [],              false,    'decimal', NodeKind::Temporel,   false,     false, false],
             ['mois',        'Mois',      'ph:calendar-dot',       NodeFamily::Structural,     36,       ['mutualisable' => true],                                                                  null,       [],              false,    'decimal', NodeKind::Temporel,   false,     false, false],

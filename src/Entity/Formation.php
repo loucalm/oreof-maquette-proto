@@ -24,6 +24,11 @@ class Formation
     #[ORM\Column(length: 80, nullable: true)]
     private ?string $diplome = null;
 
+    /** Type de diplôme configurable ; null = formation non typée (texte libre `diplome`). */
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?TypeDiplome $typeDiplome = null;
+
     #[ORM\Column(length: 160, nullable: true)]
     private ?string $domaine = null;
 
@@ -156,9 +161,22 @@ class Formation
         return $this;
     }
 
+    /** Libellé du type de diplôme s'il existe, sinon l'ancienne valeur texte. */
     public function getDiplome(): ?string
     {
-        return $this->diplome;
+        return $this->typeDiplome?->getLabel() ?? $this->diplome;
+    }
+
+    public function getTypeDiplome(): ?TypeDiplome
+    {
+        return $this->typeDiplome;
+    }
+
+    public function setTypeDiplome(?TypeDiplome $typeDiplome): self
+    {
+        $this->typeDiplome = $typeDiplome;
+
+        return $this;
     }
 
     public function setDiplome(?string $diplome): self

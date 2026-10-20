@@ -64,7 +64,7 @@ final class TypeDiplomeVersionRepositoryTest extends DatabaseTestCase
         $this->em->flush();
         $this->em->clear();
 
-        $reloaded = $this->repo()->findOneBy([]);
+        $reloaded = $this->em->getRepository(TypeDiplome::class)->findOneByKey('test_t')->latestVersion();
         self::assertTrue($reloaded->config()->options['quitus']);
         self::assertSame(['Bloc'], $reloaded->config()->bccLevels);
     }

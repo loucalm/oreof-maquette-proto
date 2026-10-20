@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\DataFixtures;
 
 use App\Entity\Formation;
+use App\Entity\TypeDiplome;
 use App\Maquette\Maquette;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
@@ -19,7 +20,7 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
 {
     public function getDependencies(): array
     {
-        return [NodeTypeFixtures::class];
+        return [NodeTypeFixtures::class, TypeDiplomeFixtures::class];
     }
 
     /** Compteur de nid, réinitialisé par formation. */
@@ -29,8 +30,11 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
     {
     }
 
+    private TypeDiplome $licenceType;
+
     public function load(ObjectManager $manager): void
     {
+        $this->licenceType = $this->getReference(TypeDiplomeFixtures::REF_PREFIX.'L', TypeDiplome::class);
         $formations = [$this->licenceInfo(), $this->licenceMulti(), $this->certificatCourt()];
         foreach ($formations as $f) {
             $manager->persist($f);
@@ -134,6 +138,7 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
 
         return (new Formation('Licence Informatique (démo)'))
             ->setDiplome('Licence')
+            ->setTypeDiplome($this->licenceType)
             ->setDomaine('Sciences, technologies, santé')
             ->setComposante('UFR Sciences Exactes et Naturelles')
             ->setAvecParcours(false)
@@ -246,6 +251,7 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
 
         return (new Formation('Licence Sciences & Technologies (démo avec parcours)'))
             ->setDiplome('Licence')
+            ->setTypeDiplome($this->licenceType)
             ->setDomaine('Sciences, technologies, santé')
             ->setComposante('UFR Sciences Exactes et Naturelles')
             ->setAvecParcours(true)
