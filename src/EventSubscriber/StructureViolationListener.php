@@ -38,11 +38,23 @@ final class StructureViolationListener
 
         $request = $event->getRequest();
         $first = $e->violations[0];
+        $target = $this->editorRoute($e->formation, $first->scopeNid);
+        $derogationUrl = $this->router->generate($target[0], $target[1] + [
+            'derogation' => $first->ruleKey,
+            'scope' => $first->scopeNid,
+            'value' => $first->actual,
+        ]);
+        $refused = $this->translator->trans('diplome.guard.refused', ['%message%' => $first->message], 'diplome');
 
         if ($this->wantsJson($request)) {
+            // de quoi afficher côté client le même toast que le flash serveur (message + lien de dérogation)
             $event->setResponse(new JsonResponse([
                 'ok' => false,
                 'error' => $this->translator->trans('diplome.guard.error', [], 'diplome'),
+                'message' => $refused,
+                'derogationUrl' => $derogationUrl,
+                'derogationLabel' => $this->translator->trans('diplome.guard.request_derogation', [], 'diplome'),
+                'closeLabel' => $this->translator->trans('layout.close', [], 'layout'),
                 'violations' => array_map(static fn ($v): array => [
                     'ruleKey' => $v->ruleKey,
                     'scopeNid' => $v->scopeNid,
@@ -55,16 +67,9 @@ final class StructureViolationListener
             return;
         }
 
-        $target = $this->editorRoute($e->formation, $first->scopeNid);
-        $derogationUrl = $this->router->generate($target[0], $target[1] + [
-            'derogation' => $first->ruleKey,
-            'scope' => $first->scopeNid,
-            'value' => $first->actual,
-        ]);
-
         if ($request->hasSession()) {
             $flashes = $request->getSession()->getFlashBag();
-            $flashes->add('warning', $this->translator->trans('diplome.guard.refused', ['%message%' => $first->message], 'diplome'));
+            $flashes->add('warning', $refused);
             $flashes->add('derogation_link', $derogationUrl);
         }
         $event->setResponse(new RedirectResponse($this->router->generate($target[0], $target[1])));

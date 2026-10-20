@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { showGuardRefusal } from '../guard_refusal.js';
 
 /**
  * Grille de saisie rapide (type tableur) :
@@ -144,9 +145,12 @@ export default class extends Controller {
             },
             signal: controller.signal,
         })
-            .then((response) => {
+            .then(async (response) => {
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
+                    // refus du garde de structure : toast avec le motif et le lien de dérogation
+                    const shown = await showGuardRefusal(response);
+                    const data = shown ? await response.json() : null;
+                    throw new Error(data?.message || `HTTP ${response.status}`);
                 }
                 return response.json();
             })

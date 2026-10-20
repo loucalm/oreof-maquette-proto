@@ -1,5 +1,6 @@
 import { Controller } from '@hotwired/stimulus';
 import Sortable from 'sortablejs';
+import { showGuardRefusal } from '../guard_refusal.js';
 
 /**
  * Panneau « Structure de la formation » :
@@ -357,6 +358,7 @@ export default class extends Controller {
             });
             if (!res.ok) {
                 (evt.from).insertBefore(li, evt.from.children[evt.oldIndex] || null);
+                await showGuardRefusal(res); // refus hors bornes : message + lien de dérogation
                 return;
             }
         } catch (e) {

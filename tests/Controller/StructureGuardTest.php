@@ -132,6 +132,10 @@ final class StructureGuardTest extends WebTestCase
         self::assertSame($s1, $data['violations'][0]['scopeNid']);
         self::assertSame(7, $data['violations'][0]['actual']);
         self::assertSame(6, $this->ueCount($f->getId(), $s1));
+        // de quoi afficher côté client le même toast que le flash serveur
+        self::assertStringContainsString('Modification refusée', $data['message']);
+        self::assertSame('Demander une dérogation', $data['derogationLabel']);
+        self::assertSame('/formations/'.$f->getId().'?focus='.$s1.'&derogation=level:ue:count:max&scope='.$s1.'&value=7', urldecode($data['derogationUrl']));
     }
 
     public function testGrantedDerogationLetsTheActionThrough(): void
