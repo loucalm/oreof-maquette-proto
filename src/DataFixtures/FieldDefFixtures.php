@@ -86,6 +86,16 @@ final class FieldDefFixtures extends Fixture
             $manager->persist($field);
         }
 
+        // nature d'élément (ec, stage, ressource, sae…) : options tirées des natures de la version du type de diplôme
+        $manager->persist((new FieldDef('natureElement', "Nature d'élément"))
+            ->setTab('props')
+            ->setType('choice')
+            ->setOptionsSource('version_natures')
+            ->setPlaceholder("Choisir la nature de l'élément")
+            ->setHelp("Nature déclarée par le type de diplôme ; elle détermine les types de MCCC proposés.")
+            ->setPosition(45)
+            ->setSystem(true));
+
         $orgBase = 200;
         $presBase = 300;
         $orgI = 0;

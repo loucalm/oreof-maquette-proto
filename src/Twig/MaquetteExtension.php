@@ -39,6 +39,7 @@ final class MaquetteExtension extends AbstractExtension
         private readonly \App\Validation\TabValidator $validator,
         private readonly \App\Maquette\BccReferences $bccRefs,
         private readonly \App\Maquette\NodeClipboard $clipboard,
+        private readonly \App\Diplome\VersionMccc $versionMccc,
     ) {
     }
 
@@ -89,8 +90,10 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('parcours_field_value', fn (TreeNode $p, string $k, array $data) => $this->completion->parcoursFieldValue($p, $k, $data)),
             new TwigFunction('node_type_param_editable', static fn (NodeType $t) => \in_array($t->getKey(), NodeTypeController::EDITABLE_PARAM_KEYS, true)),
             new TwigFunction('referentiel', fn (string $key) => $this->referentiels->values($key)),
-            new TwigFunction('mccc_types_for', fn (Formation $f) => $this->mcctypes->availableFor(
-                null !== $f->getDiplome() ? $this->templates->findOneByDiplome($f->getDiplome()) : null,
+            // types de MCCC proposés pour un nœud : ceux de la version du type de diplôme (selon la
+            // nature de l'élément), à défaut ceux du template du diplôme de la formation
+            new TwigFunction('mccc_types_for', fn (TreeNode $n) => $this->versionMccc->typesFor($n) ?? $this->mcctypes->availableFor(
+                null !== $n->getFormation()?->getDiplome() ? $this->templates->findOneByDiplome($n->getFormation()->getDiplome()) : null,
             )),
             new TwigFunction('mccc_results', fn (TreeNode $n) => $this->mcccValidator->forNode($n)),
             new TwigFunction('mccc_type_label', function (string $key): ?string {

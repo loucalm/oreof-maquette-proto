@@ -49,7 +49,7 @@ final class AttributeCatalog
     /**
      * @return array<string, array{
      *     domain: string, label: string, field: string,
-     *     options: array<string, string>, referentielKey: ?string, allowExtra: bool,
+     *     options: array<string, string>, referentielKey: ?string, optionsSource: ?string, allowExtra: bool,
      *     quickAdd: bool, required: bool, help: ?string, min: ?float, max: ?float, placeholder: ?string
      * }>
      */
@@ -67,6 +67,7 @@ final class AttributeCatalog
                 'field' => $f->getType(),
                 'options' => $f->getOptions(),
                 'referentielKey' => $f->getReferentielKey(),
+                'optionsSource' => $f->getOptionsSource(),
                 'allowExtra' => $f->isAllowExtra(),
                 'quickAdd' => $f->isQuickAdd(),
                 'required' => $f->isRequired(),

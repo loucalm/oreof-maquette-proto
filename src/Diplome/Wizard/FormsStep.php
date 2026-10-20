@@ -19,6 +19,11 @@ final class FormsStep extends AbstractWizardStep
         return 30;
     }
 
+    public function editable(): bool
+    {
+        return true;
+    }
+
     public function formType(): string
     {
         return FormsType::class;

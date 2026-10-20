@@ -1,5 +1,5 @@
 {% import _self as ui %}
-{% set mtypes = mccc_types_for(node.formation) %}
+{% set mtypes = mccc_types_for(node) %}
 {% set selectedType = value.type ?? '' %}
 {% set selectedMt = mtypes|filter(t => t.key == selectedType)|first %}
 {% set evals = value.evaluations ?? [] %}

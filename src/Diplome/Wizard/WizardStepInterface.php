@@ -27,6 +27,9 @@ interface WizardStepInterface
     /** Vrai si l'étape n'est accessible qu'une fois les informations valides. */
     public function needsInformations(): bool;
 
+    /** Vrai si l'étape est aussi un onglet de l'édition d'une version existante (configuration seulement). */
+    public function editable(): bool;
+
     /** @return class-string|null Type de formulaire, null pour une étape sans saisie. */
     public function formType(): ?string;
 

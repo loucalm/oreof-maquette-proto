@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Diplome\Spec\Bound;
 use App\Entity\TypeDiplome;
+use App\Diplome\Wizard\WizardStepRegistry;
 use App\Repository\FormationRepository;
 use App\Repository\TypeDiplomeRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -25,6 +26,7 @@ final class DiplomeController extends AbstractController
     public function __construct(
         private readonly TypeDiplomeRepository $types,
         private readonly FormationRepository $formations,
+        private readonly WizardStepRegistry $steps,
         private readonly EntityManagerInterface $em,
         private readonly TranslatorInterface $translator,
     ) {
@@ -54,6 +56,7 @@ final class DiplomeController extends AbstractController
                 'formations' => $this->formations->countByTypeDiplome($type),
                 'version' => $latest?->getAnneeUniversitaire(),
                 'versionId' => $latest?->getId(),
+                'editStep' => $this->steps->editableKeys()[0] ?? null,
             ];
         }
 

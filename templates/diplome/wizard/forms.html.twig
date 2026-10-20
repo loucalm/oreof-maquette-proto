@@ -1,4 +1,4 @@
-{% extends 'diplome/wizard/_layout.html.twig' %}
+{% extends wizard_layout|default('diplome/wizard/_layout.html.twig') %}
 {% block step_content %}
 <p class="text-sm mb-4" style="color:var(--c-muted)">{{ 'diplome.wizard.formulaires.help'|trans({}, 'diplome') }}</p>
 {{ form_start(form, {attr: {id: 'wizard-form', class: 'space-y-4'}}) }}

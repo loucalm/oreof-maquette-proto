@@ -1,0 +1,33 @@
+{% extends wizard_layout|default('diplome/wizard/_layout.html.twig') %}
+{% block step_content %}
+<p class="text-sm mb-4" style="color:var(--c-muted)">{{ 'diplome.wizard.mccc.help'|trans({}, 'diplome') }}</p>
+{{ form_start(form, {attr: {id: 'wizard-form', class: 'space-y-5'}}) }}
+    {{ form_errors(form) }}
+    {% if form.natures|length == 0 %}
+        <p class="text-sm" style="color:var(--c-muted)" data-no-natures>{{ 'diplome.wizard.mccc.no_natures'|trans({}, 'diplome') }}</p>
+    {% endif %}
+    {% for entry in form.natures %}
+        <fieldset class="rounded-lg border p-4 space-y-3" style="border-color:var(--c-border)" data-nature="{{ entry.vars.value.nature }}">
+            <legend class="px-2 text-sm font-semibold">{{ entry.vars.value.nature }}</legend>
+            {{ form_widget(entry.nature) }}
+            <div class="text-xs font-medium">{{ form_label(entry.types) }}</div>
+            <div class="grid gap-2 sm:grid-cols-2 text-sm">
+                {% for choice in entry.types %}
+                    <label class="flex items-center gap-2">{{ form_widget(choice) }} {{ choice.vars.label }}</label>
+                {% endfor %}
+            </div>
+            {{ form_errors(entry.types) }}
+            {% include 'diplome/wizard/_field.html.twig' with {field: entry.profile} %}
+        </fieldset>
+    {% endfor %}
+    <fieldset class="rounded-lg border p-4 space-y-2" style="border-color:var(--c-border)">
+        <legend class="px-2 text-sm font-semibold">{{ 'diplome.wizard.mccc.options.title'|trans({}, 'diplome') }}</legend>
+        {% for option in [form.quitus, form.assiduite, form.sansNote] %}
+            <label class="flex items-center gap-2 text-sm">{{ form_widget(option) }} {{ form_label(option) }}</label>
+        {% endfor %}
+    </fieldset>
+{{ form_end(form) }}
+{% endblock %}
+{% block step_next %}
+    <button form="wizard-form" class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'diplome.wizard.next'|trans({}, 'diplome') }}</button>
+{% endblock %}

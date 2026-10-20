@@ -40,6 +40,10 @@
                 <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ row.version ?? '—' }}</td>
                 <td class="px-4 py-2.5 text-right whitespace-nowrap">
                     {% if row.versionId %}
+                        <a href="{{ path('diplome_edit', {id: t.id, versionId: row.versionId, step: row.editStep}) }}" class="text-xs hover:underline mr-2" data-action="edit">{{ 'diplome.index.edit'|trans({}, 'diplome') }}</a>
+                        <form method="post" action="{{ path('diplome_version_new', {id: t.id}) }}" class="inline mr-2">
+                            <button class="text-xs hover:underline" data-action="new-version">{{ 'diplome.index.new_version'|trans({}, 'diplome') }}</button>
+                        </form>
                         <a href="{{ path('diplome_wizard_start', {depuis: row.versionId}) }}" class="text-xs hover:underline mr-2" data-action="duplicate">{{ 'diplome.index.duplicate'|trans({}, 'diplome') }}</a>
                     {% endif %}
                     {% if t.archived %}

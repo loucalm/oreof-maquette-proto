@@ -33,6 +33,11 @@ final class StructureStep extends AbstractWizardStep
         return 40;
     }
 
+    public function editable(): bool
+    {
+        return true;
+    }
+
     public function formType(): string
     {
         return StructureType::class;

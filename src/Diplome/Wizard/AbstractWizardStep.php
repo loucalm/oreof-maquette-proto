@@ -14,6 +14,11 @@ abstract class AbstractWizardStep implements WizardStepInterface
         return true;
     }
 
+    public function editable(): bool
+    {
+        return false;
+    }
+
     public function formType(): ?string
     {
         return null;

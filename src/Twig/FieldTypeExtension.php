@@ -8,6 +8,7 @@ use App\Entity\FieldDef;
 use App\FieldType\FieldTypeInterface;
 use App\FieldType\FieldTypeRegistry;
 use App\Maquette\Doc\TreeNode;
+use App\FieldType\Options\FieldOptionsSources;
 use App\Repository\ReferentielRepository;
 use Twig\Environment;
 use Twig\Extension\AbstractExtension;
@@ -25,6 +26,7 @@ final class FieldTypeExtension extends AbstractExtension
     public function __construct(
         private readonly FieldTypeRegistry $types,
         private readonly ReferentielRepository $referentiels,
+        private readonly FieldOptionsSources $optionsSources,
     ) {
     }
 
@@ -55,7 +57,7 @@ final class FieldTypeExtension extends AbstractExtension
             'key' => $key,
             'value' => $value,
             'name' => $inputName,
-            'options' => $this->options($def),
+            'options' => $this->options($def, $node),
             'node' => $node,
             'errors' => $errors,
             'variant' => $variant,
@@ -70,7 +72,7 @@ final class FieldTypeExtension extends AbstractExtension
         return $twig->render($this->type($def)->viewTemplate(), [
             'def' => $def,
             'value' => $value,
-            'options' => $this->options($def),
+            'options' => $this->options($def, $node),
             'node' => $node,
         ]);
     }
@@ -82,8 +84,12 @@ final class FieldTypeExtension extends AbstractExtension
     }
 
     /** @param array<string, mixed> $def */
-    private function options(array $def): array
+    private function options(array $def, ?TreeNode $node): array
     {
+        if (!empty($def['optionsSource'])) {
+            return $this->optionsSources->options((string) $def['optionsSource'], $node);
+        }
+
         return $def['referentielKey'] ? $this->referentiels->values($def['referentielKey']) : $def['options'];
     }
 
@@ -99,7 +105,7 @@ final class FieldTypeExtension extends AbstractExtension
         if ($def instanceof FieldDef) {
             return [
                 'key' => $def->getKey(), 'label' => $def->getLabel(), 'type' => $def->getType(),
-                'options' => $def->getOptions(), 'referentielKey' => $def->getReferentielKey(),
+                'options' => $def->getOptions(), 'referentielKey' => $def->getReferentielKey(), 'optionsSource' => $def->getOptionsSource(),
                 'allowExtra' => $def->isAllowExtra(), 'quickAdd' => $def->isQuickAdd(),
                 'required' => $def->isRequired(), 'help' => $def->getHelp(),
                 'min' => $def->getMin(), 'max' => $def->getMax(), 'placeholder' => $def->getPlaceholder(),
@@ -107,7 +113,7 @@ final class FieldTypeExtension extends AbstractExtension
         }
 
         return ['type' => $def['field'] ?? $def['type'] ?? 'text'] + $def + [
-            'options' => [], 'referentielKey' => null, 'allowExtra' => false, 'quickAdd' => false,
+            'options' => [], 'referentielKey' => null, 'optionsSource' => null, 'allowExtra' => false, 'quickAdd' => false,
             'required' => false, 'help' => null, 'min' => null, 'max' => null, 'placeholder' => null,
         ];
     }

@@ -1,0 +1,59 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ 'diplome.edit.title'|trans({'%label%': type.label}, 'diplome') }}{% endblock %}
+
+{% block body %}
+<div class="mb-5 flex items-start justify-between gap-4">
+    <div>
+        <h1 class="text-xl font-bold">{{ 'diplome.edit.heading'|trans({'%label%': type.label, '%year%': version.anneeUniversitaire}, 'diplome') }}</h1>
+        <nav class="mt-2 flex flex-wrap items-center gap-2 text-xs" aria-label="{{ 'diplome.edit.versions'|trans({}, 'diplome') }}">
+            <span style="color:var(--c-muted)">{{ 'diplome.edit.versions'|trans({}, 'diplome') }}</span>
+            {% for v in versions %}
+                <a href="{{ path('diplome_edit', {id: type.id, versionId: v.id, step: step}) }}" data-version="{{ v.anneeUniversitaire }}"
+                   class="pill {{ v.id == version.id ? 'font-semibold' : '' }}" {{ v.id == version.id ? 'aria-current="true"' }}>{{ v.anneeUniversitaire }}</a>
+            {% endfor %}
+        </nav>
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+        <a href="{{ path('diplome_index') }}" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'diplome.edit.back'|trans({}, 'diplome') }}</a>
+        <form method="post" action="{{ path('diplome_version_new', {id: type.id}) }}">
+            <button class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)" data-action="new-version">{{ 'diplome.edit.new_version'|trans({}, 'diplome') }}</button>
+        </form>
+    </div>
+</div>
+
+{% if formations is not empty %}
+<section class="mb-5 rounded-xl border p-4 text-sm" style="border-color:var(--c-border);background:#fffbeb" data-impact>
+    <p class="font-semibold">{{ 'diplome.edit.impact_title'|trans({'%count%': formations|length}, 'diplome') }}</p>
+    <ul class="mt-2 list-disc pl-5">
+        {% for f in formations %}
+            <li><a href="{{ path('formation_editor', {id: f.id}) }}" class="hover:underline">{{ f.name }}</a></li>
+        {% endfor %}
+    </ul>
+    <form method="post" action="{{ path('diplome_version_propagate', {id: type.id, versionId: version.id}) }}" class="mt-3">
+        <button class="rounded-md border px-3 py-1.5 text-sm hover:bg-white" style="border-color:var(--c-border)" data-action="propagate">{{ 'diplome.edit.propagate'|trans({}, 'diplome') }}</button>
+        <span class="text-xs" style="color:var(--c-muted)">{{ 'diplome.edit.propagate_help'|trans({}, 'diplome') }}</span>
+    </form>
+</section>
+{% endif %}
+
+<div class="rounded-xl border bg-white" style="border-color:var(--c-border)">
+    <nav class="flex gap-1 border-b px-3 pt-2 text-sm" style="border-color:var(--c-border)" aria-label="{{ 'diplome.edit.tabs'|trans({}, 'diplome') }}">
+        {% for s in steps %}
+            <a href="{{ path('diplome_edit', {id: type.id, versionId: version.id, step: s}) }}" data-step="{{ s }}" {{ s == step ? 'aria-current="page"' }}
+               class="rounded-t-md px-4 py-2 {{ s == step ? 'font-semibold bg-gray-100' : 'hover:bg-gray-50' }}">{{ ('diplome.wizard.steps.' ~ s)|trans({}, 'diplome') }}</a>
+        {% endfor %}
+    </nav>
+    <section class="p-5">
+        {% block step_content %}{% endblock %}
+        <div class="flex items-center justify-end gap-4 pt-5">
+            {% if formations is not empty %}
+                <label class="flex items-center gap-2 text-sm">
+                    <input type="checkbox" name="confirmImpact" value="1" form="wizard-form" data-confirm-impact>
+                    {{ 'diplome.edit.confirm_impact'|trans({'%count%': formations|length}, 'diplome') }}
+                </label>
+            {% endif %}
+            <button form="wizard-form" class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'diplome.edit.save'|trans({}, 'diplome') }}</button>
+        </div>
+    </section>
+</div>
+{% endblock %}

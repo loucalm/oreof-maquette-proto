@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Maquette;
 
+use App\Diplome\VersionMccc;
 use App\Maquette\Doc\TreeNode;
 use App\Repository\MccTypeRepository;
 use App\Repository\StructureTemplateRepository;
@@ -16,10 +17,11 @@ use Symfony\Contracts\Service\ResetInterface;
  * (`App\Rules\RuleEvaluator`) — même forme que `Completion`/`Numbering` :
  * un petit service qui parcourt un `TreeNode` et calcule quelque chose.
  *
- * Le profil de règles appliqué dépend du diplôme de la formation : résolu via
- * le template de ce diplôme (`StructureTemplate::mcccProfiles[typeKey]`).
- * Sans template, ou sans profil mappé pour ce type, aucune règle n'est
- * appliquée (comportement permissif, cohérent avec le reste de l'appli).
+ * Le profil de règles appliqué vient de la version du type de diplôme de la
+ * formation (`VersionConfig::mccc[nature].profile`, cf. VersionMccc) ; sans
+ * version, du template du diplôme (`StructureTemplate::mcccProfiles[typeKey]`).
+ * Sans profil, aucune règle n'est appliquée (comportement permissif, cohérent
+ * avec le reste de l'appli).
  *
  * Calculée à l'affichage uniquement (informatif, non bloquant) : rien dans
  * cette application ne bloque déjà un enregistrement sur un champ requis
@@ -37,6 +39,7 @@ final class McccValidator implements ResetInterface
         private readonly MccTypeRepository $types,
         private readonly RuleEvaluator $evaluator,
         private readonly StructureTemplateRepository $templates,
+        private readonly VersionMccc $versionMccc,
     ) {
     }
 
@@ -55,12 +58,17 @@ final class McccValidator implements ResetInterface
             return [];
         }
 
-        $diplome = $node->getFormation()?->getDiplome();
-        $template = null;
-        if (null !== $diplome) {
-            $template = $this->templateCache[$diplome] ??= $this->templates->findOneByDiplome($diplome);
+        // profil : celui de la version du type de diplôme selon la nature de l'élément ;
+        // sans version, repli sur le template du diplôme (R4)
+        [$hasVersion, $profileKey] = $this->versionMccc->profileFor($node);
+        if (!$hasVersion) {
+            $diplome = $node->getFormation()?->getDiplome();
+            $template = null;
+            if (null !== $diplome) {
+                $template = $this->templateCache[$diplome] ??= $this->templates->findOneByDiplome($diplome);
+            }
+            $profileKey = $template?->getMcccProfiles()[$typeKey] ?? null;
         }
-        $profileKey = $template?->getMcccProfiles()[$typeKey] ?? null;
         $rules = $type->getProfileRules($profileKey);
         if ([] === $rules) {
             return [];

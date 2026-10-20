@@ -104,12 +104,14 @@ final class DiplomeWizardTest extends WebTestCase
         self::assertStringContainsString('param_presentation_parcours', $crawler->filter('[data-diff]')->text());
     }
 
-    public function testPlaceholderStepsShowComingSoon(): void
+    public function testMcccAndBccStepsRenderTheirForms(): void
     {
-        $this->client->request('GET', '/diplomes/nouveau');
+        $this->client->request('GET', '/diplomes/nouveau', ['depuis' => $this->licenceVersionId()]);
         $this->submitInformations(['informations[label]' => 'Deust', 'informations[sigle]' => 'DEUST']);
         $crawler = $this->client->request('GET', '/diplomes/nouveau/mccc');
-        self::assertCount(1, $crawler->filter('[data-coming-soon]'));
+        self::assertCount(1, $crawler->filter('form#wizard-form fieldset[data-nature=ec]'));
+        $crawler = $this->client->request('GET', '/diplomes/nouveau/bcc');
+        self::assertCount(1, $crawler->filter('form#wizard-form input[name="bcc_config[level1]"]'));
     }
 
     public function testListOffersDuplicateLink(): void

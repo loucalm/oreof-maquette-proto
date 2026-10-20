@@ -1,4 +1,4 @@
-{% extends 'diplome/wizard/_layout.html.twig' %}
+{% extends wizard_layout|default('diplome/wizard/_layout.html.twig') %}
 
 {% macro tree(nodes) %}
     <ul class="tree-list">

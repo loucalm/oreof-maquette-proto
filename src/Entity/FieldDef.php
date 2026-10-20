@@ -53,6 +53,14 @@ class FieldDef
     #[ORM\Column(length: 64, nullable: true)]
     private ?string $referentielKey = null;
 
+    /**
+     * Si renseigné, les options viennent d'une source calculée selon le nœud
+     * (App\FieldType\Options\FieldOptionsSourceInterface, clé = ce champ) ; prioritaire
+     * sur `referentielKey` et `options`. Réglé par les fixtures, pas par l'éditeur de formulaire.
+     */
+    #[ORM\Column(length: 40, nullable: true)]
+    private ?string $optionsSource = null;
+
     /** Autorise une valeur libre en plus des options (uniquement pertinent pour choice/checkbox). */
     #[ORM\Column]
     private bool $allowExtra = false;
@@ -179,6 +187,18 @@ class FieldDef
     public function setReferentielKey(?string $referentielKey): self
     {
         $this->referentielKey = trim((string) $referentielKey) ?: null;
+
+        return $this;
+    }
+
+    public function getOptionsSource(): ?string
+    {
+        return $this->optionsSource;
+    }
+
+    public function setOptionsSource(?string $optionsSource): self
+    {
+        $this->optionsSource = trim((string) $optionsSource) ?: null;
 
         return $this;
     }

@@ -23,6 +23,8 @@ diplome:
     empty: Aucun type de diplôme.
     new: Nouveau diplôme
     duplicate: Dupliquer
+    edit: Modifier
+    new_version: Nouvelle version
     duration_exact: '%n% ans'
     duration_range: '%min% à %max% ans'
     duration_min: 'au moins %min% ans'
@@ -33,7 +35,6 @@ diplome:
     previous: Précédent
     next: Suivant
     create: Créer le type de diplôme
-    coming: À venir
     steps:
       informations: Informations
       depart: Type de départ
@@ -112,6 +113,29 @@ diplome:
         imposed_level: 'Élément imposé %n% : son type doit figurer dans la chaîne, sous le premier niveau.'
         rule_scope: 'Règle %n% : la portée doit être un niveau de la chaîne.'
         unknown_nature: 'Ligne %n% : la nature « %nature% » n''est pas déclarée dans les natures d''élément du type.'
+    mccc:
+      help: Pour chaque nature d'élément déclarée par la structure, choisissez les types de MCCC autorisés et le profil de règles à appliquer.
+      no_natures: Aucune nature d'élément n'est déclarée dans l'étape Structure.
+      types: Types de MCCC autorisés
+      profile: Profil de règles
+      no_profile: Aucun profil
+      options:
+        title: Options
+        quitus: Quitus
+        assiduite: Assiduité
+        sansNote: Sans note
+    bcc:
+      help: Nommez les niveaux du référentiel de compétences (de 1 à 3) et indiquez celui auquel les éléments se rattachent.
+      level: 'Niveau %n%'
+      level_n_1: Niveau 1
+      level_n_2: Niveau 2
+      level_n_3: Niveau 3
+      link_level: Niveau relié aux éléments
+      link_level_help: Par défaut, le dernier niveau.
+      error:
+        first_required: Le premier niveau est obligatoire.
+        gap: Les niveaux se remplissent dans l'ordre, sans niveau vide.
+        link_level: Le niveau relié doit faire partie des niveaux saisis.
     section:
       informations: Informations
       structure: Structure
@@ -172,6 +196,23 @@ diplome:
       based_on: Type de départ
       differences: 'Différences avec %base%'
       identical: Aucune différence avec le type de départ.
+  edit:
+    title: 'Modifier %label%'
+    heading: 'Type « %label% » — version %year%'
+    versions: Versions
+    tabs: Étapes de la version
+    back: Retour aux diplômes
+    new_version: Nouvelle version
+    save: Enregistrer
+    saved: 'Version %year% enregistrée.'
+    version_created: 'Version %year% créée par copie de la précédente.'
+    impact_title: '{1} Cette version s''applique à 1 formation|]1,Inf[ Cette version s''applique à %count% formations'
+    confirm_impact: 'Je confirme : la modification s''appliquera aux formations concernées.'
+    impact_required: Cochez la confirmation d'impact pour enregistrer une version utilisée par des formations.
+    propagate: Propager aux formations
+    propagate_help: Ajoute les éléments imposés manquants et réapplique leurs verrous.
+    propagated: '{0} Aucun élément à propager.|{1} 1 nœud touché.|]1,Inf[ %count% nœuds touchés.'
+    propagate_refused: 'Propagation refusée pour « %formation% » : %message%'
   flash:
     created: 'Type « %label% » créé.'
     archived: 'Type « %label% » archivé.'

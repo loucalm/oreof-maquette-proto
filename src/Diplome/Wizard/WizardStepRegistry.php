@@ -33,6 +33,12 @@ final class WizardStepRegistry
         return array_keys($this->steps);
     }
 
+    /** @return list<string> étapes qui sont aussi des onglets de l'édition d'une version existante */
+    public function editableKeys(): array
+    {
+        return array_keys(array_filter($this->steps, static fn (WizardStepInterface $s) => $s->editable()));
+    }
+
     public function neighbour(string $key, int $offset): ?string
     {
         $keys = $this->keys();
