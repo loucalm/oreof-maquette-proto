@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Diplome\Check\StructureViolationException;
 use App\Diplome\ImposedPropagator;
 use App\Diplome\NextVersionCreator;
 use App\Diplome\VersionUsage;
+use App\Diplome\Wizard\WizardStepInterface;
 use App\Diplome\Wizard\WizardStepRegistry;
 use App\Diplome\WizardDraft;
 use App\Entity\TypeDiplome;
@@ -57,17 +57,17 @@ final class DiplomeEditController extends AbstractController
     {
         $version = $this->version($type, $versionId);
         $current = $this->editableStep($step);
-        $draft = WizardDraft::fromVersion($version);
-        $form = $this->createForm($current->formType(), $current->initialData($draft))->handleRequest($request);
+        $draft = WizardDraft::forEdit($version);
+        $form = $this->createForm($current->formType(), $current->initialData($draft), $current->editFormOptions($version))->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            if ([] !== $this->usage->formationsUsing($version) && !$request->request->getBoolean('confirmImpact')) {
+            if ([] !== $this->concerned($current, $type, $version) && !$request->request->getBoolean('confirmImpact')) {
                 $this->addFlash('error', $this->translator->trans('diplome.edit.impact_required', [], 'diplome'));
 
                 return $this->renderStep($type, $version, $step, $form, Response::HTTP_UNPROCESSABLE_ENTITY);
             }
             $current->apply($draft, $form->getData());
-            $version->setConfig($draft->config());
+            $current->persist($version, $draft);
             $this->em->flush();
             $this->addFlash('success', $this->translator->trans('diplome.edit.saved', ['%year%' => $version->getAnneeUniversitaire()], 'diplome'));
 
@@ -96,16 +96,15 @@ final class DiplomeEditController extends AbstractController
     public function propagate(TypeDiplome $type, int $versionId): RedirectResponse
     {
         $version = $this->version($type, $versionId);
-        $config = $version->config();
-        $touched = 0;
-        foreach ($this->usage->formationsUsing($version) as $formation) {
-            try {
-                $touched += $this->propagator->propagate($formation, $config);
-            } catch (StructureViolationException $e) {
-                $this->addFlash('error', $this->translator->trans('diplome.edit.propagate_refused', ['%formation%' => $formation->getName(), '%message%' => $e->getMessage()], 'diplome'));
-            }
+        $result = $this->propagator->propagateVersion($version);
+        foreach ($result->refused as $refusal) {
+            $this->addFlash('error', $this->translator->trans('diplome.edit.propagate_refused', ['%formation%' => $refusal['formation']->getName(), '%message%' => $refusal['message']], 'diplome'));
         }
-        $this->addFlash('success', $this->translator->trans('diplome.edit.propagated', ['%count%' => $touched], 'diplome'));
+        if ([] === $result->refused) {
+            $this->addFlash('success', $this->translator->trans('diplome.edit.propagated', ['%count%' => $result->touched], 'diplome'));
+        } else {
+            $this->addFlash('error', $this->translator->trans('diplome.edit.propagated_partial', ['%count%' => $result->touched, '%refused%' => \count($result->refused)], 'diplome'));
+        }
 
         return $this->redirectToRoute('diplome_edit', ['id' => $type->getId(), 'versionId' => $version->getId(), 'step' => $this->steps->editableKeys()[0]]);
     }
@@ -113,8 +112,8 @@ final class DiplomeEditController extends AbstractController
     private function renderStep(TypeDiplome $type, TypeDiplomeVersion $version, string $step, ?\Symfony\Component\Form\FormInterface $form, int $status = Response::HTTP_OK): Response
     {
         $current = $this->editableStep($step);
-        $draft = WizardDraft::fromVersion($version);
-        $form ??= $this->createForm($current->formType(), $current->initialData($draft));
+        $draft = WizardDraft::forEdit($version);
+        $form ??= $this->createForm($current->formType(), $current->initialData($draft), $current->editFormOptions($version));
 
         return $this->render('diplome/wizard/'.$current->template().'.html.twig', $current->viewData($draft) + [
             'wizard_layout' => 'diplome/edit.html.twig',
@@ -125,8 +124,14 @@ final class DiplomeEditController extends AbstractController
             'type' => $type,
             'version' => $version,
             'versions' => $type->getVersions(),
-            'formations' => $this->usage->formationsUsing($version),
+            'formations' => $this->concerned($current, $type, $version),
         ], new Response(status: $status));
+    }
+
+    /** @return list<\App\Entity\Formation> formations touchées par l'enregistrement de cet onglet */
+    private function concerned(WizardStepInterface $step, TypeDiplome $type, TypeDiplomeVersion $version): array
+    {
+        return $step->editsType() ? $this->usage->formationsOfType($type) : $this->usage->formationsUsing($version);
     }
 
     private function version(TypeDiplome $type, int $versionId): TypeDiplomeVersion
@@ -139,7 +144,7 @@ final class DiplomeEditController extends AbstractController
         return $version;
     }
 
-    private function editableStep(string $key): \App\Diplome\Wizard\WizardStepInterface
+    private function editableStep(string $key): WizardStepInterface
     {
         $step = $this->steps->get($key);
         if (null === $step || !$step->editable()) {

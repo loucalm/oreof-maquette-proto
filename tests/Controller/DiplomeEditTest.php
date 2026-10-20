@@ -157,7 +157,7 @@ final class DiplomeEditTest extends WebTestCase
     {
         $type = $this->type('L');
         $crawler = $this->client->request('GET', '/diplomes');
-        self::assertCount(1, $crawler->filter(sprintf('a[data-action=edit][href="%s"]', $this->editPath($type, 'formulaires'))));
+        self::assertCount(1, $crawler->filter(sprintf('a[data-action=edit][href="%s"]', $this->editPath($type, 'informations'))));
         self::assertCount(1, $crawler->filter(sprintf('form[action="/diplomes/%d/versions"] button[data-action=new-version]', $type->getId())));
     }
 
@@ -186,5 +186,87 @@ final class DiplomeEditTest extends WebTestCase
         $this->em->clear();
         $doc = static::getContainer()->get(Maquette::class)->open($this->em->find(Formation::class, $formation->getId()));
         self::assertCount(1, array_filter($doc->allNodes(), static fn (TreeNode $n) => 'lp-nouveau' === $n->getAttribute('_imposed')));
+    }
+
+    public function testBccLinkLevelDefaultsToLastLevel(): void
+    {
+        $type = $this->type('M2E'); // 3 niveaux, lien sur le dernier
+        $crawler = $this->client->request('GET', $this->editPath($type, 'bcc'));
+        $values = $crawler->filter('form#wizard-form')->form()->getPhpValues();
+        $values['bcc_config'] = ['level1' => 'A', 'level2' => 'B', 'level3' => '', 'linkLevel' => '0'];
+        $this->client->request('POST', $this->editPath($type, 'bcc'), $values);
+        self::assertResponseRedirects();
+
+        // deux niveaux, lien explicite sur le premier ; puis trois niveaux avec l'option par défaut : le dernier
+        $values['bcc_config'] = ['level1' => 'A', 'level2' => 'B', 'level3' => 'C', 'linkLevel' => ''];
+        $this->client->request('POST', $this->editPath($type, 'bcc'), $values);
+        self::assertResponseRedirects();
+        $this->em->clear();
+        $config = $this->type('M2E')->latestVersion()->config();
+        self::assertSame(['A', 'B', 'C'], $config->bccLevels);
+        self::assertSame(2, $config->bccLinkLevel);
+    }
+
+    public function testBccDefaultOptionOnFreshConfigLinksLastLevel(): void
+    {
+        $type = $this->type('M2E');
+        $crawler = $this->client->request('GET', $this->editPath($type, 'bcc'));
+        $values = $crawler->filter('form#wizard-form')->form()->getPhpValues();
+        $values['bcc_config'] = ['level1' => 'Bloc', 'level2' => 'Objectif', 'level3' => 'Attendu', 'linkLevel' => ''];
+        $this->client->request('POST', $this->editPath($type, 'bcc'), $values);
+        $this->em->clear();
+        self::assertSame(2, $this->type('M2E')->latestVersion()->config()->bccLinkLevel);
+    }
+
+    public function testInformationsOfUsedTypeNeedConfirmationAndKeepSigle(): void
+    {
+        $this->formationOf('L', 3);
+        $type = $this->type('L');
+        $crawler = $this->client->request('GET', $this->editPath($type, 'informations'));
+        self::assertCount(0, $crawler->filter('input[name="informations[anneeUniversitaire]"]'));
+        self::assertCount(1, $crawler->filter('input[name="informations[sigle]"][disabled]'));
+
+        $values = $crawler->filter('form#wizard-form')->form()->getPhpValues();
+        $values['informations']['label'] = 'Licence rénovée';
+        $values['informations']['description'] = 'Nouvelle description';
+        $values['informations']['sigle'] = 'HACK';
+        $this->client->request('POST', $this->editPath($type, 'informations'), $values);
+        self::assertResponseStatusCodeSame(422);
+        $this->em->clear();
+        self::assertSame('Licence', $this->type('L')->getLabel());
+
+        $values['confirmImpact'] = '1';
+        $this->client->request('POST', $this->editPath($type, 'informations'), $values);
+        self::assertResponseRedirects($this->editPath($type, 'informations'));
+        $this->em->clear();
+        $saved = $this->type('L');
+        self::assertSame('Licence rénovée', $saved->getLabel());
+        self::assertSame('Nouvelle description', $saved->getDescription());
+        self::assertSame('L', $saved->getSigle());
+    }
+
+    public function testSigleOfUnusedTypeIsEditableWithUniqueness(): void
+    {
+        $type = $this->type('M2E');
+        $crawler = $this->client->request('GET', $this->editPath($type, 'informations'));
+        self::assertCount(0, $crawler->filter('input[name="informations[sigle]"][disabled]'));
+        $values = $crawler->filter('form#wizard-form')->form()->getPhpValues();
+
+        $values['informations']['sigle'] = 'BUT';
+        $this->client->request('POST', $this->editPath($type, 'informations'), $values);
+        self::assertResponseStatusCodeSame(422);
+
+        // son propre sigle reste accepté
+        $values['informations']['sigle'] = 'M2E';
+        $values['informations']['label'] = 'Master M2E bis';
+        $this->client->request('POST', $this->editPath($type, 'informations'), $values);
+        self::assertResponseRedirects();
+
+        $values['informations']['sigle'] = 'M2X';
+        $this->client->request('POST', $this->editPath($type, 'informations'), $values);
+        self::assertResponseRedirects();
+        $this->em->clear();
+        $saved = $this->em->getRepository(TypeDiplome::class)->findOneBy(['sigle' => 'M2X']);
+        self::assertSame('Master M2E bis', $saved->getLabel());
     }
 }

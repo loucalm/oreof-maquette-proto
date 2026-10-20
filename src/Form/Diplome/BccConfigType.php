@@ -36,6 +36,8 @@ final class BccConfigType extends AbstractType
                 range(0, self::MAX_LEVELS - 1),
             ),
             'choice_translation_domain' => 'diplome',
+            'required' => false,
+            'placeholder' => 'diplome.wizard.bcc.link_default',
             'label' => 'diplome.wizard.bcc.link_level',
             'help' => 'diplome.wizard.bcc.link_level_help',
         ]);
@@ -66,7 +68,7 @@ final class BccConfigType extends AbstractType
                 $filled[] = $name;
             }
         }
-        if ((int) ($data['linkLevel'] ?? 0) >= max(1, \count($filled))) {
+        if (null !== ($data['linkLevel'] ?? null) && '' !== $data['linkLevel'] && (int) $data['linkLevel'] >= max(1, \count($filled))) {
             $context->buildViolation('diplome.wizard.bcc.error.link_level')->setTranslationDomain('diplome')->addViolation();
         }
     }

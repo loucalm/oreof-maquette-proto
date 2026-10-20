@@ -7,7 +7,10 @@ namespace App\Diplome;
 use App\Diplome\Spec\VersionConfig;
 use App\Entity\MccType;
 use App\Maquette\Doc\TreeNode;
+use App\Entity\Formation;
+use App\Entity\TypeDiplomeVersion;
 use App\Repository\MccTypeRepository;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * MCCC d'un nœud d'après la version du type de diplôme de sa formation :
@@ -17,19 +20,33 @@ use App\Repository\MccTypeRepository;
  * Sans version (formation sans type de diplôme), `config()` renvoie null et
  * l'appelant garde le comportement par template.
  */
-final class VersionMccc
+final class VersionMccc implements ResetInterface
 {
+    /** @var \WeakMap<Formation, array{0: ?TypeDiplomeVersion}> version résolue par formation (évite de la recalculer à chaque nœud affiché) */
+    private \WeakMap $versions;
+
     public function __construct(
         private readonly TypeDiplomeResolver $resolver,
         private readonly MccTypeRepository $types,
     ) {
+        $this->versions = new \WeakMap();
     }
 
     public function config(TreeNode $node): ?VersionConfig
     {
         $formation = $node->getFormation();
 
-        return null === $formation ? null : $this->resolver->configFor($formation);
+        if (null === $formation) {
+            return null;
+        }
+        $this->versions[$formation] ??= [$this->resolver->versionFor($formation)];
+
+        return $this->versions[$formation][0]?->config();
+    }
+
+    public function reset(): void
+    {
+        $this->versions = new \WeakMap();
     }
 
     public function natureOf(TreeNode $node, VersionConfig $config): ?string

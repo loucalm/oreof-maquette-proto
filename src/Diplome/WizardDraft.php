@@ -40,6 +40,24 @@ final class WizardDraft
         return $draft;
     }
 
+    /** Brouillon d'édition d'une version existante : informations du type incluses, déjà valides. */
+    public static function forEdit(TypeDiplomeVersion $version): self
+    {
+        $type = $version->getTypeDiplome();
+        $draft = self::fromVersion($version);
+        $draft->informations = [
+            'label' => $type->getLabel(),
+            'sigle' => $type->getSigle(),
+            'codeApogee' => $type->getCodeApogee(),
+            'description' => $type->getDescription(),
+            'accredite' => $type->isAccredite(),
+            'passageCfvu' => $type->isPassageCfvu(),
+        ];
+        $draft->informationsValid = true;
+
+        return $draft;
+    }
+
     public function config(): VersionConfig
     {
         return VersionConfig::fromArray($this->configData);

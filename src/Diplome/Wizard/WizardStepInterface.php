@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Diplome\Wizard;
 
 use App\Diplome\WizardDraft;
+use App\Entity\TypeDiplomeVersion;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
 /**
@@ -29,6 +30,19 @@ interface WizardStepInterface
 
     /** Vrai si l'étape est aussi un onglet de l'édition d'une version existante (configuration seulement). */
     public function editable(): bool;
+
+    /** Vrai si, en édition, l'étape modifie le type de diplôme (toutes ses versions) et non la configuration de la version. */
+    public function editsType(): bool;
+
+    /**
+     * Options du formulaire en édition de cette version.
+     *
+     * @return array<string, mixed>
+     */
+    public function editFormOptions(TypeDiplomeVersion $version): array;
+
+    /** Enregistre en édition les données appliquées au brouillon (config de la version, ou type). */
+    public function persist(TypeDiplomeVersion $version, WizardDraft $draft): void;
 
     /** @return class-string|null Type de formulaire, null pour une étape sans saisie. */
     public function formType(): ?string;

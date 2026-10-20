@@ -17,6 +17,12 @@ final class VersionUsage
     ) {
     }
 
+    /** @return list<Formation> toutes les formations du type, quelle que soit la version qu'elles appliquent */
+    public function formationsOfType(\App\Entity\TypeDiplome $type): array
+    {
+        return $this->formations->findBy(['typeDiplome' => $type], ['name' => 'ASC']);
+    }
+
     /** @return list<Formation> */
     public function formationsUsing(TypeDiplomeVersion $version): array
     {

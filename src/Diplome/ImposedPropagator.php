@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Diplome;
 
 use App\Diplome\Spec\VersionConfig;
+use App\Diplome\Check\StructureViolationException;
 use App\Entity\Formation;
+use App\Entity\TypeDiplomeVersion;
 use App\Maquette\Maquette;
 
 /**
@@ -20,9 +22,30 @@ final class ImposedPropagator
 {
     private readonly ImposedHostLocator $locator;
 
-    public function __construct(private readonly Maquette $maquette, ?ImposedHostLocator $locator = null)
+    public function __construct(
+        private readonly Maquette $maquette,
+        private readonly VersionUsage $usage,
+        ?ImposedHostLocator $locator = null,
+    )
     {
         $this->locator = $locator ?? new ImposedHostLocator();
+    }
+
+    /** Propage la configuration de la version à chaque formation qui l'applique ; les refus du garde sont recensés, pas contournés. */
+    public function propagateVersion(TypeDiplomeVersion $version): PropagationResult
+    {
+        $config = $version->config();
+        $touched = 0;
+        $refused = [];
+        foreach ($this->usage->formationsUsing($version) as $formation) {
+            try {
+                $touched += $this->propagate($formation, $config);
+            } catch (StructureViolationException $e) {
+                $refused[] = ['formation' => $formation, 'message' => $e->getMessage()];
+            }
+        }
+
+        return new PropagationResult($touched, $refused);
     }
 
     /**

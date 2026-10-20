@@ -44,6 +44,12 @@ final class GenericFieldRenderingTest extends WebTestCase
         self::assertCount(1, $crawler->filter('select[name=attr_ficheMatiere]'));
     }
 
+    public function testFieldWithoutAnyComputedOptionIsNotRendered(): void
+    {
+        // formation sans type de diplôme : aucune nature à proposer, le champ n'apparaît pas
+        self::assertCount(0, $this->panel('ec')->filter('[name=attr_natureElement]'));
+    }
+
     public function testEcPanelMcccAndHoursBlocks(): void
     {
         $crawler = $this->panel('ec');

@@ -35,6 +35,7 @@ final class FieldTypeExtension extends AbstractExtension
         return [
             new TwigFunction('field_widget', $this->widget(...), ['needs_environment' => true, 'is_safe' => ['html']]),
             new TwigFunction('field_view', $this->view(...), ['needs_environment' => true, 'is_safe' => ['html']]),
+            new TwigFunction('field_available', $this->available(...)),
             new TwigFunction('field_type', fn (FieldDef|array $def): FieldTypeInterface => $this->type($def)),
         ];
     }
@@ -62,6 +63,14 @@ final class FieldTypeExtension extends AbstractExtension
             'errors' => $errors,
             'variant' => $variant,
         ]);
+    }
+
+    /** Faux si les options du champ viennent d'une source calculée qui n'en donne aucune pour ce nœud : rien à choisir, on ne l'affiche pas. */
+    public function available(FieldDef|array $def, ?TreeNode $node = null): bool
+    {
+        $def = $this->normalize($def);
+
+        return empty($def['optionsSource']) || [] !== $this->options($def, $node);
     }
 
     /** Affichage en lecture seule d'une valeur. */

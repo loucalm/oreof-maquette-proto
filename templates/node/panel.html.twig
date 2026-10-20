@@ -306,6 +306,7 @@
 
 {% macro field(key, def, node) %}
     {% import _self as ui %}
+    {% if field_available(def, node) %}
     {# un champ « système » (heures, MCCC) porte son propre libellé dans son gabarit ; un séparateur n'a rien à saisir #}
     {% set ftype = field_type(def) %}
     {% if ftype.input and not ftype.system %}
@@ -313,4 +314,5 @@
         {{ ui.label(def.label|replace({'%type%': tl}), def.required ?? false, def.help ? def.help|replace({'%type%': tl}) : null) }}
     {% endif %}
     {{ field_widget(def, key, node.getAttribute(key), 'attr_' ~ key, node, [], 'node') }}
+    {% endif %}
 {% endmacro %}

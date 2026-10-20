@@ -132,6 +132,7 @@ diplome:
       level_n_3: Niveau 3
       link_level: Niveau relié aux éléments
       link_level_help: Par défaut, le dernier niveau.
+      link_default: Dernier niveau (défaut)
       error:
         first_required: Le premier niveau est obligatoire.
         gap: Les niveaux se remplissent dans l'ordre, sans niveau vide.
@@ -212,6 +213,7 @@ diplome:
     propagate: Propager aux formations
     propagate_help: Ajoute les éléments imposés manquants et réapplique leurs verrous.
     propagated: '{0} Aucun élément à propager.|{1} 1 nœud touché.|]1,Inf[ %count% nœuds touchés.'
+    propagated_partial: 'Propagation incomplète : %count% nœud(s) touché(s), %refused% formation(s) refusée(s).'
     propagate_refused: 'Propagation refusée pour « %formation% » : %message%'
   flash:
     created: 'Type « %label% » créé.'

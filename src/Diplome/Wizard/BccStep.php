@@ -33,7 +33,9 @@ final class BccStep extends AbstractWizardStep
     public function initialData(WizardDraft $draft): array
     {
         $config = $draft->config();
-        $data = ['linkLevel' => $config->bccLinkLevel];
+        // le niveau relié par défaut (le dernier) est présenté comme « dernier niveau »
+        $isDefault = [] === $config->bccLevels || $config->bccLinkLevel === \count($config->bccLevels) - 1;
+        $data = ['linkLevel' => $isDefault ? null : $config->bccLinkLevel];
         for ($i = 1; $i <= BccConfigType::MAX_LEVELS; ++$i) {
             $data['level'.$i] = $config->bccLevels[$i - 1] ?? null;
         }
@@ -53,7 +55,8 @@ final class BccStep extends AbstractWizardStep
 
         $config = $draft->configData;
         $config['bccLevels'] = $levels;
-        $config['bccLinkLevel'] = (int) $formData['linkLevel'];
+        $link = $formData['linkLevel'] ?? null;
+        $config['bccLinkLevel'] = null === $link || '' === $link ? max(0, \count($levels) - 1) : (int) $link;
         $draft->configData = $config;
     }
 

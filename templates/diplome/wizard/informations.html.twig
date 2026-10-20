@@ -1,4 +1,4 @@
-{% extends 'diplome/wizard/_layout.html.twig' %}
+{% extends wizard_layout|default('diplome/wizard/_layout.html.twig') %}
 {% block step_content %}
 {{ form_start(form, {attr: {id: 'wizard-form', class: 'space-y-4'}}) }}
     <div class="grid grid-cols-3 gap-3">
@@ -7,7 +7,7 @@
     </div>
     <div class="grid grid-cols-3 gap-3">
         {% include 'diplome/wizard/_field.html.twig' with {field: form.codeApogee} %}
-        {% include 'diplome/wizard/_field.html.twig' with {field: form.anneeUniversitaire} %}
+        {% if form.anneeUniversitaire is defined %}{% include 'diplome/wizard/_field.html.twig' with {field: form.anneeUniversitaire} %}{% endif %}
     </div>
     {% include 'diplome/wizard/_field.html.twig' with {field: form.description} %}
     <div class="flex gap-6 text-sm">

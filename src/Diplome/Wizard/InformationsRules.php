@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Diplome\Wizard;
 
 use App\Diplome\WizardDraft;
+use App\Entity\TypeDiplome;
 use App\Repository\TypeDiplomeRepository;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -30,11 +31,11 @@ final class InformationsRules
     }
 
     /** @return list<Constraint> */
-    public function constraints(string $field): array
+    public function constraints(string $field, ?TypeDiplome $except = null): array
     {
         return match ($field) {
             'label' => [new Assert\NotBlank(), new Assert\Length(max: 120)],
-            'sigle' => [new Assert\NotBlank(), new Assert\Length(max: 40), new Assert\Callback($this->validateUniqueSigle(...))],
+            'sigle' => [new Assert\NotBlank(), new Assert\Length(max: 40), new Assert\Callback(fn (?string $v, ExecutionContextInterface $c) => $this->validateUniqueSigle($v, $c, $except))],
             'codeApogee' => [new Assert\Length(max: 1)],
             'anneeUniversitaire' => [
                 new Assert\NotBlank(),
@@ -64,13 +65,16 @@ final class InformationsRules
         return $messages;
     }
 
-    private function validateUniqueSigle(?string $value, ExecutionContextInterface $context): void
+    private function validateUniqueSigle(?string $value, ExecutionContextInterface $context, ?TypeDiplome $except = null): void
     {
         if (null === $value || '' === trim($value)) {
             return;
         }
         $key = self::normalizeKey($value);
         foreach ($this->types->findAllOrdered() as $type) {
+            if (null !== $except && $type->getId() === $except->getId()) {
+                continue;
+            }
             if ($key === self::normalizeKey($type->getKey()) || $key === self::normalizeKey($type->getSigle())) {
                 $context->buildViolation('diplome.wizard.error.sigle_taken')->setTranslationDomain('diplome')->addViolation();
 
