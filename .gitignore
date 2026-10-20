@@ -21,3 +21,4 @@
 
 # sauvegardes automatiques de l’éditeur de traductions
 /translations/*.bak_*
+.superpowers/
