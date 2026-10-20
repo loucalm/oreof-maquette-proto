@@ -1,0 +1,5 @@
+<div class="block">
+    {{ form_label(field, null, {label_attr: {class: 'text-xs font-medium'}}) }}
+    {{ form_widget(field, {attr: {class: 'mt-1 w-full rounded-md border px-3 py-2 text-sm', style: 'border-color:var(--c-border)'}}) }}
+    {{ form_errors(field) }}
+</div>

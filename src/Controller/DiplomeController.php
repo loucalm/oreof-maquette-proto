@@ -53,6 +53,7 @@ final class DiplomeController extends AbstractController
                 'bcc' => null === $config || [] === $config->bccLevels ? null : implode(' › ', $config->bccLevels),
                 'formations' => $this->formations->countByTypeDiplome($type),
                 'version' => $latest?->getAnneeUniversitaire(),
+                'versionId' => $latest?->getId(),
             ];
         }
 

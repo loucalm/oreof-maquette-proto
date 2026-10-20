@@ -1,0 +1,55 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ 'diplome.wizard.title'|trans({}, 'diplome') }}{% endblock %}
+
+{% block body %}
+<div class="mb-5">
+    <h1 class="text-xl font-bold">{{ 'diplome.wizard.heading'|trans({}, 'diplome') }}</h1>
+</div>
+
+<div class="flex gap-6 items-start">
+    <nav class="w-56 shrink-0 rounded-xl border bg-white p-2" style="border-color:var(--c-border)" aria-label="{{ 'diplome.wizard.heading'|trans({}, 'diplome') }}">
+        <ol class="space-y-1 text-sm">
+        {% for s in steps %}
+            {% set current = s == step %}
+            <li>
+                {% if s == 'informations' or unlocked %}
+                    <a href="{{ path('diplome_wizard_step', {step: s}) }}" data-step="{{ s }}" {{ current ? 'aria-current="step"' }}
+                       class="block rounded-md px-3 py-2 {{ current ? 'font-semibold bg-gray-100' : 'hover:bg-gray-50' }}">
+                        {{ loop.index }}. {{ ('diplome.wizard.steps.' ~ s)|trans({}, 'diplome') }}
+                    </a>
+                {% else %}
+                    <span data-step="{{ s }}" class="block px-3 py-2 opacity-50">{{ loop.index }}. {{ ('diplome.wizard.steps.' ~ s)|trans({}, 'diplome') }}</span>
+                {% endif %}
+            </li>
+        {% endfor %}
+        </ol>
+    </nav>
+
+    <section class="flex-1 rounded-xl border bg-white p-5" style="border-color:var(--c-border)">
+        <h2 class="text-lg font-semibold mb-4">{{ ('diplome.wizard.steps.' ~ step)|trans({}, 'diplome') }}</h2>
+        {% block step_content %}{% endblock %}
+        {% block step_nav %}
+        <div class="flex justify-between pt-5">
+            <div>
+                {% if previous %}
+                    <a href="{{ path('diplome_wizard_step', {step: previous}) }}" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'diplome.wizard.previous'|trans({}, 'diplome') }}</a>
+                {% else %}
+                    <a href="{{ path('diplome_index') }}" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</a>
+                {% endif %}
+            </div>
+            <div>
+                {% block step_next %}
+                    {% if next %}
+                        {% if form is defined and form %}
+                            <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'diplome.wizard.next'|trans({}, 'diplome') }}</button>
+                        {% else %}
+                            <a href="{{ path('diplome_wizard_step', {step: next}) }}" class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'diplome.wizard.next'|trans({}, 'diplome') }}</a>
+                        {% endif %}
+                    {% endif %}
+                {% endblock %}
+            </div>
+        </div>
+        {% endblock %}
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'diplome/wizard/_layout.html.twig' %}
+{% block step_content %}
+{% set info = draft.informations %}
+<dl class="grid grid-cols-3 gap-y-2 text-sm mb-5">
+    <dt style="color:var(--c-muted)">{{ 'diplome.wizard.recap.label'|trans({}, 'diplome') }}</dt><dd class="col-span-2">{{ info.label }}</dd>
+    <dt style="color:var(--c-muted)">{{ 'diplome.wizard.recap.sigle'|trans({}, 'diplome') }}</dt><dd class="col-span-2">{{ info.sigle }}</dd>
+    <dt style="color:var(--c-muted)">{{ 'diplome.wizard.recap.annee'|trans({}, 'diplome') }}</dt><dd class="col-span-2">{{ draft.anneeUniversitaire }}</dd>
+    <dt style="color:var(--c-muted)">{{ 'diplome.wizard.recap.based_on'|trans({}, 'diplome') }}</dt><dd class="col-span-2">{{ basedOn ?? '—' }}</dd>
+    {% for slot, key in config.forms %}
+        <dt style="color:var(--c-muted)">{{ ('diplome.wizard.formulaires.slot.' ~ slot)|trans({}, 'diplome') }}</dt><dd class="col-span-2">{{ key }}</dd>
+    {% endfor %}
+</dl>
+
+{% if base %}
+    <h3 class="text-sm font-semibold mb-2">{{ 'diplome.wizard.recap.differences'|trans({'%base%': base.typeDiplome.label ~ ' ' ~ base.anneeUniversitaire}, 'diplome') }}</h3>
+    {% if diff is empty %}
+        <p class="text-sm" style="color:var(--c-muted)" data-no-diff>{{ 'diplome.wizard.recap.identical'|trans({}, 'diplome') }}</p>
+    {% else %}
+        <ul class="text-sm space-y-1" data-diff>
+        {% for path, change in diff %}
+            {% set parts = path|split('.') %}
+            {% set slot = parts[0] == 'forms' ? parts[1:]|join('.') : null %}
+            <li data-path="{{ path }}"><span class="font-medium">{{ slot ? ('diplome.wizard.formulaires.slot.' ~ slot)|trans({}, 'diplome') : path }}</span> : {{ change.from }} → {{ change.to }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+{% endif %}
+{% endblock %}
+{% block step_next %}
+    <form method="post" action="{{ path('diplome_wizard_save') }}">
+        <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'diplome.wizard.create'|trans({}, 'diplome') }}</button>
+    </form>
+{% endblock %}

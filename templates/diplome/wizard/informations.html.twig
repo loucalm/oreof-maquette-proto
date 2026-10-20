@@ -1,0 +1,26 @@
+{% extends 'diplome/wizard/_layout.html.twig' %}
+{% block step_content %}
+{{ form_start(form, {attr: {id: 'wizard-form', class: 'space-y-4'}}) }}
+    <div class="grid grid-cols-3 gap-3">
+        <div class="col-span-2">{% include 'diplome/wizard/_field.html.twig' with {field: form.label} %}</div>
+        {% include 'diplome/wizard/_field.html.twig' with {field: form.sigle} %}
+    </div>
+    <div class="grid grid-cols-3 gap-3">
+        {% include 'diplome/wizard/_field.html.twig' with {field: form.codeApogee} %}
+        {% include 'diplome/wizard/_field.html.twig' with {field: form.anneeUniversitaire} %}
+    </div>
+    {% include 'diplome/wizard/_field.html.twig' with {field: form.description} %}
+    <div class="flex gap-6 text-sm">
+        <label class="flex items-center gap-2">{{ form_widget(form.accredite) }} {{ form_label(form.accredite) }}</label>
+        <label class="flex items-center gap-2">{{ form_widget(form.passageCfvu) }} {{ form_label(form.passageCfvu) }}</label>
+    </div>
+    {{ form_rest(form) }}
+{{ form_end(form, {render_rest: false}) }}
+{% endblock %}
+{% block step_nav %}
+    {# le bouton Suivant doit appartenir au formulaire #}
+    <div class="flex justify-between pt-5">
+        <a href="{{ path('diplome_index') }}" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</a>
+        <button form="wizard-form" class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'diplome.wizard.next'|trans({}, 'diplome') }}</button>
+    </div>
+{% endblock %}

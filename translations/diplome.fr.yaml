@@ -21,11 +21,50 @@ diplome:
     archive_confirm: 'Archiver le type « %label% » ? Il ne sera plus proposé à la création de formations ; les formations existantes sont conservées.'
     delete_confirm: 'Supprimer définitivement le type « %label% » et toutes ses versions ?'
     empty: Aucun type de diplôme.
+    new: Nouveau diplôme
+    duplicate: Dupliquer
     duration_exact: '%n% ans'
     duration_range: '%min% à %max% ans'
     duration_min: 'au moins %min% ans'
     duration_max: 'au plus %max% ans'
+  wizard:
+    title: Nouveau diplôme
+    heading: Nouveau type de diplôme
+    previous: Précédent
+    next: Suivant
+    create: Créer le type de diplôme
+    coming: À venir
+    steps:
+      informations: Informations
+      depart: Type de départ
+      formulaires: Formulaires
+      structure: Structure
+      mccc: MCCC
+      bcc: BCC
+      recapitulatif: Récapitulatif
+    error:
+      sigle_taken: Ce sigle est déjà utilisé par un autre type de diplôme.
+      annee_consecutive: La seconde année doit suivre la première (ex. 2026-2027).
+    depart:
+      none: Aucun (partir de zéro)
+      help: Choisissez un type existant dont la configuration sera copiée, ou partez de zéro.
+    formulaires:
+      none: Aucun
+      help: Choisissez le formulaire utilisé pour chaque emplacement.
+      slot:
+        formation.organisation: Formation — organisation
+        formation.presentation: Formation — présentation
+        parcours.organisation: Parcours — organisation
+        parcours.presentation: Parcours — présentation
+    recap:
+      label: Libellé
+      sigle: Sigle
+      annee: Année universitaire
+      based_on: Type de départ
+      differences: 'Différences avec %base%'
+      identical: Aucune différence avec le type de départ.
   flash:
+    created: 'Type « %label% » créé.'
     archived: 'Type « %label% » archivé.'
     unarchived: 'Type « %label% » désarchivé.'
     deleted: 'Type « %label% » supprimé.'

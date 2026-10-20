@@ -2,9 +2,12 @@
 {% block title %}{{ 'diplome.index.title'|trans({}, 'diplome') }}{% endblock %}
 
 {% block body %}
-<div class="mb-5">
-    <h1 class="text-xl font-bold">{{ 'diplome.index.heading'|trans({}, 'diplome') }}</h1>
-    <p class="text-sm" style="color:var(--c-muted)">{{ 'diplome.index.description'|trans({}, 'diplome') }}</p>
+<div class="mb-5 flex items-start justify-between">
+    <div>
+        <h1 class="text-xl font-bold">{{ 'diplome.index.heading'|trans({}, 'diplome') }}</h1>
+        <p class="text-sm" style="color:var(--c-muted)">{{ 'diplome.index.description'|trans({}, 'diplome') }}</p>
+    </div>
+    <a href="{{ path('diplome_wizard_start') }}" class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'diplome.index.new'|trans({}, 'diplome') }}</a>
 </div>
 
 <div class="rounded-xl border bg-white overflow-hidden" style="border-color:var(--c-border)">
@@ -36,6 +39,9 @@
                 <td class="px-4 py-2.5" data-col="formations">{{ row.formations }}</td>
                 <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ row.version ?? '—' }}</td>
                 <td class="px-4 py-2.5 text-right whitespace-nowrap">
+                    {% if row.versionId %}
+                        <a href="{{ path('diplome_wizard_start', {depuis: row.versionId}) }}" class="text-xs hover:underline mr-2" data-action="duplicate">{{ 'diplome.index.duplicate'|trans({}, 'diplome') }}</a>
+                    {% endif %}
                     {% if t.archived %}
                         <form method="post" action="{{ path('diplome_unarchive', {id: t.id}) }}" class="inline">
                             <button class="text-xs hover:underline">{{ 'diplome.index.unarchive'|trans({}, 'diplome') }}</button>

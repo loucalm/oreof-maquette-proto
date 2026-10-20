@@ -1,0 +1,14 @@
+{% extends 'diplome/wizard/_layout.html.twig' %}
+{% block step_content %}
+<p class="text-sm mb-4" style="color:var(--c-muted)">{{ 'diplome.wizard.formulaires.help'|trans({}, 'diplome') }}</p>
+{{ form_start(form, {attr: {id: 'wizard-form', class: 'space-y-4'}}) }}
+    {% for field in form %}
+        {% if not field.rendered and field.vars.name != '_token' %}
+            {% include 'diplome/wizard/_field.html.twig' with {field: field} %}
+        {% endif %}
+    {% endfor %}
+{{ form_end(form) }}
+{% endblock %}
+{% block step_next %}
+    <button form="wizard-form" class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'diplome.wizard.next'|trans({}, 'diplome') }}</button>
+{% endblock %}
