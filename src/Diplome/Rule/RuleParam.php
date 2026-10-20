@@ -8,6 +8,8 @@ namespace App\Diplome\Rule;
  * Paramètre d'un gabarit de règles (l'assistant en génère un champ de formulaire).
  * Types : int, string, typeKey (clé de type d'ELP), nature (nature d'élément),
  * attribute (attribut de nœud, ex. ects), op (opérateur de comparaison).
+ * Un paramètre `internal` est posé par le code (ex. StructureChecker) et n'est
+ * jamais proposé à l'admin.
  */
 final readonly class RuleParam
 {
@@ -18,6 +20,7 @@ final readonly class RuleParam
         public string $label,
         public string $type,
         public bool $required = true,
+        public bool $internal = false,
     ) {
     }
 }

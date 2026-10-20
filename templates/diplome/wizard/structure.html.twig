@@ -1,0 +1,59 @@
+{% extends 'diplome/wizard/_layout.html.twig' %}
+
+{% macro tree(nodes) %}
+    <ul class="tree-list">
+        {% for n in nodes %}
+            <li data-node-type="{{ n.typeKey }}">
+                <div class="tree-row"><span class="text-sm">{{ n.displayLabel }}</span> <span class="text-xs" style="color:var(--c-muted)">({{ n.typeKey }})</span></div>
+                {% if n.children %}<div class="tree-children">{{ _self.tree(n.children) }}</div>{% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% endmacro %}
+
+{% block step_content %}
+{% import 'diplome/wizard/_structure_rows.html.twig' as rows %}
+<p class="text-sm mb-4" style="color:var(--c-muted)">{{ 'diplome.wizard.structure.help'|trans({}, 'diplome') }}</p>
+{{ form_start(form, {attr: {id: 'wizard-form', class: 'space-y-6'}}) }}
+    {{ form_errors(form) }}
+
+    <fieldset class="grid grid-cols-3 gap-3 items-start">
+        {{ rows.bound(form.duration) }}
+        <label class="flex items-center gap-2 text-sm pt-5">{{ form_widget(form.parcoursAllowed) }} {{ form_label(form.parcoursAllowed) }}</label>
+        {{ rows.field(form.natures) }}
+    </fieldset>
+
+    {% set sections = [
+        {field: form.levels, add: 'add_level', macro: 'level'},
+        {field: form.imposed, add: 'add_imposed', macro: 'imposed'},
+        {field: form.rules, add: 'add_rule', macro: 'rule'},
+    ] %}
+    {% for s in sections %}
+        {% set proto = s.macro == 'level' ? rows.level(s.field.vars.prototype) : (s.macro == 'imposed' ? rows.imposed(s.field.vars.prototype) : rows.rule(s.field.vars.prototype)) %}
+        <section data-controller="collection" data-collection-prototype-value="{{ proto|e('html_attr') }}" data-collection-index-value="{{ s.field|length }}" data-section="{{ s.macro }}">
+            <h3 class="text-sm font-semibold mb-2">{{ form_label(s.field) }}</h3>
+            {{ form_errors(s.field) }}
+            <div data-collection-target="list" class="space-y-2">
+                {% for row in s.field %}
+                    {% if s.macro == 'level' %}{{ rows.level(row) }}{% elseif s.macro == 'imposed' %}{{ rows.imposed(row) }}{% else %}{{ rows.rule(row) }}{% endif %}
+                {% endfor %}
+            </div>
+            <button type="button" data-action="collection#add" class="mt-2 rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ('diplome.wizard.structure.' ~ s.add)|trans({}, 'diplome') }}</button>
+        </section>
+    {% endfor %}
+    {{ form_rest(form) }}
+{{ form_end(form, {render_rest: false}) }}
+
+<section data-preview class="mt-8 border-t pt-5" style="border-color:var(--c-border)">
+    <h3 class="text-sm font-semibold mb-1">{{ 'diplome.wizard.structure.preview'|trans({}, 'diplome') }}</h3>
+    <p class="text-xs mb-3" style="color:var(--c-muted)">{{ 'diplome.wizard.structure.preview_help'|trans({}, 'diplome') }}</p>
+    {% if previewError %}
+        <p class="text-sm" style="color:var(--c-danger, #b91c1c)" data-preview-error>{{ previewError }}</p>
+    {% else %}
+        {{ _self.tree(preview) }}
+    {% endif %}
+</section>
+{% endblock %}
+{% block step_next %}
+    <button form="wizard-form" class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'diplome.wizard.next'|trans({}, 'diplome') }}</button>
+{% endblock %}

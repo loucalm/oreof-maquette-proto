@@ -57,6 +57,60 @@ diplome:
         formation.presentation: Formation — présentation
         parcours.organisation: Parcours — organisation
         parcours.presentation: Parcours — présentation
+    structure:
+      help: Définissez la chaîne de niveaux du diplôme (du premier niveau à la feuille), les bornes de chaque niveau, les éléments imposés et les règles de validation.
+      choose: Choisir…
+      duration: Durée (nombre de nœuds du premier niveau)
+      parcours_allowed: Parcours autorisés
+      levels: Niveaux de la chaîne
+      level_type: Type de nœud
+      level_count: Nombre par parent
+      level_ects: ECTS de chaque nœud
+      level_ects_sum: Somme des ECTS des enfants
+      level_start_at: Numéro de départ
+      natures: Natures d'élément
+      natures_help: Clés séparées par des virgules (ex. ec, stage, sae). Elles qualifient les éléments du niveau feuille.
+      imposed: Éléments imposés
+      imposed_type: Type de nœud
+      imposed_label: Libellé
+      imposed_position: Position
+      imposed_position_help: 'first, last, all, ou un numéro (1, 2…) parmi les nœuds du niveau situé juste au-dessus.'
+      imposed_position_invalid: 'Position attendue : first, last, all ou un numéro.'
+      imposed_nature: Nature
+      imposed_locked: Verrous
+      imposed_count: Nombre d'enfants (surcharge)
+      rules: Règles
+      rule_template: Gabarit de règle
+      rule_scope: Portée (niveau)
+      rule_severity: Gravité
+      rule_param_missing: 'Une règle : le paramètre « %param% » est obligatoire.'
+      bound_invalid: 'Borne invalide : indiquez un nombre positif (et, pour « entre », un maximum au moins égal au minimum).'
+      add_level: Ajouter un niveau
+      add_imposed: Ajouter un élément imposé
+      add_rule: Ajouter une règle
+      remove: Retirer
+      up: Monter
+      down: Descendre
+      preview: Aperçu de la maquette minimale
+      preview_help: Maquette obtenue avec la plus petite durée autorisée, sans parcours (lecture seule, non enregistrée).
+      bound:
+        none: aucune
+        min: au moins
+        max: au plus
+        between: entre
+        exact: exactement
+      lock:
+        add: ajout
+        delete: suppression
+        duplicate: duplication
+      severity:
+        error: bloquante
+        warning: avertissement
+      error:
+        no_level: Définissez au moins un niveau.
+        duplicate_level: Un même type de nœud ne peut pas figurer deux fois dans la chaîne.
+        imposed_level: 'Élément imposé %n% : son type doit figurer dans la chaîne, sous le premier niveau.'
+        rule_scope: 'Règle %n% : la portée doit être un niveau de la chaîne.'
     section:
       informations: Informations
       structure: Structure
@@ -101,6 +155,8 @@ diplome:
       parcours: Parcours autorisés
       level: 'Niveau %n%'
       level_count: nombre
+      imposed_position: 'position %position% parmi les nœuds « %level% »'
+      rule_scope: 'portée « %level% »'
       level_ects_sum: somme ECTS
       natures: Natures d'élément
       imposed: Éléments imposés

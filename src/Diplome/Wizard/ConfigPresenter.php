@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Diplome\Wizard;
 
+use App\Diplome\Rule\RuleTemplateRegistry;
 use App\Diplome\Spec\Bound;
+use App\Diplome\Spec\ImposedElement;
+use App\Diplome\Spec\RuleSpec;
 use App\Diplome\Spec\VersionConfig;
 use App\Diplome\WizardDraft;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -12,8 +15,10 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 /** Mise en mots d'une configuration de version (récapitulatif de l'assistant). */
 final class ConfigPresenter
 {
-    public function __construct(private readonly TranslatorInterface $translator)
-    {
+    public function __construct(
+        private readonly TranslatorInterface $translator,
+        private readonly RuleTemplateRegistry $templates,
+    ) {
     }
 
     /**
@@ -100,10 +105,41 @@ final class ConfigPresenter
             $rows[] = [$this->t('recap.level', ['%n%' => $i + 1]), $level->typeKey.([] === $details ? '' : ' ('.implode(', ', $details).')')];
         }
         $rows[] = [$this->t('recap.natures'), [] === $s->natures ? '—' : implode(', ', $s->natures)];
-        $rows[] = [$this->t('recap.imposed'), (string) \count($s->imposed)];
-        $rows[] = [$this->t('recap.rules'), (string) \count($s->rules)];
+        foreach ([] === $s->imposed ? [null] : $s->imposed as $imposed) {
+            $rows[] = [$this->t('recap.imposed'), null === $imposed ? '—' : $this->imposedLine($imposed)];
+        }
+        foreach ([] === $s->rules ? [null] : $s->rules as $rule) {
+            $rows[] = [$this->t('recap.rules'), null === $rule ? '—' : $this->ruleLine($rule)];
+        }
 
         return $rows;
+    }
+
+    private function imposedLine(ImposedElement $i): string
+    {
+        $parts = [$i->typeKey.(null === $i->nature ? '' : ' ('.$i->nature.')'), $this->t('recap.imposed_position', ['%position%' => $i->position, '%level%' => $i->parentLevel])];
+        if (null !== $i->countOverride) {
+            $parts[] = $this->t('recap.level_count').' '.$this->boundLabel($i->countOverride);
+        }
+
+        return $i->label.' — '.implode(', ', $parts);
+    }
+
+    private function ruleLine(RuleSpec $rule): string
+    {
+        $label = $rule->template;
+        $values = [];
+        if ($this->templates->has($rule->template)) {
+            $template = $this->templates->get($rule->template);
+            $label = $template->label();
+            foreach ($template->params() as $param) {
+                if (!$param->internal && isset($rule->params[$param->name])) {
+                    $values[] = $param->label.' : '.$rule->params[$param->name];
+                }
+            }
+        }
+
+        return $label.([] === $values ? '' : ' ('.implode(', ', $values).')').' — '.$this->t('recap.rule_scope', ['%level%' => $rule->scopeLevel]).', '.$this->t('structure.severity.'.$rule->severity);
     }
 
     /** @return list<array{0: string, 1: string}> */

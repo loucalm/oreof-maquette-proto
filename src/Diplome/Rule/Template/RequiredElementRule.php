@@ -26,7 +26,7 @@ final class RequiredElementRule implements RuleTemplateInterface
         return [
             new RuleParam('typeKey', "Type d'élément", 'typeKey'),
             new RuleParam('nature', "Nature d'élément", 'nature', false),
-            new RuleParam('imposed', "Identifiant de l'élément imposé", 'string', false),
+            new RuleParam('imposed', "Identifiant de l'élément imposé", 'string', false, internal: true),
         ];
     }
 
