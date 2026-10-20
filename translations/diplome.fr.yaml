@@ -111,6 +111,7 @@ diplome:
         duplicate_level: Un même type de nœud ne peut pas figurer deux fois dans la chaîne.
         imposed_level: 'Élément imposé %n% : son type doit figurer dans la chaîne, sous le premier niveau.'
         rule_scope: 'Règle %n% : la portée doit être un niveau de la chaîne.'
+        unknown_nature: 'Ligne %n% : la nature « %nature% » n''est pas déclarée dans les natures d''élément du type.'
     section:
       informations: Informations
       structure: Structure

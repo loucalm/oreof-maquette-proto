@@ -30,7 +30,7 @@
     ] %}
     {% for s in sections %}
         {% set proto = s.macro == 'level' ? rows.level(s.field.vars.prototype) : (s.macro == 'imposed' ? rows.imposed(s.field.vars.prototype) : rows.rule(s.field.vars.prototype)) %}
-        <section data-controller="collection" data-collection-prototype-value="{{ proto|e('html_attr') }}" data-collection-index-value="{{ s.field|length }}" data-section="{{ s.macro }}">
+        <section data-controller="collection" data-collection-prototype-value="{{ proto|e('html_attr') }}" data-collection-index-value="{{ s.field|keys|reduce((max, k) => k >= max ? k + 1 : max, 0) }}" data-section="{{ s.macro }}">
             <h3 class="text-sm font-semibold mb-2">{{ form_label(s.field) }}</h3>
             {{ form_errors(s.field) }}
             <div data-collection-target="list" class="space-y-2">

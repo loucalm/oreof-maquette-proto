@@ -76,7 +76,7 @@ final class DiplomeWizardStructureTest extends WebTestCase
         }
         $rules = [];
         foreach ($s['rules'] as $r) {
-            $rules[] = ['uid' => $r['uid'], 'template' => $r['template'], 'scopeLevel' => $r['scopeLevel'], 'severity' => $r['severity'], 'params_'.$r['template'] => $r['params']];
+            $rules[] = ['uid' => $r['uid'], 'template' => $r['template'], 'scopeLevel' => $r['scopeLevel'], 'severity' => $r['severity'], 'params_'.$r['template'] => array_diff_key($r['params'], ['imposed' => 1])]; // le champ interne n'est jamais envoyé
         }
 
         $payload = [
@@ -115,6 +115,10 @@ final class DiplomeWizardStructureTest extends WebTestCase
         $levels = $this->storedStructure()['levels'];
         self::assertSame('semestre', $levels[1]['typeKey']);
         self::assertSame(['min' => 2, 'max' => 2], $levels[1]['count']);
+        $expected = $this->startFrom('L')['levels'];
+        self::assertSame($expected[0], $levels[0]);
+        self::assertSame($expected[2], $levels[2]);
+        self::assertSame($expected[3], $levels[3]);
     }
 
     public function testRemovingSemesterLevelLikeM2e(): void
@@ -225,5 +229,49 @@ final class DiplomeWizardStructureTest extends WebTestCase
         self::assertStringContainsString('Stage', $crawler->text());
         self::assertStringContainsString('Part d\'un attribut pour une nature d\'élément', $crawler->text());
         self::assertStringNotContainsString('Identifiant de l\'élément imposé', $crawler->text());
+    }
+
+    public function testUndeclaredNatureIsRejected(): void
+    {
+        $payload = self::payload($this->startFrom('L'));
+        $payload['imposed'][] = ['uid' => '', 'typeKey' => 'ue', 'label' => 'X', 'position' => 'last', 'nature' => 'sae', 'countOverride' => ['mode' => 'none']];
+        $this->submit($payload);
+        self::assertResponseStatusCodeSame(422);
+
+        $payload = self::payload($this->startFrom('L'));
+        $payload['rules'][] = ['uid' => '', 'template' => 'ratio', 'scopeLevel' => 'semestre', 'severity' => 'error', 'params_ratio' => ['attribute' => 'ects', 'numeratorNature' => 'sae', 'op' => '>=', 'percent' => '40']];
+        $this->submit($payload);
+        self::assertResponseStatusCodeSame(422);
+    }
+
+    public function testButDeclaresItsImposedNature(): void
+    {
+        $structure = $this->startFrom('BUT');
+        self::assertContains('stage', $structure['natures']);
+    }
+
+    public function testSubmittingLpUnchangedKeepsEverything(): void
+    {
+        $structure = $this->startFrom('LP');
+        $this->submit(self::payload($structure));
+        self::assertResponseRedirects('/diplomes/nouveau/mccc');
+        self::assertSame($structure, $this->storedStructure());
+    }
+
+    public function testInternalRuleParamSurvivesSubmission(): void
+    {
+        $structure = $this->startFrom('L');
+        $this->submit(self::payload($structure));
+        $session = $this->client->getRequest()->getSession();
+        $draft = $session->get(WizardDraft::SESSION_KEY);
+        $config = $draft->configData;
+        $config['structure']['rules'] = [['uid' => 'r-imp', 'template' => 'required_element', 'params' => ['typeKey' => 'ec', 'imposed' => 'abc'], 'scopeLevel' => 'ue', 'severity' => 'error']];
+        $draft->configData = $config;
+        $session->set(WizardDraft::SESSION_KEY, $draft);
+        $session->save();
+
+        $this->submit(self::payload($draft->config()->structure->toArray()));
+        self::assertResponseRedirects('/diplomes/nouveau/mccc');
+        self::assertSame(['typeKey' => 'ec', 'imposed' => 'abc'], $this->storedStructure()['rules'][0]['params']);
     }
 }

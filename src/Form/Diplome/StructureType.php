@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Form\Diplome;
 
+use App\Diplome\Rule\RuleTemplateRegistry;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\CallbackTransformer;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
@@ -21,6 +22,10 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
  */
 final class StructureType extends AbstractType
 {
+    public function __construct(private readonly RuleTemplateRegistry $templates)
+    {
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $collection = ['allow_add' => true, 'allow_delete' => true, 'by_reference' => false, 'delete_empty' => false, 'prototype' => true, 'required' => false];
@@ -52,9 +57,10 @@ final class StructureType extends AbstractType
         ]);
     }
 
-    /** Cohérence entre les parties : les niveaux cités doivent exister dans la chaîne. */
+    /** Cohérence entre les parties : les niveaux cités doivent exister dans la chaîne, les natures citées être déclarées. */
     private function validateConsistency(array $data, ExecutionContextInterface $context): void
     {
+        $natures = $data['natures'] ?? [];
         $chain = array_values(array_filter(array_map(static fn ($l) => $l['typeKey'] ?? null, $data['levels'] ?? [])));
         $add = static fn (string $id, array $params = []) => $context->buildViolation($id, $params)->setTranslationDomain('diplome')->addViolation();
 
@@ -67,11 +73,25 @@ final class StructureType extends AbstractType
             if (false === $at || 0 === $at) {
                 $add('diplome.wizard.structure.error.imposed_level', $row);
             }
+            $nature = (string) ($imposed['nature'] ?? '');
+            if ('' !== $nature && !\in_array($nature, $natures, true)) {
+                $add('diplome.wizard.structure.error.unknown_nature', $row + ['%nature%' => $nature]);
+            }
         }
         foreach ($data['rules'] ?? [] as $i => $rule) {
             $row = ['%n%' => $i + 1];
             if (!\in_array($rule['scopeLevel'] ?? null, $chain, true)) {
                 $add('diplome.wizard.structure.error.rule_scope', $row);
+            }
+            $key = (string) ($rule['template'] ?? '');
+            if (!$this->templates->has($key)) {
+                continue;
+            }
+            foreach ($this->templates->get($key)->params() as $param) {
+                $value = (string) ($rule[RuleSpecType::PARAMS_PREFIX.$key][$param->name] ?? '');
+                if ('nature' === $param->type && '' !== $value && !\in_array($value, $natures, true)) {
+                    $add('diplome.wizard.structure.error.unknown_nature', $row + ['%nature%' => $value]);
+                }
             }
         }
     }

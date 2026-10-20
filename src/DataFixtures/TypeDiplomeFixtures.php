@@ -157,7 +157,7 @@ final class TypeDiplomeFixtures extends Fixture implements DependentFixtureInter
                 ],
                 'parcoursAllowed' => true,
                 'duration' => ['min' => 3, 'max' => 3],
-                'natures' => ['ressource', 'sae'],
+                'natures' => ['ressource', 'sae', 'stage'],
                 'imposed' => [[
                     'uid' => 'but-stage',
                     'typeKey' => 'ec',

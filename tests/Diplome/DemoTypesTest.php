@@ -40,7 +40,7 @@ final class DemoTypesTest extends DatabaseTestCase
         self::assertSame(['Bloc', 'Objectif', 'Attendu'], $m2e->bccLevels);
 
         $but = $this->config('BUT');
-        self::assertSame(['ressource', 'sae'], $but->structure->natures);
+        self::assertSame(['ressource', 'sae', 'stage'], $but->structure->natures);
         self::assertCount(1, $but->structure->rules);
         self::assertSame('ratio', $but->structure->rules[0]->template);
         self::assertSame('stage', $but->structure->imposed[0]->nature);
