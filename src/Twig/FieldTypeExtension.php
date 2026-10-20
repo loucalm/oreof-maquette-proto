@@ -39,12 +39,15 @@ final class FieldTypeExtension extends AbstractExtension
 
     /**
      * Widget de saisie. `$inputName` est le nom HTML complet de l'input (`attr_ects`, `p[ects]`) ;
-     * `$variant` (déduite si absente : « node » avec un nœud, « param » sans) sélectionne l'habillage de l'écran appelant.
+     * `$variant` (« node » | « param », obligatoire et explicite) sélectionne l'habillage de l'écran appelant.
      *
      * @param list<string> $errors
      */
     public function widget(Environment $twig, FieldDef|array $def, string $key, mixed $value, string $inputName, ?TreeNode $node = null, array $errors = [], ?string $variant = null): string
     {
+        if (!\in_array($variant, ['node', 'param'], true)) {
+            throw new \InvalidArgumentException('field_widget() : variante « node » ou « param » requise.');
+        }
         $def = $this->normalize($def);
 
         return $twig->render($this->type($def)->widgetTemplate(), [
@@ -55,7 +58,7 @@ final class FieldTypeExtension extends AbstractExtension
             'options' => $this->options($def),
             'node' => $node,
             'errors' => $errors,
-            'variant' => $variant ?? (null !== $node ? 'node' : 'param'),
+            'variant' => $variant,
         ]);
     }
 

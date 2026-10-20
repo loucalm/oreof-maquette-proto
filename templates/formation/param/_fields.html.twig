@@ -48,7 +48,7 @@
     {% import _self as fld %}
     {{ fld.label(def.label, def.required, def.help) }}
     {% if hint %}<div class="fld-help" style="color:#b45309">{{ ux_icon('ph:git-branch', {class: 'icon'}) }} {{ hint }}</div>{% endif %}
-    {{ field_widget(def, key, data[key] ?? '', 'p[' ~ key ~ ']') }}
+    {{ field_widget(def, key, data[key] ?? '', 'p[' ~ key ~ ']', null, [], 'param') }}
     {# erreurs du champ (règles de l'onglet, bornes) ; mises à jour en direct par autosave_controller #}
     <div class="fld-error" data-field-errors="{{ key }}">{% for m in errors|default([]) %}<div>⚠ {{ m }}</div>{% endfor %}</div>
 {% endmacro %}

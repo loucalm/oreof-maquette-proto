@@ -141,11 +141,11 @@ final class AttributeCatalog
      * [key, label, tab, type, options, required, help, referentielKey, placeholder, allowExtra]
      */
     public const SEED = [
-        ['ects', "ECTS de l'%type%", 'props', 'number', [], true, "ECTS associés à l'%type%.", null, null, false],
+        ['ects', 'ECTS (%type%)', 'props', 'number', [], true, 'ECTS associés à cet élément (%type%).', null, null, false],
         ['choiceCount', 'Nombre à choisir', 'props', 'number', [], true, 'Combien de ces éléments doivent être choisis parmi les options de ce bloc (ex. 1 parmi 3).', null, null, false],
         ['ueType', "Type d'UE", 'props', 'choice', [], false, null, 'types_ue', "Choisir un type d'UE", false],
         ['ecType', "Type d'EC", 'props', 'choice', [], false, null, 'types_ec', "Choisir un type d'EC", false],
-        ['nature', "Nature de l'élément", 'props', 'radio', [], true, "Cocher une case ici n'assemble aucune alternative — utilisez « Transformer en bloc de choix » en haut de ce panneau pour regrouper cet ELP avec d'autres.", 'nature_elp', null, false],
+        ['nature', "Nature de l'élément", 'props', 'radio', [], true, null, 'nature_elp', null, false],
         ['competencies', 'Compétence(s) associée(s)', 'props', 'competencies', [], false, 'Sélection de compétences du référentiel (BCC).', null, null, false],
         ['ficheMatiere', 'Fiche matière obligatoire', 'props', 'choice', [], true, 'Fiche matière rattachée à l’EC.', 'fiches_matiere', 'Choisir dans la liste ou « Créer une nouvelle »…', true],
         ['hours', 'Volume horaire', 'volume_horaire', 'hours', [], true, null, null, null, false],

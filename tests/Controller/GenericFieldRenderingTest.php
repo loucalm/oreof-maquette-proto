@@ -24,9 +24,9 @@ final class GenericFieldRenderingTest extends WebTestCase
         $this->resetDatabase();
     }
 
-    private function panel(string $typeKey): \Symfony\Component\DomCrawler\Crawler
+    private function panel(string $typeKey, string $template = 'licence_lmd'): \Symfony\Component\DomCrawler\Crawler
     {
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $formation = FormationFactory::create(static::getContainer())->fromTemplate($template);
         $this->em->clear();
         $fresh = $this->em->find($formation::class, $formation->getId());
         $doc = static::getContainer()->get(Maquette::class)->open($fresh);
@@ -57,7 +57,10 @@ final class GenericFieldRenderingTest extends WebTestCase
         $crawler = $this->panel('ue');
 
         self::assertSame("Choisir un type d'UE", trim($crawler->filter('select[name=attr_ueType] option[value=""]')->text()));
-        self::assertStringContainsString("ECTS de l'UE", $crawler->filter('#node-form')->text());
+        self::assertStringContainsString('ECTS (UE)', $crawler->filter('#node-form')->text());
+        self::assertStringContainsString('(UE)', $crawler->filter('#node-form')->text());
+        self::assertStringContainsString('Transformer en bloc de choix', $crawler->text());
+        self::assertStringContainsString('n\'assemble aucune alternative', $crawler->text());
     }
 
     public function testFormationParamPageRendersTextareaWithPrefixedName(): void
@@ -86,5 +89,12 @@ final class GenericFieldRenderingTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertStringContainsString('Oui', $crawler->filter('[data-node="param:organisation"]')->text());
+    }
+
+    public function testEctsLabelUsesNonElidingTypeWording(): void
+    {
+        $crawler = $this->panel('parcours', 'master_parcours');
+        self::assertStringContainsString('ECTS (Parcours)', $crawler->filter('#node-form')->text());
+        self::assertStringNotContainsString('Transformer en bloc de choix', $crawler->text());
     }
 }

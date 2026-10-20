@@ -66,6 +66,9 @@ node:
     or_free_value: 'Ou saisir une autre valeur :'
     other_placeholder: (facultatif)
     quick_add_placeholder: Nouvelle valeur…
+    nature_choice_note: >-
+      Cocher une case de nature n'assemble aucune alternative : utilisez « Transformer en bloc de choix »
+      pour regrouper cet ELP avec d'autres.
     no_competencies: >-
       Aucune compétence dans le référentiel (BCC). Ajoutez-en dans « Référentiel de compétences (BCC) ».
     filter_competencies_placeholder: Filtrer les compétences…

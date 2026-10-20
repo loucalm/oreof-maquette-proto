@@ -124,6 +124,7 @@
                     {{ ux_icon('ph:shuffle', {class: 'icon'}) }} {{ 'node.panel.convert_choice_button'|trans({}, 'node') }}
                 </button>
             </form>
+            <p class="w-full text-right text-xs" style="color:#9333ea">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'node.panel.nature_choice_note'|trans({}, 'node') }}</p>
             {% endif %}
             {% if caps.mutualisable ?? false %}
             <form method="post" action="{{ node_url(node, 'node_mutualize') }}" data-turbo-frame="_top">
@@ -311,5 +312,5 @@
         {% set tl = node.type.label %}
         {{ ui.label(def.label|replace({'%type%': tl}), def.required ?? false, def.help ? def.help|replace({'%type%': tl}) : null) }}
     {% endif %}
-    {{ field_widget(def, key, node.getAttribute(key), 'attr_' ~ key, node) }}
+    {{ field_widget(def, key, node.getAttribute(key), 'attr_' ~ key, node, [], 'node') }}
 {% endmacro %}
