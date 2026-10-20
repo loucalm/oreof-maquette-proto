@@ -108,6 +108,25 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
         }
     }
 
+    /** Ajoute un parcours (périodes `debut`–`fin`, rattaché à son parent de ramification) avec ses années de départ. */
+    private function parcours(MaquetteDoc $doc, string $label, int $debut, int $fin, TreeNode $parent, int $ects): TreeNode
+    {
+        $parcours = $doc->addNode(null, 'parcours', $label);
+        $parcours->setAttribute('periodeDebut', $debut)->setAttribute('periodeFin', $fin)->setAttribute('ects', $ects);
+        $parcours->setParcoursParent($parent);
+        for ($y = $debut; $y <= $fin; ++$y) {
+            $annee = $doc->addNode($parcours->nid, 'annee');
+            for ($s = 0; $s < 2; ++$s) {
+                $semestre = $doc->addNode($annee->nid, 'semestre');
+                for ($u = 0; $u < 3; ++$u) {
+                    $doc->addNode($semestre->nid, 'ue');
+                }
+            }
+        }
+
+        return $parcours;
+    }
+
     /** Semestres, dans l'ordre, d'une portée (la racine en mono-parcours, un parcours sinon). */
     private function semestres(MaquetteDoc $doc, ?TreeNode $parcours = null): array
     {
@@ -232,31 +251,27 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
         $this->maquette->save($formation, $doc, 'Démo');
     }
 
-    // ─── 2e démo : avec parcours (chacun dans les bornes du diplôme : 3 années complètes) ───
+    // ─── 2e démo : avec parcours et ramification (portail › parcours › sous-parcours) ───
+    // La durée du diplôme se mesure par cursus : périodes du parcours + celles de ses parents (portail compris).
 
     private function licenceMulti(): void
     {
         [$formation, $doc] = $this->start('Licence Sciences & Technologies (démo avec parcours)', $this->licenceType, 3, true);
 
-        $info = $doc->parcoursNodes()[0];
-        $this->fill($info, 'Parcours Informatique', ['periodeDebut' => 1, 'periodeFin' => 3, 'ects' => 180]);
-
-        // second parcours : mêmes bornes, structure de départ identique
-        $maths = $doc->addNode(null, 'parcours', 'Parcours Mathématiques');
-        $maths->setAttribute('periodeDebut', 1)->setAttribute('periodeFin', 3);
-        for ($y = 0; $y < 3; ++$y) {
-            $annee = $doc->addNode($maths->nid, 'annee');
-            for ($s = 0; $s < 2; ++$s) {
-                $semestre = $doc->addNode($annee->nid, 'semestre');
-                for ($u = 0; $u < 3; ++$u) {
-                    $doc->addNode($semestre->nid, 'ue');
-                }
-            }
+        // le parcours créé avec la structure de départ devient le portail commun : une seule année
+        $portail = $doc->parcoursNodes()[0];
+        foreach (\array_slice($portail->getChildren(), 1) as $annee) {
+            $doc->removeNode($annee, true);
         }
+        $this->fill($portail, 'Portail commun (L1)', ['periodeDebut' => 1, 'periodeFin' => 1, 'ects' => 60]);
+
+        $info = $this->parcours($doc, 'Parcours Informatique', 2, 2, $portail, 120);
+        $this->parcours($doc, 'Parcours Mathématiques', 2, 3, $portail, 120);
+        $this->parcours($doc, 'Informatique — Données & IA', 3, 3, $info, 60);
+        $this->parcours($doc, 'Informatique — Génie logiciel', 3, 3, $info, 60);
 
         $semestres = $this->semestres($doc, $info);
-        $this->fill($semestres[2]->getChildren()[0], 'UE Programmation avancée', ['ects' => 10]);
-        $this->fill($semestres[4]->getChildren()[0], 'UE Programmation avancée', ['ects' => 10]);
+        $this->fill($semestres[0]->getChildren()[0], 'UE Programmation avancée', ['ects' => 10]);
         $this->defaultEcts($doc);
         $this->bloc($doc, $info, 'Concevoir un système logiciel', [
             ['C1', 'Analyser un besoin et spécifier une solution.'],

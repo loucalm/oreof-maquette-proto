@@ -27,6 +27,48 @@ final class StructureContextBuilder
         return [] === $parcours ? [null] : $parcours;
     }
 
+    /**
+     * Portées de la durée : un cursus par parcours FEUILLE de la ramification (un parcours qui a des
+     * sous-parcours n'est pas mesuré seul) ; sans ramification, comme rootScopes().
+     *
+     * @return list<?TreeNode>
+     */
+    public function cursusScopes(MaquetteDoc $doc): array
+    {
+        $parcours = $doc->parcoursNodes();
+        if ([] === $parcours) {
+            return [null];
+        }
+        $parents = [];
+        foreach ($parcours as $p) {
+            $parent = $p->getParcoursParent();
+            if (null !== $parent) {
+                $parents[$parent->nid] = true;
+            }
+        }
+
+        return array_values(array_filter($parcours, static fn (TreeNode $p): bool => !isset($parents[$p->nid])));
+    }
+
+    /**
+     * Contexte d'un cursus : ses périodes propres plus celles de ses parcours parents (le portail compris).
+     *
+     * @return array<string, list<array<string, mixed>>>
+     */
+    public function cursusContextFor(MaquetteDoc $doc, ?TreeNode $leaf): array
+    {
+        $context = $this->contextFor($doc, $leaf);
+        $seen = [($leaf?->nid ?? '') => true];
+        for ($p = $leaf?->getParcoursParent(); null !== $p && !isset($seen[$p->nid]); $p = $p->getParcoursParent()) {
+            $seen[$p->nid] = true;
+            $own = $this->contextFor($doc, $p);
+            $context['children'] = [...$context['children'], ...$own['children']];
+            $context['leaves'] = [...$context['leaves'], ...$own['leaves']];
+        }
+
+        return $context;
+    }
+
     /** @return array<string, list<array<string, mixed>>> */
     public function contextFor(MaquetteDoc $doc, ?TreeNode $scope): array
     {

@@ -39,7 +39,7 @@ final class BccFormatTest extends WebTestCase
     private function nationalFormation(string $typeKey = 'BUT', int $duration = 3, bool $avecParcours = false): Formation
     {
         $formation = $this->factory()->fromType($typeKey, $duration, avecParcours: $avecParcours);
-        $niveau = static fn (int $n) => ['ordre' => $n, 'annee' => 'BUT'.$n, 'libelle' => "Niveau $n", 'acs' => [['code' => sprintf('AC%d1.01', $n), 'libelle' => "Apprentissage $n"]]];
+        $niveau = static fn (int $n) => ['ordre' => $n, 'annee' => 'Niveau '.$n.' (an)', 'libelle' => "Niveau $n", 'acs' => [['code' => sprintf('AC%d1.01', $n), 'libelle' => "Apprentissage $n"]]];
         $maquette = static::getContainer()->get(Maquette::class);
         $doc = $maquette->open($formation);
         $doc->setFormationParam('bccReferentiel', ['competences' => [['numero' => 1, 'nomCourt' => 'Réaliser', 'libelle' => 'Réaliser une application', 'niveaux' => [$niveau(1), $niveau(2), $niveau(3)]]]]);
@@ -89,7 +89,7 @@ final class BccFormatTest extends WebTestCase
 
         self::assertNotEmpty($groups);
         foreach ($groups as $g) {
-            self::assertStringEndsWith('BUT1', $g['bloc']);
+            self::assertStringEndsWith('Niveau 1 (an)', $g['bloc']);
         }
         self::assertSame('AC11.01', $groups[0]['items'][0]['ref']);
         self::assertSame('AC11.01', $groups[0]['items'][0]['id']);

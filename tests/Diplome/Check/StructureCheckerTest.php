@@ -180,4 +180,44 @@ final class StructureCheckerTest extends DatabaseTestCase
         self::assertContains('level:ue:count:max@'.$last->nid, $keys);
         self::assertNotContains('level:ue:count:min@'.$last->nid, $keys);
     }
+
+    /** Portail d'une année + sous-parcours de $years années chacun (ramification), dans une Licence (durée 3 à 4). */
+    private function ramified(int $years, int $subs = 2): MaquetteDoc
+    {
+        $doc = $this->build('L', 3, true);
+        $portail = $doc->parcoursNodes()[0];
+        foreach (\array_slice($portail->getChildren(), 1) as $annee) {
+            $doc->removeNode($annee, true);
+        }
+        $portail->setAttribute('periodeDebut', 1)->setAttribute('periodeFin', 1);
+        for ($i = 0; $i < $subs; ++$i) {
+            $sub = $doc->addNode(null, 'parcours', 'Sous-parcours '.($i + 1));
+            $sub->setAttribute('periodeDebut', 2)->setAttribute('periodeFin', 1 + $years)->setParcoursParent($portail);
+            for ($y = 0; $y < $years; ++$y) {
+                $doc->addNode($sub->nid, 'annee');
+            }
+        }
+
+        return $doc;
+    }
+
+    public function testDurationIsMeasuredPerCursusInARamification(): void
+    {
+        // portail 1 an + sous-parcours de 2 ans : 3 ans de cursus, aucun écart de durée
+        $doc = $this->ramified(2);
+
+        self::assertSame([], $this->withKey($this->checker->check($doc, $this->config), 'duration:min'));
+        self::assertSame([], $this->withKey($this->checker->check($doc, $this->config), 'duration:max'));
+    }
+
+    public function testRamificationTooShortGetsDurationMinOnTheLeafParcours(): void
+    {
+        // portail 1 an + sous-parcours d'1 an : 2 ans de cursus, sous le minimum de 3
+        $doc = $this->ramified(1, 1);
+
+        $found = $this->withKey($this->checker->check($doc, $this->config), 'duration:min');
+        self::assertCount(1, $found);
+        self::assertSame($doc->parcoursNodes()[1]->nid, $found[0]->scopeNid);
+        self::assertSame(2, $found[0]->actual);
+    }
 }

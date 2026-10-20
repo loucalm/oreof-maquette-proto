@@ -13,10 +13,12 @@
             </div>
             <div class="flex items-center gap-2">
                 <span class="fake-btn" style="color:#15803d;border-color:#bbf7d0" aria-disabled="true" title="{{ 'common.coming_soon'|trans({}, 'common') }}">{{ ux_icon('ph:check-bold', {class: 'icon'}) }} {{ 'formation.index.check_lheo'|trans({}, 'formation') }}</span>
+                {% if is_admin() %}
                 <button type="button" data-action="modal#open"
                         class="rounded-lg border px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50" style="border-color:#bbf7d0">
                     {{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.index.add_button'|trans({}, 'formation') }}
                 </button>
+                {% endif %}
             </div>
         </div>
         <div class="mt-3 text-sm text-gray-400">
@@ -179,7 +181,8 @@
         </div>
     </div>
 
-    {# ─── modale : ajouter une formation ─── #}
+    {# ─── modale : ajouter une formation (admin) ─── #}
+    {% if is_admin() %}
     <dialog data-modal-target="dialog" class="w-[min(920px,92vw)] rounded-2xl border p-0 backdrop:bg-black/40" style="border-color:var(--c-border)">
         <form method="post" action="{{ path('formation_create') }}">
             <div class="flex items-start justify-between border-b px-7 py-5" style="border-color:var(--c-border)">
@@ -281,5 +284,6 @@
             </div>
         </form>
     </dialog>
+    {% endif %}
 </div>
 {% endblock %}

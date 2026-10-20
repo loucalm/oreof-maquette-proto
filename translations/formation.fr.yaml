@@ -75,6 +75,7 @@ formation:
       no_version: 'Le type de diplôme « %type% » n’a aucune version applicable à l’année %year%.'
       duration: 'Durée de %duration% hors des bornes du type de diplôme « %type% » (%bounds%).'
       no_parcours: 'Le type de diplôme « %type% » n’autorise pas les parcours.'
+      invalid: 'La structure du type de diplôme « %type% » ne peut pas être générée : %message% Aucune formation n’a été créée.'
     bounds:
       free: 1 ou plus
       exact: exactement %n%

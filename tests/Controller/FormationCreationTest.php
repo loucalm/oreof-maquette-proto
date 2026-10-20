@@ -215,4 +215,50 @@ final class FormationCreationTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextNotContains('body', 'Templates de structure');
     }
+
+    public function testResponsableCannotCreateAFormation(): void
+    {
+        $this->client->request('POST', '/role/responsable');
+        $this->create('L');
+
+        self::assertResponseRedirects('/');
+        self::assertNull($this->created());
+        $crawler = $this->client->followRedirect();
+        self::assertCount(0, $crawler->filter('select[name=typeDiplome]'));
+        self::assertSelectorTextNotContains('body', 'Ajouter une formation');
+    }
+
+    public function testAFailedGenerationLeavesNoFormationAndNoServerError(): void
+    {
+        // version dont l'élément imposé est mal placé : la génération échoue APRÈS l'écriture de la formation
+        $version = $this->em->getRepository(TypeDiplome::class)->findOneByKey('L')->latestVersion();
+        $config = $version->config()->toArray();
+        $config['structure']['imposed'] = [['uid' => 'mal-place', 'typeKey' => 'ue', 'label' => 'X', 'parentLevel' => 'annee', 'position' => 'last', 'locked' => []]];
+        $version->setConfig(\App\Diplome\Spec\VersionConfig::fromArray($config));
+        $this->em->flush();
+
+        $this->create('L');
+
+        self::assertResponseRedirects('/');
+        // la transaction annulée ferme le gestionnaire : on repart d'un neuf
+        $this->em = static::getContainer()->get('doctrine')->resetManager();
+        self::assertNull($this->created());
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('body', 'Aucune formation n’a été créée');
+    }
+
+    public function testRamifiedTypedFormationHasNoDurationGapAndShowsItsGraph(): void
+    {
+        $formation = $this->em->getRepository(Formation::class)->findOneBy(['name' => 'Licence Sciences & Technologies (démo avec parcours)']);
+        $doc = static::getContainer()->get(Maquette::class)->open($formation);
+        self::assertNotEmpty(array_filter($doc->parcoursNodes(), static fn ($p) => null !== $p->getParcoursParent()));
+        $violations = static::getContainer()->get(\App\Maquette\Completion::class)->structureViolations($doc);
+        self::assertSame([], array_filter($violations, static fn ($v) => str_starts_with($v->ruleKey, 'duration')));
+
+        $crawler = $this->client->request('GET', '/formations/'.$formation->getId().'/parcours');
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('body', 'Portail commun (L1)');
+        self::assertSelectorTextContains('body', 'Informatique — Génie logiciel');
+        self::assertGreaterThan(0, $crawler->filter('svg path')->count());
+    }
 }

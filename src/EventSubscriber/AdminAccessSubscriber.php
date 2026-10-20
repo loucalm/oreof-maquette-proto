@@ -25,6 +25,7 @@ final class AdminAccessSubscriber
     private const ADMIN_ROUTES = [
         'node_params',
         'node_params_form',
+        'formation_create',
         'formation_structure_save',
         'formation_reset',
     ];

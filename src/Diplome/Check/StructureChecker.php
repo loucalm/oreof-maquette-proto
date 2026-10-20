@@ -41,11 +41,13 @@ final class StructureChecker
 
         /** @var array<string, array<string, list<array<string, mixed>>>> $cache */
         $cache = [];
-        $run = function (string $prefix, string $template, array $params, array $scopes, bool $forceWarning = false, ?callable $paramsFor = null) use ($doc, &$cache, &$violations): void {
+        $run = function (string $prefix, string $template, array $params, array $scopes, bool $forceWarning = false, ?callable $paramsFor = null, bool $cursus = false) use ($doc, &$cache, &$violations): void {
             foreach ($scopes as $scope) {
                 $scopeParams = null !== $paramsFor ? $paramsFor($scope, $params) : $params;
                 foreach ($this->templates->get($template)->compile($scopeParams) as $compiled) {
-                    $ctx = $cache[$scope?->nid ?? ''] ??= $this->contexts->contextFor($doc, $scope);
+                    $ctx = $cursus
+                        ? ($cache['cursus:'.($scope?->nid ?? '')] ??= $this->contexts->cursusContextFor($doc, $scope))
+                        : ($cache[$scope?->nid ?? ''] ??= $this->contexts->contextFor($doc, $scope));
                     $violation = $this->evaluate($prefix, $compiled, $scope, $ctx, $forceWarning);
                     if (null !== $violation) {
                         $violations[] = $violation;
@@ -56,7 +58,7 @@ final class StructureChecker
 
         $firstLevel = $levels[0]->typeKey ?? null;
         if (null !== $firstLevel && null !== $structure->duration) {
-            $run('duration', 'child_count', ['childType' => $firstLevel] + self::bounds($structure->duration), $rootScopes);
+            $run('duration', 'child_count', ['childType' => $firstLevel] + self::bounds($structure->duration), $this->contexts->cursusScopes($doc), false, null, true);
         }
 
         // surcharges de borne : nid de l'hôte → typeKey enfant → borne

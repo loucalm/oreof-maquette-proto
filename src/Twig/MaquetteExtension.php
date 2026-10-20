@@ -414,10 +414,28 @@ final class MaquetteExtension extends AbstractExtension
         return array_map(static fn (string $v) => $byKey[$v] ?? $v, array_values(array_map('strval', $values)));
     }
 
+    /** Rang (1-based, sur l'axe temporel de la formation) de la période qui contient le nœud, ou null. */
+    private function periodRank(TreeNode $node): ?int
+    {
+        $periodKey = $node->getFormation()?->getChildTypeKey('parcours');
+        for ($c = $node; null !== $c; $c = $c->getParent()) {
+            if (null !== $periodKey && $periodKey === $c->typeKey) {
+                $parent = $c->getParent();
+                $siblings = $parent?->getChildren() ?? $this->maquette->open($node->getFormation())->pedagogicalRoots();
+                $before = \count(array_filter($siblings, static fn (TreeNode $s) => $s->typeKey === $periodKey && $s->getPosition() < $c->getPosition()));
+
+                // sous un parcours qui se sépare plus loin (ramification), la 1re période du parcours n'est pas la 1re de la formation
+                return $before + 1 + (null !== $parent && $parent->isParcours() ? $parent->getPeriodeDebut() - 1 : 0);
+            }
+        }
+
+        return null;
+    }
+
     /**
      * Référentiel national : les apprentissages critiques (AC) du référentiel national, groupés
-     * par compétence, limités au niveau de l'année du nœud (1re année → BUT1…) quand
-     * le nœud est sous une année ; tous les niveaux sinon.
+     * par compétence, limités au niveau dont l'ordre est le rang de la période du nœud
+     * (1re période → niveau d'ordre 1…), jamais par libellé, quand le nœud est sous une période ; tous les niveaux sinon.
      *
      * @param list<array<string, mixed>> $referentiel
      *
@@ -425,19 +443,12 @@ final class MaquetteExtension extends AbstractExtension
      */
     private function apprentissagesNationaux(array $referentiel, TreeNode $node): array
     {
-        $annee = null;
-        for ($c = $node; null !== $c; $c = $c->getParent()) {
-            if ('annee' === $c->typeKey) {
-                $siblings = $c->getParent()?->getChildren() ?? $this->maquette->open($node->getFormation())->pedagogicalRoots();
-                $annee = 'BUT'.(1 + \count(array_filter($siblings, static fn (TreeNode $s) => 'annee' === $s->typeKey && $s->getPosition() < $c->getPosition())));
-                break;
-            }
-        }
+        $rank = $this->periodRank($node);
 
         $out = [];
         foreach ($referentiel as $competence) {
             foreach ($competence['niveaux'] ?? [] as $niveau) {
-                if (null !== $annee && ($niveau['annee'] ?? null) !== $annee) {
+                if (null !== $rank && (int) ($niveau['ordre'] ?? 0) !== $rank) {
                     continue;
                 }
                 $out[] = [

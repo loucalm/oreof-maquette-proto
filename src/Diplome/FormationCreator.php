@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Diplome;
 
+use App\Diplome\Check\StructureViolationException;
 use App\Diplome\Spec\Bound;
 use App\Entity\Formation;
 use App\Entity\TypeDiplome;
@@ -66,22 +67,29 @@ final class FormationCreator
             throw new \DomainException($this->t('formation.creation.error.no_parcours', ['%type%' => $type->getLabel()]));
         }
 
-        $formation = (new Formation($name))
-            ->setTypeDiplome($type)
-            ->setDomaine($domaine)
-            ->setComposante($composante)
-            ->setPhase($phase)
-            ->setAnneeUniversitaire($year)
-            ->setCalendarSpan($duration);
+        try {
+            // tout ou rien : un échec de génération ou du garde de structure ne laisse aucune formation
+            return $this->em->wrapInTransaction(function () use ($name, $type, $year, $duration, $avecParcours, $phase, $domaine, $composante, $version): Formation {
+                $formation = (new Formation($name))
+                    ->setTypeDiplome($type)
+                    ->setDomaine($domaine)
+                    ->setComposante($composante)
+                    ->setPhase($phase)
+                    ->setAnneeUniversitaire($year)
+                    ->setCalendarSpan($duration);
 
-        $this->em->persist($formation);
-        $this->em->flush();
+                $this->em->persist($formation);
+                $this->em->flush();
 
-        $doc = $this->maquette->open($formation);
-        $this->instantiator->instantiate($doc, $version, $duration, $avecParcours);
-        $this->maquette->save($formation, $doc, 'Création');
+                $doc = $this->maquette->open($formation);
+                $this->instantiator->instantiate($doc, $version, $duration, $avecParcours);
+                $this->maquette->save($formation, $doc, 'Création');
 
-        return $formation;
+                return $formation;
+            });
+        } catch (\InvalidArgumentException|StructureViolationException $e) {
+            throw new \DomainException($this->t('formation.creation.error.invalid', ['%type%' => $type->getLabel(), '%message%' => $e->getMessage()]), 0, $e);
+        }
     }
 
     /** Durée acceptée par la version, en clair (« de 3 à 4 », « exactement 2 »…), pour l'aide du formulaire et les refus. */
