@@ -45,7 +45,7 @@ final class DiplomeEditTest extends WebTestCase
         $this->em->flush();
         $maquette = static::getContainer()->get(Maquette::class);
         $doc = $maquette->open($formation);
-        (new StructureInstantiator())->instantiate($doc, $type->latestVersion(), $duration, false);
+        static::getContainer()->get(StructureInstantiator::class)->instantiate($doc, $type->latestVersion(), $duration, false);
         $maquette->save($formation, $doc, 'Création');
 
         return $formation;

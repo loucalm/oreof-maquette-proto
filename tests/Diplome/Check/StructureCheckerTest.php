@@ -35,7 +35,7 @@ final class StructureCheckerTest extends DatabaseTestCase
         $this->em->flush();
 
         $doc = static::getContainer()->get(Maquette::class)->open($formation);
-        (new StructureInstantiator())->instantiate($doc, $type->latestVersion(), $duration, $parcours);
+        static::getContainer()->get(StructureInstantiator::class)->instantiate($doc, $type->latestVersion(), $duration, $parcours);
         $this->config = $type->latestVersion()->config();
 
         return $doc;
@@ -127,7 +127,20 @@ final class StructureCheckerTest extends DatabaseTestCase
         $found = $this->withKey($this->checker->check($doc, $this->config), 'imposed:lp-projet-stage');
         self::assertCount(1, $found);
         self::assertTrue($found[0]->blocking);
-        self::assertSame($last->nid, $found[0]->scopeNid);
+        self::assertSame('', $found[0]->scopeNid, 'portée de la présence : la racine en mono-parcours');
+    }
+
+    public function testDefaultNatureIsTheSameForChecksAndMccc(): void
+    {
+        $doc = $this->build('BUT', 3);
+        $ue = $this->ofType($doc, 'ue')[0];
+        $ec = $doc->addNode($ue->nid, 'ec', 'Sans nature');
+
+        $context = static::getContainer()->get(\App\Diplome\Check\StructureContextBuilder::class)->contextFor($doc, $ue, $this->config);
+        $row = array_values(array_filter($context['children'], static fn (array $r) => $r['nid'] === $ec->getId()))[0];
+
+        self::assertSame($this->config->structure->natures[0], $row['nature']);
+        self::assertSame($row['nature'], static::getContainer()->get(\App\Diplome\VersionMccc::class)->natureOf($ec, $this->config));
     }
 
     public function testBlocChoiceWithUnevenChildrenFailsRule(): void

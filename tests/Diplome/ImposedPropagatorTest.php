@@ -24,7 +24,7 @@ final class ImposedPropagatorTest extends DatabaseTestCase
         $this->em->flush();
         $maquette = static::getContainer()->get(Maquette::class);
         $doc = $maquette->open($formation);
-        (new StructureInstantiator())->instantiate($doc, $type->latestVersion(), 1, false);
+        static::getContainer()->get(StructureInstantiator::class)->instantiate($doc, $type->latestVersion(), 1, false);
         $maquette->save($formation, $doc, 'Création');
 
         return [$formation, $type->latestVersion()->config()->toArray()];

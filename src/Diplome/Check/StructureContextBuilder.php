@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Diplome\Check;
 
+use App\Diplome\Spec\VersionConfig;
 use App\Maquette\Doc\MaquetteDoc;
 use App\Maquette\Doc\TreeNode;
 
@@ -14,7 +15,8 @@ use App\Maquette\Doc\TreeNode;
  * avec ses propres ECTS) et `leaves` (feuilles descendantes ; dans un bloc à
  * choix un seul enfant, le premier, est compté).
  * Colonnes : nid, typeKey, hostTypeKey (type réel de l'élément ; pour un bloc à
- * choix, celui de ses enfants), nature (attribut `natureElement`), ects, plus
+ * choix, celui de ses enfants), nature (cf. VersionConfig::natureOf quand la
+ * configuration est fournie, sinon l'attribut `natureElement` brut), ects, plus
  * les attributs du nœud.
  */
 final class StructureContextBuilder
@@ -55,13 +57,11 @@ final class StructureContextBuilder
      *
      * @return array<string, list<array<string, mixed>>>
      */
-    public function cursusContextFor(MaquetteDoc $doc, ?TreeNode $leaf): array
+    public function cursusContextFor(MaquetteDoc $doc, ?TreeNode $leaf, ?VersionConfig $config = null): array
     {
-        $context = $this->contextFor($doc, $leaf);
-        $seen = [($leaf?->nid ?? '') => true];
-        for ($p = $leaf?->getParcoursParent(); null !== $p && !isset($seen[$p->nid]); $p = $p->getParcoursParent()) {
-            $seen[$p->nid] = true;
-            $own = $this->contextFor($doc, $p);
+        $context = ['children' => [], 'leaves' => []];
+        foreach ($this->cursusChain($leaf) as $scope) {
+            $own = $this->contextFor($doc, $scope, $config);
             $context['children'] = [...$context['children'], ...$own['children']];
             $context['leaves'] = [...$context['leaves'], ...$own['leaves']];
         }
@@ -69,19 +69,74 @@ final class StructureContextBuilder
         return $context;
     }
 
+    /**
+     * Tous les nœuds structurels d'un cursus, dans l'ordre de l'arbre : ceux des parcours parents
+     * (portail d'abord), puis ceux du parcours feuille ; toute la maquette en mono-parcours.
+     *
+     * @return list<TreeNode>
+     */
+    public function cursusNodes(MaquetteDoc $doc, ?TreeNode $leaf): array
+    {
+        $nodes = [];
+        foreach (array_reverse($this->cursusChain($leaf)) as $scope) {
+            foreach ($this->structural($scope?->getChildren() ?? $doc->pedagogicalRoots()) as $child) {
+                $this->collectAll($child, $nodes);
+            }
+        }
+
+        return $nodes;
+    }
+
+    /**
+     * Contexte de présence d'un cursus : `children` = tous ses nœuds structurels (pas seulement les
+     * enfants directs), pour savoir si un élément y figure quelle que soit sa position.
+     *
+     * @return array<string, list<array<string, mixed>>>
+     */
+    public function cursusPresenceContextFor(MaquetteDoc $doc, ?TreeNode $leaf, ?VersionConfig $config = null): array
+    {
+        return [
+            'children' => array_map(fn (TreeNode $n): array => $this->row($n, $config), $this->cursusNodes($doc, $leaf)),
+            'leaves' => [],
+        ];
+    }
+
+    /** @return list<?TreeNode> le parcours feuille puis ses parcours parents ([null] en mono-parcours) */
+    private function cursusChain(?TreeNode $leaf): array
+    {
+        $chain = [$leaf];
+        $seen = [($leaf?->nid ?? '') => true];
+        for ($p = $leaf?->getParcoursParent(); null !== $p && !isset($seen[$p->nid]); $p = $p->getParcoursParent()) {
+            $seen[$p->nid] = true;
+            $chain[] = $p;
+        }
+
+        return $chain;
+    }
+
     /** @return array<string, list<array<string, mixed>>> */
-    public function contextFor(MaquetteDoc $doc, ?TreeNode $scope): array
+    public function contextFor(MaquetteDoc $doc, ?TreeNode $scope, ?VersionConfig $config = null): array
     {
         $children = $this->structural($scope?->getChildren() ?? $doc->roots);
         $leaves = [];
         foreach ($children as $child) {
             $this->collectLeaves($child, $leaves);
         }
+        $row = fn (TreeNode $n): array => $this->row($n, $config);
 
         return [
-            'children' => array_map($this->row(...), $children),
-            'leaves' => array_map($this->row(...), $leaves),
+            'children' => array_map($row, $children),
+            'leaves' => array_map($row, $leaves),
         ];
+    }
+
+    /** @param list<TreeNode> $out */
+    private function collectAll(TreeNode $node, array &$out): void
+    {
+        $out[] = $node;
+        foreach ($this->structural($node->getChildren()) as $child) {
+            $this->collectAll($child, $out);
+        }
     }
 
     /**
@@ -124,13 +179,13 @@ final class StructureContextBuilder
     }
 
     /** @return array<string, mixed> */
-    private function row(TreeNode $node): array
+    private function row(TreeNode $node, ?VersionConfig $config): array
     {
         return array_merge($node->getAttributes(), [
             'nid' => $node->getId(),
             'typeKey' => $node->typeKey,
             'hostTypeKey' => $this->hostTypeKey($node),
-            'nature' => $node->getAttribute('natureElement'),
+            'nature' => null !== $config ? $config->natureOf($node) : $node->getAttribute('natureElement'),
             'ects' => $node->getAttribute('ects'),
         ]);
     }

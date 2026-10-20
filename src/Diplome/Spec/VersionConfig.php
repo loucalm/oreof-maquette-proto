@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Diplome\Spec;
 
+use App\Maquette\Doc\TreeNode;
+
 /**
  * Configuration complète d'une version de type de diplôme (colonne JSON de
  * `TypeDiplomeVersion`), lue de façon typée.
@@ -34,6 +36,21 @@ final readonly class VersionConfig
         public array $bccLevels,
         public int $bccLinkLevel,
     ) {
+    }
+
+    /**
+     * Nature d'élément d'un nœud : son attribut `natureElement`, à défaut la première nature déclarée
+     * par la structure (à défaut, la première nature du MCCC). Règle unique, partagée par le contexte
+     * de vérification et le MCCC.
+     */
+    public function natureOf(TreeNode $node): ?string
+    {
+        $nature = $node->getAttribute('natureElement');
+        if (\is_string($nature) && '' !== $nature) {
+            return $nature;
+        }
+
+        return $this->structure->natures[0] ?? array_key_first($this->mccc);
     }
 
     /** @param array<string, mixed> $a */

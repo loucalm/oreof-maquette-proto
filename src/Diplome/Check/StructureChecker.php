@@ -41,13 +41,13 @@ final class StructureChecker
 
         /** @var array<string, array<string, list<array<string, mixed>>>> $cache */
         $cache = [];
-        $run = function (string $prefix, string $template, array $params, array $scopes, bool $forceWarning = false, ?callable $paramsFor = null, bool $cursus = false) use ($doc, &$cache, &$violations): void {
+        $run = function (string $prefix, string $template, array $params, array $scopes, bool $forceWarning = false, ?callable $paramsFor = null, bool $cursus = false) use ($doc, $config, &$cache, &$violations): void {
             foreach ($scopes as $scope) {
                 $scopeParams = null !== $paramsFor ? $paramsFor($scope, $params) : $params;
                 foreach ($this->templates->get($template)->compile($scopeParams) as $compiled) {
                     $ctx = $cursus
-                        ? ($cache['cursus:'.($scope?->nid ?? '')] ??= $this->contexts->cursusContextFor($doc, $scope))
-                        : ($cache[$scope?->nid ?? ''] ??= $this->contexts->contextFor($doc, $scope));
+                        ? ($cache['cursus:'.($scope?->nid ?? '')] ??= $this->contexts->cursusContextFor($doc, $scope, $config))
+                        : ($cache[$scope?->nid ?? ''] ??= $this->contexts->contextFor($doc, $scope, $config));
                     $violation = $this->evaluate($prefix, $compiled, $scope, $ctx, $forceWarning);
                     if (null !== $violation) {
                         $violations[] = $violation;
@@ -87,13 +87,14 @@ final class StructureChecker
             }
         }
 
+        // présence dans la portée (cursus ; racine en mono), quelle que soit la position : celle-ci ne sert qu'au placement
         foreach ($structure->imposed as $imposed) {
             $params = ['typeKey' => $imposed->typeKey, 'nature' => $imposed->nature ?? '', 'imposed' => $imposed->uid];
-            foreach ($this->locator->hostsIn($doc, $imposed) as $host) {
+            foreach ($this->locator->scopes($doc) as $scope) {
                 foreach ($this->templates->get('required_element')->compile($params) as $compiled) {
-                    $ctx = $cache[$host->nid] ??= $this->contexts->contextFor($doc, $host);
+                    $ctx = $cache['presence:'.($scope?->nid ?? '')] ??= $this->contexts->cursusPresenceContextFor($doc, $scope, $config);
                     $label = sprintf('Élément imposé manquant : %s', '' !== $imposed->label ? $imposed->label : $imposed->typeKey);
-                    $violation = $this->evaluate('imposed:'.$imposed->uid, new CompiledRule($compiled->node, true, $label), $host, $ctx, false);
+                    $violation = $this->evaluate('imposed:'.$imposed->uid, new CompiledRule($compiled->node, true, $label), $scope, $ctx, false);
                     if (null !== $violation) {
                         $violations[] = $violation;
                     }

@@ -23,7 +23,7 @@ final class StructureInstantiatorTest extends DatabaseTestCase
         $this->em->flush();
 
         $doc = static::getContainer()->get(Maquette::class)->open($formation);
-        (new StructureInstantiator())->instantiate($doc, $type->latestVersion(), $duration, $parcours);
+        static::getContainer()->get(StructureInstantiator::class)->instantiate($doc, $type->latestVersion(), $duration, $parcours);
 
         return $doc;
     }

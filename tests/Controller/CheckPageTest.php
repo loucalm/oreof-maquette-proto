@@ -28,7 +28,7 @@ final class CheckPageTest extends WebTestCase
 
         $maquette = static::getContainer()->get(Maquette::class);
         $doc = $maquette->open($formation);
-        (new StructureInstantiator())->instantiate($doc, $type->latestVersion(), 3, false);
+        static::getContainer()->get(StructureInstantiator::class)->instantiate($doc, $type->latestVersion(), 3, false);
         $semestre = null;
         foreach ($doc->allNodes() as $n) {
             if ('semestre' === $n->typeKey) {

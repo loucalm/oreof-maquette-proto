@@ -24,7 +24,7 @@ final class VersionMcccTest extends DatabaseTestCase
         $this->em->persist($formation);
         $this->em->flush();
         $doc = static::getContainer()->get(Maquette::class)->open($formation);
-        (new StructureInstantiator())->instantiate($doc, $type->latestVersion(), 3, false);
+        static::getContainer()->get(StructureInstantiator::class)->instantiate($doc, $type->latestVersion(), 3, false);
         $ue = current(array_filter($doc->allNodes(), static fn (TreeNode $n) => 'ue' === $n->typeKey));
         $ec = $doc->addNode($ue->nid, 'ec', 'EC');
         $ec->setAttribute('mccc', ['type' => 'CCI', 'evaluations' => [['type' => 'ecrit', 'weight' => 100]]]);

@@ -43,7 +43,7 @@ final class StructureGuardTest extends WebTestCase
 
         $maquette = static::getContainer()->get(Maquette::class);
         $doc = $maquette->open($formation);
-        (new StructureInstantiator())->instantiate($doc, $type->latestVersion(), 3, false);
+        static::getContainer()->get(StructureInstantiator::class)->instantiate($doc, $type->latestVersion(), 3, false);
         $semestres = array_values(array_filter($doc->allNodes(), static fn ($n) => 'semestre' === $n->typeKey));
         while (\count($semestres[0]->getChildren()) < $ueInS1) {
             $doc->addNode($semestres[0]->nid, 'ue');

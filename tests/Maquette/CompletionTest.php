@@ -117,7 +117,7 @@ final class CompletionTest extends DatabaseTestCase
         $this->em->persist($formation);
         $this->em->flush();
         $doc = $this->maquette->open($formation);
-        (new \App\Diplome\StructureInstantiator())->instantiate($doc, $type->latestVersion(), 3, false);
+        static::getContainer()->get(\App\Diplome\StructureInstantiator::class)->instantiate($doc, $type->latestVersion(), 3, false);
 
         $before = $this->completion->docStats($doc);
         $beforeCount = \count($this->completion->structureViolations($doc));

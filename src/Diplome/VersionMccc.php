@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Diplome;
 
 use App\Diplome\Spec\VersionConfig;
-use App\Entity\MccType;
-use App\Maquette\Doc\TreeNode;
 use App\Entity\Formation;
+use App\Entity\MccType;
 use App\Entity\TypeDiplomeVersion;
+use App\Maquette\Doc\TreeNode;
 use App\Repository\MccTypeRepository;
 use Symfony\Contracts\Service\ResetInterface;
 
@@ -51,12 +51,7 @@ final class VersionMccc implements ResetInterface
 
     public function natureOf(TreeNode $node, VersionConfig $config): ?string
     {
-        $nature = $node->getAttribute('natureElement');
-        if (\is_string($nature) && '' !== $nature) {
-            return $nature;
-        }
-
-        return $config->structure->natures[0] ?? array_key_first($config->mccc);
+        return $config->natureOf($node);
     }
 
     /** @return list<MccType> types proposés pour ce nœud, ou null sans version */

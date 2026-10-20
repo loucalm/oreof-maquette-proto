@@ -30,8 +30,10 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
     /** Compteur de nid, réinitialisé par formation. */
     private int $seq = 0;
 
-    public function __construct(private readonly Maquette $maquette)
-    {
+    public function __construct(
+        private readonly Maquette $maquette,
+        private readonly StructureInstantiator $instantiator,
+    ) {
     }
 
     private TypeDiplome $licenceType;
@@ -72,7 +74,7 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
         $this->manager->flush();
 
         $doc = $this->maquette->open($formation);
-        (new StructureInstantiator())->instantiate($doc, $type->latestVersion() ?? throw new \LogicException('Type de démo sans version.'), $duration, $avecParcours);
+        $this->instantiator->instantiate($doc, $type->latestVersion() ?? throw new \LogicException('Type de démo sans version.'), $duration, $avecParcours);
 
         return [$formation, $doc];
     }

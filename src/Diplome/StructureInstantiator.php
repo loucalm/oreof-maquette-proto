@@ -20,11 +20,8 @@ use App\Maquette\Doc\TreeNode;
  */
 final class StructureInstantiator
 {
-    private readonly ImposedHostLocator $locator;
-
-    public function __construct(?ImposedHostLocator $locator = null)
+    public function __construct(private readonly ImposedHostLocator $locator)
     {
-        $this->locator = $locator ?? new ImposedHostLocator();
     }
 
     public function instantiate(MaquetteDoc $doc, TypeDiplomeVersion $version, int $duration, bool $avecParcours): void
@@ -74,10 +71,7 @@ final class StructureInstantiator
             foreach ($structure->imposed as $imposed) {
                 $hosts = $byLevel[$imposed->parentLevel] ?? [];
                 foreach ($this->locator->select($hosts, $imposed->position) as $host) {
-                    $node = $doc->addNode($host->nid, $imposed->typeKey, $imposed->label);
-                    $node->locked = $imposed->locked;
-                    $node->setAttribute('_imposed', $imposed->uid);
-                    $node->setAttribute('natureElement', $imposed->nature);
+                    ImposedHostLocator::addTo($doc, $host, $imposed);
                 }
             }
         }

@@ -4,31 +4,28 @@ declare(strict_types=1);
 
 namespace App\Diplome;
 
-use App\Diplome\Spec\VersionConfig;
 use App\Diplome\Check\StructureViolationException;
+use App\Diplome\Spec\VersionConfig;
 use App\Entity\Formation;
 use App\Entity\TypeDiplomeVersion;
 use App\Maquette\Maquette;
 
 /**
  * Applique à la maquette d'une formation les éléments imposés d'une configuration :
- * ajoute ceux qui manquent sous leurs hôtes (cf. ImposedHostLocator), marqués `_imposed`
- * et verrouillés, et réapplique les verrous de ceux déjà en place.
+ * dans chaque portée (cf. ImposedHostLocator), ajoute ceux qui en sont absents sous l'hôte
+ * désigné par leur position, marqués `_imposed` et verrouillés, et réapplique les verrous
+ * de ceux déjà présents (où qu'ils soient dans la portée : jamais de doublon).
  *
  * L'enregistrement passe par `Maquette::save`, donc par le garde de structure :
  * un refus (StructureViolationException) est remonté tel quel, jamais contourné.
  */
 final class ImposedPropagator
 {
-    private readonly ImposedHostLocator $locator;
-
     public function __construct(
         private readonly Maquette $maquette,
         private readonly VersionUsage $usage,
-        ?ImposedHostLocator $locator = null,
-    )
-    {
-        $this->locator = $locator ?? new ImposedHostLocator();
+        private readonly ImposedHostLocator $locator,
+    ) {
     }
 
     /** Propage la configuration de la version à chaque formation qui l'applique ; les refus du garde sont recensés, pas contournés. */
@@ -51,7 +48,7 @@ final class ImposedPropagator
     /**
      * @return int nombre de nœuds touchés (créés, ou dont les verrous ont été remis)
      *
-     * @throws \App\Diplome\Check\StructureViolationException
+     * @throws StructureViolationException
      */
     public function propagate(Formation $formation, VersionConfig $config): int
     {
@@ -59,23 +56,21 @@ final class ImposedPropagator
         $touched = 0;
 
         foreach ($config->structure->imposed as $imposed) {
-            foreach ($this->locator->hostsIn($doc, $imposed) as $host) {
-                $existing = null;
-                foreach ($host->getChildren() as $child) {
-                    if ($child->getAttribute('_imposed') === $imposed->uid) {
-                        $existing = $child;
-                        break;
+            // portée par portée, sur l'arbre déjà complété : un portail partagé reçoit l'élément une seule fois
+            foreach ($this->locator->scopes($doc) as $scope) {
+                $present = $this->locator->presentIn($doc, $scope, $imposed);
+                if ([] === $present) {
+                    foreach ($this->locator->placementHostsIn($doc, $scope, $imposed) as $host) {
+                        ImposedHostLocator::addTo($doc, $host, $imposed);
+                        ++$touched;
                     }
+                    continue;
                 }
-                if (null === $existing) {
-                    $node = $doc->addNode($host->nid, $imposed->typeKey, $imposed->label);
-                    $node->locked = $imposed->locked;
-                    $node->setAttribute('_imposed', $imposed->uid);
-                    $node->setAttribute('natureElement', $imposed->nature);
-                    ++$touched;
-                } elseif ($existing->locked !== $imposed->locked) {
-                    $existing->locked = $imposed->locked;
-                    ++$touched;
+                foreach ($present as $existing) {
+                    if ($existing->locked !== $imposed->locked) {
+                        $existing->locked = $imposed->locked;
+                        ++$touched;
+                    }
                 }
             }
         }

@@ -4,17 +4,27 @@ declare(strict_types=1);
 
 namespace App\Diplome;
 
+use App\Diplome\Check\StructureContextBuilder;
 use App\Diplome\Spec\ImposedElement;
 use App\Maquette\Doc\MaquetteDoc;
 use App\Maquette\Doc\TreeNode;
 
 /**
- * Nœuds qui doivent accueillir un élément imposé : parmi tous les nœuds de son
- * `parentLevel`, dans l'ordre de l'arbre (et par parcours en multi-parcours),
- * ceux désignés par `position` (`first`, `last`, `all` ou un indice « n » 1-based).
+ * Où se trouve, et où placer, un élément imposé.
+ *
+ * Portée : chaque cursus (le parcours, ou en ramification chaque parcours feuille avec ses parcours
+ * parents) ; toute la maquette en mono-parcours. L'élément est « présent » s'il existe dans sa portée
+ * un nœud marqué `_imposed` = son uid, où qu'il soit : sa `position` ne sert qu'à le placer.
+ *
+ * Placement : parmi tous les nœuds de son `parentLevel` dans la portée, dans l'ordre de l'arbre, ceux
+ * désignés par `position` (`first`, `last`, `all` ou un indice « n » 1-based).
  */
 final class ImposedHostLocator
 {
+    public function __construct(private readonly StructureContextBuilder $contexts)
+    {
+    }
+
     /**
      * @param list<TreeNode> $candidates nœuds du niveau parent, dans l'ordre de l'arbre
      *
@@ -31,33 +41,62 @@ final class ImposedHostLocator
         };
     }
 
-    /** @return list<TreeNode> hôtes de l'élément imposé dans une maquette existante */
-    public function hostsIn(MaquetteDoc $doc, ImposedElement $imposed): array
+    /** @return list<?TreeNode> portées des éléments imposés (null = racine, en mono-parcours) */
+    public function scopes(MaquetteDoc $doc): array
     {
-        $parcours = $doc->parcoursNodes();
-        $scopes = [] === $parcours ? [$doc->pedagogicalRoots()] : array_map(static fn (TreeNode $p): array => $p->getChildren(), $parcours);
+        return $this->contexts->cursusScopes($doc);
+    }
 
-        $hosts = [];
-        foreach ($scopes as $roots) {
-            $candidates = [];
-            $this->collect($roots, $imposed->parentLevel, $candidates);
-            array_push($hosts, ...$this->select($candidates, $imposed->position));
-        }
+    /** @return list<TreeNode> nœuds de l'élément imposé présents dans la portée */
+    public function presentIn(MaquetteDoc $doc, ?TreeNode $scope, ImposedElement $imposed): array
+    {
+        return array_values(array_filter(
+            $this->contexts->cursusNodes($doc, $scope),
+            static fn (TreeNode $n): bool => $n->getAttribute('_imposed') === $imposed->uid,
+        ));
+    }
 
-        return $hosts;
+    /** @return list<TreeNode> hôtes désignés par la position, où ajouter l'élément quand il est absent de la portée */
+    public function placementHostsIn(MaquetteDoc $doc, ?TreeNode $scope, ImposedElement $imposed): array
+    {
+        $candidates = array_values(array_filter(
+            $this->contexts->cursusNodes($doc, $scope),
+            static fn (TreeNode $n): bool => $n->typeKey === $imposed->parentLevel,
+        ));
+
+        return $this->select($candidates, $imposed->position);
     }
 
     /**
-     * @param list<TreeNode> $nodes
-     * @param list<TreeNode> $out
+     * Hôtes effectifs de l'élément (pour la surcharge de borne) : dans chaque portée, le parent du nœud
+     * imposé présent ; à défaut, l'hôte désigné par la position.
+     *
+     * @return list<TreeNode>
      */
-    private function collect(array $nodes, string $typeKey, array &$out): void
+    public function hostsIn(MaquetteDoc $doc, ImposedElement $imposed): array
     {
-        foreach ($nodes as $node) {
-            if ($node->typeKey === $typeKey) {
-                $out[] = $node;
+        $hosts = [];
+        foreach ($this->scopes($doc) as $scope) {
+            $present = $this->presentIn($doc, $scope, $imposed);
+            $scopeHosts = [] !== $present
+                ? array_filter(array_map(static fn (TreeNode $n): ?TreeNode => $n->getParent(), $present))
+                : $this->placementHostsIn($doc, $scope, $imposed);
+            foreach ($scopeHosts as $host) {
+                $hosts[$host->nid] = $host; // un portail partagé par plusieurs cursus n'est compté qu'une fois
             }
-            $this->collect($node->getChildren(), $typeKey, $out);
         }
+
+        return array_values($hosts);
+    }
+
+    /** Crée le nœud imposé sous son hôte : libellé, verrous, marque `_imposed` et nature d'élément. */
+    public static function addTo(MaquetteDoc $doc, TreeNode $host, ImposedElement $imposed): TreeNode
+    {
+        $node = $doc->addNode($host->nid, $imposed->typeKey, $imposed->label);
+        $node->locked = $imposed->locked;
+        $node->setAttribute('_imposed', $imposed->uid);
+        $node->setAttribute('natureElement', $imposed->nature);
+
+        return $node;
     }
 }
