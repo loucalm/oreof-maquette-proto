@@ -58,10 +58,10 @@ class DerogationRequestRepository extends ServiceEntityRepository
      * Règles de couverture (cf. DerogationRequest::covers) : clé en `:max` → couverte si
      * actual <= valeur accordée ; en `:min` → actual >= valeur accordée ; `imposed:*` → couverte
      * sans comparaison ; toute autre clé → actual == valeur accordée, ou sans comparaison si
-     * aucune valeur n'est accordée. Sans `$actual`, seule l'existence d'une dérogation accordée
-     * pour la règle et le nœud est vérifiée.
+     * aucune valeur n'est accordée. `$actual` null (valeur inconnue) ne couvre jamais une
+     * règle `:min`/`:max` : on échoue fermé.
      */
-    public function grantedCovering(Formation $formation, string $ruleKey, string $scopeNid, float|int|null $actual = null): ?DerogationRequest
+    public function grantedCovering(Formation $formation, string $ruleKey, string $scopeNid, float|int|null $actual): ?DerogationRequest
     {
         /** @var list<DerogationRequest> $candidates */
         $candidates = $this->createQueryBuilder('d')
@@ -78,7 +78,7 @@ class DerogationRequestRepository extends ServiceEntityRepository
             ->getResult();
 
         foreach ($candidates as $candidate) {
-            if (null === $actual || $candidate->covers($actual)) {
+            if ($candidate->covers($actual)) {
                 return $candidate;
             }
         }

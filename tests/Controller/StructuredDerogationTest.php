@@ -84,7 +84,7 @@ final class StructuredDerogationTest extends WebTestCase
         $this->em->persist($rejected);
         $this->em->flush();
 
-        self::assertNull($this->repo()->grantedCovering($f, 'level:ue:count:max', 'S1'));
+        self::assertNull($this->repo()->grantedCovering($f, 'level:ue:count:max', 'S1', 7));
     }
 
     public function testGrantedDerogationCoversUpToAllowedValueOnly(): void
@@ -97,6 +97,23 @@ final class StructuredDerogationTest extends WebTestCase
         self::assertNull($this->repo()->grantedCovering($f, 'level:ue:count:max', 'S1', 8));
         self::assertNull($this->repo()->grantedCovering($f, 'level:ue:count:max', 'S2', 7), 'autre nœud');
         self::assertNull($this->repo()->grantedCovering($f, 'level:ue:ects:max', 'S1', 7), 'autre règle');
+    }
+
+    public function testUnknownActualFailsClosed(): void
+    {
+        $f = $this->formation();
+        $this->granted($f, 'level:ue:count:max', 'S1', 7.0);
+
+        self::assertNull($this->repo()->grantedCovering($f, 'level:ue:count:max', 'S1', null));
+    }
+
+    public function testMonoParcoursRootScopeIsEmptyString(): void
+    {
+        $f = $this->formation();
+        $this->granted($f, 'duration:max', '', 4.0);
+
+        self::assertNotNull($this->repo()->grantedCovering($f, 'duration:max', '', 4));
+        self::assertNull($this->repo()->grantedCovering($f, 'duration:max', '', 5));
     }
 
     public function testMinimumImposedAndSinglePartRules(): void
@@ -115,7 +132,7 @@ final class StructuredDerogationTest extends WebTestCase
         self::assertNotNull($this->repo()->grantedCovering($f, 'rule:r2', 'S1', 42));
     }
 
-    public function testAdminResolutionIsTimestampedAndShownInFormationHistory(): void
+    public function testAdminResolutionIsTimestampedAndShownInAdminList(): void
     {
         $f = $this->formation();
         $d = (new DerogationRequest($f, 'Une UE de plus'))->withDeviation('level:ue:count:max', 'S1', 7.0);
@@ -132,6 +149,10 @@ final class StructuredDerogationTest extends WebTestCase
         $this->client->request('GET', '/administration/derogations');
         self::assertSelectorTextContains('body', 'level:ue:count:max');
         self::assertSelectorTextContains('body', 'valeur accordée : 7');
+
+        $history = $this->repo()->findByFormation($f);
+        self::assertCount(1, $history);
+        self::assertSame(7.0, $history[0]->getAllowedValue());
     }
 
     public function testOnlyAdminCanResolve(): void
