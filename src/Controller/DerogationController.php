@@ -43,6 +43,15 @@ final class DerogationController extends AbstractController
         $node = null !== $nodeId ? $this->maquette->open($formation)->node($nodeId) : null;
 
         $derogation = new DerogationRequest($formation, $message, $nodeId, $node?->getDisplayLabel());
+        $ruleKey = trim((string) $request->request->get('ruleKey'));
+        if ('' !== $ruleKey) {
+            $allowed = trim((string) $request->request->get('allowedValue'));
+            $derogation->withDeviation(
+                $ruleKey,
+                trim((string) $request->request->get('scopeNid')),
+                is_numeric($allowed) ? (float) $allowed : null,
+            );
+        }
         $em->persist($derogation);
         $em->flush();
 

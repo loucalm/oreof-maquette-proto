@@ -319,6 +319,7 @@
                             <span class="text-xs" style="color:var(--c-muted)">{{ d.createdAt|date('d/m/Y') }}</span>
                         </div>
                         <p class="mt-1.5 whitespace-pre-line">{{ d.message }}</p>
+                        {% include 'derogation/_deviation.html.twig' %}
                         {% if not d.isPending and d.adminNote %}
                             <p class="mt-1.5 rounded-md p-2 text-xs" style="background:#f8f9fb">{{ d.adminNote }}</p>
                         {% endif %}

@@ -38,6 +38,18 @@ class DerogationRequest
     #[ORM\Column(length: 200, nullable: true)]
     private ?string $nodeLabel = null;
 
+    /** Règle structurelle dérogée (clé stable d'une StructureViolation) ; null pour une demande libre. */
+    #[ORM\Column(length: 120, nullable: true)]
+    private ?string $ruleKey = null;
+
+    /** Nœud portant l'écart ('' = racine d'une maquette mono-parcours) ; null pour une demande libre. */
+    #[ORM\Column(length: 32, nullable: true)]
+    private ?string $scopeNid = null;
+
+    /** Valeur jusqu'à laquelle l'écart est toléré ; null = sans comparaison. */
+    #[ORM\Column(type: Types::FLOAT, nullable: true)]
+    private ?float $allowedValue = null;
+
     #[ORM\Column(type: Types::TEXT)]
     private string $message;
 
@@ -60,6 +72,63 @@ class DerogationRequest
         $this->nodeId = $nodeId;
         $this->nodeLabel = $nodeLabel;
         $this->createdAt = new \DateTimeImmutable();
+    }
+
+    /** Rattache l'écart structuré demandé (règle, nœud, valeur accordée). */
+    public function withDeviation(string $ruleKey, string $scopeNid, ?float $allowedValue): self
+    {
+        $this->ruleKey = $ruleKey;
+        $this->scopeNid = $scopeNid;
+        $this->allowedValue = $allowedValue;
+
+        return $this;
+    }
+
+    public function getRuleKey(): ?string
+    {
+        return $this->ruleKey;
+    }
+
+    public function getScopeNid(): ?string
+    {
+        return $this->scopeNid;
+    }
+
+    public function getAllowedValue(): ?float
+    {
+        return $this->allowedValue;
+    }
+
+    public function isApproved(): bool
+    {
+        return DerogationStatus::Approved === $this->status;
+    }
+
+    /**
+     * La dérogation tolère-t-elle cette valeur constatée ?
+     * `:max` → actual <= accordé ; `:min` → actual >= accordé ; `imposed:*` → sans comparaison ;
+     * toute autre clé → actual == accordé (ou sans comparaison si aucune valeur n'est accordée).
+     */
+    public function covers(float|int|null $actual): bool
+    {
+        if (null === $this->ruleKey) {
+            return false;
+        }
+        if (str_starts_with($this->ruleKey, 'imposed:')) {
+            return true;
+        }
+        if (null === $this->allowedValue) {
+            return !str_ends_with($this->ruleKey, ':max') && !str_ends_with($this->ruleKey, ':min');
+        }
+        if (null === $actual) {
+            return false;
+        }
+
+        return match (true) {
+            str_ends_with($this->ruleKey, ':max') => $actual <= $this->allowedValue,
+            str_ends_with($this->ruleKey, ':min') => $actual >= $this->allowedValue,
+            default => abs($actual - $this->allowedValue) < 1e-9,
+        };
     }
 
     public function getId(): ?int

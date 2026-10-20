@@ -1,0 +1,9 @@
+{% if d.ruleKey %}
+    {% set bound = d.ruleKey ends with ':max' ? 'derogation.deviation.bound_max' : (d.ruleKey ends with ':min' ? 'derogation.deviation.bound_min' : (d.ruleKey starts with 'imposed:' ? 'derogation.deviation.bound_imposed' : 'derogation.deviation.bound_other')) %}
+    <div class="mt-1.5 text-xs rounded-md p-2" style="background:#fffbeb;color:#b45309">
+        {{ ux_icon('ph:flag', {class: 'icon'}) }} {{ 'derogation.deviation.label'|trans({}, 'derogation') }}
+        <code>{{ d.ruleKey }}</code> ({{ bound|trans({}, 'derogation') }})
+        {% if d.nodeLabel %}· {{ d.nodeLabel }}{% elseif d.scopeNid is same as('') %}· {{ 'derogation.deviation.root'|trans({}, 'derogation') }}{% endif %}
+        {% if d.allowedValue is not null %}· {{ 'derogation.deviation.allowed'|trans({'%value%': d.allowedValue|round(2)}, 'derogation') }}{% endif %}
+    </div>
+{% endif %}
