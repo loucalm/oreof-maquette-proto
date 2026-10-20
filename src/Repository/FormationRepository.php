@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\Formation;
+use App\Entity\TypeDiplome;
 use App\Enum\FormationPhase;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -37,5 +38,15 @@ class FormationRepository extends ServiceEntityRepository
             ->orderBy('f.createdAt', 'DESC')
             ->getQuery()
             ->getResult();
+    }
+
+    public function countByTypeDiplome(TypeDiplome $type): int
+    {
+        return (int) $this->createQueryBuilder('f')
+            ->select('COUNT(f.id)')
+            ->where('f.typeDiplome = :type')
+            ->setParameter('type', $type)
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 }

@@ -3,3 +3,30 @@ diplome:
     refused: 'Modification refusée : %message%'
     request_derogation: 'Demander une dérogation'
     error: 'Modification refusée : elle sortirait des bornes du type de diplôme.'
+  index:
+    title: Diplômes
+    heading: Types de diplôme
+    description: Les types de diplôme définissent la structure, les bornes et les règles que suivent les formations.
+    col_label: Type de diplôme
+    col_sigle: Sigle
+    col_based_on: Type de départ
+    col_duration: Durée
+    col_bcc: Format BCC
+    col_formations: Formations
+    col_version: Dernière version
+    badge_archived: archivé
+    archive: Archiver
+    unarchive: Désarchiver
+    delete: Supprimer
+    archive_confirm: 'Archiver le type « %label% » ? Il ne sera plus proposé à la création de formations ; les formations existantes sont conservées.'
+    delete_confirm: 'Supprimer définitivement le type « %label% » et toutes ses versions ?'
+    empty: Aucun type de diplôme.
+    duration_exact: '%n% ans'
+    duration_range: '%min% à %max% ans'
+    duration_min: 'au moins %min% ans'
+    duration_max: 'au plus %max% ans'
+  flash:
+    archived: 'Type « %label% » archivé.'
+    unarchived: 'Type « %label% » désarchivé.'
+    deleted: 'Type « %label% » supprimé.'
+    delete_refused: 'Le type « %label% » ne peut pas être supprimé : %count% formation(s) l’utilisent. Archivez-le plutôt.'

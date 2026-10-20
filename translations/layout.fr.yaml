@@ -15,6 +15,7 @@ layout:
     councils: Conseils
     users_rights: Utilisateurs et droits
     administration: Administration
+    diplomes: Diplômes
   role_switch:
     title: Voir en tant que
     help: Le responsable ne voit pas le métamodèle ni la configuration de structure.

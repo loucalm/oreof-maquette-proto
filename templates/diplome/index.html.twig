@@ -1,0 +1,63 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ 'diplome.index.title'|trans({}, 'diplome') }}{% endblock %}
+
+{% block body %}
+<div class="mb-5">
+    <h1 class="text-xl font-bold">{{ 'diplome.index.heading'|trans({}, 'diplome') }}</h1>
+    <p class="text-sm" style="color:var(--c-muted)">{{ 'diplome.index.description'|trans({}, 'diplome') }}</p>
+</div>
+
+<div class="rounded-xl border bg-white overflow-hidden" style="border-color:var(--c-border)">
+    <table class="w-full text-sm">
+        <thead class="text-xs uppercase tracking-wide" style="color:var(--c-muted)">
+            <tr class="border-b" style="border-color:var(--c-border)">
+                <th class="text-left px-4 py-2.5">{{ 'diplome.index.col_label'|trans({}, 'diplome') }}</th>
+                <th class="text-left px-4 py-2.5">{{ 'diplome.index.col_sigle'|trans({}, 'diplome') }}</th>
+                <th class="text-left px-4 py-2.5">{{ 'diplome.index.col_based_on'|trans({}, 'diplome') }}</th>
+                <th class="text-left px-4 py-2.5">{{ 'diplome.index.col_duration'|trans({}, 'diplome') }}</th>
+                <th class="text-left px-4 py-2.5">{{ 'diplome.index.col_bcc'|trans({}, 'diplome') }}</th>
+                <th class="text-left px-4 py-2.5">{{ 'diplome.index.col_formations'|trans({}, 'diplome') }}</th>
+                <th class="text-left px-4 py-2.5">{{ 'diplome.index.col_version'|trans({}, 'diplome') }}</th>
+                <th class="px-4 py-2.5"></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for row in rows %}
+            {% set t = row.type %}
+            <tr class="border-b last:border-0" style="border-color:var(--c-border)">
+                <td class="px-4 py-2.5">
+                    <span class="font-medium">{{ t.label }}</span>
+                    {% if t.archived %}<span class="pill ml-1">{{ 'diplome.index.badge_archived'|trans({}, 'diplome') }}</span>{% endif %}
+                </td>
+                <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ t.sigle }}</td>
+                <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ row.basedOn ?? '—' }}</td>
+                <td class="px-4 py-2.5" style="color:var(--c-muted)" data-col="duration">{{ row.duration ?? '—' }}</td>
+                <td class="px-4 py-2.5" style="color:var(--c-muted)" data-col="bcc">{{ row.bcc ?? '—' }}</td>
+                <td class="px-4 py-2.5" data-col="formations">{{ row.formations }}</td>
+                <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ row.version ?? '—' }}</td>
+                <td class="px-4 py-2.5 text-right whitespace-nowrap">
+                    {% if t.archived %}
+                        <form method="post" action="{{ path('diplome_unarchive', {id: t.id}) }}" class="inline">
+                            <button class="text-xs hover:underline">{{ 'diplome.index.unarchive'|trans({}, 'diplome') }}</button>
+                        </form>
+                    {% else %}
+                        <form method="post" action="{{ path('diplome_archive', {id: t.id}) }}" class="inline"
+                              data-controller="confirm" data-confirm-message-value="{{ 'diplome.index.archive_confirm'|trans({'%label%': t.label}, 'diplome') }}">
+                            <button class="text-xs hover:underline">{{ 'diplome.index.archive'|trans({}, 'diplome') }}</button>
+                        </form>
+                    {% endif %}
+                    {% if row.formations == 0 %}
+                        <form method="post" action="{{ path('diplome_delete', {id: t.id}) }}" class="inline"
+                              data-controller="confirm" data-confirm-message-value="{{ 'diplome.index.delete_confirm'|trans({'%label%': t.label}, 'diplome') }}">
+                            <button class="text-xs text-red-600 hover:underline ml-2">{{ 'diplome.index.delete'|trans({}, 'diplome') }}</button>
+                        </form>
+                    {% endif %}
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="8" class="px-4 py-6 text-center" style="color:var(--c-muted)">{{ 'diplome.index.empty'|trans({}, 'diplome') }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

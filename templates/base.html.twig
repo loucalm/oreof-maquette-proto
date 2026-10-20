@@ -32,6 +32,8 @@
                     <span class="fake-link cursor-default" aria-disabled="true" title="{{ 'common.coming_soon'|trans({}, 'common') }}">{{ 'layout.nav.councils'|trans({}, 'layout') }} {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>
                     <span class="fake-link cursor-default" aria-disabled="true" title="{{ 'common.coming_soon'|trans({}, 'common') }}">{{ 'layout.nav.users_rights'|trans({}, 'layout') }} {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>
                     {% if is_admin() %}
+                        <a href="{{ path('diplome_index') }}"
+                           class="hover:text-gray-900 {{ _route matches '/^diplome_/' ? 'font-semibold text-gray-900' }}">{{ 'layout.nav.diplomes'|trans({}, 'layout') }}</a>
                         <a href="{{ path('admin_index') }}"
                            class="hover:text-gray-900 {{ _route matches '/^(admin_|node_type_|field_|template_)/' ? 'font-semibold text-gray-900' }}">{{ 'layout.nav.administration'|trans({}, 'layout') }}</a>
                     {% endif %}
