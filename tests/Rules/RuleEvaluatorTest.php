@@ -544,4 +544,35 @@ final class RuleEvaluatorTest extends TestCase
         $this->assertSame('rule3', $results[2]->ruleKey);
         $this->assertTrue($results[2]->valid);
     }
+
+    public function testAggregateWhereFiltersRows(): void
+    {
+        $context = ['rows' => [
+            ['nature' => 'sae', 'ects' => 5],
+            ['nature' => 'ec', 'ects' => 10],
+            ['nature' => 'sae', 'ects' => 7],
+        ]];
+        $sum = ['kind' => 'aggregate', 'fn' => 'SUM', 'collection' => 'rows', 'field' => 'ects', 'where' => ['field' => 'nature', 'op' => '==', 'value' => 'sae']];
+        $result = $this->evaluator->evaluate(['key' => 'k', 'node' => [
+            'kind' => 'comparison', 'op' => '==', 'left' => $sum, 'right' => ['kind' => 'literal', 'value' => 12],
+        ]], $context);
+
+        $this->assertTrue($result->valid);
+        $this->assertSame(12.0, $result->actual);
+    }
+
+    public function testRatioExpressionDividesAndToleratesZero(): void
+    {
+        $context = ['rows' => [['nature' => 'sae', 'ects' => 12], ['nature' => 'ec', 'ects' => 18]], 'empty' => []];
+        $ratio = static fn (string $denominator): array => ['kind' => 'ratio',
+            'numerator' => ['kind' => 'aggregate', 'fn' => 'SUM', 'collection' => 'rows', 'field' => 'ects', 'where' => ['field' => 'nature', 'op' => '==', 'value' => 'sae']],
+            'denominator' => ['kind' => 'aggregate', 'fn' => 'SUM', 'collection' => $denominator, 'field' => 'ects'],
+        ];
+        $eval = fn (array $left) => $this->evaluator->evaluate(['key' => 'k', 'node' => [
+            'kind' => 'comparison', 'op' => '==', 'left' => $left, 'right' => ['kind' => 'literal', 'value' => 0],
+        ]], $context);
+
+        $this->assertEqualsWithDelta(0.4, $eval($ratio('rows'))->actual, 0.0001);
+        $this->assertSame(0.0, $eval($ratio('empty'))->actual);
+    }
 }

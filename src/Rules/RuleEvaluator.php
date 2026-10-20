@@ -13,7 +13,10 @@ namespace App\Rules;
  *   - comparison { op, left, right }        — op: == != > >= < <=
  *   - each       { collection, field, op, value }  (vrai si TOUS les éléments respectent op)
  *   - literal    { value }
- *   - aggregate  { fn: COUNT|SUM|MIN|MAX|AVG, collection, field? }
+ *   - aggregate  { fn: COUNT|SUM|MIN|MAX|AVG, collection, field?, where? }
+ *       where : { field, op, value } ou liste de ces conditions (ET) ; filtre les
+ *       lignes avant agrégation. Une valeur texte se compare en texte (== / !=).
+ *   - ratio      { numerator: <expr>, denominator: <expr> }  — 0 si dénominateur nul
  *
  * Extensible plus tard (mêmes formes de retour, pas de réécriture) : logical
  * (ET/OU/NON), conditional (SI/ALORS), quantifier (généralisation ALL/ANY/NONE
@@ -119,14 +122,24 @@ final class RuleEvaluator
         return match ($node['kind'] ?? null) {
             'literal' => $node['value'] ?? null,
             'aggregate' => $this->evalAggregate($node, $context),
+            'ratio' => $this->evalRatio($node, $context),
             default => null,
         };
     }
 
     /** @param array<string, list<array<string, mixed>>> $context */
+    private function evalRatio(array $node, array $context): float
+    {
+        $numerator = (float) $this->evalExpr(\is_array($node['numerator'] ?? null) ? $node['numerator'] : [], $context);
+        $denominator = (float) $this->evalExpr(\is_array($node['denominator'] ?? null) ? $node['denominator'] : [], $context);
+
+        return abs($denominator) < 1e-9 ? 0.0 : $numerator / $denominator;
+    }
+
+    /** @param array<string, list<array<string, mixed>>> $context */
     private function evalAggregate(array $node, array $context): float
     {
-        $rows = $this->rows((string) ($node['collection'] ?? ''), $context);
+        $rows = $this->filter($this->rows((string) ($node['collection'] ?? ''), $context), $node['where'] ?? null);
         $field = $node['field'] ?? null;
         $values = null !== $field
             ? array_map(static fn (array $r): float => (float) ($r[$field] ?? 0), $rows)
@@ -152,6 +165,42 @@ final class RuleEvaluator
         $rows = $context[$collection] ?? [];
 
         return \is_array($rows) ? array_values(array_filter($rows, 'is_array')) : [];
+    }
+
+    /**
+     * @param list<array<string, mixed>> $rows
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function filter(array $rows, mixed $where): array
+    {
+        if (!\is_array($where) || [] === $where) {
+            return $rows;
+        }
+        $conditions = isset($where['field']) ? [$where] : array_filter($where, 'is_array');
+
+        return array_values(array_filter($rows, function (array $row) use ($conditions): bool {
+            foreach ($conditions as $c) {
+                if (!$this->matches((string) ($c['op'] ?? '=='), $row[$c['field'] ?? ''] ?? null, $c['value'] ?? null)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }));
+    }
+
+    private function matches(string $op, mixed $left, mixed $right): bool
+    {
+        if (\is_string($left) && !is_numeric($left) || \is_string($right) && !is_numeric($right)) {
+            return match ($op) {
+                '==' => null !== $left && (string) $left === (string) $right,
+                '!=' => (string) $left !== (string) $right,
+                default => false,
+            };
+        }
+
+        return $this->compare($op, $left, $right);
     }
 
     private function compare(string $op, mixed $left, mixed $right): bool

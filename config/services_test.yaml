@@ -1,0 +1,8 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    # Lu directement depuis le conteneur par les tests (sinon retiré tant qu'il n'est injecté nulle part).
+    App\Diplome\Rule\RuleTemplateRegistry:
+        public: true
