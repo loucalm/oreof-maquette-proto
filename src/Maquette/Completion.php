@@ -169,6 +169,10 @@ final class Completion
     /**
      * Statistiques d'une maquette, rangées dans Formation::stats.
      *
+     * Choix de formule : chaque violation de structure (bloquante ou non) ajoute UN
+     * champ requis non rempli à `req` (jamais à `filled`) : la progression baisse
+     * donc tant que la maquette s'écarte de sa version, sans pondération par gravité.
+     *
      * `structure` : violations de la version du type de diplôme, `incomplete`
      * (non bloquantes, comptées parmi les éléments à compléter) et `blocking` (erreurs).
      *

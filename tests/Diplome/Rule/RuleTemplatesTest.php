@@ -156,6 +156,20 @@ final class RuleTemplatesTest extends DatabaseTestCase
         self::assertFalse($this->check($value, $semestre)[0]->valid);
     }
 
+    public function testRequiredElementWithImposedUidMatchesOnlyThatElement(): void
+    {
+        $semestre = $this->node('s1', 'semestre', children: [
+            $this->node('u1', 'ue'),
+            $this->node('u2', 'ue', ['_imposed' => 'y']),
+        ]);
+        $template = $this->registry->get('required_element');
+
+        self::assertFalse($this->check($template->compile(['typeKey' => 'ue', 'imposed' => 'x']), $semestre)[0]->valid);
+        self::assertTrue($this->check($template->compile(['typeKey' => 'ue', 'imposed' => 'y']), $semestre)[0]->valid);
+        // sans `imposed`, n'importe quel élément du type convient
+        self::assertTrue($this->check($template->compile(['typeKey' => 'ue']), $semestre)[0]->valid);
+    }
+
     public function testRootScopes(): void
     {
         $mono = $this->doc([$this->node('a', 'annee')]);

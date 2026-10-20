@@ -295,6 +295,7 @@ formation:
     missing_label: 'Manquant : %fields%'
     fix_button: Corriger
     structure_title: '%count% écart(s) à la structure du diplôme :'
+    unknown_rule: 'Règle inconnue : %template%'
     structure_actual: 'constaté : %actual%, attendu : %expected%'
   bcc_but:
     count: '%count% compétence(s)'
@@ -326,7 +327,7 @@ formation:
     competence_no_description: description à saisir
     pinned_title: Le bloc des compétences transversales reste toujours en tête
     scope_mention: à la mention
-    structure_title: '%count% écart(s) à la structure du diplôme :'
+    structure_title: Structure BCC
     add_transversal_button: Ajouter des compétences transversales (RNCP)
     empty: 'Aucun bloc de compétences. Commencez par « Ajouter un bloc ».'
     reorder_title: Glisser pour réordonner

@@ -113,6 +113,16 @@ final class PrototypeFeedbackTest extends WebTestCase
         self::assertSelectorTextContains('form.bcc-edit', 'généré automatiquement');
     }
 
+    public function testBccPageKeepsItsStructureHeading(): void
+    {
+        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $this->client->request('GET', '/formations/'.$formation->getId().'/bcc');
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Structure BCC', (string) $this->client->getResponse()->getContent());
+        self::assertStringNotContainsString('écart(s)', (string) $this->client->getResponse()->getContent());
+    }
+
     public function testReferentielPageHasNoMetamodelBlock(): void
     {
         $this->client->request('GET', '/administration/referentiels');

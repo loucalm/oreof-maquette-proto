@@ -13,6 +13,7 @@ use App\Diplome\Spec\VersionConfig;
 use App\Maquette\Doc\MaquetteDoc;
 use App\Maquette\Doc\TreeNode;
 use App\Rules\RuleEvaluator;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Vérifie une maquette contre la configuration de sa version : bornes des
@@ -26,6 +27,7 @@ final class StructureChecker
         private readonly RuleEvaluator $evaluator,
         private readonly StructureContextBuilder $contexts,
         private readonly ImposedHostLocator $locator,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -99,6 +101,15 @@ final class StructureChecker
 
         foreach ($structure->rules as $rule) {
             if (!$this->templates->has($rule->template)) {
+                // gabarit disparu : signalé (non bloquant) plutôt qu'ignoré en silence
+                $violations[] = new StructureViolation(
+                    'rule:'.$rule->uid.':unknown',
+                    '',
+                    $this->translator->trans('formation.check.unknown_rule', ['%template%' => $rule->template], 'formation'),
+                    false,
+                    null,
+                    null,
+                );
                 continue;
             }
             $run('rule:'.$rule->uid, $rule->template, $rule->params, $this->nodesOfType($doc, $rule->scopeLevel), RuleSpec::WARNING === $rule->severity);

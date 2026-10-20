@@ -152,6 +152,18 @@ final class StructureCheckerTest extends DatabaseTestCase
         self::assertFalse($warn[0]->blocking);
     }
 
+    public function testUnknownTemplateIsReportedNonBlocking(): void
+    {
+        $doc = $this->build('L', 3);
+        $array = $this->config->toArray();
+        $array['structure']['rules'][] = ['uid' => 'fantome', 'template' => 'gabarit_disparu', 'params' => [], 'scopeLevel' => 'ue', 'severity' => 'error'];
+
+        $found = $this->withKey($this->checker->check($doc, VersionConfig::fromArray($array)), 'rule:fantome:unknown');
+        self::assertCount(1, $found);
+        self::assertFalse($found[0]->blocking);
+        self::assertSame('Règle inconnue : gabarit_disparu', $found[0]->message);
+    }
+
     public function testCountOverrideReplacesLevelBoundOnItsHostOnly(): void
     {
         $doc = $this->build('LP', 1);

@@ -108,4 +108,37 @@ final class CompletionTest extends DatabaseTestCase
 
         self::assertNotContains('mccc', array_column($this->completion->missing($ec), 'key'));
     }
+
+    public function testStructureViolationsLowerProgressAndAreCounted(): void
+    {
+        $type = $this->em->getRepository(\App\Entity\TypeDiplome::class)->findOneByKey('L');
+        $formation = new \App\Entity\Formation('Licence');
+        $formation->setTypeDiplome($type);
+        $this->em->persist($formation);
+        $this->em->flush();
+        $doc = $this->maquette->open($formation);
+        (new \App\Diplome\StructureInstantiator())->instantiate($doc, $type->latestVersion(), 3, false);
+
+        $before = $this->completion->docStats($doc);
+        $beforeCount = \count($this->completion->structureViolations($doc));
+        $s1 = $this->factory->first($doc, 'semestre');
+        for ($i = 0; $i < 4; ++$i) {
+            $doc->addNode($s1->nid, 'ue');
+        }
+        $after = $this->completion->docStats($doc);
+        $violations = $this->completion->structureViolations($doc);
+
+        self::assertSame(1, $after['structure']['blocking']);
+        self::assertSame(\count($violations) - 1, $after['structure']['incomplete']);
+        // formule documentée : +1 `req` non rempli par violation ; les 4 UE ajoutées apportent aussi leurs champs requis
+        $newUes = array_map(fn ($ue) => $this->completion->node($ue), array_slice($s1->getChildren(), 3));
+        $addedReq = array_sum(array_column($newUes, 'req'));
+        $addedFilled = array_sum(array_column($newUes, 'filled'));
+        self::assertSame(
+            $before['req'] + $addedReq + (\count($violations) - $beforeCount),
+            $after['req'],
+        );
+        self::assertLessThanOrEqual($before['progress'], $after['progress']);
+        self::assertSame($before['filled'] + $addedFilled, $after['filled']);
+    }
 }
