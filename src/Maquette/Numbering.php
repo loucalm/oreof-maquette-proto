@@ -23,38 +23,40 @@ final class Numbering
     /**
      * Renseigne NodeView::ref pour tout l'arbre.
      *
-     * @param list<NodeView> $roots
+     * @param list<NodeView>     $roots
+     * @param array<string, int> $startAt typeKey → premier indice (défaut 1 ; LP : semestre à 5)
      */
-    public function apply(array $roots): void
+    public function apply(array $roots, array $startAt = []): void
     {
         /** @var array<string, int> $counters clé "refParent|typeKey" → compteur */
         $counters = [];
-        $this->walk($roots, '', $counters);
+        $this->walk($roots, '', $counters, $startAt);
     }
 
     /**
      * @param list<NodeView>       $views
      * @param array<string, int>   $counters
+     * @param array<string, int>   $startAt
      */
-    private function walk(array $views, string $parentRef, array &$counters): void
+    private function walk(array $views, string $parentRef, array &$counters, array $startAt): void
     {
         foreach ($views as $view) {
             $type = $view->node->getType();
             if ($type->isNumbered() && $type->isGlobalNumbering()) {
                 $key = '__global__|'.$type->getKey();
-                $n = ($counters[$key] = ($counters[$key] ?? 0) + 1);
+                $n = ($counters[$key] = ($counters[$key] ?? 0) + 1) + ($startAt[$type->getKey()] ?? 1) - 1;
                 $view->ref = $this->format($n, $type->getNumberStyle());
                 $childRef = $view->ref;
             } elseif ($type->isNumbered()) {
                 $key = $parentRef.'|'.$type->getKey();
-                $n = ($counters[$key] = ($counters[$key] ?? 0) + 1);
+                $n = ($counters[$key] = ($counters[$key] ?? 0) + 1) + ($startAt[$type->getKey()] ?? 1) - 1;
                 $idx = $this->format($n, $type->getNumberStyle());
                 $view->ref = $parentRef === '' ? $idx : $parentRef.'.'.$idx;
                 $childRef = $view->ref;
             } else {
                 $childRef = $parentRef;
             }
-            $this->walk($view->children, $childRef, $counters);
+            $this->walk($view->children, $childRef, $counters, $startAt);
         }
     }
 

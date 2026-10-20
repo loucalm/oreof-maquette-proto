@@ -1,0 +1,99 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Diplome;
+
+use App\Diplome\StructureInstantiator;
+use App\Entity\Formation;
+use App\Entity\TypeDiplome;
+use App\Maquette\Maquette;
+use App\Maquette\MaquetteBuilder;
+use App\Maquette\Doc\MaquetteDoc;
+use App\Tests\Support\DatabaseTestCase;
+
+final class StructureInstantiatorTest extends DatabaseTestCase
+{
+    private function build(string $key, int $duration, bool $parcours = false): MaquetteDoc
+    {
+        $type = $this->em->getRepository(TypeDiplome::class)->findOneByKey($key);
+        $formation = new Formation('Formation '.$key);
+        $formation->setTypeDiplome($type);
+        $this->em->persist($formation);
+        $this->em->flush();
+
+        $doc = static::getContainer()->get(Maquette::class)->open($formation);
+        (new StructureInstantiator())->instantiate($doc, $type->latestVersion(), $duration, $parcours);
+
+        return $doc;
+    }
+
+    /** @return list<\App\Maquette\Doc\TreeNode> */
+    private function ofType(MaquetteDoc $doc, string $typeKey): array
+    {
+        return array_values(array_filter($doc->allNodes(), static fn ($n) => $n->typeKey === $typeKey));
+    }
+
+    public function testLicenceThreeYearsGivesSixSemestersAndThreeUeEach(): void
+    {
+        $doc = $this->build('L', 3);
+        self::assertCount(3, $this->ofType($doc, 'annee'));
+        self::assertCount(6, $this->ofType($doc, 'semestre'));
+        self::assertCount(18, $this->ofType($doc, 'ue'));
+        self::assertCount(0, $this->ofType($doc, 'ec'));
+        self::assertSame(['annee', 'semestre', 'ue', 'ec'], $doc->formation->getStructure());
+        self::assertFalse($doc->formation->isAvecParcours());
+    }
+
+    public function testLicenceAcceptsFourYearsButNotFive(): void
+    {
+        self::assertCount(4, $this->ofType($this->build('L', 4), 'annee'));
+        $this->expectException(\InvalidArgumentException::class);
+        $this->build('L', 5);
+    }
+
+    public function testLpNumbersSemestersFromFive(): void
+    {
+        $doc = $this->build('LP', 1);
+        $formation = $doc->formation;
+        static::getContainer()->get(Maquette::class)->save($formation, $doc, 'Création');
+        $views = static::getContainer()->get(MaquetteBuilder::class)->build($formation);
+        $refs = array_map(static fn ($v) => $v->ref, $views[0]->children);
+        self::assertSame(['5', '6'], $refs);
+    }
+
+    public function testM2eHasNoSemesterLevel(): void
+    {
+        $doc = $this->build('M2E', 2);
+        self::assertCount(0, $this->ofType($doc, 'semestre'));
+        self::assertCount(2, $this->ofType($doc, 'annee'));
+        self::assertCount(2, $this->ofType($doc, 'bloc_formation'));
+        self::assertSame(['annee', 'bloc_formation', 'ec'], $doc->formation->getStructure());
+    }
+
+    public function testImposedElementIsCreatedLockedInLastSemester(): void
+    {
+        $doc = $this->build('LP', 1);
+        $semestres = $this->ofType($doc, 'semestre');
+        $last = end($semestres);
+        $imposed = array_values(array_filter($last->children, static fn ($n) => 'lp-projet-stage' === $n->getAttribute('_imposed')));
+        self::assertCount(1, $imposed);
+        self::assertSame('Projet tutoré et stage', $imposed[0]->label);
+        self::assertTrue($imposed[0]->isLocked('delete'));
+        self::assertSame($imposed[0], end($last->children));
+        self::assertCount(0, array_filter($semestres[0]->children, static fn ($n) => null !== $n->getAttribute('_imposed')));
+    }
+
+    public function testMultiParcoursBuildsLevelsInsideOneParcours(): void
+    {
+        $doc = $this->build('BUT', 3, true);
+        self::assertTrue($doc->formation->isAvecParcours());
+        self::assertCount(1, $doc->roots);
+        self::assertSame('parcours', $doc->roots[0]->typeKey);
+        self::assertCount(3, $doc->roots[0]->children);
+        $stage = array_values(array_filter($this->ofType($doc, 'ec'), static fn ($n) => 'but-stage' === $n->getAttribute('_imposed')));
+        self::assertCount(1, $stage);
+        self::assertSame('ue', $stage[0]->parent->typeKey);
+        self::assertSame('stage', $stage[0]->getAttribute('natureElement'));
+    }
+}

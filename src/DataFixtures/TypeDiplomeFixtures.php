@@ -162,7 +162,7 @@ final class TypeDiplomeFixtures extends Fixture implements DependentFixtureInter
                     'uid' => 'but-stage',
                     'typeKey' => 'ec',
                     'label' => 'Stage',
-                    'parentLevel' => 'semestre',
+                    'parentLevel' => 'ue',
                     'position' => 'last',
                     'nature' => 'stage',
                     'locked' => ['delete'],

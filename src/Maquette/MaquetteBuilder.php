@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Maquette;
 
+use App\Diplome\TypeDiplomeResolver;
 use App\Entity\Formation;
 use App\Maquette\Doc\TreeNode;
 
@@ -18,6 +19,7 @@ final class MaquetteBuilder
         private readonly AttributeCatalog $catalog,
         private readonly Numbering $numbering,
         private readonly Completion $completion,
+        private readonly TypeDiplomeResolver $typeDiplomes,
     ) {
     }
 
@@ -28,7 +30,7 @@ final class MaquetteBuilder
     {
         $roots = $this->maquette->open($formation)->pedagogicalRoots();
         $views = array_map(fn (TreeNode $n) => $this->view($n), $roots);
-        $this->numbering->apply($views);
+        $this->numbering->apply($views, $this->startAt($formation));
 
         return $views;
     }
@@ -36,9 +38,25 @@ final class MaquetteBuilder
     public function buildSubtree(TreeNode $root): NodeView
     {
         $view = $this->view($root);
-        $this->numbering->apply([$view]);
+        $formation = $root->getFormation();
+        $this->numbering->apply([$view], null === $formation ? [] : $this->startAt($formation));
 
         return $view;
+    }
+
+    /**
+     * Premier indice de numérotation par type, selon la version de type de diplôme.
+     *
+     * @return array<string, int>
+     */
+    private function startAt(Formation $formation): array
+    {
+        $startAt = [];
+        foreach ($this->typeDiplomes->configFor($formation)?->structure->levels ?? [] as $level) {
+            $startAt[$level->typeKey] = $level->startAt;
+        }
+
+        return $startAt;
     }
 
     /**
