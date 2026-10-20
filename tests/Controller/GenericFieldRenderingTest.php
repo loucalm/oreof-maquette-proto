@@ -97,4 +97,23 @@ final class GenericFieldRenderingTest extends WebTestCase
         self::assertStringContainsString('ECTS (Parcours)', $crawler->filter('#node-form')->text());
         self::assertStringNotContainsString('Transformer en bloc de choix', $crawler->text());
     }
+
+    public function testEveryParamPageRenders(): void
+    {
+        $factory = FormationFactory::create(static::getContainer());
+        $formation = $factory->fromTemplate('licence_lmd');
+        foreach (['structure', 'organisation', 'presentation'] as $section) {
+            $this->client->request('GET', sprintf('/formations/%d/parametre/%s', $formation->getId(), $section));
+            self::assertResponseIsSuccessful($section);
+        }
+
+        $master = $factory->fromTemplate('master_parcours');
+        $this->em->clear();
+        $doc = static::getContainer()->get(Maquette::class)->open($this->em->find($master::class, $master->getId()));
+        $parcours = current(array_filter($doc->allNodes(), static fn (TreeNode $n) => $n->isParcours()));
+        foreach (['organisation', 'presentation'] as $section) {
+            $this->client->request('GET', sprintf('/formations/%d/parcours/%s/parametre/%s', $master->getId(), $parcours->nid, $section));
+            self::assertResponseIsSuccessful('parcours '.$section);
+        }
+    }
 }
