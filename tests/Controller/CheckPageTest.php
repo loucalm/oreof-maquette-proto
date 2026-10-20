@@ -39,7 +39,10 @@ final class CheckPageTest extends WebTestCase
         for ($i = 0; $i < 4; ++$i) {
             $doc->addNode($semestre->nid, 'ue');
         }
-        $maquette->save($formation, $doc, 'Création');
+        // état hors bornes écrit directement : Maquette::save() le refuserait
+        $doc->reindex();
+        $formation->setArbre($doc->dumpTree());
+        $this->em->flush();
 
         $client->request('GET', '/formations/'.$formation->getId().'/verifier');
         self::assertResponseIsSuccessful();

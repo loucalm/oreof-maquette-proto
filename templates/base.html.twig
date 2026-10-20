@@ -67,12 +67,17 @@
         {% set _flashes = app.flashes %}
         {# « undo » : id de la formation dont la dernière modification peut être annulée depuis le toast #}
         {% set _undo = _flashes.undo ?? [] %}
-        {% if _flashes|filter((m, l) => l != 'undo') is not empty %}
+        {# « derogation_link » : lien de demande de dérogation attaché au toast d'un refus hors bornes #}
+        {% set _derog = _flashes.derogation_link ?? [] %}
+        {% if _flashes|filter((m, l) => l not in ['undo', 'derogation_link']) is not empty %}
             <div class="flash-stack" role="status" aria-live="polite" data-turbo-temporary>
-                {% for label, messages in _flashes|filter((m, l) => l != 'undo') %}
+                {% for label, messages in _flashes|filter((m, l) => l not in ['undo', 'derogation_link']) %}
                     {% for message in messages %}
                         <div class="flash flash--{{ label ?: 'info' }}" data-controller="flash">
                             <span class="flash-msg">{{ message }}</span>
+                            {% if _derog is not empty and label == 'warning' and loop.first %}
+                                <a href="{{ _derog|first }}" class="flash-undo" data-turbo-frame="_top">{{ ux_icon('ph:flag', {class: 'icon'}) }} {{ 'diplome.guard.request_derogation'|trans({}, 'diplome') }}</a>
+                            {% endif %}
                             {% if _undo is not empty and label in ['success', 'info'] and loop.first %}
                                 <form method="post" action="{{ path('formation_undo', {id: _undo|first}) }}" data-turbo-frame="_top">
                                     <button class="flash-undo">{{ ux_icon('ph:arrow-counter-clockwise', {class: 'icon'}) }} {{ 'layout.undo'|trans({}, 'layout') }}</button>

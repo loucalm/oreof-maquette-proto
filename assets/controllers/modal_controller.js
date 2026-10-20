@@ -3,6 +3,11 @@ import { Controller } from '@hotwired/stimulus';
 /** Ouvre/ferme une <dialog> (modale native). */
 export default class extends Controller {
     static targets = ['dialog'];
+    static values = { autoOpen: Boolean };
+
+    connect() {
+        if (this.autoOpenValue && !this.dialogTarget.open) this.dialogTarget.showModal();
+    }
 
     open() {
         this.dialogTarget.showModal();

@@ -54,6 +54,7 @@
         {# ─── panneau structure ─── #}
         <div class="editor-aside flex flex-col overflow-hidden"
              data-controller="tree modal treefilter"
+             data-modal-auto-open-value="{{ app.request.query.has('derogation') ? 'true' : 'false' }}"
              data-tree-move-url-value="{{ path('node_move', {fid: formation.id, nid: '__ID__'}) }}"
              data-tree-dup-url-value="{{ path('node_duplicate', {fid: formation.id, nid: '__ID__'}) }}"
              data-tree-del-url-value="{{ path('node_delete', {fid: formation.id, nid: '__ID__'}) }}"
@@ -162,9 +163,9 @@
                     <p class="text-sm text-gray-500" data-tree-target="derogContext">{{ 'formation.editor.derogation_modal_default_context'|trans({}, 'formation') }}</p>
                     <input type="hidden" name="nodeId" data-tree-target="derogNodeId" value="">
                     {# écart structuré (rempli par le blocage de modification) : vide pour une demande libre #}
-                    <input type="hidden" name="ruleKey" value="">
-                    <input type="hidden" name="scopeNid" value="">
-                    <input type="hidden" name="allowedValue" value="">
+                    <input type="hidden" name="ruleKey" value="{{ app.request.query.get('derogation') }}">
+                    <input type="hidden" name="scopeNid" value="{{ app.request.query.get('scope') }}">
+                    <input type="hidden" name="allowedValue" value="{{ app.request.query.get('value') }}">
                     <div>
                         <label class="text-xs font-medium">{{ 'formation.editor.derogation_message_label'|trans({}, 'formation') }}</label>
                         <textarea name="message" rows="4" required class="fld mt-1" placeholder="{{ 'formation.editor.derogation_message_placeholder'|trans({}, 'formation') }}"></textarea>

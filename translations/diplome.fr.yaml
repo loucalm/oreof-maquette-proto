@@ -1,0 +1,5 @@
+diplome:
+  guard:
+    refused: 'Modification refusée : %message%'
+    request_derogation: 'Demander une dérogation'
+    error: 'Modification refusée : elle sortirait des bornes du type de diplôme.'

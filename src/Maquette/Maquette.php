@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Maquette;
 
 use App\Entity\Formation;
+use App\Diplome\Check\StructureGuard;
+use App\Diplome\Check\StructureViolationException;
 use App\Entity\FormationRevision;
 use App\Maquette\Doc\MaquetteDoc;
 use App\Maquette\Doc\TreeNode;
@@ -39,6 +41,9 @@ final class Maquette
     /** @var array<int, array<string, mixed>> état complet au 1er open() de la requête, fid → snapshot */
     private array $before = [];
 
+    /** true pendant restore() : revenir à un état passé n'est jamais bloqué par les bornes */
+    private bool $bypassGuard = false;
+
     /** @var array<string, \App\Entity\NodeType>|null */
     private ?array $typeMap = null;
 
@@ -48,6 +53,7 @@ final class Maquette
         private readonly FormationRepository $formations,
         private readonly FormationRevisionRepository $revisions,
         private readonly Completion $completion,
+        private readonly StructureGuard $guard,
     ) {
     }
 
@@ -73,6 +79,15 @@ final class Maquette
         $doc->reindex();
         $id = $formation->getId() ?? spl_object_id($formation);
         $before = $this->before[$id] ?? null;
+
+        if (!$this->bypassGuard) {
+            try {
+                $this->guard->assertAllowed($formation, null !== $before ? $this->hydrateRaw($formation, $before) : null, $doc);
+            } catch (StructureViolationException $e) {
+                unset($this->cache[$id]); // le doc modifié, refusé, ne doit pas survivre en cache
+                throw $e;
+            }
+        }
 
         $formation->setArbre($doc->dumpTree());
         $formation->setDataParcours($doc->parcours);
@@ -116,7 +131,12 @@ final class Maquette
         $this->applySnapshotScalars($formation, $snap);
 
         $doc = $this->hydrateRaw($formation, $snap);
-        $this->save($formation, $doc, sprintf('Restauration de l’état du %s', $revision->getCreatedAt()->format('d/m/Y à H:i')), $revision);
+        $this->bypassGuard = true;
+        try {
+            $this->save($formation, $doc, sprintf('Restauration de l’état du %s', $revision->getCreatedAt()->format('d/m/Y à H:i')), $revision);
+        } finally {
+            $this->bypassGuard = false;
+        }
     }
 
     /** Y a-t-il une modification à annuler (bandeau d'actions) ? */
