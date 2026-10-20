@@ -2,21 +2,36 @@
 {% block title %}{{ 'diplome.wizard.title'|trans({}, 'diplome') }}{% endblock %}
 
 {% block body %}
-<div class="mb-5">
+{# étape avec formulaire : la navigation soumet l'étape courante (champ `goto`) pour ne pas perdre la saisie #}
+{% set _submits = form is defined and form %}
+<div class="mb-5 flex items-start justify-between gap-4">
     <h1 class="text-xl font-bold">{{ 'diplome.wizard.heading'|trans({}, 'diplome') }}</h1>
+    <a href="{{ path('diplome_wizard_start', {nouveau: 1}) }}" data-action="restart"
+       class="rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'diplome.wizard.restart'|trans({}, 'diplome') }}</a>
 </div>
 
 <div class="flex gap-6 items-start">
+    {% if _submits %}
+        {# bouton par défaut (touche Entrée) : premier bouton du formulaire dans l'ordre du document, donc avant les liens d'étapes ; il mène à l'étape suivante #}
+        <button type="submit" form="wizard-form" class="sr-only" tabindex="-1" aria-hidden="true">{{ 'diplome.wizard.next'|trans({}, 'diplome') }}</button>
+    {% endif %}
     <nav class="w-56 shrink-0 rounded-xl border bg-white p-2" style="border-color:var(--c-border)" aria-label="{{ 'diplome.wizard.heading'|trans({}, 'diplome') }}">
         <ol class="space-y-1 text-sm">
         {% for s in steps %}
             {% set current = s == step %}
             <li>
                 {% if s == 'informations' or unlocked %}
+                    {% if _submits %}
+                        <button type="submit" form="wizard-form" name="goto" value="{{ s }}" formnovalidate data-step="{{ s }}" {{ current ? 'aria-current="step"' }}
+                                class="block w-full text-left rounded-md px-3 py-2 {{ current ? 'font-semibold bg-gray-100' : 'hover:bg-gray-50' }}">
+                            {{ loop.index }}. {{ ('diplome.wizard.steps.' ~ s)|trans({}, 'diplome') }}
+                        </button>
+                    {% else %}
                     <a href="{{ path('diplome_wizard_step', {step: s}) }}" data-step="{{ s }}" {{ current ? 'aria-current="step"' }}
                        class="block rounded-md px-3 py-2 {{ current ? 'font-semibold bg-gray-100' : 'hover:bg-gray-50' }}">
                         {{ loop.index }}. {{ ('diplome.wizard.steps.' ~ s)|trans({}, 'diplome') }}
                     </a>
+                    {% endif %}
                 {% else %}
                     <span data-step="{{ s }}" class="block px-3 py-2 opacity-50">{{ loop.index }}. {{ ('diplome.wizard.steps.' ~ s)|trans({}, 'diplome') }}</span>
                 {% endif %}
@@ -31,8 +46,10 @@
         {% block step_nav %}
         <div class="flex justify-between pt-5">
             <div>
-                {% if previous %}
-                    <a href="{{ path('diplome_wizard_step', {step: previous}) }}" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'diplome.wizard.previous'|trans({}, 'diplome') }}</a>
+                {% if previous and _submits %}
+                    <button type="submit" form="wizard-form" name="goto" value="{{ previous }}" formnovalidate data-action="previous" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'diplome.wizard.previous'|trans({}, 'diplome') }}</button>
+                {% elseif previous %}
+                    <a href="{{ path('diplome_wizard_step', {step: previous}) }}" data-action="previous" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'diplome.wizard.previous'|trans({}, 'diplome') }}</a>
                 {% else %}
                     <a href="{{ path('diplome_index') }}" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</a>
                 {% endif %}

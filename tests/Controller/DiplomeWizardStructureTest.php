@@ -7,18 +7,21 @@ namespace App\Tests\Controller;
 use App\Diplome\WizardDraft;
 use App\Entity\TypeDiplome;
 use App\Tests\Support\ResetsDatabase;
+use App\Tests\Support\SameOriginCsrf;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 final class DiplomeWizardStructureTest extends WebTestCase
 {
     use ResetsDatabase;
+    use SameOriginCsrf;
 
     private KernelBrowser $client;
 
     protected function setUp(): void
     {
         $this->client = static::createClient();
+        $this->sameOrigin($this->client);
         $this->resetDatabase();
     }
 
@@ -96,7 +99,7 @@ final class DiplomeWizardStructureTest extends WebTestCase
     /** @param array<string, mixed> $payload */
     private function submit(array $payload): \Symfony\Component\DomCrawler\Crawler
     {
-        return $this->client->request('POST', '/diplomes/nouveau/structure', ['structure' => $payload]);
+        return $this->client->request('POST', '/diplomes/nouveau/structure', ['structure' => $payload + ['_token' => $this->formToken()]]);
     }
 
     /** @return array<string, mixed> */

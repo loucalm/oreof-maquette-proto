@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -31,21 +32,33 @@ final class DiplomeWizardController extends AbstractController
     ) {
     }
 
+    /**
+     * Entrée de l'assistant : reprend le brouillon en cours, sauf demande explicite d'en commencer un
+     * nouveau (`?nouveau=1`, bouton « Recommencer ») ou de dupliquer une autre version (`?depuis=`).
+     */
     #[Route('/diplomes/nouveau', name: 'diplome_wizard_start', methods: ['GET'])]
     public function start(Request $request, SessionInterface $session): RedirectResponse
     {
+        $current = $session->get(WizardDraft::SESSION_KEY);
         $from = $request->query->getInt('depuis');
-        $base = $from > 0 ? $this->versions->find($from) : null;
-        $draft = null === $base ? new WizardDraft() : WizardDraft::fromVersion($base);
-        if ('' === $draft->anneeUniversitaire) {
-            $draft->anneeUniversitaire = $this->defaultYear();
+        $fresh = $request->query->getBoolean('nouveau')
+            || !$current instanceof WizardDraft
+            || ($from > 0 && $from !== $current->basedOnVersionId);
+
+        if ($fresh) {
+            $base = $from > 0 ? $this->versions->find($from) : null;
+            $draft = null === $base ? new WizardDraft() : WizardDraft::fromVersion($base);
+            if ('' === $draft->anneeUniversitaire) {
+                $draft->anneeUniversitaire = $this->defaultYear();
+            }
+            $session->set(WizardDraft::SESSION_KEY, $draft);
         }
-        $session->set(WizardDraft::SESSION_KEY, $draft);
 
         return $this->redirectToRoute('diplome_wizard_step', ['step' => $this->steps->keys()[0]]);
     }
 
     #[Route('/diplomes/nouveau/enregistrer', name: 'diplome_wizard_save', methods: ['POST'])]
+    #[IsCsrfTokenValid(DiplomeController::CSRF_ID, tokenKey: DiplomeController::CSRF_FIELD)]
     public function save(SessionInterface $session): RedirectResponse
     {
         try {
@@ -78,7 +91,11 @@ final class DiplomeWizardController extends AbstractController
                 $current->apply($draft, $form->getData());
                 $session->set(WizardDraft::SESSION_KEY, $draft);
 
-                return $this->redirectToRoute('diplome_wizard_step', ['step' => $this->steps->neighbour($step, 1) ?? $step]);
+                // « Précédent » et les liens d'étapes soumettent aussi l'étape (champ `goto`) : la saisie n'est pas perdue
+                $goto = $request->request->getString('goto');
+                $target = null !== $this->steps->get($goto) ? $goto : ($this->steps->neighbour($step, 1) ?? $step);
+
+                return $this->redirectToRoute('diplome_wizard_step', ['step' => $target]);
             }
         }
 

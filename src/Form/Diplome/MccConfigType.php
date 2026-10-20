@@ -33,6 +33,6 @@ final class MccConfigType extends AbstractType
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults(['translation_domain' => 'diplome', 'csrf_protection' => false]);
+        $resolver->setDefaults(['translation_domain' => 'diplome']);
     }
 }

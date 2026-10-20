@@ -24,22 +24,22 @@ final class InformationsType extends AbstractType
     {
         $existing = $options['existing_type'];
         $builder
-            ->add('label', TextType::class, ['constraints' => $this->rules->constraints('label')])
+            ->add('label', TextType::class, ['label' => 'diplome.wizard.informations.label', 'constraints' => $this->rules->constraints('label')])
             // un type déjà utilisé garde son sigle (champ désactivé : la valeur envoyée est ignorée)
-            ->add('sigle', TextType::class, ['constraints' => $this->rules->constraints('sigle', $existing), 'disabled' => $options['sigle_locked']])
-            ->add('codeApogee', TextType::class, ['required' => false, 'constraints' => $this->rules->constraints('codeApogee')])
-            ->add('description', TextareaType::class, ['required' => false])
-            ->add('accredite', CheckboxType::class, ['required' => false])
-            ->add('passageCfvu', CheckboxType::class, ['required' => false]);
+            ->add('sigle', TextType::class, ['label' => 'diplome.wizard.informations.sigle', 'constraints' => $this->rules->constraints('sigle', $existing), 'disabled' => $options['sigle_locked']])
+            ->add('codeApogee', TextType::class, ['label' => 'diplome.wizard.informations.code_apogee', 'required' => false, 'constraints' => $this->rules->constraints('codeApogee')])
+            ->add('description', TextareaType::class, ['label' => 'diplome.wizard.informations.description', 'required' => false])
+            ->add('accredite', CheckboxType::class, ['label' => 'diplome.wizard.informations.accredite', 'required' => false])
+            ->add('passageCfvu', CheckboxType::class, ['label' => 'diplome.wizard.informations.passage_cfvu', 'required' => false]);
         // l'année est celle de la version : saisie à la création seulement
         if (null === $existing) {
-            $builder->add('anneeUniversitaire', TextType::class, ['constraints' => $this->rules->constraints('anneeUniversitaire')]);
+            $builder->add('anneeUniversitaire', TextType::class, ['label' => 'diplome.wizard.informations.annee', 'constraints' => $this->rules->constraints('anneeUniversitaire')]);
         }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults(['translation_domain' => 'diplome', 'csrf_protection' => false, 'existing_type' => null, 'sigle_locked' => false]);
+        $resolver->setDefaults(['translation_domain' => 'diplome', 'existing_type' => null, 'sigle_locked' => false]);
         $resolver->setAllowedTypes('existing_type', ['null', TypeDiplome::class]);
     }
 }

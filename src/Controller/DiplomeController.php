@@ -14,6 +14,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -23,6 +24,11 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 final class DiplomeController extends AbstractController
 {
+    /** Jeton CSRF (sans état, cf. config/packages/csrf.yaml) des actions POST hors formulaire de la section. */
+    public const CSRF_ID = 'diplome';
+    /** Nom du champ attendu par le contrôleur Stimulus csrf_protection (double soumission). */
+    public const CSRF_FIELD = '_csrf_token';
+
     public function __construct(
         private readonly TypeDiplomeRepository $types,
         private readonly FormationRepository $formations,
@@ -64,6 +70,7 @@ final class DiplomeController extends AbstractController
     }
 
     #[Route('/diplomes/{id}/archiver', name: 'diplome_archive', methods: ['POST'])]
+    #[IsCsrfTokenValid(self::CSRF_ID, tokenKey: self::CSRF_FIELD)]
     public function archive(TypeDiplome $type): RedirectResponse
     {
         $type->setArchived(true);
@@ -74,6 +81,7 @@ final class DiplomeController extends AbstractController
     }
 
     #[Route('/diplomes/{id}/desarchiver', name: 'diplome_unarchive', methods: ['POST'])]
+    #[IsCsrfTokenValid(self::CSRF_ID, tokenKey: self::CSRF_FIELD)]
     public function unarchive(TypeDiplome $type): RedirectResponse
     {
         $type->setArchived(false);
@@ -84,6 +92,7 @@ final class DiplomeController extends AbstractController
     }
 
     #[Route('/diplomes/{id}/supprimer', name: 'diplome_delete', methods: ['POST'])]
+    #[IsCsrfTokenValid(self::CSRF_ID, tokenKey: self::CSRF_FIELD)]
     public function delete(TypeDiplome $type): RedirectResponse
     {
         $count = $this->formations->countByTypeDiplome($type);

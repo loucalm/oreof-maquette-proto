@@ -11,7 +11,7 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-/** Étape « Formulaires » : un formulaire (NodeType de famille `parameter`) par emplacement. */
+/** Étape « Formulaires » : un formulaire (NodeType de famille `parameter`, de la portée de l'emplacement) par emplacement. */
 final class FormsType extends AbstractType
 {
     public const SLOTS = ['formation.organisation', 'formation.presentation', 'parcours.organisation', 'parcours.presentation'];
@@ -22,13 +22,16 @@ final class FormsType extends AbstractType
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $choices = [];
-        foreach ($this->nodeTypes->findAllOrdered() as $nodeType) {
-            if (NodeFamily::Parameter === $nodeType->getFamily()) {
-                $choices[$nodeType->getLabel().' ('.$nodeType->getKey().')'] = $nodeType->getKey();
-            }
-        }
+        $parameters = array_filter($this->nodeTypes->findAllOrdered(), static fn ($t): bool => NodeFamily::Parameter === $t->getFamily());
         foreach (self::SLOTS as $slot) {
+            // un emplacement `<portée>.<section>` ne propose que les formulaires de sa portée (convention `*_<portée>`, cf. ParamTypeResolver)
+            $scope = explode('.', $slot)[0];
+            $choices = [];
+            foreach ($parameters as $nodeType) {
+                if (str_ends_with($nodeType->getKey(), '_'.$scope)) {
+                    $choices[$nodeType->getLabel().' ('.$nodeType->getKey().')'] = $nodeType->getKey();
+                }
+            }
             $builder->add(self::fieldName($slot), ChoiceType::class, [
                 'choices' => $choices,
                 'required' => false,
@@ -40,7 +43,7 @@ final class FormsType extends AbstractType
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults(['translation_domain' => 'diplome', 'csrf_protection' => false]);
+        $resolver->setDefaults(['translation_domain' => 'diplome']);
     }
 
     /** Un nom de champ de formulaire ne peut pas contenir de point. */

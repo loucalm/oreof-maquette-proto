@@ -47,7 +47,6 @@ final class BccConfigType extends AbstractType
     {
         $resolver->setDefaults([
             'translation_domain' => 'diplome',
-            'csrf_protection' => false,
             'constraints' => [new Assert\Callback($this->validateLevels(...))],
         ]);
     }

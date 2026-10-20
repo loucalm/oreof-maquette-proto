@@ -1,0 +1,2 @@
+{# jeton CSRF sans état des actions POST hors formulaire (cf. DiplomeController::CSRF_ID / CSRF_FIELD) #}
+<input type="hidden" name="_csrf_token" value="{{ csrf_token('diplome') }}" data-controller="csrf-protection" autocomplete="off">

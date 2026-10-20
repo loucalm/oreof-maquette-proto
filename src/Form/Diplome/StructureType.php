@@ -52,7 +52,6 @@ final class StructureType extends AbstractType
     {
         $resolver->setDefaults([
             'translation_domain' => 'diplome',
-            'csrf_protection' => false,
             'constraints' => [new Assert\Callback($this->validateConsistency(...))],
         ]);
     }

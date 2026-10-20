@@ -6,18 +6,21 @@ namespace App\Tests\Controller;
 
 use App\Entity\TypeDiplome;
 use App\Tests\Support\ResetsDatabase;
+use App\Tests\Support\SameOriginCsrf;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 final class DiplomePageTest extends WebTestCase
 {
     use ResetsDatabase;
+    use SameOriginCsrf;
 
     private KernelBrowser $client;
 
     protected function setUp(): void
     {
         $this->client = static::createClient();
+        $this->sameOrigin($this->client);
         $this->resetDatabase();
     }
 
@@ -47,12 +50,12 @@ final class DiplomePageTest extends WebTestCase
     {
         $id = $this->type('Licence')->getId();
 
-        $this->client->request('POST', '/diplomes/'.$id.'/archiver');
+        $this->client->request('POST', '/diplomes/'.$id.'/archiver', ['_csrf_token' => $this->csrfToken()]);
         self::assertResponseRedirects('/diplomes');
         $this->em->clear();
         self::assertTrue($this->em->find(TypeDiplome::class, $id)->isArchived());
 
-        $this->client->request('POST', '/diplomes/'.$id.'/desarchiver');
+        $this->client->request('POST', '/diplomes/'.$id.'/desarchiver', ['_csrf_token' => $this->csrfToken()]);
         $this->em->clear();
         self::assertFalse($this->em->find(TypeDiplome::class, $id)->isArchived());
     }
@@ -61,7 +64,7 @@ final class DiplomePageTest extends WebTestCase
     {
         $id = $this->type('Licence')->getId();
 
-        $this->client->request('POST', '/diplomes/'.$id.'/supprimer');
+        $this->client->request('POST', '/diplomes/'.$id.'/supprimer', ['_csrf_token' => $this->csrfToken()]);
 
         self::assertResponseRedirects('/diplomes');
         $crawler = $this->client->followRedirect();
@@ -74,7 +77,7 @@ final class DiplomePageTest extends WebTestCase
     {
         $id = $this->type('Master M2E')->getId();
 
-        $this->client->request('POST', '/diplomes/'.$id.'/supprimer');
+        $this->client->request('POST', '/diplomes/'.$id.'/supprimer', ['_csrf_token' => $this->csrfToken()]);
 
         self::assertResponseRedirects('/diplomes');
         $this->em->clear();
@@ -90,9 +93,36 @@ final class DiplomePageTest extends WebTestCase
         self::assertResponseRedirects('/');
 
         $id = $this->type('Master M2E')->getId();
-        $this->client->request('POST', '/diplomes/'.$id.'/supprimer');
+        $this->client->request('POST', '/diplomes/'.$id.'/supprimer', ['_csrf_token' => $this->csrfToken()]);
         self::assertResponseRedirects('/');
         $this->em->clear();
         self::assertNotNull($this->em->find(TypeDiplome::class, $id));
+    }
+
+    public function testPostWithoutCsrfTokenIsRefused(): void
+    {
+        $id = $this->type('Master M2E')->getId();
+
+        $this->client->request('POST', '/diplomes/'.$id.'/supprimer');
+        self::assertGreaterThanOrEqual(400, $this->client->getResponse()->getStatusCode(), 'sans jeton, la suppression doit être refusée');
+
+        // jeton présent mais requête d'une autre origine : refusée aussi
+        $this->client->setServerParameter('HTTP_SEC_FETCH_SITE', 'cross-site');
+        $this->client->request('POST', '/diplomes/'.$id.'/archiver', ['_csrf_token' => $this->csrfToken()]);
+        self::assertGreaterThanOrEqual(400, $this->client->getResponse()->getStatusCode());
+
+        $this->em->clear();
+        $type = $this->em->find(TypeDiplome::class, $id);
+        self::assertNotNull($type);
+        self::assertFalse($type->isArchived());
+    }
+
+    public function testIndexFormsCarryTheCsrfToken(): void
+    {
+        $crawler = $this->client->request('GET', '/diplomes');
+
+        $forms = $crawler->filter('form[method="post"][action^="/diplomes/"]');
+        self::assertGreaterThan(0, $forms->count());
+        self::assertSame($forms->count(), $forms->filter('input[name="_csrf_token"]')->count());
     }
 }

@@ -34,6 +34,7 @@ diplome:
     heading: Nouveau type de diplôme
     previous: Précédent
     next: Suivant
+    restart: Recommencer
     create: Créer le type de diplôme
     steps:
       informations: Informations
@@ -47,7 +48,16 @@ diplome:
       sigle_taken: Ce sigle est déjà utilisé par un autre type de diplôme.
       incomplete: Les informations du diplôme ne sont pas complètes.
       annee_consecutive: La seconde année doit suivre la première (ex. 2026-2027).
+    informations:
+      label: Libellé
+      sigle: Sigle
+      code_apogee: Code Apogée
+      annee: Année universitaire
+      description: Description
+      accredite: Accrédité
+      passage_cfvu: Passage en CFVU
     depart:
+      field: Type de départ
       none: Aucun (partir de zéro)
       help: Choisissez un type existant dont la configuration sera copiée, ou partez de zéro.
     formulaires:

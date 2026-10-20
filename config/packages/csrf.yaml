@@ -9,3 +9,5 @@ framework:
             - submit
             - authenticate
             - logout
+            # actions POST hors formulaire de la section Diplômes (archiver, supprimer, nouvelle version…)
+            - diplome

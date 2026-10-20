@@ -32,11 +32,12 @@ final class BasedOnType extends AbstractType
             'choices' => $choices,
             'required' => false,
             'placeholder' => 'diplome.wizard.depart.none',
+            'label' => 'diplome.wizard.depart.field',
         ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults(['translation_domain' => 'diplome', 'csrf_protection' => false]);
+        $resolver->setDefaults(['translation_domain' => 'diplome']);
     }
 }

@@ -10,18 +10,21 @@ use App\Entity\TypeDiplome;
 use App\Maquette\Doc\TreeNode;
 use App\Maquette\Maquette;
 use App\Tests\Support\ResetsDatabase;
+use App\Tests\Support\SameOriginCsrf;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 final class DiplomeEditTest extends WebTestCase
 {
     use ResetsDatabase;
+    use SameOriginCsrf;
 
     private KernelBrowser $client;
 
     protected function setUp(): void
     {
         $this->client = static::createClient();
+        $this->sameOrigin($this->client);
         $this->resetDatabase();
     }
 
@@ -143,7 +146,7 @@ final class DiplomeEditTest extends WebTestCase
     {
         $type = $this->type('L');
         $previous = $type->latestVersion();
-        $this->client->request('POST', sprintf('/diplomes/%d/versions', $type->getId()));
+        $this->client->request('POST', sprintf('/diplomes/%d/versions', $type->getId()), ['_csrf_token' => $this->csrfToken()]);
         self::assertResponseRedirects();
 
         $this->em->clear();
@@ -180,7 +183,7 @@ final class DiplomeEditTest extends WebTestCase
         $type->latestVersion()->setConfig(\App\Diplome\Spec\VersionConfig::fromArray($config));
         $this->em->flush();
 
-        $this->client->request('POST', sprintf('/diplomes/%d/propager/%d', $type->getId(), $type->latestVersion()->getId()));
+        $this->client->request('POST', sprintf('/diplomes/%d/propager/%d', $type->getId(), $type->latestVersion()->getId()), ['_csrf_token' => $this->csrfToken()]);
         self::assertResponseRedirects();
 
         $this->em->clear();
@@ -193,12 +196,12 @@ final class DiplomeEditTest extends WebTestCase
         $type = $this->type('M2E'); // 3 niveaux, lien sur le dernier
         $crawler = $this->client->request('GET', $this->editPath($type, 'bcc'));
         $values = $crawler->filter('form#wizard-form')->form()->getPhpValues();
-        $values['bcc_config'] = ['level1' => 'A', 'level2' => 'B', 'level3' => '', 'linkLevel' => '0'];
+        $values['bcc_config'] = ['level1' => 'A', 'level2' => 'B', 'level3' => '', 'linkLevel' => '0', '_token' => $this->formToken()];
         $this->client->request('POST', $this->editPath($type, 'bcc'), $values);
         self::assertResponseRedirects();
 
         // deux niveaux, lien explicite sur le premier ; puis trois niveaux avec l'option par défaut : le dernier
-        $values['bcc_config'] = ['level1' => 'A', 'level2' => 'B', 'level3' => 'C', 'linkLevel' => ''];
+        $values['bcc_config'] = ['level1' => 'A', 'level2' => 'B', 'level3' => 'C', 'linkLevel' => '', '_token' => $this->formToken()];
         $this->client->request('POST', $this->editPath($type, 'bcc'), $values);
         self::assertResponseRedirects();
         $this->em->clear();
@@ -212,7 +215,7 @@ final class DiplomeEditTest extends WebTestCase
         $type = $this->type('M2E');
         $crawler = $this->client->request('GET', $this->editPath($type, 'bcc'));
         $values = $crawler->filter('form#wizard-form')->form()->getPhpValues();
-        $values['bcc_config'] = ['level1' => 'Bloc', 'level2' => 'Objectif', 'level3' => 'Attendu', 'linkLevel' => ''];
+        $values['bcc_config'] = ['level1' => 'Bloc', 'level2' => 'Objectif', 'level3' => 'Attendu', 'linkLevel' => '', '_token' => $this->formToken()];
         $this->client->request('POST', $this->editPath($type, 'bcc'), $values);
         $this->em->clear();
         self::assertSame(2, $this->type('M2E')->latestVersion()->config()->bccLinkLevel);

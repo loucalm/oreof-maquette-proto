@@ -42,23 +42,27 @@
                     {% if row.versionId %}
                         <a href="{{ path('diplome_edit', {id: t.id, versionId: row.versionId, step: row.editStep}) }}" class="text-xs hover:underline mr-2" data-action="edit">{{ 'diplome.index.edit'|trans({}, 'diplome') }}</a>
                         <form method="post" action="{{ path('diplome_version_new', {id: t.id}) }}" class="inline mr-2">
+                            {% include 'diplome/_csrf.html.twig' %}
                             <button class="text-xs hover:underline" data-action="new-version">{{ 'diplome.index.new_version'|trans({}, 'diplome') }}</button>
                         </form>
                         <a href="{{ path('diplome_wizard_start', {depuis: row.versionId}) }}" class="text-xs hover:underline mr-2" data-action="duplicate">{{ 'diplome.index.duplicate'|trans({}, 'diplome') }}</a>
                     {% endif %}
                     {% if t.archived %}
                         <form method="post" action="{{ path('diplome_unarchive', {id: t.id}) }}" class="inline">
+                            {% include 'diplome/_csrf.html.twig' %}
                             <button class="text-xs hover:underline">{{ 'diplome.index.unarchive'|trans({}, 'diplome') }}</button>
                         </form>
                     {% else %}
                         <form method="post" action="{{ path('diplome_archive', {id: t.id}) }}" class="inline"
                               data-controller="confirm" data-confirm-message-value="{{ 'diplome.index.archive_confirm'|trans({'%label%': t.label}, 'diplome') }}">
+                            {% include 'diplome/_csrf.html.twig' %}
                             <button class="text-xs hover:underline">{{ 'diplome.index.archive'|trans({}, 'diplome') }}</button>
                         </form>
                     {% endif %}
                     {% if row.formations == 0 %}
                         <form method="post" action="{{ path('diplome_delete', {id: t.id}) }}" class="inline"
                               data-controller="confirm" data-confirm-message-value="{{ 'diplome.index.delete_confirm'|trans({'%label%': t.label}, 'diplome') }}">
+                            {% include 'diplome/_csrf.html.twig' %}
                             <button class="text-xs text-red-600 hover:underline ml-2">{{ 'diplome.index.delete'|trans({}, 'diplome') }}</button>
                         </form>
                     {% endif %}

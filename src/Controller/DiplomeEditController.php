@@ -10,15 +10,18 @@ use App\Diplome\VersionUsage;
 use App\Diplome\Wizard\WizardStepInterface;
 use App\Diplome\Wizard\WizardStepRegistry;
 use App\Diplome\WizardDraft;
+use App\Entity\Formation;
 use App\Entity\TypeDiplome;
 use App\Entity\TypeDiplomeVersion;
 use App\Repository\TypeDiplomeVersionRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -78,6 +81,7 @@ final class DiplomeEditController extends AbstractController
     }
 
     #[Route('/diplomes/{id}/versions', name: 'diplome_version_new', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[IsCsrfTokenValid(DiplomeController::CSRF_ID, tokenKey: DiplomeController::CSRF_FIELD)]
     public function newVersion(TypeDiplome $type): RedirectResponse
     {
         try {
@@ -93,6 +97,7 @@ final class DiplomeEditController extends AbstractController
     }
 
     #[Route('/diplomes/{id}/propager/{versionId}', name: 'diplome_version_propagate', requirements: self::REQUIREMENTS, methods: ['POST'])]
+    #[IsCsrfTokenValid(DiplomeController::CSRF_ID, tokenKey: DiplomeController::CSRF_FIELD)]
     public function propagate(TypeDiplome $type, int $versionId): RedirectResponse
     {
         $version = $this->version($type, $versionId);
@@ -109,7 +114,7 @@ final class DiplomeEditController extends AbstractController
         return $this->redirectToRoute('diplome_edit', ['id' => $type->getId(), 'versionId' => $version->getId(), 'step' => $this->steps->editableKeys()[0]]);
     }
 
-    private function renderStep(TypeDiplome $type, TypeDiplomeVersion $version, string $step, ?\Symfony\Component\Form\FormInterface $form, int $status = Response::HTTP_OK): Response
+    private function renderStep(TypeDiplome $type, TypeDiplomeVersion $version, string $step, ?FormInterface $form, int $status = Response::HTTP_OK): Response
     {
         $current = $this->editableStep($step);
         $draft = WizardDraft::forEdit($version);
@@ -128,7 +133,7 @@ final class DiplomeEditController extends AbstractController
         ], new Response(status: $status));
     }
 
-    /** @return list<\App\Entity\Formation> formations touchées par l'enregistrement de cet onglet */
+    /** @return list<Formation> formations touchées par l'enregistrement de cet onglet */
     private function concerned(WizardStepInterface $step, TypeDiplome $type, TypeDiplomeVersion $version): array
     {
         return $step->editsType() ? $this->usage->formationsOfType($type) : $this->usage->formationsUsing($version);

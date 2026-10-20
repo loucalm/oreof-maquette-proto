@@ -24,6 +24,7 @@
 {% endblock %}
 {% block step_next %}
     <form method="post" action="{{ path('diplome_wizard_save') }}">
+        {% include 'diplome/_csrf.html.twig' %}
         <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'diplome.wizard.create'|trans({}, 'diplome') }}</button>
     </form>
 {% endblock %}
