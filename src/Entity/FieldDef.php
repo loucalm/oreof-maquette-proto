@@ -61,6 +61,10 @@ class FieldDef
     #[ORM\Column]
     private bool $quickAdd = false;
 
+    /** Libellé de l'option vide d'une liste de choix (ex. « Choisir un type d'UE »). */
+    #[ORM\Column(length: 120, nullable: true)]
+    private ?string $placeholder = null;
+
     #[ORM\Column]
     private bool $required = false;
 
@@ -199,6 +203,18 @@ class FieldDef
     public function setQuickAdd(bool $quickAdd): self
     {
         $this->quickAdd = $quickAdd;
+
+        return $this;
+    }
+
+    public function getPlaceholder(): ?string
+    {
+        return $this->placeholder;
+    }
+
+    public function setPlaceholder(?string $placeholder): self
+    {
+        $this->placeholder = trim((string) $placeholder) ?: null;
 
         return $this;
     }

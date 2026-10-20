@@ -1,0 +1,6 @@
+{% import 'field_type/_macros.html.twig' as m %}
+{% if variant == 'param' %}
+    {% include 'field_type/_rich_textarea.html.twig' with {name: name, value: value, help: null, def: def} only %}
+{% else %}
+    <textarea name="{{ name }}" rows="3" class="fld"{{ m.lengthBounds(def) }}>{{ value }}</textarea>
+{% endif %}

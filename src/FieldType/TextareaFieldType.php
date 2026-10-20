@@ -25,4 +25,9 @@ final class TextareaFieldType extends AbstractFieldType
     {
         return self::BOUNDS_LENGTH;
     }
+
+    public function viewTemplate(): string
+    {
+        return 'field_type/view/textarea.html.twig';
+    }
 }

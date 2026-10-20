@@ -1,0 +1,81 @@
+{% import _self as ui %}
+{% set mtypes = mccc_types_for(node.formation) %}
+{% set selectedType = value.type ?? '' %}
+{% set selectedMt = mtypes|filter(t => t.key == selectedType)|first %}
+{% set evals = value.evaluations ?? [] %}
+<div data-controller="mccc">
+    <div class="flex items-center gap-2">
+        <span class="fld-label">{{ 'node.panel.mccc_type_label'|trans({}, 'node') }}</span>
+        <span class="text-red-500" aria-hidden="true">*</span>
+    </div>
+    {% if mtypes is empty %}
+        <p class="fld-help mt-1">{{ 'node.panel.no_mccc_types'|trans({}, 'node') }}</p>
+    {% endif %}
+    <div class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {% for mt in mtypes %}
+            {% set on = selectedType == mt.key %}
+            <label class="flex items-start gap-2.5 text-sm cursor-pointer rounded-lg border px-3 py-2.5 hover:bg-gray-50"
+                   style="border-color:{{ on ? 'var(--c-primary)' : 'var(--c-border)' }};background:{{ on ? 'var(--c-primary-soft)' : '#fff' }}">
+                <input type="radio" name="{{ name }}[type]" value="{{ mt.key }}" {{ on ? 'checked' }} class="mt-0.5"
+                       data-mccc-target="typeRadio" data-action="change->mccc#sync"
+                       data-has-evaluations="{{ mt.hasEvaluations ? '1' : '0' }}" data-evaluations-label="{{ mt.evaluationsLabel }}">
+                <span><span class="font-semibold">{{ mt.shortLabel }}</span>
+                    <span class="block text-xs text-gray-400">{{ mt.label }}</span></span>
+            </label>
+        {% endfor %}
+    </div>
+
+    <div data-mccc-target="collection" {{ (selectedMt and selectedMt.hasEvaluations) ? '' : 'hidden' }}
+         class="mt-4 rounded-xl border p-4" style="border-color:var(--c-border)">
+        <div class="flex items-center justify-between gap-2">
+            <div class="fld-label" data-mccc-target="collectionLabel">{{ selectedMt ? selectedMt.evaluationsLabel : 'node.panel.default_evaluations_label'|trans({}, 'node') }}</div>
+            <div class="text-sm text-gray-500">{{ 'node.panel.mccc_total_label'|trans({}, 'node') }} <span class="font-semibold" data-mccc-target="sum">0</span> %</div>
+        </div>
+        <div data-mccc-target="rows" class="mt-2 space-y-2">
+            {% for e in evals %}{{ ui.mcccRow(loop.index0, e.type ?? '', e.weight ?? '', e.duree ?? '', name) }}{% endfor %}
+        </div>
+        <button type="button" data-action="mccc#addRow"
+                class="mt-2 inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">
+            {{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'node.panel.add_evaluation_button'|trans({}, 'node') }}
+        </button>
+        <template data-mccc-target="rowTemplate">{{ ui.mcccRow('__INDEX__', '', '', '', name) }}</template>
+    </div>
+</div>
+
+{% set results = mccc_results(node) %}
+{% if results is not empty %}
+    <div class="mt-3 space-y-1.5">
+        {% for r in results %}
+            {% set colors = r.valid ? {bg: '#f0fdf4', fg: '#166534', icon: 'ph:check-circle'}
+                : (r.severity == 'error' ? {bg: '#fef2f2', fg: '#b91c1c', icon: 'ph:x-circle'}
+                : (r.severity == 'warning' ? {bg: '#fffbeb', fg: '#b45309', icon: 'ph:warning'}
+                : {bg: '#eff6ff', fg: '#1d4ed8', icon: 'ph:info'})) %}
+            <div class="flex items-center gap-2 text-sm rounded-lg px-3 py-2" style="background:{{ colors.bg }};color:{{ colors.fg }}">
+                {{ ux_icon(colors.icon, {class: 'icon'}) }} {{ r.message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% macro mcccRow(index, type, weight, duree, name) %}
+    <div class="flex items-center gap-2" data-mccc-target="row">
+        <select name="{{ name }}[evaluations][{{ index }}][type]" class="fld flex-1">
+            <option value="">{{ 'node.panel.evaluation_type_placeholder'|trans({}, 'node') }}</option>
+            {% for k, l in referentiel('types_epreuve') %}<option value="{{ k }}" {{ type == k ? 'selected' }}>{{ l }}</option>{% endfor %}
+        </select>
+        <div class="relative w-24 shrink-0">
+            <input type="number" step="1" min="0" name="{{ name }}[evaluations][{{ index }}][duree]" value="{{ duree }}"
+                   placeholder="{{ 'node.panel.evaluation_duree_placeholder'|trans({}, 'node') }}" class="fld pr-8" title="{{ 'node.panel.evaluation_duree_title'|trans({}, 'node') }}">
+            <span class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-xs text-gray-400">min</span>
+        </div>
+        <div class="relative w-28 shrink-0">
+            <input type="number" step="0.1" min="0" name="{{ name }}[evaluations][{{ index }}][weight]" value="{{ weight }}"
+                   class="fld pr-7" data-mccc-target="weightInput" data-action="input->mccc#updateSum">
+            <span class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-xs text-gray-400">%</span>
+        </div>
+        <button type="button" data-action="mccc#removeRow"
+                class="shrink-0 rounded-lg border px-2 py-2 text-gray-400 hover:bg-gray-50 hover:text-red-600" style="border-color:var(--c-border)" title="{{ 'node.panel.delete_title'|trans({}, 'node') }}">
+            {{ ux_icon('ph:trash', {class: 'icon'}) }}
+        </button>
+    </div>
+{% endmacro %}

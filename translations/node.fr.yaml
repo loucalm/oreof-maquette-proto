@@ -62,23 +62,15 @@ node:
     view_ramification_link: Voir / modifier dans l'arborescence des parcours
     duplicate_delete_hint: "Dupliquer / supprimer : bas de l'arborescence"
     add_child_label: Ajouter un enfant
-    ects_label: ECTS de l'%type%
-    ects_help: ECTS associés à l'%type%.
-    choice_ue_type: Choisir un type d'UE
-    choice_ec_type: Choisir un type d'EC
     choice_default: — Choisir —
     or_free_value: 'Ou saisir une autre valeur :'
     other_placeholder: (facultatif)
     quick_add_placeholder: Nouvelle valeur…
-    nature_choice_note: >-
-      Cocher une case ici n'assemble aucune alternative — utilisez « Transformer en bloc de choix » en
-      haut de ce panneau pour regrouper cet ELP avec d'autres.
     no_competencies: >-
       Aucune compétence dans le référentiel (BCC). Ajoutez-en dans « Référentiel de compétences (BCC) ».
     filter_competencies_placeholder: Filtrer les compétences…
     no_competency_match: Aucune compétence ne correspond.
     add_competency_fake: Ajouter une compétence
-    fiche_choice_placeholder: Choisir dans la liste ou « Créer une nouvelle »…
     create_fiche_fake: Créer une nouvelle fiche
     hours_none_label: EC sans volume horaire
     place_pres: présentiel

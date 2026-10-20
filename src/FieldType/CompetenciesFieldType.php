@@ -21,8 +21,8 @@ final class CompetenciesFieldType extends AbstractFieldType
         return 70;
     }
 
-    public function isSystem(): bool
+    public function viewTemplate(): string
     {
-        return true;
+        return 'field_type/view/competencies.html.twig';
     }
 }

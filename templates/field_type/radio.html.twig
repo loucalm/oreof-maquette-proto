@@ -1,0 +1,15 @@
+{% if variant == 'param' %}
+    <div class="flex flex-wrap gap-6 mt-2 text-sm">
+        {% for ov, ol in options %}
+            <label class="flex items-center gap-2"><input type="radio" name="{{ name }}" value="{{ ov }}" {{ value == ov ? 'checked' }}> {{ ol }}</label>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="mt-1 flex flex-wrap gap-x-6 gap-y-2">
+        {% for ov, ol in options %}
+            <label class="flex items-center gap-2 text-sm cursor-pointer">
+                <input type="radio" name="{{ name }}" value="{{ ov }}" {{ value == ov ? 'checked' }}>{{ ol }}
+            </label>
+        {% endfor %}
+    </div>
+{% endif %}

@@ -111,6 +111,10 @@ class NodeType
     #[ORM\Column]
     private bool $choiceTransformable = true;
 
+    /** Le code de l'ELP est-il obligatoire pour ce type ? (libellé et aide du champ « code » en dépendent) */
+    #[ORM\Column]
+    private bool $codeRequired = false;
+
     /** Type "socle" livré par les fixtures — informatif, non bloquant dans le proto. */
     #[ORM\Column]
     private bool $system = false;
@@ -314,6 +318,18 @@ class NodeType
     public function setChoiceTransformable(bool $choiceTransformable): self
     {
         $this->choiceTransformable = $choiceTransformable;
+
+        return $this;
+    }
+
+    public function isCodeRequired(): bool
+    {
+        return $this->codeRequired;
+    }
+
+    public function setCodeRequired(bool $codeRequired): self
+    {
+        $this->codeRequired = $codeRequired;
 
         return $this;
     }

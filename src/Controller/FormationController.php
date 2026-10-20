@@ -615,9 +615,10 @@ final class FormationController extends AbstractController
     }
 
     public const PARAM_SECTIONS = [
-        'organisation' => ['label' => 'Organisation et localisation'],
-        'presentation' => ['label' => 'Présentation'],
-        'structure' => ['label' => 'Configuration de la structure'],
+        // generic : champs pilotés par le catalogue (FieldDef) ; sinon écran dédié
+        'organisation' => ['label' => 'Organisation et localisation', 'generic' => true],
+        'presentation' => ['label' => 'Présentation', 'generic' => true],
+        'structure' => ['label' => 'Configuration de la structure', 'generic' => false],
     ];
 
     #[Route('/formations/{id}/parametre/{key}', name: 'formation_param', methods: ['GET'])]

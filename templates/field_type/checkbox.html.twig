@@ -1,0 +1,19 @@
+{% set cur = value is iterable ? value : [] %}
+{% if variant == 'param' %}
+    <div class="grid gap-2 sm:grid-cols-2 mt-2 text-sm">
+        {% for ov, ol in options %}
+            <label class="flex items-center gap-2">
+                <input type="checkbox" name="{{ name }}[]" value="{{ ov }}" {{ ov in cur ? 'checked' }}> {{ ol }}
+            </label>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="mt-1 flex flex-wrap gap-x-6 gap-y-2">
+        {% for ov, ol in options %}
+            <label class="flex items-center gap-2 text-sm cursor-pointer">
+                <input type="checkbox" name="{{ name }}[]" value="{{ ov }}" {{ ov in cur ? 'checked' }}>{{ ol }}
+            </label>
+        {% endfor %}
+    </div>
+    {% if def.quickAdd and def.referentielKey and node %}{% include 'field_type/_quick_add.html.twig' with {key: key} only %}{% endif %}
+{% endif %}

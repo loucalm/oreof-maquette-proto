@@ -1,0 +1,38 @@
+{% set groups = bcc_competences(node) %}
+{% set cur = value ?? [] %}
+{% if groups is empty %}
+    <p class="fld-help">{{ 'node.panel.no_competencies'|trans({}, 'node') }}</p>
+{% else %}
+    <div data-controller="cbxfilter" class="mt-1">
+        <div data-cbxfilter-target="chips" class="mb-2 flex flex-wrap gap-1.5" hidden></div>
+        <div class="rounded-lg border overflow-hidden" style="border-color:var(--c-border)">
+            <div class="border-b bg-gray-50 px-2 py-1.5" style="border-color:var(--c-border)">
+                <input type="search" placeholder="{{ 'node.panel.filter_competencies_placeholder'|trans({}, 'node') }}" data-cbxfilter-target="input"
+                       data-action="input->cbxfilter#filter"
+                       class="w-full rounded-md border px-2 py-1 text-sm" style="border-color:var(--c-border)">
+            </div>
+            <div class="max-h-64 overflow-y-auto p-2 space-y-3">
+                {% for g in groups %}
+                    <div data-cbxfilter-target="group">
+                        <div class="text-[11px] font-semibold uppercase tracking-wide {{ g.transversal ? 'text-teal-700' : 'text-gray-400' }}">{{ g.bloc }}</div>
+                        <div class="mt-1 space-y-0.5">
+                            {% for c in g.items %}
+                                <label class="flex items-center gap-2 text-sm cursor-pointer rounded px-1 py-1 hover:bg-gray-50"
+                                       data-cbxfilter-target="row"
+                                       data-text="{{ (c.ref ~ ' ' ~ c.description ~ ' ' ~ g.bloc)|lower }}">
+                                    <input type="checkbox" name="{{ name }}[]" value="{{ c.id }}" data-chip="{{ c.title }}" {{ (c.id in cur or c.label in cur) ? 'checked' }}>
+                                    {% if c.ref %}<span class="font-mono text-xs font-bold shrink-0" style="color:var(--c-primary)">{{ c.ref }}</span>{% endif %}
+                                    <span class="min-w-0 truncate">{{ c.description ?: c.label }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+                <p data-cbxfilter-target="empty" hidden class="px-1 py-3 text-center text-sm text-gray-400">{{ 'node.panel.no_competency_match'|trans({}, 'node') }}</p>
+            </div>
+        </div>
+        <div class="mt-1 flex items-center justify-between">
+            <span class="text-xs text-gray-400" data-cbxfilter-target="count"></span>
+        </div>
+    </div>
+{% endif %}

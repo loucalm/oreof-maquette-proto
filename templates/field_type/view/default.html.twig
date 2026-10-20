@@ -1,0 +1,4 @@
+{%- if value is iterable -%}{{ value|join(', ') }}
+{%- elseif options is not empty -%}{{ options[value] ?? value }}
+{%- else -%}{{ value }}
+{%- endif -%}

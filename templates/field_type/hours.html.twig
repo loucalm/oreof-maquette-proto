@@ -1,0 +1,45 @@
+{% set mods = referentiel('modalites_heure')|filter((l, k) => k != 'te') %}
+<div data-controller="hours" class="space-y-4">
+    <label class="flex items-center gap-3 text-sm">
+        <input type="checkbox" class="switch" name="{{ name }}[none]" value="1" {{ (value.none ?? false) ? 'checked' }}
+               data-hours-target="none" data-action="change->hours#sync">
+        <span class="font-medium">{{ 'node.panel.hours_none_label'|trans({}, 'node') }}</span>
+    </label>
+
+    <div data-hours-target="fields" class="space-y-4">
+        {% set places = referentiel('lieux_enseignement') %}
+        {% for place, plabel in places %}
+            <div class="rounded-xl border p-4" style="border-color:var(--c-border)">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="fld-label">{{ 'node.panel.hours_volume_label'|trans({'%place%': plabel}, 'node') }}</div>
+                    <span class="text-red-500 shrink-0" aria-hidden="true">*</span>
+                </div>
+                <div class="mt-2 grid gap-3 sm:grid-cols-3">
+                    {% for m, mlabel in mods %}
+                        <div class="relative">
+                            <input type="number" min="0" step="0.5" placeholder="0"
+                                   name="{{ name }}[{{ place }}][{{ m }}]" value="{{ value[place][m] ?? '' }}"
+                                   data-hours-target="input" class="fld pr-24">
+                            <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-gray-400">{{ 'node.panel.hours_unit_label'|trans({'%mod%': mlabel}, 'node') }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'node.panel.hours_place_help'|trans({'%place%': plabel}, 'node') }}</div>
+            </div>
+        {% endfor %}
+
+        <div class="rounded-xl border p-4" style="border-color:var(--c-border)">
+            <div class="flex items-center justify-between gap-2">
+                <div class="fld-label">{{ 'node.panel.hours_te_label'|trans({}, 'node') }}</div>
+                <span class="text-red-500 shrink-0" aria-hidden="true">*</span>
+            </div>
+            <div class="relative mt-2">
+                <input type="number" min="0" step="0.5" placeholder="0"
+                       name="{{ name }}[te]" value="{{ value.te ?? '' }}"
+                       data-hours-target="input" class="fld pr-24">
+                <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-gray-400">{{ 'node.panel.hours_unit_label'|trans({'%mod%': 'TE'}, 'node') }}</span>
+            </div>
+            <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'node.panel.hours_te_help'|trans({}, 'node') }}</div>
+        </div>
+    </div>
+</div>

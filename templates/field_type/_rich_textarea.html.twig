@@ -1,0 +1,16 @@
+{# Zone de texte « façon ORéOF » (barre d'outils décorative). Variables : name (nom HTML complet), value, help, def. #}
+{% import 'field_type/_macros.html.twig' as m %}
+<div class="mt-1 rounded-lg border overflow-hidden" style="border-color:var(--c-border)">
+    <div class="flex items-center gap-1 border-b bg-gray-50 px-2 py-1.5" style="border-color:var(--c-border)">
+        {% for b in ['tx', 'ph:link', '<>', 'ph:list', 'ph:image'] %}
+            <span class="grid h-7 min-w-7 place-items-center rounded border bg-white px-1.5 text-xs text-gray-500 cursor-default" style="border-color:var(--c-border)">{{ b starts with 'ph:' ? ux_icon(b, {class: 'icon'}) : b }}</span>
+        {% endfor %}
+        <span class="ml-auto flex gap-1">
+            <span class="grid h-7 w-7 place-items-center rounded border bg-white text-gray-500 cursor-default" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-counter-clockwise', {class: 'icon'}) }}</span>
+            <span class="grid h-7 w-7 place-items-center rounded border bg-white text-gray-500 cursor-default" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-clockwise', {class: 'icon'}) }}</span>
+        </span>
+    </div>
+    <textarea name="{{ name }}" rows="4"
+              class="w-full resize-y px-3 py-2 text-sm outline-none" placeholder="…"{{ m.lengthBounds(def|default(null)) }}>{{ value }}</textarea>
+</div>
+{% if help|default(null) %}<div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ help }}</div>{% endif %}

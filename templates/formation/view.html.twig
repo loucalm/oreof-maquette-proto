@@ -4,13 +4,7 @@
 {# ─────────── macros ─────────── #}
 
 {% macro fieldval(key, def, n) %}
-    {%- set v = n.getAttribute(key) -%}
-    {%- if def.field in ['choice', 'radio'] -%}{{ def.options[v] ?? v }}
-    {%- elseif def.field == 'competencies' -%}
-        <span class="inline-flex flex-wrap gap-1">{% for c in bcc_competence_titles(n, v) %}<span class="pill">{{ c }}</span>{% endfor %}</span>
-    {%- elseif def.field == 'textarea' -%}<span class="whitespace-pre-line">{{ v }}</span>
-    {%- else -%}{{ v }}
-    {%- endif -%}
+    {{- field_view(def, n.getAttribute(key), n) -}}
 {% endmacro %}
 
 {# contenu organisé d'un nœud (onglets → catégories) #}
@@ -69,7 +63,7 @@
                 {% set curCat = '__init__' %}
                 {% set tabHasFields = false %}
                 {% for key, def in catalog %}
-                    {% if def.domain == tab and (caps[key] ?? false) and def.field not in ['hours','mccc']
+                    {% if def.domain == tab and (caps[key] ?? false) and not field_type(def).system
                           and n.getAttribute(key) is not null and n.getAttribute(key) is not empty %}
                         {% set hasContent = true %}
                         {% if not tabHasFields %}
@@ -98,7 +92,7 @@
             </div>
             {% for sect, slabel in {'organisation': 'formation.view.section_organisation'|trans({}, 'formation'), 'presentation': 'formation.view.section_presentation'|trans({}, 'formation')} %}
                 {% set pd = n.getParametre(sect) %}
-                {% set pfields = parcours_param_active_fields(sect)|filter(f => f.type != 'separator') %}
+                {% set pfields = parcours_param_active_fields(sect)|filter(f => field_type(f).input) %}
                 {% set shown = pfields|filter(f => parcours_field_value(n, f.key, pd) is not empty) %}
                 {% if shown is not empty %}
                     <div class="fld-cat">{{ slabel }}</div>
@@ -219,7 +213,7 @@
                 <h3 class="text-lg font-bold">{{ section.label }}</h3>
             </div>
 
-            {% if key == 'structure' %}
+            {% if not section.generic %}
                 <dl class="divide-y" style="border-color:var(--c-border)">
                     {{ m.prow('formation.view.plabel.org_parcours'|trans({}, 'formation'), formation.avecParcours ? 'formation.view.multi_parcours_value'|trans({}, 'formation') : 'formation.editor.meta_mono_parcours'|trans({}, 'formation')) }}
                     {{ m.prow('formation.view.plabel.temporal_dimension'|trans({}, 'formation'),
@@ -254,7 +248,7 @@
                     {% endif %}
                 </dl>
             {% else %}
-                {% set allFields = param_active_fields(key)|filter(f => f.type != 'separator') %}
+                {% set allFields = param_active_fields(key)|filter(f => field_type(f).input) %}
                 {% set present = allFields|filter(f => param_field_value(formation, f.key, data) is not empty) %}
                 {% if present is empty %}
                     <p class="text-sm text-gray-400 italic">{{ 'formation.view.section_empty'|trans({}, 'formation') }}</p>
@@ -262,10 +256,9 @@
                     <dl class="divide-y" style="border-color:var(--c-border)">
                         {% for f in present %}
                             {% set val = param_field_value(formation, f.key, data) %}
-                            {% if f.key == 'rncp' %}{% set val = val|capitalize %}{% endif %}
                             <div class="grid gap-1 py-2 sm:grid-cols-[240px_1fr]">
                                 <dt class="text-sm text-gray-400">{{ f.label }}</dt>
-                                <dd class="text-sm text-gray-800 {{ f.type == 'textarea' ? 'whitespace-pre-line' }}">{{ val is iterable ? val|join(', ') : val }}</dd>
+                                <dd class="text-sm text-gray-800">{{ field_view(f, val) }}</dd>
                             </div>
                         {% endfor %}
                     </dl>
@@ -297,7 +290,7 @@
                     </div>
                     <ul class="bcc-comp-list">
                         {% set cNum = 0 %}
-                        {% for c in bloc.children|filter(c => c.type.key == 'competence') %}
+                        {% for c in bloc.children|filter(c => not c.isBloc) %}
                             {% set cRef = '' %}
                             {% if bcRef and c.type.numbered %}{% set cNum = cNum + 1 %}{% set cRef = bcRef ~ '.' ~ number_index(cNum, c.type.numberStyle) %}{% endif %}
                             <li class="bcc-comp"><div class="bcc-comp-row">

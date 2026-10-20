@@ -1,0 +1,5 @@
+{# Mini-formulaire d'ajout au référentiel ; le formulaire cible (id qa-<clé>) est posé hors du formulaire principal. #}
+<div class="mt-1.5 flex items-center gap-2">
+    <input type="text" name="value" form="qa-{{ key }}" aria-label="{{ 'node.panel.quick_add_placeholder'|trans({}, 'node') }}" placeholder="{{ 'node.panel.quick_add_placeholder'|trans({}, 'node') }}" class="fld flex-1 text-xs">
+    <button form="qa-{{ key }}" class="shrink-0 rounded-lg border px-2.5 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'common.add'|trans({}, 'common') }}</button>
+</div>

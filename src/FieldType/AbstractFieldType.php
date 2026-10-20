@@ -29,6 +29,16 @@ abstract class AbstractFieldType implements FieldTypeInterface
         return true;
     }
 
+    public function widgetTemplate(): string
+    {
+        return 'field_type/'.$this->key().'.html.twig';
+    }
+
+    public function viewTemplate(): string
+    {
+        return 'field_type/view/default.html.twig';
+    }
+
     public function isFilled(mixed $value): bool
     {
         return !(null === $value || '' === $value || [] === $value);

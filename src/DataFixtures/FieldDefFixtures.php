@@ -71,12 +71,14 @@ final class FieldDefFixtures extends Fixture
 
     public function load(ObjectManager $manager): void
     {
-        foreach (AttributeCatalog::SEED as $i => [$key, $label, $tab, $type, $options, $required, $help, $referentielKey]) {
+        foreach (AttributeCatalog::SEED as $i => [$key, $label, $tab, $type, $options, $required, $help, $referentielKey, $placeholder, $allowExtra]) {
             $field = (new FieldDef($key, $label))
                 ->setTab($tab)
                 ->setType($type)
                 ->setOptions($options)
                 ->setReferentielKey($referentielKey)
+                ->setPlaceholder($placeholder)
+                ->setAllowExtra($allowExtra)
                 ->setRequired($required)
                 ->setHelp($help)
                 ->setPosition($i * 10)

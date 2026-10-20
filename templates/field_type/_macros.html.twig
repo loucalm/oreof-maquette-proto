@@ -1,0 +1,5 @@
+{# Bornes min/max d'un champ texte = longueur en caractères (cf. éditeur de champ des types d'ELP). #}
+{% macro lengthBounds(def) -%}
+    {%- if def.min is not null %} minlength="{{ def.min|round }}"{% endif -%}
+    {%- if def.max is not null %} maxlength="{{ def.max|round }}"{% endif -%}
+{%- endmacro %}

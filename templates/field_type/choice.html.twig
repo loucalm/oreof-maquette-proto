@@ -1,0 +1,23 @@
+{% if variant == 'param' %}
+    <select name="{{ name }}" class="fld mt-1">
+        <option value="">{{ def.placeholder ?: 'formation.fields.default_placeholder'|trans({}, 'formation') }}</option>
+        {% for opt in options %}
+            <option value="{{ opt }}" {{ value == opt ? 'selected' }}>{{ opt }}</option>
+        {% endfor %}
+    </select>
+    {% if def.allowExtra %}
+        <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.param.generic_add_hint'|trans({}, 'formation') }}</span></div>
+    {% endif %}
+{% else %}
+    <select name="{{ name }}" class="fld">
+        <option value="">{{ def.placeholder ?: 'node.panel.choice_default'|trans({}, 'node') }}</option>
+        {% for ov, ol in options %}<option value="{{ ov }}" {{ value == ov ? 'selected' }}>{{ ol }}</option>{% endfor %}
+    </select>
+    {% if def.allowExtra %}
+        <div class="mt-1.5 flex items-center gap-2">
+            <span class="text-xs shrink-0" style="color:var(--c-muted)">{{ 'node.panel.or_free_value'|trans({}, 'node') }}</span>
+            <input type="text" name="{{ name }}_autre" value="{{ (value and value not in options|keys) ? value : '' }}" class="fld flex-1" placeholder="{{ 'node.panel.other_placeholder'|trans({}, 'node') }}">
+        </div>
+    {% endif %}
+    {% if def.quickAdd and def.referentielKey and node %}{% include 'field_type/_quick_add.html.twig' with {key: key} only %}{% endif %}
+{% endif %}

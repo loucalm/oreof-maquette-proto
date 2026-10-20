@@ -1,0 +1,9 @@
+{% if variant == 'param' %}
+    <div class="flex items-center gap-3 text-gray-400 my-6 first:mt-0">
+        <div class="h-px flex-1 bg-gray-200"></div>
+        <span class="text-sm">{{ def.label }}</span>
+        <div class="h-px flex-1 bg-gray-200"></div>
+    </div>
+{% else %}
+    <div class="fld-cat">{{ def.label }}</div>
+{% endif %}

@@ -51,6 +51,12 @@ interface FieldTypeInterface
     /** Faux pour un élément d'organisation (séparateur) : rien à saisir. */
     public function isInput(): bool;
 
+    /** Gabarit Twig du widget de saisie (variables : def, key, value, name, options, node, errors, variant). */
+    public function widgetTemplate(): string;
+
+    /** Gabarit Twig de l'affichage en lecture seule (variables : def, value, options, node). */
+    public function viewTemplate(): string;
+
     public function isFilled(mixed $value): bool;
 
     /**

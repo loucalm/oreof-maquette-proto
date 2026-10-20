@@ -62,6 +62,8 @@ final class NodeTypeFixtures extends Fixture
                 ->setNumberStyle($numberStyle)
                 ->setGlobalNumbering($globalNumbering)
                 ->setChoiceTransformable($choiceTransformable)
+                // le code de l'ELP n'est obligatoire que pour les éléments constitutifs (feuilles évaluées)
+                ->setCodeRequired('ec' === $key)
                 ->setSystem($system);
 
             $manager->persist($type);

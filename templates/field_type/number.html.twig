@@ -1,0 +1,9 @@
+{% if variant == 'param' %}
+    <input type="number" name="{{ name }}" value="{{ value }}" class="fld mt-1"
+           {% if def.min is not null %}min="{{ def.min }}"{% endif %} {% if def.max is not null %}max="{{ def.max }}"{% endif %}>
+{% else %}
+    <input type="number" step="0.5" name="{{ name }}" value="{{ value }}"
+           {% if def.min is not null %}min="{{ def.min }}"{% endif %}
+           {% if def.max is not null %}max="{{ def.max }}"{% endif %}
+           class="fld w-44">
+{% endif %}

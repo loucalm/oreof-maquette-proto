@@ -1,0 +1,2 @@
+{% import 'field_type/_macros.html.twig' as m %}
+<input name="{{ name }}" value="{{ value }}" class="fld{{ variant == 'param' ? ' mt-1' }}"{{ m.lengthBounds(def) }}>
