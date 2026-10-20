@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Maquette;
 
+use App\Diplome\Check\StructureChecker;
+use App\Diplome\Check\StructureViolation;
+use App\Diplome\TypeDiplomeResolver;
 use App\Entity\FieldDef;
 use App\Entity\Formation;
 use App\Entity\NodeType;
@@ -30,6 +33,8 @@ final class Completion
         private readonly FieldDefRepository $fields,
         private readonly TabValidator $validator,
         private readonly StructureTemplateRepository $templates,
+        private readonly StructureChecker $structureChecker,
+        private readonly TypeDiplomeResolver $resolver,
     ) {
     }
 
@@ -141,6 +146,20 @@ final class Completion
         return $acc;
     }
 
+    /**
+     * Écarts de la maquette à la configuration de sa version de type de diplôme
+     * (vide pour une formation sans version). Une violation non bloquante compte
+     * comme élément incomplet, une violation bloquante comme erreur.
+     *
+     * @return list<StructureViolation>
+     */
+    public function structureViolations(MaquetteDoc $doc): array
+    {
+        $config = $this->resolver->configFor($doc->formation);
+
+        return null === $config ? [] : $this->structureChecker->check($doc, $config);
+    }
+
     /** @param array{req: int, filled: int} $s */
     public function pct(array $s): int
     {
@@ -150,7 +169,10 @@ final class Completion
     /**
      * Statistiques d'une maquette, rangées dans Formation::stats.
      *
-     * @return array{progress: int, req: int, filled: int, parcours: list<array<string, mixed>>}
+     * `structure` : violations de la version du type de diplôme, `incomplete`
+     * (non bloquantes, comptées parmi les éléments à compléter) et `blocking` (erreurs).
+     *
+     * @return array{progress: int, req: int, filled: int, structure: array{incomplete: int, blocking: int}, parcours: list<array<string, mixed>>}
      */
     public function docStats(MaquetteDoc $doc): array
     {
@@ -160,6 +182,10 @@ final class Completion
             $overall['req'] += $s['req'];
             $overall['filled'] += $s['filled'];
         }
+
+        $violations = $this->structureViolations($doc);
+        $blocking = \count(array_filter($violations, static fn (StructureViolation $v): bool => $v->blocking));
+        $overall['req'] += \count($violations);
 
         $parcours = [];
         // BUT : référentiel national, rien à saisir — même règle que MaquetteExtension::bccStatus()
@@ -183,6 +209,7 @@ final class Completion
             'progress' => $this->pct($overall),
             'req' => $overall['req'],
             'filled' => $overall['filled'],
+            'structure' => ['incomplete' => \count($violations) - $blocking, 'blocking' => $blocking],
             'parcours' => $parcours,
         ];
     }

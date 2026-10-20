@@ -16,7 +16,7 @@
 </div>
 
 <div class="rounded-2xl border bg-white px-7 py-6 space-y-6" style="border-color:var(--c-border)">
-    {% if groups is empty and sections is empty %}
+    {% if groups is empty and sections is empty and violations is empty %}
         <div class="rounded-xl border p-6 text-sm" style="border-color:#bbf7d0;background:#f0fdf4">
             <span class="font-semibold text-green-800">{{ ux_icon('ph:check-bold', {class: 'icon'}) }} {{ 'formation.check.no_issue_title'|trans({}, 'formation') }}</span>
             <p class="text-green-700 mt-1">{{ 'formation.check.no_issue_text'|trans({}, 'formation') }}</p>
@@ -35,6 +35,31 @@
                             {% if sec.context %}<span class="text-gray-400">· {{ sec.context }}</span>{% endif %}
                         </div>
                         <a href="{{ sec.url }}" class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">{{ 'formation.check.fix_button'|trans({}, 'formation') }} {{ ux_icon('ph:arrow-right', {class: 'icon'}) }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% endif %}
+
+    {% if violations is not empty %}
+        <section>
+            <h2 class="text-sm font-bold uppercase tracking-wide text-gray-500 mb-2">{{ 'formation.check.structure_title'|trans({'%count%': violations|length}, 'formation') }}</h2>
+            <ul class="space-y-2">
+                {% for item in violations %}
+                    {% set v = item.violation %}
+                    {% set n = item.node %}
+                    <li class="flex items-start justify-between gap-4 rounded-lg border p-3" style="border-color:var(--c-border)">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="status-dot" data-status="{{ v.blocking ? 'error' : 'incomplete' }}"></span>
+                                <span class="text-sm font-medium">{{ n ? n.displayLabel : formation.name }}</span>
+                            </div>
+                            <p class="ml-6 mt-1 text-xs {{ v.blocking ? 'text-red-600' : 'text-gray-600' }}">{{ v.message }}{% if v.actual is not null and v.expected is not null %} ({{ 'formation.check.structure_actual'|trans({'%actual%': v.actual, '%expected%': v.expected}, 'formation') }}){% endif %}</p>
+                        </div>
+                        {% if n %}
+                            <a href="{{ path('node_open', {fid: formation.id, nid: n.id}) }}"
+                               class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">{{ 'formation.check.fix_button'|trans({}, 'formation') }} {{ ux_icon('ph:arrow-right', {class: 'icon'}) }}</a>
+                        {% endif %}
                     </li>
                 {% endfor %}
             </ul>

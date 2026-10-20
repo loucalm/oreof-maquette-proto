@@ -373,8 +373,15 @@ final class FormationController extends AbstractController
             $groups[$issue['path'] ?: $formation->getName()][] = $issue;
         }
 
+        // écarts à la version du type de diplôme (aucun sans version)
+        $violations = array_map(static fn (\App\Diplome\Check\StructureViolation $v): array => [
+            'violation' => $v,
+            'node' => $doc->node($v->scopeNid),
+        ], $completion->structureViolations($doc));
+
         return $this->render('formation/check.html.twig', [
             'formation' => $formation,
+            'violations' => $violations,
             'groups' => $groups,
             'issueCount' => array_sum(array_map('count', $groups)),
             'sections' => $sections,

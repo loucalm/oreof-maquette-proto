@@ -3,6 +3,6 @@ services:
         autowire: true
         autoconfigure: true
 
-    # Lu directement depuis le conteneur par les tests (sinon retiré tant qu'il n'est injecté nulle part).
-    App\Diplome\Rule\RuleTemplateRegistry:
+    # Lu directement depuis le conteneur par les tests (sinon inliné, car injecté une seule fois).
+    App\Diplome\Check\StructureChecker:
         public: true

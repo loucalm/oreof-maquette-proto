@@ -26,6 +26,7 @@ final class RequiredElementRule implements RuleTemplateInterface
         return [
             new RuleParam('typeKey', "Type d'élément", 'typeKey'),
             new RuleParam('nature', "Nature d'élément", 'nature', false),
+            new RuleParam('imposed', "Identifiant de l'élément imposé", 'string', false),
         ];
     }
 
@@ -35,6 +36,11 @@ final class RequiredElementRule implements RuleTemplateInterface
         $nature = (string) ($params['nature'] ?? '');
         if ('' !== $nature) {
             $where[] = ['field' => 'nature', 'op' => '==', 'value' => $nature];
+        }
+        // l'élément imposé précis (marqué `_imposed` à l'instanciation), pas n'importe quel élément du même type
+        $imposed = (string) ($params['imposed'] ?? '');
+        if ('' !== $imposed) {
+            $where[] = ['field' => '_imposed', 'op' => '==', 'value' => $imposed];
         }
         $node = [
             'kind' => 'comparison',

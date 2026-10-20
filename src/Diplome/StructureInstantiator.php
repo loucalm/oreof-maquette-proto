@@ -20,6 +20,13 @@ use App\Maquette\Doc\TreeNode;
  */
 final class StructureInstantiator
 {
+    private readonly ImposedHostLocator $locator;
+
+    public function __construct(?ImposedHostLocator $locator = null)
+    {
+        $this->locator = $locator ?? new ImposedHostLocator();
+    }
+
     public function instantiate(MaquetteDoc $doc, TypeDiplomeVersion $version, int $duration, bool $avecParcours): void
     {
         $structure = $version->config()->structure;
@@ -66,7 +73,7 @@ final class StructureInstantiator
 
             foreach ($structure->imposed as $imposed) {
                 $hosts = $byLevel[$imposed->parentLevel] ?? [];
-                foreach ($this->selectHosts($hosts, $imposed->position) as $host) {
+                foreach ($this->locator->select($hosts, $imposed->position) as $host) {
                     $node = $doc->addNode($host->nid, $imposed->typeKey, $imposed->label);
                     $node->locked = $imposed->locked;
                     $node->setAttribute('_imposed', $imposed->uid);
@@ -89,21 +96,5 @@ final class StructureInstantiator
         if (false === $at || 0 === $at || $chain[$at - 1] !== $imposed->parentLevel) {
             throw new \InvalidArgumentException(sprintf('Élément imposé « %s » : le niveau parent doit être celui situé juste au-dessus de « %s » dans la chaîne.', $imposed->uid, $imposed->typeKey));
         }
-    }
-
-    /**
-     * @param list<TreeNode> $hosts
-     *
-     * @return list<TreeNode>
-     */
-    private function selectHosts(array $hosts, string $position): array
-    {
-        return match (true) {
-            'all' === $position => $hosts,
-            'first' === $position => \array_slice($hosts, 0, 1),
-            'last' === $position => \array_slice($hosts, -1),
-            ctype_digit($position) => \array_slice($hosts, (int) $position - 1, 1),
-            default => [],
-        };
     }
 }
