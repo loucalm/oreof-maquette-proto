@@ -4,7 +4,7 @@ node_type:
     heading: Type d’éléments pédagogiques
     description: >-
       Créer les ELP / modifier les formulaires. La hiérarchie (qui contient qui) est propre à chaque
-      formation ou template, dans « Configuration de la structure ».
+      formation, dans « Configuration de la structure ».
     param_title: Formation / Parcours
     elp_title: Éléments pédagogique
     new_button: Nouveau type
@@ -42,10 +42,10 @@ node_type:
     key_auto: générée à l’enregistrement
     key_help: >-
       Identifiant technique, généré depuis le libellé et unique. Il est référencé par les formations
-      et les templates : seul le super-administrateur peut le modifier.
+      et les types de diplôme : seul le super-administrateur peut le modifier.
     key_help_superadmin: >-
       Vide = générée depuis le libellé. Attention : changer la clé d’un type déjà utilisé le détache
-      des formations et templates qui la référencent.
+      des formations qui la référencent.
     position_field: Position
     position_help: >-
       Ordre d’affichage du type dans les listes (administration, menus d’ajout, navigation). Plus petit =
@@ -80,7 +80,7 @@ node_type:
     remove_field_confirm: >-
       Retirer « %label% » de ce formulaire ? Si aucun autre type ne l'utilise, le champ sera supprimé
       du catalogue.
-    not_togglable_title: Ce champ n'est pas togglable par template
+    not_togglable_title: Ce champ n'est pas togglable par diplôme
     field_locked_title: >-
       Champ verrouillé : il écrit directement sur une propriété dédiée (pas le blob générique
       d'attributs), sa définition ne peut pas être modifiée ni retirée depuis ce formulaire — seul son
@@ -126,4 +126,4 @@ node_type:
     field_max_count: Nombre de choix maximum
     field_bounds_help_count: Nombre de cases à cocher attendues. Vide = pas de limite.
     field_options_field: 'Options (si pas de référentiel) — une par ligne : <code>valeur|Libellé</code>'
-    field_togglable_label: 'Champ togglable (activable/désactivable par diplôme, depuis le tableau structurel du template)'
+    field_togglable_label: 'Champ togglable (activable/désactivable par diplôme, depuis la configuration du type de diplôme)'

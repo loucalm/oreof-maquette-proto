@@ -13,10 +13,9 @@
 
         {# ── Nombre de parcours ── #}
         {{ fld.divider('formation.param.structure.divider_parcours_count'|trans({}, 'formation')) }}
-        {% set hasTemplate = formation.diplome and template_for_diplome(formation.diplome) %}
-        {% if not is_admin() and hasTemplate %}
+        {% if not is_admin() and lockedByType %}
             <p class="text-xs text-gray-500 -mt-2">
-                {{ 'formation.param.structure.locked_by_template_note'|trans({}, 'formation') }}
+                {{ 'formation.param.structure.locked_by_type_note'|trans({}, 'formation') }}
             </p>
             <p class="text-sm font-medium">{{ formation.avecParcours ? 'formation.param.structure.yes_options'|trans({}, 'formation') : 'formation.param.structure.no_mono'|trans({}, 'formation') }}</p>
         {% else %}
@@ -49,9 +48,9 @@
         {# ── Dimension temporelle ── #}
         {{ fld.divider('formation.param.structure.divider_temporal'|trans({}, 'formation')) }}
         {% set unit = period_unit(formation) %}
-        {% if not is_admin() and hasTemplate %}
+        {% if not is_admin() and lockedByType %}
             <p class="text-xs text-gray-500 -mt-2">
-                {{ 'formation.param.structure.locked_by_template_note'|trans({}, 'formation') }}
+                {{ 'formation.param.structure.locked_by_type_note'|trans({}, 'formation') }}
             </p>
             <p class="text-sm font-medium">{{ formation.calendarSpan ?: '—' }} {{ (formation.calendarUnit ?: unit)|lower }}(s)</p>
         {% else %}
@@ -251,50 +250,8 @@
             {{ 'formation.param.structure.node_count_note'|trans({'%count%': nodeCount, '%link_open%': '<a href="' ~ path('node_type_index') ~ '" target="_blank" class="underline">', '%link_close%': '</a>'}, 'formation')|raw }}
         </p>
 
-        {# ── Écarts au template du diplôme ── #}
-        {% if templateDiff %}
-            {% set d = templateDiff %}
-            {% set gaps = d.missing|length + d.unlocked|length + d.overrides|length %}
-            {{ fld.divider('formation.param.structure.divider_template_diff'|trans({'%template%': d.template.label}, 'formation')) }}
-            {% if gaps == 0 %}
-                <p class="text-sm text-green-700">{{ ux_icon('ph:check-circle', {class: 'icon'}) }} {{ 'formation.param.structure.template_in_sync'|trans({}, 'formation') }}</p>
-            {% else %}
-                <ul class="space-y-1 text-sm">
-                    {% if d.missing is not empty %}<li class="text-amber-700">{{ ux_icon('ph:warning', {class: 'icon'}) }} {{ 'formation.param.structure.template_missing'|trans({'%list%': d.missing|join(', ')}, 'formation') }}</li>{% endif %}
-                    {% if d.unlocked is not empty %}<li class="text-gray-600">{{ ux_icon('ph:lock-simple-open', {class: 'icon'}) }} {{ 'formation.param.structure.template_unlocked'|trans({'%list%': d.unlocked|join(', ')}, 'formation') }}</li>{% endif %}
-                    {% if d.overrides is not empty %}<li class="text-gray-600">{{ ux_icon('ph:sliders', {class: 'icon'}) }} {{ 'formation.param.structure.template_overrides'|trans({'%list%': d.overrides|join(', ')}, 'formation') }}</li>{% endif %}
-                </ul>
-                <form method="post" action="{{ path('formation_template_propagate', {id: formation.id}) }}" data-turbo-frame="_top"
-                      class="flex flex-wrap items-center gap-3"
-                      data-controller="confirm" data-confirm-message-value="{{ 'formation.param.structure.template_propagate_confirm'|trans({}, 'formation') }}">
-                    <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="relock" value="1"> {{ 'formation.param.structure.template_relock_label'|trans({}, 'formation') }}</label>
-                    <button class="rounded-lg border px-3 py-2 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:arrows-clockwise', {class: 'icon'}) }} {{ 'formation.param.structure.template_propagate_button'|trans({}, 'formation') }}</button>
-                </form>
-            {% endif %}
-        {% endif %}
-
-        {# ── Charger un template ── #}
-        {{ fld.divider('formation.param.structure.divider_load_template'|trans({}, 'formation')) }}
-        <form method="post" action="{{ path('formation_apply_template', {id: formation.id}) }}" data-turbo-frame="_top"
-              data-controller="confirm" data-confirm-message-value="{{ 'formation.param.structure.load_template_confirm'|trans({}, 'formation') }}"
-              class="flex flex-wrap items-end gap-3">
-            <div class="flex-1 min-w-[220px]">
-                <select name="template" class="fld">
-                    {% for tpl in templates %}<option value="{{ tpl.key }}">{{ tpl.label }}</option>{% endfor %}
-                </select>
-            </div>
-            <button class="rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'formation.param.structure.load_button'|trans({}, 'formation') }}</button>
-        </form>
-        <p class="text-xs text-gray-400">
-            {{ 'formation.param.structure.template_note'|trans({'%link_open%': '<a href="' ~ path('template_index') ~ '" target="_blank" class="underline">', '%link_close%': '</a>'}, 'formation')|raw }}
-        </p>
-
-        {# ── enregistrer / vider ── #}
+        {# ── vider ── #}
         <div class="flex flex-wrap items-center gap-3 pt-2 border-t" style="border-color:var(--c-border)">
-            <form method="post" action="{{ path('template_from_formation', {id: formation.id}) }}" data-turbo-frame="_top" class="flex items-end gap-2">
-                <input name="label" placeholder="{{ 'formation.param.structure.template_name_placeholder'|trans({}, 'formation') }}" required class="fld w-52">
-                <button class="rounded-lg border px-3 py-2.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:floppy-disk', {class: 'icon'}) }} {{ 'formation.param.structure.save_as_template_button'|trans({}, 'formation') }}</button>
-            </form>
             <form method="post" action="{{ path('formation_reset', {id: formation.id}) }}" data-turbo-frame="_top" class="ml-auto"
                   data-controller="confirm" data-confirm-message-value="{{ 'formation.param.structure.reset_confirm'|trans({}, 'formation') }}">
                 <button class="rounded-lg border px-3 py-2.5 text-sm text-red-600 hover:bg-red-50" style="border-color:var(--c-border)">{{ ux_icon('ph:trash', {class: 'icon'}) }} {{ 'formation.param.structure.reset_button'|trans({}, 'formation') }}</button>

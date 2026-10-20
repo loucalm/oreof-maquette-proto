@@ -6,6 +6,7 @@ namespace App\Maquette;
 
 use App\Diplome\Check\StructureChecker;
 use App\Diplome\Check\StructureViolation;
+use App\Diplome\ParamTypeResolver;
 use App\Diplome\TypeDiplomeResolver;
 use App\Entity\FieldDef;
 use App\Entity\Formation;
@@ -14,7 +15,6 @@ use App\Maquette\Doc\MaquetteDoc;
 use App\Maquette\Doc\TreeNode;
 use App\Repository\FieldDefRepository;
 use App\Repository\NodeTypeRepository;
-use App\Repository\StructureTemplateRepository;
 use App\Validation\TabValidator;
 
 /**
@@ -32,9 +32,9 @@ final class Completion
         private readonly NodeTypeRepository $types,
         private readonly FieldDefRepository $fields,
         private readonly TabValidator $validator,
-        private readonly StructureTemplateRepository $templates,
         private readonly StructureChecker $structureChecker,
         private readonly TypeDiplomeResolver $resolver,
+        private readonly ParamTypeResolver $paramTypes,
     ) {
     }
 
@@ -192,8 +192,8 @@ final class Completion
         $overall['req'] += \count($violations);
 
         $parcours = [];
-        // BUT : référentiel national, rien à saisir — même règle que MaquetteExtension::bccStatus()
-        $but = true === $this->templates->forFormation($doc->formation)?->isBccBut();
+        // référentiel national porté par la formation : rien à saisir — même règle que MaquetteExtension::bccStatus()
+        $but = $doc->formation->hasBccReferentiel();
         if ($doc->formation->isAvecParcours()) {
             foreach ($doc->parcoursNodes() as $p) {
                 $ps = $this->rollup($p);
@@ -230,7 +230,7 @@ final class Completion
             return [] === $formation->getStructure() ? 'empty' : 'ok';
         }
 
-        $type = $this->types->findOneByKey('param_'.$key.'_formation');
+        $type = $this->paramTypes->typeFor($formation, ParamTypeResolver::SCOPE_FORMATION, $key);
         $data = $formation->getParametre($key);
 
         return null === $type ? 'empty' : $this->paramStatus($type, fn (string $k) => $this->formationFieldValue($formation, $k, $data));
@@ -244,7 +244,7 @@ final class Completion
      */
     public function formationParamIssues(Formation $formation, string $key): array
     {
-        $type = $this->types->findOneByKey('param_'.$key.'_formation');
+        $type = $this->paramTypes->typeFor($formation, ParamTypeResolver::SCOPE_FORMATION, $key);
         $data = $formation->getParametre($key);
 
         return null === $type ? [] : $this->paramIssues($type, fn (string $k) => $this->formationFieldValue($formation, $k, $data));
@@ -316,7 +316,7 @@ final class Completion
     /** Équivalent de formationParamStatus() pour une section « Paramètre du parcours ». */
     public function parcoursParamStatus(TreeNode $parcours, string $key): string
     {
-        $type = $this->types->findOneByKey('param_'.$key.'_parcours');
+        $type = $this->paramTypes->typeFor($parcours->getFormation(), ParamTypeResolver::SCOPE_PARCOURS, $key);
         $data = $parcours->getParametre($key);
 
         return null === $type ? 'empty' : $this->paramStatus($type, fn (string $k) => $this->parcoursFieldValue($parcours, $k, $data));
@@ -329,7 +329,7 @@ final class Completion
      */
     public function parcoursParamIssues(TreeNode $parcours, string $key): array
     {
-        $type = $this->types->findOneByKey('param_'.$key.'_parcours');
+        $type = $this->paramTypes->typeFor($parcours->getFormation(), ParamTypeResolver::SCOPE_PARCOURS, $key);
         $data = $parcours->getParametre($key);
 
         return null === $type ? [] : $this->paramIssues($type, fn (string $k) => $this->parcoursFieldValue($parcours, $k, $data));

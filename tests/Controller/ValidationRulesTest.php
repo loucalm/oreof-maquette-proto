@@ -67,7 +67,7 @@ final class ValidationRulesTest extends WebTestCase
 
     public function testConditionalRequiredFollowsTheCondition(): void
     {
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
 
         $out = $this->saveParam($formation, 'organisation', $this->organisation(['rncp' => 'oui']), self::ENTITY);
         self::assertSame('incomplete', $out['status']);
@@ -95,7 +95,7 @@ final class ValidationRulesTest extends WebTestCase
 
     public function testBoundsViolationPutsTheTabInError(): void
     {
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
 
         $out = $this->saveParam($formation, 'presentation', ['objectif' => 'x', 'resultats' => str_repeat('a', 3001), 'contenu' => 'y']);
 
@@ -129,7 +129,7 @@ final class ValidationRulesTest extends WebTestCase
 
     public function testRulesApplyToTreeNodes(): void
     {
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
         $maquette = static::getContainer()->get(Maquette::class);
         $ec = FormationFactory::create(static::getContainer())->first($maquette->open($formation), 'ec');
 

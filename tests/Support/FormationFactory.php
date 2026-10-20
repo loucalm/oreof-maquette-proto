@@ -4,46 +4,58 @@ declare(strict_types=1);
 
 namespace App\Tests\Support;
 
+use App\Diplome\FormationCreator;
+use App\Diplome\TypeDiplomeResolver;
 use App\Entity\Formation;
 use App\Maquette\Doc\MaquetteDoc;
 use App\Maquette\Maquette;
-use App\Maquette\TemplateApplier;
-use App\Repository\StructureTemplateRepository;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Repository\TypeDiplomeRepository;
 
-/** Crée une formation persistée à partir d'un template des fixtures (licence_lmd, master_parcours, but). */
+/** Crée une formation persistée d'après un type de diplôme des fixtures (L, LP, M, M2E, BUT), comme à l'écran. */
 final class FormationFactory
 {
     public function __construct(
-        private readonly EntityManagerInterface $em,
+        private readonly TypeDiplomeRepository $types,
+        private readonly FormationCreator $creator,
         private readonly Maquette $maquette,
-        private readonly StructureTemplateRepository $templates,
-        private readonly TemplateApplier $applier,
     ) {
     }
 
     public static function create(\Psr\Container\ContainerInterface $container): self
     {
         return new self(
-            $container->get('doctrine')->getManager(),
+            $container->get(TypeDiplomeRepository::class),
+            $container->get(FormationCreator::class),
             $container->get(Maquette::class),
-            $container->get(StructureTemplateRepository::class),
-            $container->get(TemplateApplier::class),
         );
     }
 
-    public function fromTemplate(string $templateKey, string $name = 'Formation de test'): Formation
+    public function fromType(string $typeKey, int $duration, string $name = 'Formation de test', bool $avecParcours = false, bool $withLeaves = false): Formation
     {
-        $template = $this->templates->findOneByKey($templateKey) ?? throw new \LogicException("Template « $templateKey » absent des fixtures.");
+        $type = $this->types->findOneByKey($typeKey) ?? throw new \LogicException("Type de diplôme « $typeKey » absent des fixtures.");
 
-        $formation = new Formation($name);
-        $formation->setDiplome($template->getDiplome());
-        $this->em->persist($formation);
-        $this->em->flush();
+        $formation = $this->creator->create($name, $type, TypeDiplomeResolver::DEFAULT_YEAR, $duration, $avecParcours);
 
-        $doc = $this->maquette->open($formation);
-        $this->applier->apply($doc, $template);
-        $this->maquette->save($formation, $doc, 'Création');
+        return $withLeaves ? $this->withLeaves($formation) : $formation;
+    }
+
+    /**
+     * Ajoute un élément feuille sous chaque nœud du niveau juste au-dessus (la maquette de départ d'un
+     * type s'arrête avant le niveau feuille) : de quoi tester ce qui porte sur les EC (`withLeaves: true`).
+     */
+    private function withLeaves(Formation $formation, string $label = 'EC à compléter'): Formation
+    {
+        $maquette = $this->maquette;
+        $doc = $maquette->open($formation);
+        $chain = $formation->getStructure();
+        $leaf = $chain[\count($chain) - 1];
+        $host = $chain[\count($chain) - 2];
+        foreach ($doc->allNodes() as $node) {
+            if ($node->typeKey === $host) {
+                $doc->addNode($node->nid, $leaf, $label);
+            }
+        }
+        $maquette->save($formation, $doc, 'Éléments feuilles');
 
         return $formation;
     }

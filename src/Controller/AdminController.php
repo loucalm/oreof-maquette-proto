@@ -11,7 +11,6 @@ use App\Repository\FieldDefRepository;
 use App\Repository\MccTypeRepository;
 use App\Repository\NodeTypeRepository;
 use App\Repository\ReferentielRepository;
-use App\Repository\StructureTemplateRepository;
 use App\Service\TranslationFileManager;
 use App\Validation\TabValidator;
 use App\Validation\ValidationRule;
@@ -29,7 +28,6 @@ final class AdminController extends AbstractController
     public const SECTIONS = [
         'overview' => ['label' => 'Vue d’ensemble', 'route' => 'admin_index', 'icon' => 'ph:gear'],
         'types' => ['label' => 'Types d’élément pédagogique', 'route' => 'node_type_index', 'icon' => 'ph:puzzle-piece'],
-        'templates' => ['label' => 'Templates de structure', 'route' => 'template_index', 'icon' => 'ph:folders'],
         'referentiels' => ['label' => 'Référentiels', 'route' => 'admin_referentiels', 'icon' => 'ph:books'],
         'mcctypes' => ['label' => 'Types de MCCC', 'route' => 'admin_mcctypes', 'icon' => 'ph:list-checks'],
         'validations' => ['label' => 'Règles de validation', 'route' => 'admin_validations', 'icon' => 'ph:check-square-offset'],
@@ -40,7 +38,6 @@ final class AdminController extends AbstractController
     #[Route('/administration', name: 'admin_index', methods: ['GET'])]
     public function index(
         NodeTypeRepository $types,
-        StructureTemplateRepository $templates,
         ReferentielRepository $referentiels,
         MccTypeRepository $mcctypes,
         DerogationRequestRepository $derogations,
@@ -60,16 +57,10 @@ final class AdminController extends AbstractController
                     'text' => 'Les briques des structures pédagogiques et du référentiel de compétences, et les capacités (champs) que chacune porte.',
                 ],
                 [
-                    'section' => 'templates',
-                    'count' => \count($templates->findAllOrdered()),
-                    'sub' => 'réutilisables',
-                    'text' => 'Des squelettes de structure prêts à instancier dans une formation, puis modifiables librement.',
-                ],
-                [
                     'section' => 'referentiels',
                     'count' => \count($referentiels->allOrdered()),
                     'sub' => 'nomenclatures',
-                    'text' => 'Les listes de valeurs des formulaires : diplômes, domaines, régimes, langues, codes ROME…',
+                    'text' => 'Les listes de valeurs des formulaires : domaines, régimes, langues, codes ROME…',
                 ],
                 [
                     'section' => 'mcctypes',
@@ -81,7 +72,7 @@ final class AdminController extends AbstractController
                     'section' => 'derogations',
                     'count' => $pendingDerogations,
                     'sub' => 'en attente',
-                    'text' => 'Les demandes des responsables de formation pour ajouter/déplacer/supprimer quelque chose que le template du diplôme ne prévoit pas.',
+                    'text' => 'Les demandes des responsables de formation pour ajouter/déplacer/supprimer quelque chose que le type de diplôme ne prévoit pas.',
                 ],
                 [
                     'section' => 'traductions',

@@ -14,7 +14,7 @@ use Doctrine\ORM\Mapping as ORM;
  * non) et une liste de **profils de règles** nommés (ex. « Licence », «
  * Master ») — un même type peut se comporter différemment selon le diplôme
  * sans dupliquer sa fiche. Le rattachement type↔profil pour un diplôme donné
- * se décide au niveau du template (`StructureTemplate::mcccProfiles`), pas ici.
+ * se décide dans la configuration de la version du type de diplôme (`VersionConfig::mccc`), pas ici.
  * Catalogue admin sur le même principe que `FieldDef` et `Referentiel` :
  * livré par les fixtures, puis entièrement éditable.
  *

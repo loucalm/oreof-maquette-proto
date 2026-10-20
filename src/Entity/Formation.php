@@ -301,6 +301,24 @@ class Formation
         return $this;
     }
 
+    /**
+     * Référentiel de compétences national porté par la formation (compétence › niveau › apprentissage
+     * critique), en lecture seule : dans ORéOF il est synchronisé depuis l'API des référentiels, ici une
+     * copie de démonstration (section `bccReferentiel` des paramètres, écrite via MaquetteDoc::setFormationParam).
+     * Une formation qui en porte un n'a pas de blocs de compétences à saisir.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function getBccReferentiel(): array
+    {
+        return array_values((array) ($this->parametres['bccReferentiel']['competences'] ?? []));
+    }
+
+    public function hasBccReferentiel(): bool
+    {
+        return [] !== $this->getBccReferentiel();
+    }
+
     /** @return array<string, array<string, mixed>> */
     public function getParametres(): array
     {

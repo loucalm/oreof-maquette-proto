@@ -15,7 +15,7 @@ use Doctrine\Persistence\ObjectManager;
  *
  * CCI porte 2 profils de démonstration (Licence/Master) pour illustrer le
  * mécanisme : un même type, des règles différentes selon le diplôme — choisi
- * au niveau du template (StructureTemplate::mcccProfiles), pas ici.
+ * dans la configuration de la version du type de diplôme (VersionConfig::mccc), pas ici.
  */
 final class MccTypeFixtures extends Fixture
 {

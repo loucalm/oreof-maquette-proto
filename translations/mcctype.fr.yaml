@@ -5,7 +5,7 @@ mcctype:
     description: >-
       Les modalités de contrôle des connaissances proposées sur un EC (CCI, CT…) et leurs profils de
       règles de validation (nombre d’épreuves, coefficients…) — le choix du profil pour un diplôme se
-      fait au niveau de son template.
+      fait au niveau de la configuration du type de diplôme.
     new_button: Nouveau type
     col_type: Type
     col_profiles: Profils
@@ -16,7 +16,7 @@ mcctype:
       ce type ne sera plus proposé.
     footer_note: >-
       Un même type peut porter plusieurs profils de règles (ex. « Licence », « Master ») sans se
-      dupliquer — le template de chaque diplôme choisit ensuite lequel s’applique.
+      dupliquer — la configuration de chaque type de diplôme choisit ensuite lequel s’applique.
   edit:
     new_title: Nouveau type de MCCC
     breadcrumb_new: nouveau
@@ -34,7 +34,7 @@ mcctype:
     profiles_title: Profils de règles
     profiles_description: >-
       Un profil nommé (ex. « Licence », « Master ») regroupe les règles à respecter pour un contexte
-      donné — le template de chaque diplôme choisit ensuite lequel s’applique.
+      donné — la configuration de chaque type de diplôme choisit ensuite lequel s’applique.
     profiles_empty: Aucun profil pour ce type — aucune règle n’est appliquée tant qu’aucun n’existe.
     duplicate_profile_button: Dupliquer
     delete_profile_confirm: 'Supprimer le profil « %label% » et toutes ses règles ?'

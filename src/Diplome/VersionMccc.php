@@ -18,7 +18,7 @@ use Symfony\Contracts\Service\ResetInterface;
  * (attribut `natureElement`, à défaut la première nature déclarée par le type).
  *
  * Sans version (formation sans type de diplôme), `config()` renvoie null et
- * l'appelant garde le comportement par template.
+ * aucune règle n'est appliquée.
  */
 final class VersionMccc implements ResetInterface
 {

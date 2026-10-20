@@ -31,7 +31,7 @@ final class MaquetteUndoRedoTest extends DatabaseTestCase
 
     public function testSaveRecordsARevisionAndEnablesUndo(): void
     {
-        $formation = $this->factory->fromTemplate('licence_lmd');
+        $formation = $this->factory->fromType('L', 3, withLeaves: true);
         $this->addYear($formation);
 
         self::assertTrue($this->maquette->canUndo($formation));
@@ -40,7 +40,7 @@ final class MaquetteUndoRedoTest extends DatabaseTestCase
 
     public function testUndoRestoresPreviousTreeThenRedoReappliesIt(): void
     {
-        $formation = $this->factory->fromTemplate('licence_lmd');
+        $formation = $this->factory->fromType('L', 3, withLeaves: true);
         $before = \count($this->maquette->open($formation)->allNodes());
         $after = $this->addYear($formation);
         self::assertSame($before + 1, $after);
@@ -56,7 +56,7 @@ final class MaquetteUndoRedoTest extends DatabaseTestCase
 
     public function testANewChangeInvalidatesRedo(): void
     {
-        $formation = $this->factory->fromTemplate('licence_lmd');
+        $formation = $this->factory->fromType('L', 3, withLeaves: true);
         $this->addYear($formation);
         $this->maquette->undo($formation);
         self::assertTrue($this->maquette->canRedo($formation));

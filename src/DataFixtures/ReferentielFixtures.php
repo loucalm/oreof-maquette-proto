@@ -49,10 +49,6 @@ final class ReferentielFixtures extends Fixture
         ], RefCategory::Libre, null],
 
         // ─── Lier à des entités : listes destinées à pointer vers de vraies entités/API dans l'appli finale ───
-        ['diplomes', 'Types de diplôme', 'Proposés à la création d’une formation.', [
-            'Licence' => 'Licence', 'Licence professionnelle' => 'Licence professionnelle', 'BUT' => 'BUT',
-            'Master' => 'Master', 'DU' => 'DU', 'Ingénieur' => 'Ingénieur', 'DAEU' => 'DAEU',
-        ], RefCategory::Entite, 'Type de diplôme (référentiel ORéOF)'],
         ['domaines', 'Domaines de formation', 'Grands domaines disciplinaires.', [
             'Sciences, technologies, santé' => 'Sciences, technologies, santé',
             'Droit, économie, gestion' => 'Droit, économie, gestion',

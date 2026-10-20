@@ -16,7 +16,7 @@ use App\Maquette\Doc\TreeNode;
  * minimum de sa borne `count` (1 à défaut) sous chaque parent, jusqu'au niveau
  * feuille exclu, puis les éléments imposés (verrouillés, marqués `_imposed`).
  *
- * ⚠️ Écrase la structure existante, comme TemplateApplier.
+ * ⚠️ Écrase la structure existante.
  */
 final class StructureInstantiator
 {
@@ -34,7 +34,7 @@ final class StructureInstantiator
         if ([] === $chain) {
             throw new \InvalidArgumentException('La version ne définit aucun niveau de structure.');
         }
-        if (!self::within($structure->duration, $duration)) {
+        if (!self::acceptsDuration($structure->duration, $duration)) {
             throw new \InvalidArgumentException(sprintf('Durée %d hors des bornes du type de diplôme.', $duration));
         }
         if ($avecParcours && !$structure->parcoursAllowed) {
@@ -84,7 +84,8 @@ final class StructureInstantiator
         $doc->reindex();
     }
 
-    private static function within(?Bound $bound, int $n): bool
+    /** Une durée est acceptée si elle est d'au moins 1 et dans la borne du type (borne absente = ouverte). */
+    public static function acceptsDuration(?Bound $bound, int $n): bool
     {
         return $n >= 1 && (null === $bound || ((null === $bound->min || $n >= $bound->min) && (null === $bound->max || $n <= $bound->max)));
     }

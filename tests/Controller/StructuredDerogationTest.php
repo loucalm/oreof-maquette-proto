@@ -27,7 +27,7 @@ final class StructuredDerogationTest extends WebTestCase
 
     private function formation(): Formation
     {
-        return FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        return FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
     }
 
     private function repo(): DerogationRequestRepository

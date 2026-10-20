@@ -29,7 +29,7 @@ final class AutosaveParamTest extends WebTestCase
 
     public function testParamSaveReturnsStatusAsJsonForAjaxRequests(): void
     {
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
 
         $this->client->request(
             'POST',
@@ -52,7 +52,7 @@ final class AutosaveParamTest extends WebTestCase
 
     public function testParamSaveRedirectsWithoutJsonAcceptHeader(): void
     {
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
 
         $this->client->request(
             'POST',

@@ -24,9 +24,13 @@ final class GenericFieldRenderingTest extends WebTestCase
         $this->resetDatabase();
     }
 
-    private function panel(string $typeKey, string $template = 'licence_lmd'): \Symfony\Component\DomCrawler\Crawler
+    private function panel(string $typeKey, bool $multi = false, bool $untyped = false): \Symfony\Component\DomCrawler\Crawler
     {
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate($template);
+        $formation = FormationFactory::create(static::getContainer())->fromType($multi ? 'M' : 'L', $multi ? 2 : 3, avecParcours: $multi, withLeaves: true);
+        if ($untyped) {
+            $formation->setTypeDiplome(null);
+            $this->em->flush();
+        }
         $this->em->clear();
         $fresh = $this->em->find($formation::class, $formation->getId());
         $doc = static::getContainer()->get(Maquette::class)->open($fresh);
@@ -47,7 +51,7 @@ final class GenericFieldRenderingTest extends WebTestCase
     public function testFieldWithoutAnyComputedOptionIsNotRendered(): void
     {
         // formation sans type de diplôme : aucune nature à proposer, le champ n'apparaît pas
-        self::assertCount(0, $this->panel('ec')->filter('[name=attr_natureElement]'));
+        self::assertCount(0, $this->panel('ec', untyped: true)->filter('[name=attr_natureElement]'));
     }
 
     public function testEcPanelMcccAndHoursBlocks(): void
@@ -71,7 +75,7 @@ final class GenericFieldRenderingTest extends WebTestCase
 
     public function testFormationParamPageRendersTextareaWithPrefixedName(): void
     {
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
         $crawler = $this->client->request('GET', '/formations/'.$formation->getId().'/parametre/presentation');
 
         self::assertCount(1, $crawler->filter('textarea[name="p[objectif]"]'));
@@ -79,7 +83,7 @@ final class GenericFieldRenderingTest extends WebTestCase
 
     public function testFormationParamPageRendersRadioAndChoiceWithPrefixedNames(): void
     {
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
         $crawler = $this->client->request('GET', '/formations/'.$formation->getId().'/parametre/organisation');
 
         self::assertCount(2, $crawler->filter('input[type=radio][name="p[rncp]"]'));
@@ -88,7 +92,7 @@ final class GenericFieldRenderingTest extends WebTestCase
 
     public function testReadOnlyViewRendersChoiceLabelsThroughViewTemplates(): void
     {
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
         $formation->setParametre('organisation', ['rncp' => 'oui']);
         $this->em->flush();
         $crawler = $this->client->request('GET', '/formations/'.$formation->getId().'/voir');
@@ -99,7 +103,7 @@ final class GenericFieldRenderingTest extends WebTestCase
 
     public function testEctsLabelUsesNonElidingTypeWording(): void
     {
-        $crawler = $this->panel('parcours', 'master_parcours');
+        $crawler = $this->panel('parcours', true);
         self::assertStringContainsString('ECTS (Parcours)', $crawler->filter('#node-form')->text());
         self::assertStringNotContainsString('Transformer en bloc de choix', $crawler->text());
     }
@@ -107,13 +111,13 @@ final class GenericFieldRenderingTest extends WebTestCase
     public function testEveryParamPageRenders(): void
     {
         $factory = FormationFactory::create(static::getContainer());
-        $formation = $factory->fromTemplate('licence_lmd');
+        $formation = $factory->fromType('L', 3, withLeaves: true);
         foreach (['structure', 'organisation', 'presentation'] as $section) {
             $this->client->request('GET', sprintf('/formations/%d/parametre/%s', $formation->getId(), $section));
             self::assertResponseIsSuccessful($section);
         }
 
-        $master = $factory->fromTemplate('master_parcours');
+        $master = $factory->fromType('M', 2, avecParcours: true);
         $this->em->clear();
         $doc = static::getContainer()->get(Maquette::class)->open($this->em->find($master::class, $master->getId()));
         $parcours = current(array_filter($doc->allNodes(), static fn (TreeNode $n) => $n->isParcours()));

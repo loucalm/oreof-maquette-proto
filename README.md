@@ -25,11 +25,11 @@ Autres : `make sh`, `make console ARGS="…"`, `make cc`, `make tw-watch`, `make
 | **Catalogue d'attributs** normalisés (ects, ueType, nature, competencies, ficheMatiere, hours, mccc) groupés par domaine | `src/Maquette/AttributeCatalog.php` |
 | **Calculs** : statut de complétude 🔴/🟠/🟢 + agrégats heures / ECTS remontés | `src/Maquette/MaquetteBuilder.php` |
 | **Éditeur** : arbre drag&drop (SortableJS) + panneau d'attributs par onglet, gated par capacités | `templates/formation/editor.html.twig`, `templates/node/panel.html.twig` |
-| **Templates de structure** : base réutilisable (BUT, Licence, Master à parcours), instanciée puis modifiable ; « enregistrer la structure courante comme template » | `src/Entity/StructureTemplate.php` + `src/Maquette/TemplateApplier.php` + `/templates` |
+| **Types de diplôme** : une version par année universitaire (bornes, éléments imposés, règles) ; la création d'une formation en génère la maquette de départ (type + année + durée) | `src/Diplome/` + `/diplomes` |
 | **Opérations nœud** : ajouter (typé, filtré), déplacer / reparenter, dupliquer, supprimer, « Paramètre du nœud » (capacités par nœud), mutualiser | `src/Controller/NodeController.php` |
 | **Types de champ** : une classe par type de saisie (taguée, découverte par le registre) qui décide des réglages de l'éditeur de champ, du sens des bornes min / max et de la validation des valeurs | `src/FieldType/` |
 | **Règles de validation par onglet** : « obligatoire sous condition », « au moins un parmi », bornes des champs ; pilotent les pastilles (dont l'état « erreur ») et les messages sous les champs | `src/Validation/` + éditeur d'un type d'ELP + `/administration/regles-de-validation` |
-| **Format des BCC par diplôme** : blocs saisis (Licence, Master, M2E) ou référentiel national BUT en lecture seule (compétence › niveau › AC) | `StructureTemplate::bccFormat`, `templates/formation/bcc_but.html.twig` |
+| **Format des BCC par diplôme** : blocs saisis (Licence, Master, M2E) ou référentiel national porté par la formation, en lecture seule (compétence › niveau › AC) | `Formation::getBccReferentiel`, `templates/formation/bcc_but.html.twig` |
 
 ## Pas (encore) dans le prototype
 

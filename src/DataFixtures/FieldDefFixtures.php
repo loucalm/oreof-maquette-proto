@@ -28,7 +28,7 @@ final class FieldDefFixtures extends Fixture
     private const PARAM_SEED = [
         // ─── organisation ───
         ['name', 'Nom de la formation', 'organisation', 'text', [], true, null, null, true],
-        ['diplome', 'Type de diplôme', 'organisation', 'choice', [], true, 'Licence, Master, BUT, DU, Ingénieur, etc.', 'diplomes', true],
+        ['diplome', 'Type de diplôme', 'organisation', 'choice', [], true, 'Fixé à la création de la formation, d’après son type de diplôme.', null, true],
         ['domaine', 'Domaine de formation', 'organisation', 'choice', [], true, null, 'domaines', true],
         ['composante', 'Composante porteuse de la formation', 'organisation', 'text', [], true, "Indiquer la composante porteuse du projet, qui aura en charge le dépôt de la demande de création de la formation", null, true],
         ['contacts', 'Contacts de la formation', 'organisation', 'textarea', [], false, null, null, false],

@@ -9,7 +9,6 @@ use App\Entity\Formation;
 use App\Enum\FormationPhase;
 use App\Maquette\Doc\MaquetteDoc;
 use App\Maquette\Maquette;
-use App\Maquette\TemplateDiff;
 use App\Tests\Support\FormationFactory;
 use App\Tests\Support\ResetsDatabase;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -42,7 +41,7 @@ final class Lot2FeaturesTest extends WebTestCase
 
     public function testConsolidationIgnoresContentButKeepsLabel(): void
     {
-        $formation = $this->factory()->fromTemplate('licence_lmd');
+        $formation = $this->factory()->fromType('L', 3, withLeaves: true);
         $formation->setPhase(FormationPhase::Consolidation);
         $this->em->flush();
         $ec = $this->factory()->first(static::getContainer()->get(Maquette::class)->open($formation), 'ec');
@@ -59,8 +58,8 @@ final class Lot2FeaturesTest extends WebTestCase
 
     public function testBatchSwitchesSelectedFormationsToConstruction(): void
     {
-        $a = $this->factory()->fromTemplate('licence_lmd', 'A');
-        $b = $this->factory()->fromTemplate('licence_lmd', 'B');
+        $a = $this->factory()->fromType('L', 3, 'A', withLeaves: true);
+        $b = $this->factory()->fromType('L', 3, 'B', withLeaves: true);
         $a->setPhase(FormationPhase::Consolidation);
         $b->setPhase(FormationPhase::Consolidation);
         $this->em->flush();
@@ -74,7 +73,7 @@ final class Lot2FeaturesTest extends WebTestCase
 
     public function testApprovingADerogationCanUnlockTheNode(): void
     {
-        $formation = $this->factory()->fromTemplate('licence_lmd');
+        $formation = $this->factory()->fromType('L', 3, withLeaves: true);
         $annee = $this->factory()->first(static::getContainer()->get(Maquette::class)->open($formation), 'annee');
         $derogation = new DerogationRequest($formation, 'Supprimer cette année', $annee->nid, $annee->label);
         $this->em->persist($derogation);
@@ -88,30 +87,11 @@ final class Lot2FeaturesTest extends WebTestCase
         self::assertSame([], $doc->node($annee->nid)->locked);
     }
 
-    public function testTemplateDiffReportsUnlockedNodesAndPropagationRelocks(): void
-    {
-        $formation = $this->factory()->fromTemplate('licence_lmd');
-        $maquette = static::getContainer()->get(Maquette::class);
-        $doc = $maquette->open($formation);
-        $annee = $this->factory()->first($doc, 'annee');
-        $annee->locked = [];
-        $maquette->save($formation, $doc);
-
-        $diff = static::getContainer()->get(TemplateDiff::class)->diff($formation);
-        self::assertNotEmpty($diff['unlocked']);
-        self::assertSame([], $diff['missing']);
-
-        $this->client->request('POST', sprintf('/formations/%d/template/propager', $formation->getId()), ['relock' => '1']);
-
-        [, $doc] = $this->reload($formation);
-        self::assertTrue($doc->node($annee->nid)->isLocked('delete'));
-    }
-
     public function testMutualizedCopyDetectsSourceChangeAndRefreshes(): void
     {
         $maquette = static::getContainer()->get(Maquette::class);
-        $source = $this->factory()->fromTemplate('licence_lmd', 'Source');
-        $target = $this->factory()->fromTemplate('licence_lmd', 'Cible');
+        $source = $this->factory()->fromType('L', 3, 'Source', withLeaves: true);
+        $target = $this->factory()->fromType('L', 3, 'Cible', withLeaves: true);
         $srcUe = $this->factory()->first($maquette->open($source), 'ue');
         $tgtSemestre = $this->factory()->first($maquette->open($target), 'semestre');
 
@@ -153,31 +133,5 @@ final class Lot2FeaturesTest extends WebTestCase
                 unlink($bak);
             }
         }
-    }
-
-    public function testTemplateDiffMatchesByTemplateIdentityNotByPosition(): void
-    {
-        // template avec uids (comme après une édition dans l'admin)
-        $template = static::getContainer()->get(\App\Repository\StructureTemplateRepository::class)->findOneByKey('licence_lmd');
-        $tree = new \App\Maquette\TemplateTree($template->getTree());
-        $tree->ensureUids();
-        $template->setTree($tree->tree);
-        $this->em->flush();
-
-        $formation = $this->factory()->fromTemplate('licence_lmd');
-        $maquette = static::getContainer()->get(Maquette::class);
-        $doc = $maquette->open($formation);
-        // une année ajoutée à la main EN TÊTE : la 1re année du template n'est plus au rang 1
-        $manual = $doc->addNode(null, 'annee', 'Année préparatoire');
-        $doc->moveNode($manual, null, 0);
-        $maquette->save($formation, $doc);
-
-        $diff = static::getContainer()->get(TemplateDiff::class)->diff($formation);
-        self::assertSame([], $diff['missing']);
-        self::assertSame([], $diff['unlocked'], 'le nœud manuel ne doit pas être confondu avec le nœud imposé');
-
-        static::getContainer()->get(TemplateDiff::class)->propagate($formation, true);
-        [, $doc] = $this->reload($formation);
-        self::assertSame([], $doc->node($manual->nid)->locked, 'le nœud manuel ne reçoit pas les verrous du template');
     }
 }

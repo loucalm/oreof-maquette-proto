@@ -13,7 +13,7 @@
           class="panel-card space-y-5">
 
         {% set issues = param_issues(formation, key) %}
-        {% set hints = field_rule_hints('param_' ~ key ~ '_formation') %}
+        {% set hints = field_rule_hints(param_type_key(formation, 'formation', key)) %}
         {% for f in fields %}
             {% if f.type == 'separator' %}
                 {{ fld.divider(f.label) }}
@@ -27,11 +27,7 @@
                 {% elseif f.key == 'diplome' %}
                     <div>
                         {{ fld.label('formation.index.diplome_field'|trans({}, 'formation'), true, 'formation.param.organisation.diplome_help'|trans({}, 'formation')) }}
-                        <select name="diplome" class="fld mt-1">
-                            {% for d in referentiel('diplomes') %}
-                                <option value="{{ d }}" {{ formation.diplome == d ? 'selected' }}>{{ d }}</option>
-                            {% endfor %}
-                        </select>
+                        <p class="fld mt-1 bg-gray-50 text-gray-700">{{ formation.diplome ?: '—' }}</p>
                     </div>
                 {% elseif f.key == 'domaine' %}
                     <div>

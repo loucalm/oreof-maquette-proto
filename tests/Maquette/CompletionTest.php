@@ -26,7 +26,7 @@ final class CompletionTest extends DatabaseTestCase
 
     public function testTemporalNodeDoesNotRequireALabel(): void
     {
-        $doc = $this->maquette->open($this->factory->fromTemplate('licence_lmd'));
+        $doc = $this->maquette->open($this->factory->fromType('L', 3, withLeaves: true));
         $semestre = $this->factory->first($doc, 'semestre');
 
         $semestre->setLabel('');
@@ -39,7 +39,7 @@ final class CompletionTest extends DatabaseTestCase
 
     public function testStructuralNodeRequiresALabel(): void
     {
-        $doc = $this->maquette->open($this->factory->fromTemplate('licence_lmd'));
+        $doc = $this->maquette->open($this->factory->fromType('L', 3, withLeaves: true));
         $ue = $this->factory->first($doc, 'ue');
 
         $ue->setLabel('');
@@ -54,7 +54,7 @@ final class CompletionTest extends DatabaseTestCase
 
     public function testCollectIssuesNeverReportsAMissingLabelOnTemporalNodes(): void
     {
-        $formation = $this->factory->fromTemplate('licence_lmd');
+        $formation = $this->factory->fromType('L', 3, withLeaves: true);
         $doc = $this->maquette->open($formation);
         foreach ($doc->allNodes() as $node) {
             if ($node->getType()->isTemporel()) {
@@ -74,7 +74,7 @@ final class CompletionTest extends DatabaseTestCase
 
     public function testDocStatsProgressIsAPercentage(): void
     {
-        $doc = $this->maquette->open($this->factory->fromTemplate('licence_lmd'));
+        $doc = $this->maquette->open($this->factory->fromType('L', 3, withLeaves: true));
 
         $stats = $this->completion->docStats($doc);
 
@@ -86,7 +86,7 @@ final class CompletionTest extends DatabaseTestCase
 
     public function testInvalidMcccCountsAsMissing(): void
     {
-        $doc = $this->maquette->open($this->factory->fromTemplate('licence_lmd'));
+        $doc = $this->maquette->open($this->factory->fromType('L', 3, withLeaves: true));
         $ec = $this->factory->first($doc, 'ec');
         // profil CCI Licence : au moins 3 épreuves, somme = 100
         $ec->setAttribute('mccc', ['type' => 'CCI', 'evaluations' => [['type' => 'ecrit', 'weight' => 100]]]);
@@ -98,7 +98,7 @@ final class CompletionTest extends DatabaseTestCase
 
     public function testValidMcccIsNotMissing(): void
     {
-        $doc = $this->maquette->open($this->factory->fromTemplate('licence_lmd'));
+        $doc = $this->maquette->open($this->factory->fromType('L', 3, withLeaves: true));
         $ec = $this->factory->first($doc, 'ec');
         $ec->setAttribute('mccc', ['type' => 'CCI', 'evaluations' => [
             ['type' => 'ecrit', 'weight' => 40, 'duree' => 60],

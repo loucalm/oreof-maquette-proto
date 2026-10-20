@@ -65,7 +65,7 @@ final class NodeClipboardTest extends WebTestCase
 
     public function testPasteCopiesFilledDataButNeitherLabelNorCode(): void
     {
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
         [$source, $target] = \array_slice($this->nodesOfType($formation, 'ec'), 0, 2);
         $this->fill($formation, $source, ['ects' => 4, 'nature' => 'obligatoire', 'hours' => ['pres' => ['cm' => 12]]], 'Algorithmique');
         $this->fill($formation, $target, ['ects' => 1], 'Autre EC');
@@ -83,7 +83,7 @@ final class NodeClipboardTest extends WebTestCase
 
     public function testPasteRefusedOnAnotherElementType(): void
     {
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
         [$ec] = $this->nodesOfType($formation, 'ec');
         [$ue] = $this->nodesOfType($formation, 'ue');
         $this->fill($formation, $ec, ['ects' => 4]);
@@ -97,7 +97,7 @@ final class NodeClipboardTest extends WebTestCase
 
     public function testPasteRefusedDuringConsolidationAndWithEmptyClipboard(): void
     {
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
         [$source, $target] = \array_slice($this->nodesOfType($formation, 'ec'), 0, 2);
         $this->fill($formation, $source, ['ects' => 4]);
 
@@ -118,7 +118,7 @@ final class NodeClipboardTest extends WebTestCase
 
     public function testPanelOffersPasteOnlyWhenCompatible(): void
     {
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
         [$source, $other] = \array_slice($this->nodesOfType($formation, 'ec'), 0, 2);
         [$ue] = $this->nodesOfType($formation, 'ue');
         $this->fill($formation, $source, ['ects' => 4]);

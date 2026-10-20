@@ -32,7 +32,6 @@ final class RoleGuardTest extends WebTestCase
     {
         yield 'édition type MCCC' => ['GET', '/administration/mcc-types/1/editer'];
         yield 'vider la structure' => ['POST', '/formations/{id}/reset'];
-        yield 'appliquer un template' => ['POST', '/formations/{id}/apply-template'];
         yield 'enregistrer le squelette' => ['POST', '/formations/{id}/structure'];
         yield 'types d’ELP' => ['GET', '/node-types'];
     }
@@ -40,7 +39,7 @@ final class RoleGuardTest extends WebTestCase
     #[DataProvider('adminOnlyRoutes')]
     public function testResponsableIsRedirectedFromAdminRoutes(string $method, string $path): void
     {
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
         $this->switchRole('responsable');
 
         $this->client->request($method, str_replace('{id}', (string) $formation->getId(), $path));
@@ -50,7 +49,7 @@ final class RoleGuardTest extends WebTestCase
 
     public function testResponsableCannotResetAFormation(): void
     {
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
         $count = \count($formation->getArbre());
         $this->switchRole('responsable');
 
@@ -71,7 +70,7 @@ final class RoleGuardTest extends WebTestCase
 
     public function testResponsableCannotChangeParcoursModeWhenATemplateIsImposed(): void
     {
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
         $this->switchRole('responsable');
 
         $this->client->request('POST', '/formations/'.$formation->getId().'/settings', [

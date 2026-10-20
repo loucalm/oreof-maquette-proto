@@ -27,7 +27,7 @@ final class QuickGridTest extends WebTestCase
     private function licenceWithEc(): array
     {
         $factory = FormationFactory::create(static::getContainer());
-        $formation = $factory->fromTemplate('licence_lmd');
+        $formation = $factory->fromType('L', 3, withLeaves: true);
         $ec = $factory->first(static::getContainer()->get(Maquette::class)->open($formation), 'ec');
 
         return [$formation, $ec->nid];

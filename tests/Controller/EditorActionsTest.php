@@ -25,7 +25,7 @@ final class EditorActionsTest extends WebTestCase
 
     private function licence(): Formation
     {
-        return FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        return FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
     }
 
     /** @return list<string> nids des enfants de $nid, dans l'ordre */

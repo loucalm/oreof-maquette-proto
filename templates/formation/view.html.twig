@@ -92,7 +92,7 @@
             </div>
             {% for sect, slabel in {'organisation': 'formation.view.section_organisation'|trans({}, 'formation'), 'presentation': 'formation.view.section_presentation'|trans({}, 'formation')} %}
                 {% set pd = n.getParametre(sect) %}
-                {% set pfields = parcours_param_active_fields(sect)|filter(f => field_type(f).input) %}
+                {% set pfields = parcours_param_active_fields(sect, formation)|filter(f => field_type(f).input) %}
                 {% set shown = pfields|filter(f => parcours_field_value(n, f.key, pd) is not empty) %}
                 {% if shown is not empty %}
                     <div class="fld-cat">{{ slabel }}</div>
@@ -248,7 +248,7 @@
                     {% endif %}
                 </dl>
             {% else %}
-                {% set allFields = param_active_fields(key)|filter(f => field_type(f).input) %}
+                {% set allFields = param_active_fields(key, formation)|filter(f => field_type(f).input) %}
                 {% set present = allFields|filter(f => param_field_value(formation, f.key, data) is not empty) %}
                 {% if present is empty %}
                     <p class="text-sm text-gray-400 italic">{{ 'formation.view.section_empty'|trans({}, 'formation') }}</p>

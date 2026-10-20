@@ -10,7 +10,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Demande de dérogation à la structure imposée par le template du diplôme —
+ * Demande de dérogation à la structure imposée par le type de diplôme —
  * un responsable de formation décrit par texte ce qu'il voudrait ajouter/
  * déplacer/supprimer et qui n'est pas prévu (typiquement un ELP verrouillé,
  * cf. TreeNode::isLocked()) ; un admin SES traite la demande (il applique

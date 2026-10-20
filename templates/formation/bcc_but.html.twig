@@ -11,6 +11,7 @@
         <div class="text-sm text-gray-400">{{ parcours ? parcours.displayLabel : formation.name }} · {{ 'formation.bcc_but.count'|trans({'%count%': referentiel|length}, 'formation') }}</div>
         <p class="text-xs mt-1 rounded-md p-2" style="background:#f1f5f9;color:#475569">
             {{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ 'formation.bcc_but.intro'|trans({}, 'formation') }}
+            {% if levels is not empty %}{{ 'formation.bcc_but.levels'|trans({'%levels%': levels|join(' › ')}, 'formation') }}{% endif %}
         </p>
     </div>
 

@@ -22,17 +22,18 @@ final class MaquetteDocTest extends DatabaseTestCase
 
     public function testRemoveNodeRefusesLockedNode(): void
     {
-        $doc = $this->maquette->open($this->factory->fromTemplate('licence_lmd'));
-        $annee = $this->factory->first($doc, 'annee');
-        self::assertTrue($annee->isLocked('delete'));
+        // l'élément imposé d'une Licence professionnelle est verrouillé contre la suppression
+        $doc = $this->maquette->open($this->factory->fromType('LP', 1));
+        $imposed = current(array_filter($doc->allNodes(), static fn ($n) => null !== $n->getAttribute('_imposed')));
+        self::assertTrue($imposed->isLocked('delete'));
 
-        self::assertFalse($doc->removeNode($annee));
-        self::assertNotNull($doc->node($annee->nid));
+        self::assertFalse($doc->removeNode($imposed));
+        self::assertNotNull($doc->node($imposed->nid));
     }
 
     public function testRemoveNodeForceRemovesLockedNodeAndItsSubtree(): void
     {
-        $doc = $this->maquette->open($this->factory->fromTemplate('licence_lmd'));
+        $doc = $this->maquette->open($this->factory->fromType('L', 3, withLeaves: true));
         $annee = $this->factory->first($doc, 'annee');
         $descendantNid = $annee->children[0]->nid;
 
@@ -43,7 +44,7 @@ final class MaquetteDocTest extends DatabaseTestCase
 
     public function testRemoveNodeRemovesFreeNodeWithDescendants(): void
     {
-        $doc = $this->maquette->open($this->factory->fromTemplate('licence_lmd'));
+        $doc = $this->maquette->open($this->factory->fromType('L', 3, withLeaves: true));
         $ue = $this->factory->first($doc, 'ue');
         self::assertFalse($ue->isLocked('delete'));
         $ecNid = $ue->children[0]->nid;
@@ -55,7 +56,7 @@ final class MaquetteDocTest extends DatabaseTestCase
 
     public function testRemoveNodeRefusesFreeParentContainingLockedDescendant(): void
     {
-        $doc = $this->maquette->open($this->factory->fromTemplate('licence_lmd'));
+        $doc = $this->maquette->open($this->factory->fromType('L', 3, withLeaves: true));
         $ue = $this->factory->first($doc, 'ue');
         $ec = $ue->children[0];
         $ec->locked = ['delete'];
@@ -67,7 +68,7 @@ final class MaquetteDocTest extends DatabaseTestCase
 
     public function testAddNodeRejectsUnknownType(): void
     {
-        $doc = $this->maquette->open($this->factory->fromTemplate('licence_lmd'));
+        $doc = $this->maquette->open($this->factory->fromType('L', 3, withLeaves: true));
 
         $this->expectException(\InvalidArgumentException::class);
         $doc->addNode(null, 'type_inexistant', 'X');
@@ -75,7 +76,7 @@ final class MaquetteDocTest extends DatabaseTestCase
 
     public function testDuplicateNodeReassignsNids(): void
     {
-        $doc = $this->maquette->open($this->factory->fromTemplate('licence_lmd'));
+        $doc = $this->maquette->open($this->factory->fromType('L', 3, withLeaves: true));
         $ue = $this->factory->first($doc, 'ue');
         $before = \count($doc->allNodes());
 
@@ -90,7 +91,7 @@ final class MaquetteDocTest extends DatabaseTestCase
 
     public function testMoveNodeReparentsAndReorders(): void
     {
-        $doc = $this->maquette->open($this->factory->fromTemplate('licence_lmd'));
+        $doc = $this->maquette->open($this->factory->fromType('L', 3, withLeaves: true));
         $ue = $this->factory->first($doc, 'ue');
         $otherSemestre = $doc->node($ue->parent->nid)->parent->children[1]; // semestre voisin, même année
 
@@ -102,7 +103,7 @@ final class MaquetteDocTest extends DatabaseTestCase
 
     public function testSaveThenReopenKeepsTheTree(): void
     {
-        $formation = $this->factory->fromTemplate('licence_lmd');
+        $formation = $this->factory->fromType('L', 3, withLeaves: true);
         $doc = $this->maquette->open($formation);
         $count = \count($doc->allNodes());
         $this->maquette->save($formation, $doc);

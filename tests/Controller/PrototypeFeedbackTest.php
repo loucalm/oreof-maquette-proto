@@ -95,7 +95,7 @@ final class PrototypeFeedbackTest extends WebTestCase
             self::assertTrue($field->isRequired(), $key);
         }
 
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
         $this->client->request('GET', '/formations/'.$formation->getId().'/parametre/organisation');
 
         self::assertResponseIsSuccessful();
@@ -104,7 +104,7 @@ final class PrototypeFeedbackTest extends WebTestCase
 
     public function testBccCodeIsComputedAndNotEditable(): void
     {
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
         $this->client->request('POST', '/formations/'.$formation->getId().'/bcc/blocs');
         $this->client->request('GET', '/formations/'.$formation->getId().'/bcc');
 
@@ -115,7 +115,7 @@ final class PrototypeFeedbackTest extends WebTestCase
 
     public function testBccPageKeepsItsStructureHeading(): void
     {
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
         $this->client->request('GET', '/formations/'.$formation->getId().'/bcc');
 
         self::assertResponseIsSuccessful();
@@ -133,7 +133,7 @@ final class PrototypeFeedbackTest extends WebTestCase
 
     public function testParcoursParamAutosaveReturnsStatus(): void
     {
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate('master_parcours');
+        $formation = FormationFactory::create(static::getContainer())->fromType('M', 2, avecParcours: true);
         $parcours = static::getContainer()->get(Maquette::class)->open($formation)->parcoursNodes()[0];
 
         $this->client->request(
@@ -150,7 +150,7 @@ final class PrototypeFeedbackTest extends WebTestCase
 
     public function testCompetenceHasNoLabelFieldAndIsReferencedByIdentifier(): void
     {
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
         $id = $formation->getId();
         $this->client->request('POST', '/formations/'.$id.'/bcc/blocs');
         $bloc = $this->reloadDoc($id)->competenceBlocs()[0];
@@ -175,7 +175,7 @@ final class PrototypeFeedbackTest extends WebTestCase
 
     public function testTransversalBlocStaysFirstWhenOthersAreReordered(): void
     {
-        $formation = FormationFactory::create(static::getContainer())->fromTemplate('licence_lmd');
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
         foreach (['1', null, null] as $transversal) {
             $this->client->request('POST', '/formations/'.$formation->getId().'/bcc/blocs', null !== $transversal ? ['transversal' => '1'] : []);
         }

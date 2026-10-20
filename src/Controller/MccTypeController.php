@@ -16,8 +16,8 @@ use Symfony\Component\String\Slugger\AsciiSlugger;
  * Admin des types de MCCC — identité, collection d'épreuves pondérées et
  * profils de règles nommés (ex. « Licence », « Master ») : un même type peut
  * se comporter différemment selon le diplôme sans dupliquer sa fiche. Le
- * rattachement d'un profil à un diplôme se décide au niveau du template
- * (`StructureTemplate::mcccProfiles`), pas ici — un type et ses profils
+ * rattachement d'un profil à un diplôme se décide dans la configuration de la
+ * version du type de diplôme (`VersionConfig::mccc`), pas ici — un type et ses profils
  * restent génériques et réutilisables.
  *
  * Sur le même principe que `ReferentielController` : livré par les fixtures,

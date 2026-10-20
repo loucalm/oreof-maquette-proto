@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Diplome\FormationCreator;
+use App\Diplome\ParamTypeResolver;
+use App\Diplome\TypeDiplomeResolver;
 use App\Entity\Formation;
 use App\Enum\FormationPhase;
 use App\Maquette\Doc\TreeNode;
 use App\Maquette\Maquette;
 use App\Maquette\MaquetteBuilder;
-use App\Maquette\TemplateApplier;
 use App\Repository\FieldDefRepository;
 use App\Repository\FormationRepository;
 use App\Repository\NodeTypeRepository;
-use App\Repository\StructureTemplateRepository;
+use App\Repository\TypeDiplomeRepository;
+use App\Repository\TypeDiplomeVersionRepository;
 use App\Twig\RoleExtension;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
@@ -27,13 +30,20 @@ final class FormationController extends AbstractController
     public function __construct(
         private readonly Maquette $maquette,
         private readonly RoleExtension $roles,
-        private readonly StructureTemplateRepository $templates,
+        private readonly TypeDiplomeResolver $typeResolver,
+        private readonly ParamTypeResolver $paramTypes,
     ) {
     }
 
     #[Route('/', name: 'formation_index', methods: ['GET'])]
-    public function index(Request $request, FormationRepository $formations, \App\Maquette\Completion $completion): Response
-    {
+    public function index(
+        Request $request,
+        FormationRepository $formations,
+        \App\Maquette\Completion $completion,
+        TypeDiplomeRepository $typeDiplomes,
+        TypeDiplomeVersionRepository $versions,
+        FormationCreator $creator,
+    ): Response {
         $phaseFilter = FormationPhase::tryFrom((string) $request->query->get('phase', ''));
         $list = null !== $phaseFilter ? $formations->findByPhase($phaseFilter) : $formations->findAllRecent();
 
@@ -53,19 +63,29 @@ final class FormationController extends AbstractController
             ];
         }
 
+        // types proposables à la création (les archivés n'y figurent pas), avec les bornes de leur version courante
+        $creationTypes = [];
+        foreach ($typeDiplomes->findAllOrdered(false) as $type) {
+            $version = $versions->findForYear($type, TypeDiplomeResolver::DEFAULT_YEAR) ?? $type->latestVersion();
+            $structure = $version?->config()->structure;
+            $creationTypes[] = [
+                'type' => $type,
+                'duration' => null !== $structure ? $creator->describeDuration($structure->duration) : null,
+                'parcoursAllowed' => $structure?->parcoursAllowed ?? false,
+            ];
+        }
+
         return $this->render('formation/index.html.twig', [
+            'creationTypes' => $creationTypes,
+            'defaultYear' => TypeDiplomeResolver::DEFAULT_YEAR,
             'rows' => $rows,
             'consolidationTab' => $phaseFilter === FormationPhase::Consolidation,
         ]);
     }
 
     #[Route('/formations', name: 'formation_create', methods: ['POST'])]
-    public function create(
-        Request $request,
-        EntityManagerInterface $em,
-        StructureTemplateRepository $templates,
-        TemplateApplier $applier,
-    ): Response {
+    public function create(Request $request, TypeDiplomeRepository $typeDiplomes, FormationCreator $creator): Response
+    {
         $name = trim((string) $request->request->get('name'));
         if ($name === '') {
             $this->addFlash('danger', 'Un nom de formation est requis.');
@@ -73,34 +93,34 @@ final class FormationController extends AbstractController
             return $this->redirectToRoute('formation_index');
         }
 
-        $diplome = trim((string) $request->request->get('diplome')) ?: null;
-        $phase = FormationPhase::tryFrom((string) $request->request->get('phase', '')) ?? FormationPhase::Construction;
+        $type = $typeDiplomes->findOneByKey((string) $request->request->get('typeDiplome'));
+        if (null === $type) {
+            $this->addFlash('danger', 'Choisissez un type de diplôme.');
 
-        $formation = (new Formation($name))
-            ->setDiplome($diplome)
-            ->setDomaine(trim((string) $request->request->get('domaine')) ?: null)
-            ->setComposante(trim((string) $request->request->get('composante')) ?: null)
-            ->setAvecParcours($request->request->getBoolean('avecParcours'))
-            ->setPhase($phase)
-            ->setAnneeUniversitaire($request->request->get('anneeUniversitaire'))
-            ->setStructure(['annee', 'semestre', 'ue', 'ec']);
-
-        $em->persist($formation);
-        $em->flush();
-
-        // structure imposée par le diplôme, s'il en existe une
-        $template = $diplome !== null ? $templates->findOneByDiplome($diplome) : null;
-        if ($template !== null) {
-            $doc = $this->maquette->open($formation);
-            $applier->apply($doc, $template);
-            $this->maquette->save($formation, $doc);
-            $this->addFlash('success', sprintf(
-                'Formation « %s » créée. La structure imposée par le diplôme %s (« %s ») a été appliquée — ses éléments pédagogiques verrouillés ne peuvent pas être supprimés.',
-                $name, $diplome, $template->getLabel(),
-            ));
-        } else {
-            $this->addFlash('success', sprintf('Formation « %s » créée. Complétez sa structure.', $name));
+            return $this->redirectToRoute('formation_index');
         }
+
+        try {
+            $formation = $creator->create(
+                $name,
+                $type,
+                trim((string) $request->request->get('anneeUniversitaire')) ?: TypeDiplomeResolver::DEFAULT_YEAR,
+                $request->request->getInt('duree'),
+                $request->request->getBoolean('avecParcours'),
+                FormationPhase::tryFrom((string) $request->request->get('phase', '')) ?? FormationPhase::Construction,
+                trim((string) $request->request->get('domaine')) ?: null,
+                trim((string) $request->request->get('composante')) ?: null,
+            );
+        } catch (\DomainException $e) {
+            $this->addFlash('danger', $e->getMessage());
+
+            return $this->redirectToRoute('formation_index');
+        }
+
+        $this->addFlash('success', sprintf(
+            'Formation « %s » créée d\'après le type de diplôme %s : sa structure de départ respecte les bornes du diplôme, et ses éléments imposés ne peuvent pas être supprimés.',
+            $name, $type->getLabel(),
+        ));
 
         return $this->redirectToRoute('formation_editor', ['id' => $formation->getId()]);
     }
@@ -245,13 +265,13 @@ final class FormationController extends AbstractController
     }
 
     #[Route('/formations/{fid}/parcours/{nid}/parametre/{key}', name: 'parcours_param', methods: ['GET'])]
-    public function parcoursParam(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid, string $key, NodeTypeRepository $types, FieldDefRepository $fields): Response
+    public function parcoursParam(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid, string $key, FieldDefRepository $fields): Response
     {
         if (!isset(self::PARCOURS_PARAM_SECTIONS[$key])) {
             throw $this->createNotFoundException();
         }
         $node = $this->parcoursNode($formation, $nid);
-        $type = $types->findOneByKey('param_'.$key.'_parcours');
+        $type = $this->paramTypes->typeFor($formation, ParamTypeResolver::SCOPE_PARCOURS, $key);
 
         return $this->render("formation/param/parcours_$key.html.twig", [
             'formation' => $formation,
@@ -406,7 +426,6 @@ final class FormationController extends AbstractController
         Formation $formation,
         MaquetteBuilder $builder,
         NodeTypeRepository $types,
-        StructureTemplateRepository $templates,
     ): Response {
         $roots = $builder->build($formation);
 
@@ -415,7 +434,6 @@ final class FormationController extends AbstractController
             'roots' => $roots,
             'progress' => $builder->progress($roots),
             'types' => $types->findAllOrdered(),
-            'templates' => $templates->findAllOrdered(),
             'canUndo' => $this->maquette->canUndo($formation),
             'canRedo' => $this->maquette->canRedo($formation),
         ]);
@@ -427,19 +445,23 @@ final class FormationController extends AbstractController
         $wasMulti = $formation->isAvecParcours();
         $willMulti = $request->request->getBoolean('avecParcours');
 
-        // hors admin, un template imposé pour le diplôme fige avec/sans parcours et la dimension temporelle
-        $lockedByTemplate = !$this->roles->isAdmin()
-            && null !== $formation->getDiplome()
-            && null !== $this->templates->findOneByDiplome($formation->getDiplome());
-        if ($lockedByTemplate) {
+        // hors admin, le type de diplôme fige avec/sans parcours et la dimension temporelle ;
+        // un type sans parcours n'en accepte pour personne
+        $version = $this->typeResolver->versionFor($formation);
+        $lockedByType = !$this->roles->isAdmin() && null !== $version;
+        if ($lockedByType) {
             $willMulti = $wasMulti;
+        }
+        if ($willMulti && !$wasMulti && null !== $version && !$version->config()->structure->parcoursAllowed) {
+            $this->addFlash('danger', sprintf('Le type de diplôme %s n’autorise pas les parcours.', $formation->getDiplome()));
+
+            return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);
         }
 
         $doc = $this->maquette->open($formation);
 
         $formation
             ->setName(trim((string) $request->request->get('name')) ?: $formation->getName())
-            ->setDiplome(trim((string) $request->request->get('diplome')) ?: null)
             ->setDomaine(trim((string) $request->request->get('domaine')) ?: null)
             ->setComposante(trim((string) $request->request->get('composante')) ?: null)
             ->setAvecParcours($willMulti);
@@ -451,10 +473,10 @@ final class FormationController extends AbstractController
                 ? $request->request->getInt('ectsTotal') : null);
         }
 
-        if (!$lockedByTemplate && $request->request->has('calendarUnit')) {
+        if (!$lockedByType && $request->request->has('calendarUnit')) {
             $formation->setCalendarUnit($request->request->get('calendarUnit'));
         }
-        if (!$lockedByTemplate && $request->request->has('calendarSpan')) {
+        if (!$lockedByType && $request->request->has('calendarSpan')) {
             $formation->setCalendarSpan($request->request->get('calendarSpan') !== ''
                 ? $request->request->getInt('calendarSpan') : null);
         }
@@ -582,28 +604,6 @@ final class FormationController extends AbstractController
         return true;
     }
 
-    #[Route('/formations/{id}/apply-template', name: 'formation_apply_template', methods: ['POST'])]
-    public function applyTemplate(
-        Formation $formation,
-        Request $request,
-        StructureTemplateRepository $templates,
-        TemplateApplier $applier,
-    ): Response {
-        $template = $templates->findOneByKey((string) $request->request->get('template'));
-        if ($template === null) {
-            $this->addFlash('danger', 'Template inconnu.');
-
-            return $this->redirectToRoute('formation_editor', ['id' => $formation->getId()]);
-        }
-
-        $doc = $this->maquette->open($formation);
-        $applier->apply($doc, $template);
-        $this->maquette->save($formation, $doc);
-        $this->addFlash('success', sprintf('Structure « %s » chargée. Elle reste entièrement modifiable.', $template->getLabel()));
-
-        return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);
-    }
-
     /**
      * Enregistre le squelette (chaîne de types) de la formation.
      */
@@ -632,16 +632,13 @@ final class FormationController extends AbstractController
     public function param(
         Formation $formation,
         string $key,
-        StructureTemplateRepository $templates,
         \App\Repository\DerogationRequestRepository $derogations,
-        NodeTypeRepository $types,
         FieldDefRepository $fields,
-        \App\Maquette\TemplateDiff $templateDiff,
     ): Response {
         if (!isset(self::PARAM_SECTIONS[$key])) {
             throw $this->createNotFoundException();
         }
-        $type = 'structure' !== $key ? $types->findOneByKey('param_'.$key.'_formation') : null;
+        $type = 'structure' !== $key ? $this->paramTypes->typeFor($formation, ParamTypeResolver::SCOPE_FORMATION, $key) : null;
 
         return $this->render("formation/param/$key.html.twig", [
             'formation' => $formation,
@@ -651,22 +648,10 @@ final class FormationController extends AbstractController
             'fields' => null !== $type ? $fields->activeOrderedFor($type) : [],
             // seulement pour "structure"
             'nodeCount' => $key === 'structure' ? \count($this->maquette->open($formation)->allNodes()) : 0,
-            'templates' => $templates->findAllOrdered(),
+            // le type de diplôme fige avec/sans parcours et la dimension temporelle (hors admin)
+            'lockedByType' => null !== $this->typeResolver->versionFor($formation),
             'derogations' => $key === 'structure' ? $derogations->findByFormation($formation) : [],
-            'templateDiff' => $key === 'structure' ? $templateDiff->diff($formation) : null,
         ]);
-    }
-
-    /** Réapplique aux nœuds existants les réglages (et, au choix, les verrous) du template du diplôme. */
-    #[Route('/formations/{id}/template/propager', name: 'formation_template_propagate', methods: ['POST'])]
-    public function propagateTemplate(Formation $formation, Request $request, \App\Maquette\TemplateDiff $templateDiff): Response
-    {
-        $count = $templateDiff->propagate($formation, $request->request->getBoolean('relock'));
-        $this->addFlash($count > 0 ? 'success' : 'info', $count > 0
-            ? sprintf('Réglages du template réappliqués sur %d élément(s).', $count)
-            : 'Rien à réappliquer : la formation suit déjà son template.');
-
-        return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);
     }
 
     #[Route('/formations/{id}/parametre/{key}', name: 'formation_param_save', methods: ['POST'])]
@@ -681,8 +666,7 @@ final class FormationController extends AbstractController
         if ($key === 'organisation') {
             $formation
                 ->setName(trim((string) $request->request->get('name')) ?: $formation->getName())
-                ->setDiplome(trim((string) $request->request->get('diplome')) ?: null)
-                ->setDomaine(trim((string) $request->request->get('domaine')) ?: null)
+                    ->setDomaine(trim((string) $request->request->get('domaine')) ?: null)
                 ->setComposante(trim((string) $request->request->get('composante')) ?: null);
         }
 
@@ -717,7 +701,7 @@ final class FormationController extends AbstractController
         $this->addFlash(
             $kept > 0 ? 'warning' : 'info',
             $kept > 0
-                ? sprintf('Structure vidée, sauf %d élément(s) imposé(s) par le template (non supprimables).', $kept)
+                ? sprintf('Structure vidée, sauf %d élément(s) imposé(s) par le type de diplôme (non supprimables).', $kept)
                 : 'Structure vidée.',
         );
 

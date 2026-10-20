@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
- * Dérogations à la structure imposée par un template : le responsable décrit
+ * Dérogations à la structure imposée par un type de diplôme : le responsable décrit
  * par texte ce qu'il voudrait (typiquement sur un ELP verrouillé), l'admin
  * SES traite la demande — il applique lui-même la modification avec ses
  * propres droits d'édition, puis marque la demande approuvée/refusée. Aucun

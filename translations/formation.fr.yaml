@@ -46,7 +46,11 @@ formation:
     name_placeholder: Formation exemple
     name_help: Nommer votre formation
     diplome_field: Type de diplôme
-    diplome_help: La sélection de certains diplômes nécessite une demande
+    diplome_help: Le type de diplôme fixe la structure de départ, ses bornes et ses éléments imposés. Les types archivés ne sont plus proposés.
+    type_option_bounds: 'durée %duration%'
+    type_option_no_parcours: sans parcours
+    duree_field: Durée de la formation
+    duree_help: Nombre d’années du premier niveau de la structure, dans les bornes du diplôme.
     domaine_field: Domaine de formation
     domaine_help: Domaine auquel appartient votre formation
     composante_field: Composante porteuse de la formation
@@ -62,8 +66,21 @@ formation:
       Juste le squelette (nom, structure) — préparé en avance pour une année future, à compléter plus tard.
     annee_field: Année universitaire visée
     annee_placeholder: ex. 2027-2028
-    annee_help: Surtout utile pour une consolidation.
+    annee_help: Année universitaire au format AAAA-AAAA ; elle détermine la version du type de diplôme appliquée.
     create_button: Créer
+  creation:
+    error:
+      archived: 'Le type de diplôme « %type% » est archivé : on ne peut plus créer de formation de ce type.'
+      year: 'Année universitaire invalide : attendue au format AAAA-AAAA, avec deux années consécutives (ex. 2026-2027).'
+      no_version: 'Le type de diplôme « %type% » n’a aucune version applicable à l’année %year%.'
+      duration: 'Durée de %duration% hors des bornes du type de diplôme « %type% » (%bounds%).'
+      no_parcours: 'Le type de diplôme « %type% » n’autorise pas les parcours.'
+    bounds:
+      free: 1 ou plus
+      exact: exactement %n%
+      range: de %min% à %max%
+      min: au moins %n%
+      max: au plus %n%
   tree:
     search_placeholder: 'Rechercher un élément…  ( / )'
     search_aria: Rechercher dans la structure (libellé, référence, type)
@@ -300,10 +317,11 @@ formation:
   bcc_but:
     count: '%count% compétence(s)'
     intro: >-
-      Référentiel national du BUT (dans ORéOF : synchronisé depuis l’API des référentiels), en lecture
+      Référentiel national de compétences (dans ORéOF : synchronisé depuis l’API des référentiels), en lecture
       seule. Les apprentissages critiques (AC) se cochent sur chaque EC, parmi ceux du niveau de son année.
     niveau: 'Niveau %ordre% (%annee%)'
-    empty: Aucun référentiel national chargé pour ce diplôme.
+    levels: 'Niveaux du diplôme : %levels%.'
+    empty: Aucun référentiel national chargé pour cette formation.
 
   bcc:
     bloc_label_field: Libellé du bloc
@@ -343,7 +361,7 @@ formation:
     generic_add_hint: Ajouter une valeur
     organisation:
       divider_global: Informations globale
-      diplome_help: 'Licence, Master, BUT, DU, Ingénieur, etc.'
+      diplome_help: Fixé à la création de la formation, d’après son type de diplôme.
       composante_help: >-
         Indiquer la composante porteuse du projet, qui aura en charge le dépôt de la demande de création
         de la formation
@@ -425,14 +443,6 @@ formation:
       codes_rome_help: Ajoutez les codes ROME pour préciser les métiers accessibles aux diplômés.
       add_rome_fake: Ajouter un code ROME
     structure:
-      divider_template_diff: 'Écarts au template « %template% »'
-      template_in_sync: La formation suit son template (éléments imposés présents, verrous et réglages identiques).
-      template_missing: 'Éléments imposés absents : %list%'
-      template_unlocked: 'Verrous levés (dérogation) : %list%'
-      template_overrides: 'Réglages de champs différents du template : %list%'
-      template_relock_label: Remettre aussi les verrous levés
-      template_propagate_button: Réappliquer les réglages du template
-      template_propagate_confirm: Réappliquer les réglages de champs du template aux éléments existants ?
       divider_parcours_count: Nombre de parcours
       has_parcours_label: La formation contient-elle des parcours ?
       has_parcours_help: >-
@@ -466,8 +476,8 @@ formation:
       ects_total_label: Volume d'ECTS total
       ects_total_help: Cela servira à vérifier le total d'ECTS de votre formation sans parcours
       divider_structure: Structure
-      locked_by_template_note: >-
-        Fixé par le template du diplôme (administrateur SES). Une demande de dérogation est nécessaire
+      locked_by_type_note: >-
+        Fixé par le type de diplôme (administrateur SES). Une demande de dérogation est nécessaire
         pour le modifier — voir plus bas.
       readonly_note: >-
         La hiérarchie des niveaux est définie par le diplôme (administrateur SES). Vous construisez
@@ -493,19 +503,11 @@ formation:
       node_count_note: >-
         %count% ELP déjà construit(s) dans l'arbre · les types sont gérés par les administrateurs —
         %link_open%voir / éditer les types%link_close%.
-      divider_load_template: Charger un template
-      load_template_confirm: Charger ce template ÉCRASE le squelette ET les éléments pédagogiques actuels.
-      load_button: Charger
-      template_note: >-
-        Un template fixe le squelette et pré-remplit un arbre de départ, ensuite librement modifiable —
-        %link_open%liste des templates%link_close%.
-      template_name_placeholder: Nom du template
-      save_as_template_button: Enregistrer comme template
       reset_confirm: >-
         Vider tous les éléments pédagogiques de l'arbre ? (le squelette et les éléments pédagogiques
         imposés sont conservés)
       reset_button: Vider les ELP
       derogation_note: >-
-        Pour ajouter, déplacer ou supprimer quelque chose que le template du diplôme ne prévoit pas
+        Pour ajouter, déplacer ou supprimer quelque chose que le type de diplôme ne prévoit pas
         (typiquement un ELP imposé) — bouton %flag_icon% dans la barre d'actions de l'arborescence.
       no_derogation: Aucune demande envoyée pour cette formation.
