@@ -16,6 +16,11 @@ make db-reset    # recrée la base SQLite + fixtures de démo
 
 Autres : `make sh`, `make console ARGS="…"`, `make cc`, `make tw-watch`, `make logs`.
 
+> **Après mise à jour de la branche `feat/types-diplome`** (types de diplôme configurables) : le schéma de
+> la base a changé et le prototype n'a pas de migrations. Lancez `make db-reset` avant de rouvrir
+> l'application. **Attention : cette commande efface toutes les données locales** (formations et
+> diplômes saisis à la main) et les remplace par les données de démonstration.
+
 ## Ce qui est dans le prototype
 
 | Brique | Où |

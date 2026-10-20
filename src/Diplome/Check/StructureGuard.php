@@ -45,7 +45,7 @@ final class StructureGuard
             if (!$v->blocking) {
                 continue;
             }
-                $old = $previous[$v->ruleKey."\0".$v->scopeNid] ?? null;
+            $old = $previous[$v->ruleKey."\0".$v->scopeNid] ?? null;
             if (null !== $old && !self::isWorse($old, $v)) {
                 continue;
             }

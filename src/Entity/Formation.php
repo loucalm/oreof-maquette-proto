@@ -20,7 +20,7 @@ class Formation
     #[ORM\Column(length: 200)]
     private string $name;
 
-    /** Libre dans le proto : "Licence", "BUT", "Master"… */
+    /** Libellé libre d'une formation non typée (ex. « Certificat ») ; une formation typée affiche le libellé de son type (cf. getDiplome). */
     #[ORM\Column(length: 80, nullable: true)]
     private ?string $diplome = null;
 

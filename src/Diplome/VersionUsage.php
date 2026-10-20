@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Diplome;
 
 use App\Entity\Formation;
+use App\Entity\TypeDiplome;
 use App\Entity\TypeDiplomeVersion;
 use App\Repository\FormationRepository;
 
@@ -18,7 +19,7 @@ final class VersionUsage
     }
 
     /** @return list<Formation> toutes les formations du type, quelle que soit la version qu'elles appliquent */
-    public function formationsOfType(\App\Entity\TypeDiplome $type): array
+    public function formationsOfType(TypeDiplome $type): array
     {
         return $this->formations->findBy(['typeDiplome' => $type], ['name' => 'ASC']);
     }

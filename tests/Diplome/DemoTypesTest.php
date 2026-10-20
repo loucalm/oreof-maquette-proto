@@ -55,4 +55,15 @@ final class DemoTypesTest extends DatabaseTestCase
         sort($labels);
         self::assertSame(['BUT', 'Licence', 'Licence professionnelle', 'Master', 'Master M2E'], $labels);
     }
+
+    public function testEveryDeclaredNatureHasItsMccc(): void
+    {
+        foreach ($this->em->getRepository(TypeDiplome::class)->findAll() as $type) {
+            $config = $type->latestVersion()->config();
+            foreach ($config->structure->natures as $nature) {
+                self::assertArrayHasKey($nature, $config->mccc, $type->getKey().' : nature « '.$nature.' » sans MCCC');
+                self::assertNotEmpty($config->mccc[$nature]['types'], $type->getKey().' : '.$nature);
+            }
+        }
+    }
 }
