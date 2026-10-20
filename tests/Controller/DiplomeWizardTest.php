@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Controller;
 
+use App\Diplome\Wizard\DraftPublisher;
+use App\Diplome\Wizard\FormsStep;
+use App\Diplome\WizardDraft;
 use App\Entity\TypeDiplome;
 use App\Tests\Support\ResetsDatabase;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -76,6 +79,7 @@ final class DiplomeWizardTest extends WebTestCase
 
         $this->submitInformations(['informations[label]' => 'X', 'informations[sigle]' => 'XY', 'informations[codeApogee]' => 'AB', 'informations[anneeUniversitaire]' => '2026-2028']);
         self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('1 caractère', $this->client->getResponse()->getContent());
         self::assertStringContainsString('seconde année', $this->client->getResponse()->getContent());
     }
 
@@ -120,5 +124,54 @@ final class DiplomeWizardTest extends WebTestCase
         $this->client->request('POST', '/role/responsable');
         $this->client->request('GET', '/diplomes/nouveau');
         self::assertResponseRedirects('/');
+    }
+
+    /** @param array<string, mixed> $info */
+    private function draft(array $info, string $annee = '2026-2027'): WizardDraft
+    {
+        return new WizardDraft($info + ['label' => 'Deust', 'sigle' => 'DEUST', 'codeApogee' => null, 'description' => null, 'accredite' => true, 'passageCfvu' => true], null, [], $annee, true);
+    }
+
+    public function testSaveRevalidatesTakenSigleAndForgedValues(): void
+    {
+        $publisher = static::getContainer()->get(DraftPublisher::class);
+
+        foreach ([
+            'sigle prise entre-temps' => $this->draft(['sigle' => ' l ']),
+            'année forgée' => $this->draft([], '2026-2030'),
+            'année mal formée' => $this->draft([], 'abc'),
+            'code Apogée trop long' => $this->draft(['codeApogee' => 'AB']),
+            'libellé vide' => $this->draft(['label' => '']),
+        ] as $case => $draft) {
+            try {
+                $publisher->publish($draft);
+                self::fail($case.' ne devrait pas être enregistré');
+            } catch (\DomainException) {
+                self::assertNull($this->em->getRepository(TypeDiplome::class)->findOneBy(['key' => 'DEUST']), $case);
+            }
+        }
+    }
+
+    public function testFormsStepKeepsSlotsItDoesNotOffer(): void
+    {
+        $draft = $this->draft([]);
+        $draft->configData = ['forms' => ['formation.organisation' => 'param_organisation_formation', 'extra.slot' => 'param_x']];
+
+        static::getContainer()->get(FormsStep::class)->apply($draft, ['formation_presentation' => 'param_presentation_formation']);
+
+        self::assertSame('param_x', $draft->config()->forms['extra.slot']);
+        self::assertSame('param_presentation_formation', $draft->config()->forms['formation.presentation']);
+        self::assertArrayNotHasKey('formation.organisation', $draft->config()->forms);
+    }
+
+    public function testSummaryListsCopiedConfiguration(): void
+    {
+        $this->client->request('GET', '/diplomes/nouveau', ['depuis' => $this->licenceVersionId()]);
+        $this->submitInformations(['informations[label]' => 'Deust', 'informations[sigle]' => 'DEUST', 'informations[description]' => 'Desc test']);
+        $crawler = $this->client->request('GET', '/diplomes/nouveau/recapitulatif');
+        $text = $crawler->filter('section')->text();
+        foreach (['Desc test', 'Code Apogée', 'Accrédité', 'Passage en CFVU', 'Durée', 'Niveau 1', 'Niveaux de BCC', 'Formation — présentation'] as $needle) {
+            self::assertStringContainsString($needle, $text);
+        }
     }
 }

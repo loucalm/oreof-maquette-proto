@@ -44,6 +44,7 @@ diplome:
       recapitulatif: Récapitulatif
     error:
       sigle_taken: Ce sigle est déjà utilisé par un autre type de diplôme.
+      incomplete: Les informations du diplôme ne sont pas complètes.
       annee_consecutive: La seconde année doit suivre la première (ex. 2026-2027).
     depart:
       none: Aucun (partir de zéro)
@@ -56,7 +57,58 @@ diplome:
         formation.presentation: Formation — présentation
         parcours.organisation: Parcours — organisation
         parcours.presentation: Parcours — présentation
+    section:
+      informations: Informations
+      structure: Structure
+      forms: Formulaires
+      mccc: MCCC
+      bcc: BCC
+    bound:
+      exact: 'exactement %n%'
+      range: 'de %min% à %max%'
+      min: 'au moins %min%'
+      max: 'au plus %max%'
+    path:
+      structure: Structure
+      levels: Niveaux
+      typeKey: type
+      count: nombre
+      ects: ECTS
+      ectsSum: somme ECTS
+      startAt: numéro de départ
+      min: minimum
+      max: maximum
+      duration: Durée
+      parcoursAllowed: Parcours autorisés
+      natures: Natures d'élément
+      imposed: Éléments imposés
+      rules: Règles
+      mccc: MCCC
+      types: types
+      profile: profil
+      options: Options
+      quitus: Quitus
+      assiduite: Assiduité
+      sansNote: Sans note
+      bccLevels: Niveaux de BCC
+      bccLinkLevel: Niveau de BCC relié aux éléments
     recap:
+      code_apogee: Code Apogée
+      description: Description
+      accredite: Accrédité
+      passage_cfvu: Passage en CFVU
+      duration: Durée
+      parcours: Parcours autorisés
+      level: 'Niveau %n%'
+      level_count: nombre
+      level_ects_sum: somme ECTS
+      natures: Natures d'élément
+      imposed: Éléments imposés
+      rules: Règles
+      bcc_levels: Niveaux de BCC
+      none: Aucun formulaire choisi
+      'yes': oui
+      'no': non
       label: Libellé
       sigle: Sigle
       annee: Année universitaire

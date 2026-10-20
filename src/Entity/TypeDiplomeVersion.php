@@ -98,6 +98,12 @@ class TypeDiplomeVersion
         return $this;
     }
 
+    /** Référence « clé@année » (valeur de `basedOn` des versions qui en partent). */
+    public function reference(): string
+    {
+        return $this->typeDiplome->getKey().'@'.$this->anneeUniversitaire;
+    }
+
     /** Première année de `anneeUniversitaire` (2026 pour `2026-2027`). */
     public function startYear(): int
     {

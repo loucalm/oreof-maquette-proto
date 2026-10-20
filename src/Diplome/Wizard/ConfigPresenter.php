@@ -1,0 +1,148 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Diplome\Wizard;
+
+use App\Diplome\Spec\Bound;
+use App\Diplome\Spec\VersionConfig;
+use App\Diplome\WizardDraft;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+/** Mise en mots d'une configuration de version (récapitulatif de l'assistant). */
+final class ConfigPresenter
+{
+    public function __construct(private readonly TranslatorInterface $translator)
+    {
+    }
+
+    /**
+     * Sections lisibles : titre + lignes [libellé, valeur].
+     *
+     * @return list<array{title: string, rows: list<array{0: string, 1: string}>}>
+     */
+    public function sections(WizardDraft $draft): array
+    {
+        $info = $draft->informationsData();
+        $config = $draft->config();
+
+        $sections = [
+            ['title' => $this->t('section.informations'), 'rows' => [
+                [$this->t('recap.label'), (string) $info['label']],
+                [$this->t('recap.sigle'), (string) $info['sigle']],
+                [$this->t('recap.code_apogee'), $this->orDash($info['codeApogee'])],
+                [$this->t('recap.description'), $this->orDash($info['description'])],
+                [$this->t('recap.accredite'), $this->yesNo((bool) $info['accredite'])],
+                [$this->t('recap.passage_cfvu'), $this->yesNo((bool) $info['passageCfvu'])],
+                [$this->t('recap.annee'), $draft->anneeUniversitaire],
+            ]],
+            ['title' => $this->t('section.structure'), 'rows' => $this->structureRows($config)],
+            ['title' => $this->t('section.forms'), 'rows' => $this->formsRows($config)],
+            ['title' => $this->t('section.mccc'), 'rows' => $this->mcccRows($config)],
+            ['title' => $this->t('section.bcc'), 'rows' => [
+                [$this->t('recap.bcc_levels'), [] === $config->bccLevels ? '—' : implode(' › ', $config->bccLevels)],
+            ]],
+        ];
+
+        return $sections;
+    }
+
+    /** Libellé en clair d'un chemin pointé de VersionConfig::toArray(). */
+    public function pathLabel(string $path): string
+    {
+        $segments = explode('.', $path);
+        if ('forms' === $segments[0] && isset($segments[1])) {
+            return $this->t('formulaires.slot.'.implode('.', \array_slice($segments, 1)));
+        }
+        $parts = [];
+        foreach ($segments as $segment) {
+            if (ctype_digit($segment)) {
+                $parts[] = '#'.((int) $segment + 1);
+                continue;
+            }
+            $id = 'diplome.wizard.path.'.$segment;
+            $label = $this->translator->trans($id, [], 'diplome');
+            $parts[] = $label === $id ? $segment : $label;
+        }
+
+        return implode(' › ', $parts);
+    }
+
+    public function boundLabel(?Bound $bound): string
+    {
+        if (null === $bound || (null === $bound->min && null === $bound->max)) {
+            return '—';
+        }
+        $key = match (true) {
+            $bound->isExact() => 'exact',
+            null !== $bound->min && null !== $bound->max => 'range',
+            null !== $bound->min => 'min',
+            default => 'max',
+        };
+
+        return $this->translator->trans('diplome.wizard.bound.'.$key, ['%n%' => $bound->min, '%min%' => $bound->min, '%max%' => $bound->max], 'diplome');
+    }
+
+    /** @return list<array{0: string, 1: string}> */
+    private function structureRows(VersionConfig $config): array
+    {
+        $s = $config->structure;
+        $rows = [
+            [$this->t('recap.duration'), $this->boundLabel($s->duration)],
+            [$this->t('recap.parcours'), $this->yesNo($s->parcoursAllowed)],
+        ];
+        foreach ($s->levels as $i => $level) {
+            $details = array_filter([
+                null === $level->count ? null : $this->t('recap.level_count').' '.$this->boundLabel($level->count),
+                null === $level->ects ? null : 'ECTS '.$this->boundLabel($level->ects),
+                null === $level->ectsSum ? null : $this->t('recap.level_ects_sum').' '.$this->boundLabel($level->ectsSum),
+            ]);
+            $rows[] = [$this->t('recap.level', ['%n%' => $i + 1]), $level->typeKey.([] === $details ? '' : ' ('.implode(', ', $details).')')];
+        }
+        $rows[] = [$this->t('recap.natures'), [] === $s->natures ? '—' : implode(', ', $s->natures)];
+        $rows[] = [$this->t('recap.imposed'), (string) \count($s->imposed)];
+        $rows[] = [$this->t('recap.rules'), (string) \count($s->rules)];
+
+        return $rows;
+    }
+
+    /** @return list<array{0: string, 1: string}> */
+    private function formsRows(VersionConfig $config): array
+    {
+        $rows = [];
+        foreach ($config->forms as $slot => $key) {
+            $rows[] = [$this->pathLabel('forms.'.$slot), $key];
+        }
+
+        return [] === $rows ? [[$this->t('recap.none'), '—']] : $rows;
+    }
+
+    /** @return list<array{0: string, 1: string}> */
+    private function mcccRows(VersionConfig $config): array
+    {
+        $rows = [];
+        foreach ($config->mccc as $nature => $m) {
+            $rows[] = [$nature, implode(', ', $m['types']).(null === $m['profile'] ? '' : ' — '.$m['profile'])];
+        }
+        foreach ($config->options as $option => $on) {
+            $rows[] = [$this->pathLabel('options.'.$option), $this->yesNo($on)];
+        }
+
+        return $rows;
+    }
+
+    private function t(string $key, array $params = []): string
+    {
+        return $this->translator->trans('diplome.wizard.'.$key, $params, 'diplome');
+    }
+
+    private function yesNo(bool $v): string
+    {
+        return $this->t($v ? 'recap.yes' : 'recap.no');
+    }
+
+    private function orDash(mixed $v): string
+    {
+        return null === $v || '' === $v ? '—' : (string) $v;
+    }
+}

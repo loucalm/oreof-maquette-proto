@@ -45,8 +45,21 @@ final class WizardDraft
         return VersionConfig::fromArray($this->configData);
     }
 
-    public function withConfig(VersionConfig $config): void
+    /**
+     * Données de l'étape « Informations » avec leurs valeurs par défaut.
+     *
+     * @return array<string, mixed>
+     */
+    public function informationsData(): array
     {
-        $this->configData = $config->toArray();
+        return $this->informations + [
+            'label' => null,
+            'sigle' => null,
+            'codeApogee' => null,
+            'description' => null,
+            'accredite' => true,
+            'passageCfvu' => true,
+            'anneeUniversitaire' => $this->anneeUniversitaire,
+        ];
     }
 }

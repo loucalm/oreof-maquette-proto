@@ -1,26 +1,22 @@
 {% extends 'diplome/wizard/_layout.html.twig' %}
 {% block step_content %}
-{% set info = draft.informations %}
-<dl class="grid grid-cols-3 gap-y-2 text-sm mb-5">
-    <dt style="color:var(--c-muted)">{{ 'diplome.wizard.recap.label'|trans({}, 'diplome') }}</dt><dd class="col-span-2">{{ info.label }}</dd>
-    <dt style="color:var(--c-muted)">{{ 'diplome.wizard.recap.sigle'|trans({}, 'diplome') }}</dt><dd class="col-span-2">{{ info.sigle }}</dd>
-    <dt style="color:var(--c-muted)">{{ 'diplome.wizard.recap.annee'|trans({}, 'diplome') }}</dt><dd class="col-span-2">{{ draft.anneeUniversitaire }}</dd>
-    <dt style="color:var(--c-muted)">{{ 'diplome.wizard.recap.based_on'|trans({}, 'diplome') }}</dt><dd class="col-span-2">{{ basedOn ?? '—' }}</dd>
-    {% for slot, key in config.forms %}
-        <dt style="color:var(--c-muted)">{{ ('diplome.wizard.formulaires.slot.' ~ slot)|trans({}, 'diplome') }}</dt><dd class="col-span-2">{{ key }}</dd>
-    {% endfor %}
-</dl>
+{% for section in sections %}
+    <h3 class="text-sm font-semibold mt-4 mb-1">{{ section.title }}</h3>
+    <dl class="grid grid-cols-3 gap-y-1 text-sm">
+        {% for row in section.rows %}
+            <dt style="color:var(--c-muted)">{{ row[0] }}</dt><dd class="col-span-2">{{ row[1] }}</dd>
+        {% endfor %}
+    </dl>
+{% endfor %}
 
 {% if base %}
-    <h3 class="text-sm font-semibold mb-2">{{ 'diplome.wizard.recap.differences'|trans({'%base%': base.typeDiplome.label ~ ' ' ~ base.anneeUniversitaire}, 'diplome') }}</h3>
+    <h3 class="text-sm font-semibold mt-6 mb-2">{{ 'diplome.wizard.recap.differences'|trans({'%base%': base.typeDiplome.label ~ ' ' ~ base.anneeUniversitaire}, 'diplome') }}</h3>
     {% if diff is empty %}
         <p class="text-sm" style="color:var(--c-muted)" data-no-diff>{{ 'diplome.wizard.recap.identical'|trans({}, 'diplome') }}</p>
     {% else %}
         <ul class="text-sm space-y-1" data-diff>
-        {% for path, change in diff %}
-            {% set parts = path|split('.') %}
-            {% set slot = parts[0] == 'forms' ? parts[1:]|join('.') : null %}
-            <li data-path="{{ path }}"><span class="font-medium">{{ slot ? ('diplome.wizard.formulaires.slot.' ~ slot)|trans({}, 'diplome') : path }}</span> : {{ change.from }} → {{ change.to }}</li>
+        {% for change in diff %}
+            <li data-path="{{ change.path }}"><span class="font-medium">{{ change.label }}</span> : {{ change.from }} → {{ change.to }}</li>
         {% endfor %}
         </ul>
     {% endif %}
