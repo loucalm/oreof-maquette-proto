@@ -16,6 +16,8 @@ namespace App\Rules;
  *   - aggregate  { fn: COUNT|SUM|MIN|MAX|AVG, collection, field?, where? }
  *       where : { field, op, value } ou liste de ces conditions (ET) ; filtre les
  *       lignes avant agrégation. Une valeur texte se compare en texte (== / !=).
+ *       Une comparison peut porter `skipWhenZero: <expr>` : si cette expression vaut 0
+ *       (rien à mesurer, ex. dénominateur d'un ratio), la règle est valide.
  *   - ratio      { numerator: <expr>, denominator: <expr> }  — 0 si dénominateur nul
  *
  * Extensible plus tard (mêmes formes de retour, pas de réécriture) : logical
@@ -80,6 +82,10 @@ final class RuleEvaluator
         $leftNode = \is_array($node['left'] ?? null) ? $node['left'] : [];
         $right = $this->evalExpr(\is_array($node['right'] ?? null) ? $node['right'] : [], $context);
         $left = $this->evalExpr($leftNode, $context);
+        $guard = \is_array($node['skipWhenZero'] ?? null) ? $this->evalExpr($node['skipWhenZero'], $context) : null;
+        if (null !== $guard && abs((float) $guard) < 1e-9) {
+            return ['valid' => true, 'expected' => $right, 'actual' => $left, 'path' => (string) ($leftNode['collection'] ?? '')];
+        }
 
         return [
             'valid' => $this->compare((string) ($node['op'] ?? '=='), $left, $right),
@@ -214,10 +220,11 @@ final class RuleEvaluator
         return match ($op) {
             '==' => abs($l - $r) < 0.001,
             '!=' => abs($l - $r) >= 0.001,
-            '>' => $l > $r,
-            '>=' => $l >= $r,
-            '<' => $l < $r,
-            '<=' => $l <= $r,
+            // ordre : tolérance d'arrondi flottant seulement (1e-9), pas celle de ==
+            '>' => $l > $r + 1e-9,
+            '>=' => $l >= $r - 1e-9,
+            '<' => $l < $r - 1e-9,
+            '<=' => $l <= $r + 1e-9,
             default => false,
         };
     }

@@ -67,10 +67,60 @@ final class RuleTemplatesTest extends DatabaseTestCase
         self::assertTrue($this->check($rules, $make(12))[0]->valid);
     }
 
+    public function testRatioBlockingAndPartFollowTheOperator(): void
+    {
+        $compile = fn (string $op) => $this->registry->get('ratio')->compile(['attribute' => 'ects', 'numeratorNature' => 'sae', 'op' => $op, 'percent' => 40])[0];
+
+        foreach (['>=', '>'] as $op) {
+            self::assertFalse($compile($op)->blocking);
+            self::assertSame('min', $compile($op)->part);
+        }
+        foreach (['<=', '<'] as $op) {
+            self::assertTrue($compile($op)->blocking);
+            self::assertSame('max', $compile($op)->part);
+        }
+        self::assertTrue($compile('==')->blocking);
+        self::assertSame('single', $compile('==')->part);
+    }
+
+    public function testRatioIsValidWhenScopeHasNoLeaves(): void
+    {
+        $empty = $this->node('s1', 'semestre');
+        foreach (['>=', '<=', '=='] as $op) {
+            $rules = $this->registry->get('ratio')->compile(['attribute' => 'ects', 'numeratorNature' => 'sae', 'op' => $op, 'percent' => 40]);
+            self::assertTrue($this->check($rules, $empty)[0]->valid, $op);
+        }
+    }
+
+    public function testRatioBoundaryTolerance(): void
+    {
+        // 1/3 = 0,3333... : >= 33,33 % valide, >= 33,34 % invalide (ordre : pas de tolérance à 0,001).
+        $third = $this->node('s1', 'semestre', children: [
+            $this->node('e1', 'ec', ['ects' => 1, 'natureElement' => 'sae']),
+            $this->node('e2', 'ec', ['ects' => 2, 'natureElement' => 'ec']),
+        ]);
+        $ratio = fn (string $op, float $percent) => $this->registry->get('ratio')->compile(['attribute' => 'ects', 'numeratorNature' => 'sae', 'op' => $op, 'percent' => $percent]);
+
+        self::assertTrue($this->check($ratio('>=', 33.33), $third)[0]->valid);
+        self::assertFalse($this->check($ratio('>=', 33.34), $third)[0]->valid);
+        self::assertFalse($this->check($ratio('<=', 33.33), $third)[0]->valid);
+        self::assertTrue($this->check($ratio('<=', 33.34), $third)[0]->valid);
+
+        // Exactement 12/30 = 40 % : >= et <= valides, == valide (tolérance 0,001 sur la fraction).
+        $exact = $this->node('s2', 'semestre', children: [
+            $this->node('e1', 'ec', ['ects' => 12, 'natureElement' => 'sae']),
+            $this->node('e2', 'ec', ['ects' => 18, 'natureElement' => 'ec']),
+        ]);
+        foreach (['>=', '<=', '=='] as $op) {
+            self::assertTrue($this->check($ratio($op, 40), $exact)[0]->valid, $op);
+        }
+        self::assertFalse($this->check($ratio('>', 40), $exact)[0]->valid);
+    }
+
     public function testSameChildValueOnChoiceBloc(): void
     {
         $rules = $this->registry->get('same_child_value')->compile(['attribute' => 'ects']);
-        $bloc = fn (array $ects) => $this->node('b', 'bloc_choix', children: array_map(fn (int $e) => $this->node("c$e".random_int(0, 999), 'ue', ['ects' => $e]), $ects));
+        $bloc = fn (array $ects) => $this->node('b', 'bloc_choix', children: array_map(fn (int $i, int $e) => $this->node("c$i", 'ue', ['ects' => $e]), array_keys($ects), $ects));
 
         self::assertFalse($this->check($rules, $bloc([3, 3, 2]))[0]->valid);
         self::assertTrue($this->check($rules, $bloc([3, 3, 3]))[0]->valid);
