@@ -87,13 +87,23 @@ final class StructureChecker
             }
         }
 
-        // présence dans la portée (cursus ; racine en mono), quelle que soit la position : celle-ci ne sert qu'au placement
+        // first / last / « n » : présence dans la portée (cursus ; racine en mono), la position ne sert qu'au placement ;
+        // all : présence sous chaque nœud du niveau parent (un portail partagé n'est contrôlé qu'une fois)
         foreach ($structure->imposed as $imposed) {
             $params = ['typeKey' => $imposed->typeKey, 'nature' => $imposed->nature ?? '', 'imposed' => $imposed->uid];
+            $label = sprintf('Élément imposé manquant : %s', '' !== $imposed->label ? $imposed->label : $imposed->typeKey);
+            $targets = [];
             foreach ($this->locator->scopes($doc) as $scope) {
+                if (!$imposed->isEveryHost()) {
+                    $targets[] = [$scope, $cache['presence:'.($scope?->nid ?? '')] ??= $this->contexts->cursusPresenceContextFor($doc, $scope, $config)];
+                    continue;
+                }
+                foreach ($this->locator->levelNodesIn($doc, $scope, $imposed) as $host) {
+                    $targets[$host->nid] = [$host, $cache['host:'.$host->nid] ??= $this->contexts->hostPresenceContextFor($host, $config)];
+                }
+            }
+            foreach ($targets as [$scope, $ctx]) {
                 foreach ($this->templates->get('required_element')->compile($params) as $compiled) {
-                    $ctx = $cache['presence:'.($scope?->nid ?? '')] ??= $this->contexts->cursusPresenceContextFor($doc, $scope, $config);
-                    $label = sprintf('Élément imposé manquant : %s', '' !== $imposed->label ? $imposed->label : $imposed->typeKey);
                     $violation = $this->evaluate('imposed:'.$imposed->uid, new CompiledRule($compiled->node, true, $label), $scope, $ctx, false);
                     if (null !== $violation) {
                         $violations[] = $violation;

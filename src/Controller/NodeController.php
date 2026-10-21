@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Diplome\ImposedPropagator;
+use App\Diplome\TypeDiplomeResolver;
 use App\Entity\Formation;
 use App\Maquette\AttributeCatalog;
 use App\Maquette\Doc\MaquetteDoc;
@@ -31,6 +33,8 @@ final class NodeController extends AbstractController
         private readonly Maquette $maquette,
         private readonly MaquetteBuilder $builder,
         private readonly AttributeCatalog $catalog,
+        private readonly ImposedPropagator $imposed,
+        private readonly TypeDiplomeResolver $diplomes,
     ) {
     }
 
@@ -235,6 +239,7 @@ final class NodeController extends AbstractController
             }
         }
         $this->applyChoiceNature($node, $parent);
+        $this->completeImposed($formation, $doc, $node);
         $this->maquette->save($formation, $doc);
         $this->addFlash('success', sprintf('%s ajouté.', $type->getLabel()));
         $this->offerUndo($formation);
@@ -321,6 +326,7 @@ final class NodeController extends AbstractController
         }
 
         $copy = $doc->duplicateNode($node);
+        $this->completeImposed($formation, $doc, $copy);
         $this->maquette->save($formation, $doc);
         $this->addFlash('success', sprintf('« %s » dupliqué.', $node->getDisplayLabel()));
         $this->offerUndo($formation);
@@ -430,6 +436,7 @@ final class NodeController extends AbstractController
             $this->stripContent($copy); // consolidation : squelette seulement
         }
         $this->applyChoiceNature($copy, $target);
+        $this->completeImposed($formation, $doc, $copy);
         $this->maquette->save($formation, $doc);
         $this->addFlash('success', sprintf('« %s » raccroché depuis « %s ».', $source->getDisplayLabel(), $sourceFormation->getName()));
 
@@ -557,6 +564,18 @@ final class NodeController extends AbstractController
     }
 
     // ─── helpers ──────────────────────────────────────────────
+
+    /**
+     * Un nœud créé dans l'éditeur (ajouté, dupliqué, raccroché) peut être un nouvel hôte d'élément
+     * imposé en position `all` : l'élément y est placé d'office, sans quoi le garde refuserait l'ajout.
+     */
+    private function completeImposed(Formation $formation, MaquetteDoc $doc, TreeNode $created): void
+    {
+        $config = $this->diplomes->configFor($formation);
+        if (null !== $config) {
+            $this->imposed->complete($doc, $config, $created);
+        }
+    }
 
     private function node(Formation $formation, string $nid): TreeNode
     {

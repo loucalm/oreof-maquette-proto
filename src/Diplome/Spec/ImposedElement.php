@@ -13,6 +13,9 @@ namespace App\Diplome\Spec;
  */
 final readonly class ImposedElement
 {
+    /** Position « sous chaque hôte » : contrôlée hôte par hôte, et non par simple présence dans la portée. */
+    public const ALL = 'all';
+
     /**
      * @param list<string> $locked
      */
@@ -26,6 +29,11 @@ final readonly class ImposedElement
         public array $locked = [],
         public ?Bound $countOverride = null,
     ) {
+    }
+
+    public function isEveryHost(): bool
+    {
+        return self::ALL === $this->position;
     }
 
     /** @param array<string, mixed> $a */
