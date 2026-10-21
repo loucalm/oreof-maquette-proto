@@ -119,6 +119,56 @@ final class MonoParcoursFicheTest extends WebTestCase
         self::assertSame('Parcours unique', $back['nom'] ?? null);
     }
 
+    public function testSwitchingToMonoKeepsDataOfOtherParcours(): void
+    {
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, 'Licence à deux parcours', true);
+        $maquette = static::getContainer()->get(Maquette::class);
+        $doc = $maquette->open($formation);
+        $a = $doc->parcoursNodes()[0];
+        $b = $doc->addNode(null, 'parcours', 'Parcours B');
+        $a->setParametre('organisation', ['lieu' => 'Campus A']);
+        $b->setParametre('organisation', ['lieu' => 'Campus B']);
+        $maquette->save($formation, $doc);
+
+        $this->client->request('POST', sprintf('/formations/%d/settings', $formation->getId()), ['avecParcours' => '0']);
+
+        $fresh = $this->reload($formation);
+        self::assertSame('Campus A', $fresh->getParametre('parcours.organisation')['lieu'] ?? null);
+        self::assertStringContainsString('Campus B', json_encode($fresh->getParametre('parcours.retires'), JSON_UNESCAPED_UNICODE));
+    }
+
+    public function testSwitchingToMultiWithoutElementsStillCreatesTheParcours(): void
+    {
+        $formation = $this->formation();
+        $maquette = static::getContainer()->get(Maquette::class);
+        $doc = $maquette->open($formation);
+        foreach ($doc->pedagogicalRoots() as $root) {
+            $doc->removeNode($root);
+        }
+        $maquette->save($formation, $doc);
+        $this->client->request('POST', sprintf('/formations/%d/parcours-unique/parametre/organisation', $formation->getId()), ['p' => ['lieu' => 'Campus Sud']]);
+
+        $this->client->request('POST', sprintf('/formations/%d/settings', $formation->getId()), ['avecParcours' => '1']);
+
+        $parcours = static::getContainer()->get(Maquette::class)->open($this->reload($formation))->parcoursNodes();
+        self::assertCount(1, $parcours);
+        self::assertSame('Campus Sud', $parcours[0]->getParametre('organisation')['lieu'] ?? null);
+    }
+
+    public function testSwitchingToMonoKeepsTheFormationEctsTotal(): void
+    {
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, 'Licence', true);
+        $formation->setEctsTotal(180);
+        $maquette = static::getContainer()->get(Maquette::class);
+        $doc = $maquette->open($formation);
+        $doc->parcoursNodes()[0]->setAttribute('ects', 120);
+        $maquette->save($formation, $doc);
+
+        $this->client->request('POST', sprintf('/formations/%d/settings', $formation->getId()), ['avecParcours' => '0']);
+
+        self::assertSame(180, $this->reload($formation)->getEctsTotal());
+    }
+
     private function formation(): Formation
     {
         return FormationFactory::create(static::getContainer())->fromType('L', 3, 'Licence de test');

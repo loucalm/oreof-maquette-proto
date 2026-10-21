@@ -173,6 +173,18 @@ final class FormLibraryTest extends WebTestCase
         self::assertCount(1, $crawler->filter('[data-form-key="param_presentation_formation"] [data-usage]'));
     }
 
+    public function testKeyOfUsedFormCannotChange(): void
+    {
+        $socle = $this->form('param_presentation_formation');
+        $this->client->request('POST', '/role/superadmin');
+
+        $this->client->request('POST', sprintf('/node-types/%d/edit', $socle->getId()), ['label' => 'Présentation', 'key' => 'presentation_renommee', 'confirmImpact' => '1']);
+
+        $this->em->clear();
+        self::assertNotNull($this->form('param_presentation_formation'));
+        self::assertNull($this->form('presentation_renommee'));
+    }
+
     private function form(string $key): ?NodeType
     {
         return $this->em->getRepository(NodeType::class)->findOneBy(['key' => $key]);

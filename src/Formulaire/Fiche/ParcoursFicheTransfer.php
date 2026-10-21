@@ -20,6 +20,9 @@ use App\Maquette\Doc\TreeNode;
  */
 final class ParcoursFicheTransfer
 {
+    /** Fiches des parcours retirés lors d'un passage sans parcours. */
+    public const ARCHIVE = 'parcours.retires';
+
     public function __construct(
         private readonly CanvasResolver $canvas,
         private readonly FormResolver $forms,
@@ -68,7 +71,34 @@ final class ParcoursFicheTransfer
                 $mono->setData($key, $data);
             }
         }
-        $mono->writeBound(array_filter(array_intersect_key($node->bound(), $mono->bound()), static fn ($v) => null !== $v && '' !== $v));
+        // une valeur déjà portée par la formation (ex. ECTS total) n'est pas écrasée
+        $empty = array_filter($mono->bound(), static fn ($v) => null === $v || '' === $v);
+        $mono->writeBound(array_filter(array_intersect_key($node->bound(), $empty), static fn ($v) => null !== $v && '' !== $v));
+    }
+
+    /**
+     * Au passage sans parcours, les parcours supprimés gardent leur fiche dans `parametres['parcours.retires']`
+     * (non affiché, présent dans l'export brut) : tous sauf `$kept`, et pour `$kept` ses données hors canevas.
+     *
+     * @param list<TreeNode> $parcours
+     */
+    public function archive(Formation $formation, MaquetteDoc $doc, array $parcours, TreeNode $kept): void
+    {
+        $known = array_flip($this->formEntries($formation));
+        $archive = $doc->formationParam(self::ARCHIVE);
+        foreach ($parcours as $p) {
+            $data = (array) ($doc->parcours[$p->getId()] ?? []);
+            if ($p === $kept) {
+                $data = array_diff_key($data, $known);
+            }
+            $data = array_filter($data, static fn ($v) => [] !== $v && null !== $v);
+            if ([] !== $data || $p !== $kept) {
+                $archive[] = ['label' => $p->getLabel(), 'ects' => $p->getAttribute('ects'), 'parametres' => $data];
+            }
+        }
+        if ([] !== $archive) {
+            $doc->setFormationParam(self::ARCHIVE, $archive);
+        }
     }
 
     /** @return list<string> clés des entrées à formulaire de la fiche parcours, masquées comprises */

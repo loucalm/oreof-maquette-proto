@@ -123,6 +123,11 @@ final class NodeTypeController extends AbstractController
             if ('' === $key) {
                 $key = $isNew ? $this->uniqueKey($label, $types) : $nodeType->getKey();
             }
+            // la clé d'un formulaire désigné par un canevas, ou dont dérive une variante, ne change pas
+            if (!$isNew && $key !== $nodeType->getKey() && ($this->usage->isUsed($nodeType) || $this->usage->hasVariants($nodeType))) {
+                $this->addFlash('warning', sprintf('La clé de « %s » ne peut pas changer : des canevas de diplôme ou des variantes la désignent.', $nodeType->getLabel()));
+                $key = $nodeType->getKey();
+            }
             $owner = $types->findOneByKey($key);
             if (null !== $owner && $owner !== $nodeType) {
                 $this->addFlash('warning', sprintf('La clé « %s » est déjà prise par « %s ».', $key, $owner->getLabel()));

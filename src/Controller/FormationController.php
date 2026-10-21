@@ -463,7 +463,8 @@ final class FormationController extends AbstractController
                 $doc->roots,
                 static fn (TreeNode $n) => !$n->isParcours(),
             ));
-            if ($bodyRoots === [] || $doc->type('parcours') === null) {
+            // une formation encore vide reçoit tout de même son parcours : sa fiche y est transférée
+            if ($doc->type('parcours') === null || ($bodyRoots === [] && $doc->parcoursNodes() !== [])) {
                 return false;
             }
 
@@ -497,6 +498,8 @@ final class FormationController extends AbstractController
 
         // la fiche du premier parcours devient celle du parcours unique
         $this->parcoursTransfer->fromNode($formation, $doc, $parcours[0]);
+        // fiches des autres parcours (et données hors canevas du premier) : conservées, non affichées
+        $this->parcoursTransfer->archive($formation, $doc, $parcours, $parcours[0]);
 
         foreach ($parcours as $p) {
             foreach ($p->getChildren() as $child) { // snapshot : moveNode reconstruit children
