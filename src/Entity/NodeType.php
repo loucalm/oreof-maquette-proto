@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Enum\FormScope;
 use App\Enum\NodeFamily;
 use App\Enum\NodeKind;
 use App\Repository\NodeTypeRepository;
@@ -118,6 +119,40 @@ class NodeType
     /** Type "socle" livré par les fixtures — informatif, non bloquant dans le proto. */
     #[ORM\Column]
     private bool $system = false;
+
+    /** Type dont ce type hérite : une variante reprend le formulaire de son parent. */
+    #[ORM\ManyToOne(targetEntity: self::class)]
+    #[ORM\JoinColumn(onDelete: 'RESTRICT')]
+    private ?NodeType $parent = null;
+
+    /**
+     * Réglages propres à ce formulaire, par clé de champ : libellé, aide,
+     * obligatoire, onglet et position.
+     *
+     * @var array<string, array{label?: string, help?: string, required?: bool, tab?: string, position?: int}>
+     */
+    #[ORM\Column(type: Types::JSON)]
+    private array $fieldSettings = [];
+
+    /** Portée du formulaire : formation, parcours ou élément. */
+    #[ORM\Column(length: 20, nullable: true, enumType: FormScope::class)]
+    private ?FormScope $scope = null;
+
+    /** Clé de l'entrée que ce formulaire occupe dans le canevas par défaut (null : absent du canevas par défaut). */
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $defaultEntryKey = null;
+
+    /** Rang de cette entrée dans le canevas par défaut. */
+    #[ORM\Column(nullable: true)]
+    private ?int $defaultEntryPosition = null;
+
+    /**
+     * Champs visibles du parent au dernier acquittement de la variante (cf. FormResolver::newParentFields()).
+     *
+     * @var list<string>
+     */
+    #[ORM\Column(type: Types::JSON)]
+    private array $knownParentFields = [];
 
     public function __construct(string $key, string $label)
     {
@@ -342,6 +377,129 @@ class NodeType
     public function setSystem(bool $system): self
     {
         $this->system = $system;
+
+        return $this;
+    }
+
+    public function getParent(): ?NodeType
+    {
+        return $this->parent;
+    }
+
+    /** Ce type hérite-t-il d'un autre type (variante de formulaire) ? */
+    public function isVariant(): bool
+    {
+        return null !== $this->parent;
+    }
+
+    public function setParent(?NodeType $parent): self
+    {
+        if (null !== $parent) {
+            if ($parent === $this) {
+                throw new \DomainException('Un type de nœud ne peut pas être son propre parent.');
+            }
+
+            $ancestor = $parent->getParent();
+            while (null !== $ancestor) {
+                if ($ancestor === $this) {
+                    throw new \DomainException('Un type de nœud ne peut pas hériter de l\'un de ses descendants.');
+                }
+                $ancestor = $ancestor->getParent();
+            }
+
+            if ($parent->getFamily() !== $this->family) {
+                throw new \DomainException('Un parent doit appartenir à la même famille que son enfant.');
+            }
+
+            if ($parent->getScope() !== $this->scope) {
+                throw new \DomainException('Un parent doit avoir la même portée que son enfant.');
+            }
+        }
+
+        $this->parent = $parent;
+
+        return $this;
+    }
+
+    /** @return array<string, array{label?: string, help?: string, required?: bool, tab?: string, position?: int}> */
+    public function getFieldSettings(): array
+    {
+        return $this->fieldSettings;
+    }
+
+    /**
+     * Fusionne des réglages dans le champ donné : une valeur `null` retire la
+     * propriété, une entrée devenue vide retire la clé du champ.
+     *
+     * @param array<string, mixed> $settings
+     */
+    public function setFieldSetting(string $fieldKey, array $settings): self
+    {
+        $current = $this->fieldSettings[$fieldKey] ?? [];
+
+        foreach ($settings as $name => $value) {
+            if (null === $value) {
+                unset($current[$name]);
+            } else {
+                $current[$name] = $value;
+            }
+        }
+
+        if ([] === $current) {
+            unset($this->fieldSettings[$fieldKey]);
+        } else {
+            $this->fieldSettings[$fieldKey] = $current;
+        }
+
+        return $this;
+    }
+
+    public function getScope(): ?FormScope
+    {
+        return $this->scope;
+    }
+
+    public function setScope(?FormScope $scope): self
+    {
+        $this->scope = $scope;
+
+        return $this;
+    }
+
+    public function getDefaultEntryKey(): ?string
+    {
+        return $this->defaultEntryKey;
+    }
+
+    public function setDefaultEntryKey(?string $key): self
+    {
+        $this->defaultEntryKey = $key;
+
+        return $this;
+    }
+
+    public function getDefaultEntryPosition(): ?int
+    {
+        return $this->defaultEntryPosition;
+    }
+
+    public function setDefaultEntryPosition(?int $position): self
+    {
+        $this->defaultEntryPosition = $position;
+
+        return $this;
+    }
+
+    /** @return list<string> */
+    public function getKnownParentFields(): array
+    {
+        return $this->knownParentFields;
+    }
+
+    /** @param list<string> $keys */
+    public function setKnownParentFields(array $keys): self
+    {
+        $this->knownParentFields = array_values(array_unique(array_map('strval', $keys)));
 
         return $this;
     }

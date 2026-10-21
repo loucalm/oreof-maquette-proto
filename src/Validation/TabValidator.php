@@ -7,6 +7,7 @@ namespace App\Validation;
 use App\Entity\FieldDef;
 use App\Entity\NodeType;
 use App\FieldType\FieldTypeRegistry;
+use App\Formulaire\FormResolver;
 use App\Repository\FieldDefRepository;
 use App\Repository\ReferentielRepository;
 use Symfony\Contracts\Service\ResetInterface;
@@ -27,29 +28,34 @@ final class TabValidator implements ResetInterface
         private readonly FieldDefRepository $fields,
         private readonly FieldTypeRegistry $fieldTypes,
         private readonly ReferentielRepository $referentiels,
+        private readonly FormResolver $forms,
     ) {
     }
 
     /**
      * @param callable(string): mixed $value      valeur d'un champ
-     * @param list<string>            $activeKeys champs présents dans ce formulaire
+     * @param list<string>            $activeKeys   champs présents dans ce formulaire
+     * @param list<string>|null       $requiredKeys champs obligatoires de ce formulaire (réglages résolus,
+     *                                              cf. FormResolver) ; à défaut, FieldDef::isRequired()
      *
      * @return array{units: int, issues: list<array{key: string, label: string, tab: string, kind: string}>}
      *                units = éléments à satisfaire en plus des champs obligatoires
      *                (conditions déclenchées, « au moins un », bornes violées) ;
      *                issues = ceux qui ne le sont pas (kind « missing » ou « invalid »)
      */
-    public function check(NodeType $type, callable $value, array $activeKeys): array
+    public function check(NodeType $type, callable $value, array $activeKeys, ?array $requiredKeys = null): array
     {
         $defs = $this->defs();
         $active = array_flip($activeKeys);
+        $required = null !== $requiredKeys ? array_flip($requiredKeys) : null;
         $units = 0;
         $issues = [];
 
-        foreach ($type->getValidationRules() as $rule) {
+        foreach ($this->forms->validationRules($type) as $rule) {
             if (ValidationRule::REQUIRED_IF === $rule->kind) {
                 $target = $rule->fields[0] ?? '';
-                if (!isset($active[$target]) || ($defs[$target] ?? null)?->isRequired() || !$this->conditionMet($rule, $value)) {
+                $isRequired = null !== $required ? isset($required[$target]) : (bool) ($defs[$target] ?? null)?->isRequired();
+                if (!isset($active[$target]) || $isRequired || !$this->conditionMet($rule, $value)) {
                     continue;
                 }
                 ++$units;
@@ -91,7 +97,7 @@ final class TabValidator implements ResetInterface
     public function hints(NodeType $type): array
     {
         $out = [];
-        foreach ($type->getValidationRules() as $rule) {
+        foreach ($this->forms->validationRules($type) as $rule) {
             if (ValidationRule::REQUIRED_IF === $rule->kind && isset($rule->fields[0])) {
                 $out[$rule->fields[0]] = $this->conditionText($rule);
             }

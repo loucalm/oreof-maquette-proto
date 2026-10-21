@@ -6,6 +6,7 @@ namespace App\Twig;
 
 use App\Entity\FieldDef;
 use App\FieldType\FieldTypeInterface;
+use App\Formulaire\ResolvedField;
 use App\FieldType\FieldTypeRegistry;
 use App\Maquette\Doc\TreeNode;
 use App\FieldType\Options\FieldOptionsSources;
@@ -36,7 +37,7 @@ final class FieldTypeExtension extends AbstractExtension
             new TwigFunction('field_widget', $this->widget(...), ['needs_environment' => true, 'is_safe' => ['html']]),
             new TwigFunction('field_view', $this->view(...), ['needs_environment' => true, 'is_safe' => ['html']]),
             new TwigFunction('field_available', $this->available(...)),
-            new TwigFunction('field_type', fn (FieldDef|array $def): FieldTypeInterface => $this->type($def)),
+            new TwigFunction('field_type', fn (FieldDef|ResolvedField|array $def): FieldTypeInterface => $this->type($def)),
         ];
     }
 
@@ -46,7 +47,7 @@ final class FieldTypeExtension extends AbstractExtension
      *
      * @param list<string> $errors
      */
-    public function widget(Environment $twig, FieldDef|array $def, string $key, mixed $value, string $inputName, ?TreeNode $node = null, array $errors = [], ?string $variant = null): string
+    public function widget(Environment $twig, FieldDef|ResolvedField|array $def, string $key, mixed $value, string $inputName, ?TreeNode $node = null, array $errors = [], ?string $variant = null): string
     {
         if (!\in_array($variant, ['node', 'param'], true)) {
             throw new \InvalidArgumentException('field_widget() : variante « node » ou « param » requise.');
@@ -66,7 +67,7 @@ final class FieldTypeExtension extends AbstractExtension
     }
 
     /** Faux si les options du champ viennent d'une source calculée qui n'en donne aucune pour ce nœud : rien à choisir, on ne l'affiche pas. */
-    public function available(FieldDef|array $def, ?TreeNode $node = null): bool
+    public function available(FieldDef|ResolvedField|array $def, ?TreeNode $node = null): bool
     {
         $def = $this->normalize($def);
 
@@ -74,7 +75,7 @@ final class FieldTypeExtension extends AbstractExtension
     }
 
     /** Affichage en lecture seule d'une valeur. */
-    public function view(Environment $twig, FieldDef|array $def, mixed $value, ?TreeNode $node = null): string
+    public function view(Environment $twig, FieldDef|ResolvedField|array $def, mixed $value, ?TreeNode $node = null): string
     {
         $def = $this->normalize($def);
 
@@ -86,10 +87,10 @@ final class FieldTypeExtension extends AbstractExtension
         ]);
     }
 
-    /** @param FieldDef|array<string, mixed> $def */
-    private function type(FieldDef|array $def): FieldTypeInterface
+    /** @param FieldDef|ResolvedField|array<string, mixed> $def */
+    private function type(FieldDef|ResolvedField|array $def): FieldTypeInterface
     {
-        return $this->types->get($def instanceof FieldDef ? $def->getType() : (string) ($def['type'] ?? $def['field'] ?? 'text'));
+        return $this->types->get(\is_array($def) ? (string) ($def['type'] ?? $def['field'] ?? 'text') : $def->getType());
     }
 
     /** @param array<string, mixed> $def */
@@ -105,12 +106,16 @@ final class FieldTypeExtension extends AbstractExtension
     /**
      * Forme unique pour les gabarits (`type` = clé du type de champ).
      *
-     * @param FieldDef|array<string, mixed> $def
+     * @param FieldDef|ResolvedField|array<string, mixed> $def
      *
      * @return array<string, mixed>
      */
-    private function normalize(FieldDef|array $def): array
+    private function normalize(FieldDef|ResolvedField|array $def): array
     {
+        // champ résolu d'un formulaire : libellé, aide et obligatoire propres à ce formulaire
+        if ($def instanceof ResolvedField) {
+            return ['label' => $def->label, 'required' => $def->required, 'help' => $def->help] + $this->normalize($def->def);
+        }
         if ($def instanceof FieldDef) {
             return [
                 'key' => $def->getKey(), 'label' => $def->getLabel(), 'type' => $def->getType(),
