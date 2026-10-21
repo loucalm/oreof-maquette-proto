@@ -5,7 +5,8 @@ Ce document décrit le fonctionnement **réel** des types de diplôme dans le pr
 ## En bref
 
 - Un **type de diplôme** (Licence, LP, Master, M2E, BUT, ou tout type futur) est entièrement défini par configuration, dans la page **Diplômes** (`/diplomes`). Aucun code ne connaît un diplôme par son nom.
-- Un type a une **version par année universitaire** (`2026-2027`…). Chaque version porte toute la configuration : structure, natures d'élément, MCCC, BCC, formulaires, options.
+- Un type a une **version par année universitaire** (`2026-2027`…). Chaque version porte toute la configuration : structure, natures d'élément, MCCC, BCC, canevas des fiches, options.
+- Les **fiches** formation et parcours que remplit le responsable suivent le **canevas** de la version : entrées choisies dans une **bibliothèque de formulaires** commune, masquées, renommées, réordonnées ou ajoutées. Un formulaire peut avoir des **variantes** qui ne stockent que leurs écarts et suivent leur formulaire de départ.
 - Une **formation** est rattachée à un type. Elle utilise la version de son année, ou à défaut la plus récente antérieure.
 - La structure d'une version se décrit par une **chaîne de niveaux** et des **bornes**, plus des **éléments imposés** et des **règles**. La maquette de la formation est contrôlée en direct : une modification qui sort des bornes est refusée, sauf **dérogation** accordée par l'admin.
 - Seuls l'admin et le SES créent ou modifient un type, et créent une formation d'un type.
@@ -24,6 +25,12 @@ Ce document décrit le fonctionnement **réel** des types de diplôme dans le pr
 | Élément imposé | Nœud précis qui doit exister (ex. UE « Projet tutoré et stage » de la LP), avec une position (`first`, `last`, `all` ou un numéro parmi les nœuds du niveau parent) et des verrous (ajout, suppression, duplication). |
 | Règle | Contrainte supplémentaire choisie dans un catalogue de **gabarits** et paramétrée par l'admin (ex. ECTS des SAÉ ≥ 40 % par semestre). |
 | Dérogation | Écart accordé par l'admin pour une règle, sur un nœud, jusqu'à une valeur précise. |
+| Fiche | Ce que le responsable remplit pour la formation ou pour un parcours (la barre latérale de l'éditeur). |
+| Canevas | Configuration, portée par la version, des entrées de chaque fiche (clé `canvas` de la configuration). |
+| Entrée | Une ligne d'une fiche : un formulaire de la bibliothèque, ou un écran intégré. Ses données sont rangées sous sa clé (`parametres[<entrée>]`). |
+| Écran intégré | Entrée dont le contenu est un écran dédié : BCC, configuration de la structure, ramification, positionnement d'un parcours. Il se place (et, pour BCC, se masque) mais ne se remplace pas. |
+| Formulaire | Liste de champs d'une fiche : un `NodeType` de famille « paramètre » avec une portée (formation ou parcours). |
+| Socle / variante | Un socle ne dérive d'aucun formulaire ; une variante dérive d'un autre et ne stocke que ses écarts (champs masqués ou ajoutés, libellé, aide, obligatoire, onglet, ordre). |
 
 ## Côté admin
 
@@ -43,20 +50,33 @@ Sept étapes, dans cet ordre. Le brouillon est gardé en session ; les étapes s
 
 1. **Informations** : libellé, sigle (unique, insensible à la casse), code Apogée (1 caractère), année universitaire, description, accrédité, passage en CFVU.
 2. **Type de départ** (facultatif) : copie toute la configuration d'une version existante. On ne modifie ensuite que les différences. Changer de type de départ remplace la configuration du brouillon.
-3. **Formulaires** : pour chaque emplacement (formation › organisation, formation › présentation, parcours › organisation, parcours › présentation), le type d'ELP de famille « paramètre » utilisé. Seuls les formulaires de la bonne portée sont proposés (`*_formation` / `*_parcours`).
-4. **Structure** : durée, parcours autorisés, natures d'élément, niveaux de la chaîne avec leurs bornes (nombre par parent, ECTS de chaque nœud, somme des ECTS des enfants, numéro de départ), éléments imposés, règles. Un **aperçu** montre la maquette minimale obtenue avec la plus petite durée autorisée (lecture seule, jamais enregistrée).
+3. **Structure** : durée, parcours autorisés, natures d'élément, niveaux de la chaîne avec leurs bornes (nombre par parent, ECTS de chaque nœud, somme des ECTS des enfants, numéro de départ), éléments imposés, règles. Un **aperçu** montre la maquette minimale obtenue avec la plus petite durée autorisée (lecture seule, jamais enregistrée).
+4. **Formulaires** : le canevas des fiches formation et parcours. Pour chaque entrée : formulaire (de la portée de la fiche, variantes comprises), libellé, masquage, ordre ; « Ajouter une entrée » crée une entrée propre au diplôme. Les écrans intégrés sont toujours présents ; Structure, ramification et positionnement ne se masquent pas. L'enregistrement est refusé si un champ verrouillé de la fiche (nom de la formation, responsables, nom du parcours…) ne figure dans aucune entrée affichée. « Adapter » crée une variante du formulaire d'une entrée (« <formulaire> · <sigle> ») et la choisit ; « Modifier » ouvre le formulaire choisi ; « Aperçu » ouvre la vraie page d'une formation rendue avec le canevas en cours, sans rien enregistrer.
 5. **MCCC** : pour chaque nature déclarée, les types de MCCC autorisés et le profil de règles ; options quitus, contrôle d'assiduité, « sans note ». Une nature sans type coché n'a aucune MCCC proposée.
 6. **BCC** : un à trois noms de niveaux (ex. BUT : Compétence › Niveau › Apprentissage critique ; M2E : Bloc › Objectif › Attendu) et le niveau auquel les éléments sont reliés (par défaut, le dernier).
 7. **Récapitulatif** : toute la configuration en clair, et les différences avec le type de départ. **Enregistrer** revalide tout côté serveur (sigle encore libre, année valide…) avant de créer le type et sa version.
 
 ### Modifier une version
 
-`/diplomes/{id}/versions/{versionId}/{étape}` : les mêmes étapes, en onglets (Informations, Formulaires, Structure, MCCC, BCC).
+`/diplomes/{id}/versions/{versionId}/{étape}` : les mêmes étapes, en onglets (Informations, Structure, Formulaires, MCCC, BCC).
 
 - **Informations** modifie le type lui-même (toutes ses versions). Le sigle est figé dès qu'une formation utilise le type. L'année de la version ne se modifie pas.
 - Si des formations utilisent la version (ou le type, pour l'onglet Informations), la page les liste et l'enregistrement exige de cocher la **confirmation d'impact**. Une modification de version est faite pour corriger une erreur de saisie ; un changement de règle se fait dans la version de l'année suivante (**Nouvelle version**).
 - Bornes, règles et options sont lues en direct par les formations : une correction s'applique aussitôt.
 - Les éléments imposés vivent dans l'arbre des formations. Après en avoir ajouté ou modifié, le bouton **Propager aux formations** ajoute les éléments manquants et réapplique les verrous. La propagation passe par le contrôle normal ; une formation qu'elle ferait sortir des bornes est signalée et laissée intacte.
+
+### Bibliothèque de formulaires
+
+`/node-types`, section « Formulaires de fiche » : les socles, puis leurs variantes en retrait, avec le nombre de versions de diplôme qui les utilisent.
+
+- **Créer une variante** depuis la liste ou depuis le canevas (« Adapter »). L'écran d'édition d'une variante montre l'origine de chaque champ (hérité, ajouté, masqué, libellé changé, rendu obligatoire…), permet de masquer ou réafficher un champ hérité (un champ verrouillé reste affiché) et signale les champs apparus depuis dans le formulaire de départ.
+- Libellé, aide, obligatoire, onglet et ordre d'un champ sont **propres à chaque formulaire de fiche** : renommer un champ dans un formulaire ne touche pas les autres. Le type et les options du champ restent partagés.
+- Un formulaire utilisé par des formations ne se modifie qu'avec la **confirmation d'impact** ; un formulaire utilisé par un canevas, ou dont dérive une variante, ne se supprime pas.
+- **Aperçu** : la fiche d'une formation rendue avec ce formulaire.
+
+### Aperçu
+
+L'aperçu ouvre l'éditeur d'une vraie formation (de la version, à défaut du type, à défaut une autre) avec le canevas substitué pour cette seule formation, le temps de la session. Un bandeau le signale ; la formation est en lecture seule (champs désactivés, écritures refusées) jusqu'à « Quitter l'aperçu ».
 
 ### Dérogations
 
@@ -73,6 +93,13 @@ Modale « Ajouter une formation » de la liste (admin seulement) : type (non arc
 - en multi-parcours, un premier parcours est créé et la structure est bâtie dedans.
 
 Tout est refusé avant écriture si un paramètre est invalide, et la création est faite dans une transaction : un échec ne laisse aucune formation.
+
+### Fiches
+
+- La barre latérale de l'éditeur de formation et de l'éditeur de parcours est construite depuis le canevas : entrées non masquées, dans l'ordre, numérotées à la suite.
+- Une **formation sans parcours** affiche aussi, dans un groupe « Parcours », les entrées à formulaire de la fiche parcours ; leurs données sont rangées sur la formation (`parametres['parcours.<entrée>']`) et suivent le passage avec ↔ sans parcours. L'écran « Configuration de la structure » ne porte plus de champs de parcours.
+- Une entrée masquée n'apparaît ni dans la barre latérale, ni sur les pages Vérifier et Voir, ni dans l'export enrichi ; ses données restent stockées (l'export brut les contient). Changer le formulaire d'une entrée conserve les valeurs par clé de champ.
+- Les champs verrouillés liés à l'entité (nom, domaine, composante de la formation ; nom et ECTS du parcours) sont rendus par `templates/formation/param/bound/<fiche>/<clé>.html.twig` et postés sous `b[]`.
 
 ### Édition et contrôle
 
@@ -167,7 +194,10 @@ Le rattachement d'une ressource ou d'une SAÉ à plusieurs UE avec un coefficien
 | Assistant et édition | `src/Diplome/Wizard/` (une classe par étape), `src/Controller/DiplomeWizardController.php`, `DiplomeEditController.php`, `src/Form/Diplome/` |
 | Versions et propagation | `src/Diplome/NextVersionCreator.php`, `VersionUsage.php`, `ImposedPropagator.php` |
 | MCCC par nature | `src/Diplome/VersionMccc.php` |
-| Formulaires de paramètres | `src/Diplome/ParamTypeResolver.php` |
+| Canevas, écrans intégrés, navigation | `src/Diplome/Spec/CanvasSpec.php`, `CanvasEntry.php` ; `src/Formulaire/CanvasResolver.php`, `CanvasDefaults.php`, `FicheNavigation.php`, `Builtin/` |
+| Formulaires, variantes, usage | `src/Formulaire/FormResolver.php`, `ResolvedField.php`, `VariantFactory.php`, `FormUsage.php` ; `src/Controller/NodeTypeController.php` |
+| Fiches (données, enregistrement) | `src/Formulaire/Fiche/` ; `src/Formulaire/EntryCompletion.php` ; `src/Controller/FicheEntryController.php` ; `templates/formation/param/entry.html.twig` |
+| Étape « Formulaires », Adapter, Aperçu | `src/Diplome/Wizard/CanvasStep.php`, `src/Form/Diplome/CanvasType.php` ; `src/Controller/CanvasController.php` ; `src/Formulaire/Preview/` ; `src/EventSubscriber/PreviewGuardSubscriber.php` |
 | Rendu des champs | `src/FieldType/` (une classe par type de champ, avec ses gabarits `templates/field_type/`) |
 
 ### Étendre sans toucher au reste
@@ -175,6 +205,7 @@ Le rattachement d'une ressource ou d'une SAÉ à plusieurs UE avec un coefficien
 - **Nouveau gabarit de règle** : une classe qui implémente `App\Diplome\Rule\RuleTemplateInterface` (`key()`, `label()`, `params()`, `compile()`). Elle est découverte automatiquement ; l'assistant génère ses champs à partir de `params()`. Un paramètre `RuleParam` marqué `internal` n'est jamais montré à l'admin.
 - **Nouvelle étape d'assistant** : une classe qui implémente `App\Diplome\Wizard\WizardStepInterface` (ou étend `AbstractWizardStep`). `position()` fixe son rang ; `editable()` en fait aussi un onglet d'édition.
 - **Nouveau type de champ** : une classe qui implémente `App\FieldType\FieldTypeInterface`, avec `widgetTemplate()` et `viewTemplate()`. Aucun gabarit ne doit tester le type ou la clé d'un champ.
+- **Nouvel écran intégré** : une classe qui implémente `App\Formulaire\Builtin\BuiltinScreenInterface` (`key()`, `fiche()`, `hideable()`, `defaultPosition()`, `appliesTo()`, `url()`, `status()`, `isCurrent()`). Il apparaît dans le canevas par défaut et dans tous les canevas.
 - **Options de champ calculées** : une classe qui implémente `App\FieldType\Options\FieldOptionsSourceInterface`, référencée par `FieldDef::optionsSource` (ex. `version_natures` pour `natureElement`). Un champ dont la source ne renvoie rien n'est pas affiché.
 
 ### Règles à respecter
@@ -191,3 +222,5 @@ Le rattachement d'une ressource ou d'une SAÉ à plusieurs UE avec un coefficien
 - Les spécificités des règlements intérieurs des composantes ne sont pas gérées.
 - Changer d'onglet dans l'édition d'une version perd la saisie non enregistrée.
 - Les messages de règle citent la clé brute de l'attribut (« ects »).
+- Les fiches des éléments (année, semestre, UE, élément par nature) ne sont pas encore dans le canevas (lot 2) : leurs champs restent réglés globalement sur le type de nœud.
+- Après la mise à jour du schéma (colonnes de `NodeType`), `make db-reset` est nécessaire.
