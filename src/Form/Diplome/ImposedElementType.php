@@ -27,13 +27,23 @@ final class ImposedElementType extends AbstractType
             ->add('uid', HiddenType::class, ['required' => false])
             ->add('typeKey', StructuralTypeKeyType::class, ['label' => 'diplome.wizard.structure.imposed_type', 'constraints' => [new Assert\NotBlank()]])
             ->add('label', TextType::class, ['label' => 'diplome.wizard.structure.imposed_label', 'constraints' => [new Assert\NotBlank(), new Assert\Length(max: 120)]])
-            ->add('position', TextType::class, [
+            ->add('position', ChoiceType::class, [
                 'label' => 'diplome.wizard.structure.imposed_position',
-                'help' => 'diplome.wizard.structure.imposed_position_help',
+                // aide en infobulle : sous le champ, elle déborderait de sa colonne étroite
+                'attr' => ['title' => 'diplome.wizard.structure.imposed_position_help'],
+                'choices' => self::positionChoices(),
+                'choice_translation_domain' => false,
                 'empty_data' => 'all',
-                'constraints' => [new Assert\Regex('/^(first|last|all|[1-9]\d*)$/', message: 'diplome.wizard.structure.imposed_position_invalid')],
+                'invalid_message' => 'diplome.wizard.structure.imposed_position_invalid',
             ])
-            ->add('nature', TextType::class, ['label' => 'diplome.wizard.structure.imposed_nature', 'required' => false])
+            ->add('nature', ChoiceType::class, [
+                'label' => 'diplome.wizard.structure.imposed_nature',
+                'required' => false,
+                'choices' => array_combine($options['natures'], $options['natures']),
+                'choice_translation_domain' => false,
+                'placeholder' => 'diplome.wizard.structure.imposed_nature_any',
+                'invalid_message' => 'diplome.wizard.structure.error.unknown_nature_short',
+            ])
             ->add('locked', ChoiceType::class, [
                 'label' => 'diplome.wizard.structure.imposed_locked',
                 'choices' => array_combine(array_map(static fn (string $l) => 'diplome.wizard.structure.lock.'.$l, self::LOCKS), self::LOCKS),
@@ -47,6 +57,18 @@ final class ImposedElementType extends AbstractType
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults(['translation_domain' => 'diplome']);
+        $resolver->setDefaults(['translation_domain' => 'diplome', 'natures' => []]);
+        $resolver->setAllowedTypes('natures', 'array');
+    }
+
+    /** @return array<string, string> « dans chaque », « le premier », « le dernier », puis les numéros 1 à 20 */
+    private static function positionChoices(): array
+    {
+        $choices = ['Dans chaque' => 'all', 'Le premier' => 'first', 'Le dernier' => 'last'];
+        foreach (range(1, 20) as $n) {
+            $choices['N° '.$n] = (string) $n;
+        }
+
+        return $choices;
     }
 }

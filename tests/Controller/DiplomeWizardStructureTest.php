@@ -247,6 +247,22 @@ final class DiplomeWizardStructureTest extends WebTestCase
         self::assertResponseStatusCodeSame(422);
     }
 
+    public function testImposedPositionAndNatureAreChoices(): void
+    {
+        $this->startFrom('BUT');
+        $crawler = $this->client->request('GET', '/diplomes/nouveau/structure');
+
+        $positions = $crawler->filter('select[name="structure[imposed][0][position]"] option')->each(static fn ($o) => $o->attr('value'));
+        self::assertSame(['all', 'first', 'last', '1', '2'], \array_slice($positions, 0, 5));
+        $natures = array_values(array_filter($crawler->filter('select[name="structure[imposed][0][nature]"] option')->each(static fn ($o) => (string) $o->attr('value'))));
+        self::assertSame(['ressource', 'sae', 'stage'], $natures);
+
+        $payload = self::payload($this->startFrom('BUT'));
+        $payload['imposed'][0]['position'] = 'n’importe quoi';
+        $this->submit($payload);
+        self::assertResponseStatusCodeSame(422);
+    }
+
     public function testButDeclaresItsImposedNature(): void
     {
         $structure = $this->startFrom('BUT');

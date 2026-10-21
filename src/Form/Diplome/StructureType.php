@@ -11,6 +11,8 @@ use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
@@ -39,13 +41,33 @@ final class StructureType extends AbstractType
                 'constraints' => [new Assert\Count(min: 1, minMessage: 'diplome.wizard.structure.error.no_level')],
             ])
             ->add('natures', TextType::class, ['label' => 'diplome.wizard.structure.natures', 'help' => 'diplome.wizard.structure.natures_help', 'required' => false])
-            ->add('imposed', CollectionType::class, $collection + ['entry_type' => ImposedElementType::class, 'label' => 'diplome.wizard.structure.imposed'])
+            ->add('imposed', CollectionType::class, $this->imposedOptions($collection, []))
             ->add('rules', CollectionType::class, $collection + ['entry_type' => RuleSpecType::class, 'label' => 'diplome.wizard.structure.rules']);
+
+        // la nature d'un élément imposé se choisit parmi les natures déclarées (saisies, à la soumission)
+        $builder->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) use ($collection): void {
+            $event->getForm()->add('imposed', CollectionType::class, $this->imposedOptions($collection, (array) ($event->getData()['natures'] ?? [])));
+        });
+        $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) use ($collection): void {
+            $natures = array_values(array_filter(array_map('trim', explode(',', (string) ($event->getData()['natures'] ?? '')))));
+            $event->getForm()->add('imposed', CollectionType::class, $this->imposedOptions($collection, $natures));
+        });
 
         $builder->get('natures')->addModelTransformer(new CallbackTransformer(
             static fn (?array $list): string => implode(', ', $list ?? []),
             static fn (?string $text): array => array_values(array_unique(array_filter(array_map('trim', explode(',', (string) $text)), static fn (string $n) => '' !== $n))),
         ));
+    }
+
+    /**
+     * @param array<string, mixed> $collection
+     * @param list<string>         $natures
+     *
+     * @return array<string, mixed>
+     */
+    private function imposedOptions(array $collection, array $natures): array
+    {
+        return $collection + ['entry_type' => ImposedElementType::class, 'entry_options' => ['natures' => array_values($natures)], 'label' => 'diplome.wizard.structure.imposed'];
     }
 
     public function configureOptions(OptionsResolver $resolver): void

@@ -115,9 +115,10 @@ diplome:
       imposed_type: Type de nœud
       imposed_label: Libellé
       imposed_position: Position
-      imposed_position_help: 'first, last, all, ou un numéro (1, 2…) parmi les nœuds du niveau situé juste au-dessus.'
-      imposed_position_invalid: 'Position attendue : first, last, all ou un numéro.'
+      imposed_position_help: Parmi les nœuds du niveau situé juste au-dessus.
+      imposed_position_invalid: Choisissez une position dans la liste.
       imposed_nature: Nature
+      imposed_nature_any: Toutes
       imposed_locked: Verrous
       imposed_count: Nombre d'enfants (surcharge)
       rules: Règles
@@ -153,6 +154,7 @@ diplome:
         imposed_level: 'Élément imposé %n% : son type doit figurer dans la chaîne, sous le premier niveau.'
         rule_scope: 'Règle %n% : la portée doit être un niveau de la chaîne.'
         unknown_nature: 'Ligne %n% : la nature « %nature% » n''est pas déclarée dans les natures d''élément du type.'
+        unknown_nature_short: Cette nature n'est pas déclarée dans les natures d'élément.
     mccc:
       help: Pour chaque nature d'élément déclarée par la structure, choisissez les types de MCCC autorisés et le profil de règles à appliquer.
       no_natures: Aucune nature d'élément n'est déclarée dans l'étape Structure.
