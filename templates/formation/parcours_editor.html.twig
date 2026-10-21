@@ -11,6 +11,7 @@
 {% set bodyRoot = typeMeta[formation.getChildTypeKey('parcours')] ?? null %}
 
 {% block body %}
+{% include 'formation/_preview_banner.html.twig' %}
 
 {# ─── en-tête compact ─── #}
 <div class="editor-header rounded-2xl border bg-white px-6 py-4 mb-4" style="border-color:var(--c-border)">

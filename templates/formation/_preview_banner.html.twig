@@ -1,0 +1,10 @@
+{# Aperçu d'un canevas en cours sur cette formation (cf. App\Formulaire\Preview\PreviewContext) : lecture seule. #}
+{% if preview_active(formation) %}
+    <div data-preview-banner class="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-2.5 text-sm" style="border-color:#fcd34d;background:#fffbeb;color:#92400e">
+        <span>{{ ux_icon('ph:eye', {class: 'icon'}) }} {{ 'formation.preview.banner'|trans({}, 'formation') }}</span>
+        <form method="post" action="{{ path('diplome_canvas_preview_stop') }}" data-turbo-frame="_top">
+            {% include 'diplome/_csrf.html.twig' %}
+            <button class="rounded-md border px-3 py-1 text-xs font-medium hover:bg-white" style="border-color:#fcd34d">{{ 'formation.preview.quit'|trans({}, 'formation') }}</button>
+        </form>
+    </div>
+{% endif %}

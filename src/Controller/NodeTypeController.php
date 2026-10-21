@@ -7,7 +7,11 @@ namespace App\Controller;
 use App\Entity\FieldDef;
 use App\Entity\NodeType;
 use App\FieldType\FieldTypeRegistry;
+use App\Diplome\Spec\CanvasEntry;
+use App\Diplome\Spec\CanvasSpec;
+use App\Formulaire\CanvasResolver;
 use App\Formulaire\FormResolver;
+use App\Formulaire\Preview\PreviewStarter;
 use App\Formulaire\FormUsage;
 use App\Formulaire\ResolvedField;
 use App\Formulaire\VariantFactory;
@@ -501,6 +505,45 @@ final class NodeTypeController extends AbstractController
         $em->flush();
 
         return $this->redirectToRoute('node_type_edit', ['id' => $nodeType->getId()]);
+    }
+
+    /**
+     * Aperçu d'un formulaire de fiche sur la vraie page d'une formation : dans le canevas de la
+     * première version qui l'utilise, l'entrée de sa lignée (ou, à défaut, une entrée ajoutée en fin
+     * de fiche) le désigne. Le constructeur enregistrant chaque modification, c'est l'état enregistré.
+     */
+    #[Route('/administration/node-types/{id}/apercu', name: 'node_type_preview', methods: ['POST'])]
+    public function preview(NodeType $nodeType, CanvasResolver $canvasResolver, PreviewStarter $previews): Response
+    {
+        $fiche = $nodeType->getScope()?->value;
+        if (!self::isFicheForm($nodeType) || !\in_array($fiche, CanvasSpec::FICHES, true)) {
+            throw $this->createNotFoundException();
+        }
+        $version = $this->usage->versionsUsing($nodeType)[0] ?? null;
+        $canvas = $canvasResolver->forConfig($version?->config());
+        $lineage = $this->forms->lineage($nodeType);
+        $entries = $canvas->entries($fiche);
+        $replaced = false;
+        foreach ($entries as $i => $entry) {
+            $form = $canvasResolver->form($entry);
+            if (!$replaced && null !== $form && (\in_array($form, $lineage, true) || \in_array($nodeType, $this->forms->lineage($form), true))) {
+                $entries[$i] = new CanvasEntry($entry->key, $nodeType->getKey(), null, $entry->label, false);
+                $replaced = true;
+            }
+        }
+        if (!$replaced) {
+            $entries[] = new CanvasEntry('apercu', $nodeType->getKey(), null, null, false);
+        }
+
+        $returnUrl = $this->generateUrl('node_type_edit', ['id' => $nodeType->getId()]);
+        $url = $previews->start($canvas->withEntries($fiche, $entries), $fiche, $returnUrl, $version, $version?->getTypeDiplome());
+        if (null === $url) {
+            $this->addFlash('warning', 'Aucune formation ne peut servir d’aperçu.');
+
+            return $this->redirect($returnUrl);
+        }
+
+        return $this->redirect($url);
     }
 
     /** La variante prend acte des champs apparus dans son formulaire de départ. */

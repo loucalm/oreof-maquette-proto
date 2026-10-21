@@ -11,6 +11,7 @@ use App\Diplome\TypeDiplomeResolver;
 use App\Entity\Formation;
 use App\Entity\NodeType;
 use App\Formulaire\Builtin\BuiltinScreenRegistry;
+use App\Formulaire\Preview\PreviewContext;
 use App\Maquette\Doc\TreeNode;
 use App\Repository\NodeTypeRepository;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -32,6 +33,7 @@ final class CanvasResolver
         private readonly NodeTypeRepository $types,
         private readonly TypeDiplomeResolver $versions,
         private readonly UrlGeneratorInterface $urls,
+        private readonly PreviewContext $preview,
     ) {
     }
 
@@ -54,7 +56,10 @@ final class CanvasResolver
 
     public function forFormation(Formation $formation): CanvasSpec
     {
-        return $this->forConfig($this->versions->configFor($formation));
+        // aperçu en cours sur cette formation : le canevas non enregistré remplace celui de la version
+        $preview = $this->preview->canvasFor($formation);
+
+        return null !== $preview ? $this->forConfig(VersionConfig::fromArray(['canvas' => $preview->toArray()])) : $this->forConfig($this->versions->configFor($formation));
     }
 
     public function label(string $fiche, CanvasEntry $entry): string

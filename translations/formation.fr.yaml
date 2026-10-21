@@ -359,6 +359,9 @@ formation:
     add_bloc_button: Ajouter un bloc
   fields:
     default_placeholder: -Choisir-
+  preview:
+    banner: Aperçu de la configuration du diplôme — rien n'est enregistré, la formation est en lecture seule.
+    quit: Quitter l'aperçu
   param:
     panel_title: Gestion de la formation
     parcours_panel_title: Gestion du parcours

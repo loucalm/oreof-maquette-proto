@@ -15,6 +15,7 @@
           data-controller="autosave" data-autosave-key-value="{{ statusKey|default(entryKey) }}"
           class="panel-card space-y-5">
 
+        <fieldset {{ preview_active(fiche.formation) ? 'disabled' }} class="space-y-5">
         {% for f in fields %}
             {% if f.type == 'separator' %}
                 {{ fld.divider(f.label) }}
@@ -24,6 +25,7 @@
                 <div>{{ fld.field(f.key, f, data, issues[f.key] ?? [], hints[f.key] ?? null) }}</div>
             {% endif %}
         {% endfor %}
+        </fieldset>
 
         <div class="pt-2 border-t" style="border-color:var(--c-border)">
             <button data-autosave-target="submit" class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>

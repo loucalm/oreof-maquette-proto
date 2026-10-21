@@ -81,6 +81,10 @@ diplome:
       adapt: Adapter
       adapt_help: Crée une variante de ce formulaire pour ce diplôme et la choisit pour l'entrée.
       modify: Modifier
+      preview: Aperçu
+      preview_help: Ouvre la vraie page d'une formation rendue avec ce canevas, sans rien enregistrer.
+      preview_invalid: Le canevas contient des erreurs ; corrigez-les avant l'aperçu.
+      preview_no_host: Aucune formation ne peut servir d'aperçu.
       library_title: Bibliothèque de formulaires
       library_help: Commune à tous les diplômes. Une variante reprend son formulaire de départ et n'en garde que les écarts.
       variant: variante

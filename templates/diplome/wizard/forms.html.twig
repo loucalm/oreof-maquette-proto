@@ -73,6 +73,8 @@
                             {{ _self.row(r, fiche, builtins, formLabels, formIds) }}
                         {% endfor %}
                     </div>
+                    {% set previewUrl = version is defined ? path('diplome_canvas_preview', {id: type.id, versionId: version.id}) : path('diplome_wizard_canvas_preview') %}
+                    <button type="submit" name="fiche" value="{{ fiche }}" formaction="{{ previewUrl }}" formtarget="_blank" class="mt-3 mr-2 rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50 float-right" style="border-color:var(--c-border)" title="{{ 'diplome.wizard.formulaires.preview_help'|trans({}, 'diplome') }}">{{ ux_icon('ph:eye', {class: 'icon'}) }} {{ 'diplome.wizard.formulaires.preview'|trans({}, 'diplome') }} ↗</button>
                     <button type="button" data-action="canvas#add" class="mt-3 rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'diplome.wizard.formulaires.add'|trans({}, 'diplome') }}</button>
                 </section>
             {% endfor %}

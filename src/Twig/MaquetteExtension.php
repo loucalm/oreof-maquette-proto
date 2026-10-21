@@ -37,6 +37,7 @@ final class MaquetteExtension extends AbstractExtension
         private readonly \App\Diplome\VersionMccc $versionMccc,
         private readonly FicheNavigation $navigation,
         private readonly FicheFactory $fiches,
+        private readonly \App\Formulaire\Preview\PreviewContext $preview,
     ) {
     }
 
@@ -75,6 +76,7 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('fiche_parcours', fn (TreeNode $p) => $this->fiches->forNode($p)),
             new TwigFunction('fiche_mono', fn (Formation $f) => $this->fiches->mono($f)),
             new TwigFunction('bcc_shown', fn (Formation $f) => $this->navigation->bccShown($f)),
+            new TwigFunction('preview_active', fn (Formation $f) => $this->preview->isActive($f)),
             new TwigFunction('bcc_status', $this->bccStatus(...)),
             new TwigFunction('referentiel', fn (string $key) => $this->referentiels->values($key)),
             // types de MCCC proposés pour un nœud : ceux de la version du type de diplôme (selon la nature

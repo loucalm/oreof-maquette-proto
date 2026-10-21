@@ -204,6 +204,9 @@
 
     {# ─── diplômes utilisateurs : la modification s'applique à tous, d'où la confirmation ─── #}
     {% if isParam %}
+        <form method="post" action="{{ path('node_type_preview', {id: nodeType.id}) }}" target="_blank" class="mb-3 flex justify-end">
+            <button class="rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:eye', {class: 'icon'}) }} {{ 'diplome.wizard.formulaires.preview'|trans({}, 'diplome') }} ↗</button>
+        </form>
         <div data-form-usage class="rounded-xl border px-4 py-3 mb-5" style="border-color:var(--c-border)">
             <div class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">{{ 'node_type.edit.usage_title'|trans({}, 'node_type') }}</div>
             {% if usage is not empty %}

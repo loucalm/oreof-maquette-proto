@@ -11,6 +11,7 @@
 {% set frameSrc = focus ? path('node_panel', {fid: formation.id, nid: focus}) : (currentItem ? currentItem.url : null) %}
 
 {% block body %}
+{% include 'formation/_preview_banner.html.twig' %}
 
 {# ─── en-tête compact : identité + statut + actions (l'éditeur reste visible sans défiler) ─── #}
 <div class="editor-header rounded-2xl border bg-white px-6 py-4 mb-4" style="border-color:var(--c-border)">
