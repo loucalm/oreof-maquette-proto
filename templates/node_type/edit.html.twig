@@ -287,7 +287,7 @@
             {% else %}
                 <div class="block">
                     <span class="text-xs font-medium">{{ 'node_type.edit.key_field'|trans({}, 'node_type') }}</span>
-                    <div class="mt-1 rounded-md border bg-gray-50 px-3 py-2 text-sm font-mono" style="border-color:var(--c-border);color:var(--c-muted)">{{ isNew ? 'node_type.edit.key_auto'|trans({}, 'node_type') : nodeType.key }}</div>
+                    <div class="mt-1 rounded-md border bg-gray-50 px-3 py-2 text-sm font-mono break-all" style="border-color:var(--c-border);color:var(--c-muted)">{{ isNew ? 'node_type.edit.key_auto'|trans({}, 'node_type') : nodeType.key }}</div>
                     <span class="text-[11px]" style="color:var(--c-muted)">{{ 'node_type.edit.key_help'|trans({}, 'node_type') }}</span>
                 </div>
             {% endif %}
@@ -371,7 +371,7 @@
                                             <button class="text-xs hover:underline shrink-0">{{ 'common.save'|trans({}, 'common') }}</button>
                                         </form>
                                         <form method="post" action="{{ path('node_type_field_remove', {id: nodeType.id, fieldId: f.id}) }}" class="shrink-0">
-                                            <button class="text-xs text-red-600 hover:underline">{{ 'common.remove'|trans({}, 'common') }}</button>
+                                            <button class="inline-flex h-7 w-7 items-center justify-center rounded hover:bg-gray-200" style="color:#dc2626" title="{{ 'common.remove'|trans({}, 'common') }}" aria-label="{{ 'common.remove'|trans({}, 'common') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
                                         </form>
                                     </div>
                                 {% elseif f.locked %}
@@ -384,35 +384,36 @@
                                     </div>
                                 {% elseif isParam and f.hidden %}
                                     {# champ masqué dans ce formulaire : on ne peut plus l'éditer, seulement le réafficher #}
-                                    <div class="flex items-center gap-2 rounded-md border px-3 py-2 text-sm opacity-60" style="border-color:var(--c-border);background:#fafafa">
-                                        <span class="flex-1">{{ f.label }} <code class="text-xs" style="color:var(--c-muted)">{{ f.key }}</code>
+                                    <div class="flex items-center gap-2 rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border);background:#f1f3f5;color:var(--c-muted)">
+                                        <span class="flex-1 min-w-0">{{ f.label }} <code class="text-xs" style="color:var(--c-muted)">{{ f.key }}</code>
                                             {% if f.required %}<span class="pill ml-1" style="background:#fee2e2;color:#dc2626">{{ 'node_type.edit.field_required_badge'|trans({}, 'node_type') }}</span>{% endif %}
-                                            <span class="pill ml-1">{{ 'node_type.edit.hidden_badge'|trans({}, 'node_type') }}</span>
                                             {{ ui.origins(f, nodeType.parent is not null) }}
                                         </span>
                                         <form method="post" action="{{ path('node_type_field_visibility', {id: nodeType.id, fieldId: f.id}) }}" class="shrink-0">
                                             <input type="hidden" name="visible" value="1">
-                                            <button class="text-xs hover:underline">{{ 'node_type.edit.show_field'|trans({}, 'node_type') }}</button>
+                                            <button class="inline-flex h-7 w-7 items-center justify-center rounded hover:bg-gray-200" title="{{ 'node_type.edit.show_field'|trans({}, 'node_type') }}" aria-label="{{ 'node_type.edit.show_field'|trans({}, 'node_type') }}">{{ ux_icon('ph:eye-slash', {class: 'icon'}) }}</button>
                                         </form>
                                     </div>
                                 {% else %}
                                     {% set togglableDefault = not nodeType.isCapabilityLocked(f.key) %}
                                     <details class="rounded-md border" style="border-color:var(--c-border)">
                                         <summary class="flex items-center justify-between gap-2 px-3 py-2 cursor-pointer text-sm">
-                                            <span>{{ f.label }} <code class="text-xs" style="color:var(--c-muted)">{{ f.key }}</code>
+                                            <span class="flex-1 min-w-0">{{ f.label }} <code class="text-xs" style="color:var(--c-muted)">{{ f.key }}</code>
                                                 {% if isParam %}{{ ui.origins(f, nodeType.parent is not null) }}{% endif %}
                                                 {% if not togglableDefault %}<span class="pill ml-1" title="{{ 'node_type.edit.not_togglable_title'|trans({}, 'node_type') }}">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }}</span>{% endif %}
                                             </span>
-                                            {% if isParam %}
-                                                <form method="post" action="{{ path('node_type_field_visibility', {id: nodeType.id, fieldId: f.id}) }}" onclick="event.stopPropagation()" class="shrink-0">
-                                                    <input type="hidden" name="visible" value="0">
-                                                    <button class="text-xs hover:underline">{{ 'node_type.edit.hide_field'|trans({}, 'node_type') }}</button>
+                                            <span class="ml-auto flex shrink-0 items-center gap-1">
+                                                {% if isParam %}
+                                                    <form method="post" action="{{ path('node_type_field_visibility', {id: nodeType.id, fieldId: f.id}) }}" onclick="event.stopPropagation()">
+                                                        <input type="hidden" name="visible" value="0">
+                                                        <button class="inline-flex h-7 w-7 items-center justify-center rounded hover:bg-gray-200" title="{{ 'node_type.edit.hide_field'|trans({}, 'node_type') }}" aria-label="{{ 'node_type.edit.hide_field'|trans({}, 'node_type') }}">{{ ux_icon('ph:eye', {class: 'icon'}) }}</button>
+                                                    </form>
+                                                {% endif %}
+                                                <form method="post" action="{{ path('node_type_field_remove', {id: nodeType.id, fieldId: f.id}) }}" onclick="event.stopPropagation()"
+                                                      data-controller="confirm" data-confirm-message-value="{{ 'node_type.edit.remove_field_confirm'|trans({'%label%': f.label}, 'node_type') }}">
+                                                    <button class="inline-flex h-7 w-7 items-center justify-center rounded hover:bg-gray-200" style="color:#dc2626" title="{{ 'common.remove'|trans({}, 'common') }}" aria-label="{{ 'common.remove'|trans({}, 'common') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
                                                 </form>
-                                            {% endif %}
-                                            <form method="post" action="{{ path('node_type_field_remove', {id: nodeType.id, fieldId: f.id}) }}" onclick="event.stopPropagation()"
-                                                  data-controller="confirm" data-confirm-message-value="{{ 'node_type.edit.remove_field_confirm'|trans({'%label%': f.label}, 'node_type') }}">
-                                                <button class="text-xs text-red-600 hover:underline">{{ 'common.remove'|trans({}, 'common') }}</button>
-                                            </form>
+                                            </span>
                                         </summary>
                                         <div class="p-3 border-t" style="border-color:var(--c-border)">
                                             {{ ui.fieldForm(path('node_type_field_edit', {id: nodeType.id, fieldId: f.id}), f, referentiels, fieldTypes, fieldTypesConfig, 'common.save'|trans({}, 'common'), togglableDefault) }}
