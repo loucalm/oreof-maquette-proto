@@ -51,17 +51,6 @@ final class TypeDiplomeFixtures extends Fixture implements DependentFixtureInter
         $manager->flush();
     }
 
-    /** @return array<string, string> */
-    private function forms(): array
-    {
-        return [
-            'formation.organisation' => 'param_organisation_formation',
-            'formation.presentation' => 'param_presentation_formation',
-            'parcours.organisation' => 'param_organisation_parcours',
-            'parcours.presentation' => 'param_presentation_parcours',
-        ];
-    }
-
     /** @return array<string, mixed> */
     private function licence(): array
     {
@@ -77,7 +66,6 @@ final class TypeDiplomeFixtures extends Fixture implements DependentFixtureInter
                 'duration' => ['min' => 3, 'max' => 4],
                 'natures' => ['ec', 'stage'],
             ],
-            'forms' => $this->forms(),
             'mccc' => [
                 'ec' => ['types' => ['CT', 'CC_CT', 'CC', 'CCI'], 'profile' => 'licence'],
                 'stage' => ['types' => ['CT'], 'profile' => 'licence'],
@@ -141,7 +129,6 @@ final class TypeDiplomeFixtures extends Fixture implements DependentFixtureInter
                 'duration' => ['min' => 2, 'max' => 2],
                 'natures' => ['ec'],
             ],
-            'forms' => $this->forms(),
             'mccc' => ['ec' => ['types' => ['CT', 'CC_CT', 'CC', 'CCI'], 'profile' => 'master']],
             'options' => ['quitus' => false, 'assiduite' => false, 'sansNote' => false],
             'bccLevels' => ['Bloc', 'Objectif', 'Attendu'],
@@ -180,7 +167,6 @@ final class TypeDiplomeFixtures extends Fixture implements DependentFixtureInter
                     'severity' => 'error',
                 ]],
             ],
-            'forms' => $this->forms(),
             'mccc' => [
                 'ressource' => ['types' => ['CC'], 'profile' => null],
                 'sae' => ['types' => ['CC'], 'profile' => null],

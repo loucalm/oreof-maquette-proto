@@ -8,7 +8,9 @@ use App\Diplome\Rule\RuleTemplateRegistry;
 use App\Diplome\Spec\Bound;
 use App\Diplome\Spec\ImposedElement;
 use App\Diplome\Spec\RuleSpec;
+use App\Diplome\Spec\CanvasSpec;
 use App\Diplome\Spec\VersionConfig;
+use App\Formulaire\CanvasResolver;
 use App\Diplome\WizardDraft;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -18,6 +20,7 @@ final class ConfigPresenter
     public function __construct(
         private readonly TranslatorInterface $translator,
         private readonly RuleTemplateRegistry $templates,
+        private readonly CanvasResolver $canvas,
     ) {
     }
 
@@ -146,8 +149,13 @@ final class ConfigPresenter
     private function formsRows(VersionConfig $config): array
     {
         $rows = [];
-        foreach ($config->forms as $slot => $key) {
-            $rows[] = [$this->pathLabel('forms.'.$slot), $key];
+        $canvas = $this->canvas->forConfig($config);
+        foreach (CanvasSpec::FICHES as $fiche) {
+            foreach ($canvas->entries($fiche) as $entry) {
+                if (!$entry->isBuiltin()) {
+                    $rows[] = [$this->pathLabel('forms.'.$fiche.'.'.$entry->key), (string) $entry->form];
+                }
+            }
         }
 
         return [] === $rows ? [[$this->t('recap.none'), '—']] : $rows;

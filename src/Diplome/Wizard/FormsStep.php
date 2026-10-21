@@ -4,11 +4,17 @@ declare(strict_types=1);
 
 namespace App\Diplome\Wizard;
 
+use App\Diplome\Spec\CanvasEntry;
 use App\Diplome\WizardDraft;
+use App\Formulaire\CanvasResolver;
 use App\Form\Diplome\FormsType;
 
 final class FormsStep extends AbstractWizardStep
 {
+    public function __construct(private readonly CanvasResolver $canvas)
+    {
+    }
+
     public function key(): string
     {
         return 'formulaires';
@@ -31,10 +37,11 @@ final class FormsStep extends AbstractWizardStep
 
     public function initialData(WizardDraft $draft): array
     {
-        $forms = $draft->config()->forms;
+        $canvas = $this->canvas->forConfig($draft->config());
         $data = [];
         foreach (FormsType::SLOTS as $slot) {
-            $data[FormsType::fieldName($slot)] = $forms[$slot] ?? null;
+            [$fiche, $key] = explode('.', $slot);
+            $data[FormsType::fieldName($slot)] = $canvas->entry($fiche, $key)?->form;
         }
 
         return $data;
@@ -42,18 +49,20 @@ final class FormsStep extends AbstractWizardStep
 
     public function apply(WizardDraft $draft, mixed $formData): void
     {
-        $config = $draft->configData;
-        // les emplacements que le formulaire ne propose pas sont conservés
-        $forms = $config['forms'] ?? [];
+        // les entrées que le formulaire ne propose pas sont conservées
+        $canvas = $this->canvas->forConfig($draft->config());
         foreach (FormsType::SLOTS as $slot) {
+            [$fiche, $key] = explode('.', $slot);
             $value = $formData[FormsType::fieldName($slot)] ?? null;
-            if (null !== $value && '' !== $value) {
-                $forms[$slot] = (string) $value;
-            } else {
-                unset($forms[$slot]);
-            }
+            $form = null !== $value && '' !== $value ? (string) $value : 'param_'.$key.'_'.$fiche;
+            $canvas = $canvas->withEntries($fiche, array_map(
+                static fn (CanvasEntry $e) => $e->key === $key && !$e->isBuiltin() ? new CanvasEntry($e->key, $form, null, $e->label, $e->hidden) : $e,
+                $canvas->entries($fiche),
+            ));
         }
-        $config['forms'] = $forms;
+        $config = $draft->configData;
+        unset($config['forms']);
+        $config['canvas'] = $canvas->toArray();
         $draft->configData = $config;
     }
 

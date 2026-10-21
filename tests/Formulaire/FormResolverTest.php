@@ -167,6 +167,7 @@ final class FormResolverTest extends DatabaseTestCase
         $parent = \is_string($parent) ? $this->form($parent) : $parent;
         $variant = (new NodeType($parent->getKey().'_v'.bin2hex(random_bytes(3)), $parent->getLabel().' · variante'))
             ->setFamily(NodeFamily::Parameter)
+            ->setScope($parent->getScope())
             ->setParent($parent);
         $this->resolver->acknowledgeParentFields($variant);
         $this->em->persist($variant);

@@ -100,7 +100,7 @@ final class DiplomeWizardTest extends WebTestCase
         self::assertResponseRedirects('/diplomes/nouveau/structure');
 
         $crawler = $this->client->request('GET', '/diplomes/nouveau/recapitulatif');
-        self::assertCount(1, $crawler->filter('[data-diff] [data-path="forms.formation.presentation"]'));
+        self::assertCount(1, $crawler->filter('[data-diff] [data-path="canvas.formation.1.form"]'));
         self::assertStringContainsString('param_organisation_formation', $crawler->filter('[data-diff]')->text());
     }
 
@@ -154,16 +154,18 @@ final class DiplomeWizardTest extends WebTestCase
         }
     }
 
-    public function testFormsStepKeepsSlotsItDoesNotOffer(): void
+    public function testFormsStepWritesTheCanvas(): void
     {
         $draft = $this->draft([]);
-        $draft->configData = ['forms' => ['formation.organisation' => 'param_organisation_formation', 'extra.slot' => 'param_x']];
+        $draft->configData = ['forms' => ['formation.organisation' => 'param_presentation_formation']];
 
-        static::getContainer()->get(FormsStep::class)->apply($draft, ['formation_presentation' => 'param_presentation_formation']);
+        static::getContainer()->get(FormsStep::class)->apply($draft, ['formation_presentation' => 'param_organisation_formation']);
 
-        self::assertSame('param_x', $draft->config()->forms['extra.slot']);
-        self::assertSame('param_presentation_formation', $draft->config()->forms['formation.presentation']);
-        self::assertArrayNotHasKey('formation.organisation', $draft->config()->forms);
+        $canvas = $draft->config()->canvas;
+        self::assertArrayNotHasKey('forms', $draft->configData);
+        self::assertSame('param_organisation_formation', $canvas->entry('formation', 'presentation')->form);
+        // un emplacement laissé vide reprend le formulaire socle de l'entrée
+        self::assertSame('param_organisation_formation', $canvas->entry('formation', 'organisation')->form);
     }
 
     public function testSummaryListsCopiedConfiguration(): void

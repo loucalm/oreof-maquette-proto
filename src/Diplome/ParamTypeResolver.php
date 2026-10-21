@@ -6,6 +6,7 @@ namespace App\Diplome;
 
 use App\Entity\Formation;
 use App\Entity\NodeType;
+use App\Formulaire\CanvasResolver;
 use App\Repository\NodeTypeRepository;
 
 /**
@@ -21,13 +22,13 @@ final class ParamTypeResolver
 
     public function __construct(
         private readonly NodeTypeRepository $types,
-        private readonly TypeDiplomeResolver $resolver,
+        private readonly CanvasResolver $canvas,
     ) {
     }
 
     public function typeKey(?Formation $formation, string $scope, string $section): string
     {
-        $configured = null !== $formation ? ($this->resolver->configFor($formation)?->forms[$scope.'.'.$section] ?? null) : null;
+        $configured = null !== $formation ? $this->canvas->forFormation($formation)->entry($scope, $section)?->form : null;
 
         return null !== $configured && '' !== $configured ? $configured : 'param_'.$section.'_'.$scope;
     }

@@ -34,7 +34,7 @@ final class StructurePreview
     public function roots(StructureSpec $structure): array
     {
         $version = (new TypeDiplomeVersion(new TypeDiplome('apercu', 'Aperçu', 'APERCU'), '0000-0001'))
-            ->setConfig(new VersionConfig($structure, [], [], ['quitus' => false, 'assiduite' => false, 'sansNote' => false], [], 0));
+            ->setConfig(new VersionConfig($structure, null, [], [], ['quitus' => false, 'assiduite' => false, 'sansNote' => false], [], 0));
         $doc = new MaquetteDoc(new Formation('Aperçu'), $this->nodeTypes->findAllIndexed());
         $this->instantiator->instantiate($doc, $version, max(1, $structure->duration?->min ?? 1), false);
 

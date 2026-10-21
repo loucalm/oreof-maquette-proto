@@ -628,6 +628,13 @@ final class FormationController extends AbstractController
         'structure' => ['label' => 'Configuration de la structure', 'generic' => false],
     ];
 
+    /** Écran intégré « Configuration de la structure » (cf. App\Formulaire\Builtin\StructureScreen). */
+    #[Route('/formations/{id}/structure', name: 'formation_structure', methods: ['GET'])]
+    public function structure(Formation $formation, \App\Repository\DerogationRequestRepository $derogations, FieldDefRepository $fields): Response
+    {
+        return $this->param($formation, 'structure', $derogations, $fields);
+    }
+
     #[Route('/formations/{id}/parametre/{key}', name: 'formation_param', methods: ['GET'])]
     public function param(
         Formation $formation,

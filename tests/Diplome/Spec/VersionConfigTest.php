@@ -32,7 +32,10 @@ final class VersionConfigTest extends TestCase
                     'scopeLevel' => 'annee', 'severity' => 'warning',
                 ]],
             ],
-            'forms' => ['formation.organisation' => 'org_licence', 'parcours.presentation' => 'pres_parcours'],
+            'canvas' => [
+                'formation' => [['key' => 'organisation', 'form' => 'org_licence', 'builtin' => null, 'label' => null, 'hidden' => false]],
+                'parcours' => [['key' => 'bcc', 'form' => null, 'builtin' => 'bcc', 'label' => 'BCC', 'hidden' => true]],
+            ],
             'mccc' => ['ec' => ['types' => ['CT', 'CC_CT', 'CC', 'CCI'], 'profile' => 'licence']],
             'options' => ['quitus' => true, 'assiduite' => true, 'sansNote' => false],
             'bccLevels' => ['Bloc', 'Compétence'],
@@ -40,6 +43,20 @@ final class VersionConfigTest extends TestCase
         ];
 
         self::assertSame($raw, VersionConfig::fromArray($raw)->toArray());
+    }
+
+    public function testLegacyFormsSurviveUntilACanvasIsWritten(): void
+    {
+        $c = VersionConfig::fromArray(['forms' => ['formation.organisation' => 'org_licence']]);
+
+        self::assertNull($c->canvas);
+        self::assertSame(['formation.organisation' => 'org_licence'], $c->legacyForms);
+        // enregistrer un autre onglet de la version ne perd pas l'ancien choix de formulaires
+        self::assertSame(['formation.organisation' => 'org_licence'], VersionConfig::fromArray($c->toArray())->legacyForms);
+
+        $withCanvas = VersionConfig::fromArray(['canvas' => ['formation' => [], 'parcours' => []], 'forms' => ['formation.organisation' => 'org_licence']]);
+        self::assertSame([], $withCanvas->legacyForms);
+        self::assertArrayNotHasKey('forms', $withCanvas->toArray());
     }
 
     public function testMissingKeysFallBackToDefaults(): void

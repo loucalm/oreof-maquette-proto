@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\DataFixtures;
 
 use App\Entity\NodeType;
+use App\Enum\FormScope;
 use App\Enum\NodeFamily;
 use App\Enum\NodeKind;
 use App\Validation\ValidationRule;
@@ -71,26 +72,21 @@ final class NodeTypeFixtures extends Fixture
             $manager->persist($type);
         }
 
-        // ─── sections fixes « Formation / Parcours » : Organisation, Présentation,
-        // Configuration de la structure, BCC — jamais des nœuds d'arbre (family Parameter,
-        // exclues des dropdowns structurels par NodeTypeRepository::forTree()). Organisation
-        // et Présentation (formation + parcours) sont réellement pilotées par ce catalogue
-        // (cf. NodeTypeController::EDITABLE_PARAM_KEYS) ; Structure et BCC gardent leur
-        // propre UI dédiée, `capabilities` reste vide pour elles.
+        // ─── formulaires socles des fiches formation et parcours (famille Parameter, jamais
+        // des nœuds d'arbre, cf. NodeTypeRepository::forTree()). Leur entrée et leur rang dans
+        // le canevas par défaut (cf. CanvasDefaults) reproduisent la fiche historique ; BCC,
+        // Structure et ramification sont des écrans intégrés (src/Formulaire/Builtin/).
         $orgFormation = ['name', 'diplome', 'domaine', 'composante', 'contacts', 'sep_org_specifiques', 'mention', 'niveauEntree', 'niveauSortie', 'rncp', 'codeRncp', 'codeApogee', 'sep_org_responsables', 'respMention', 'coRespMention'];
         $orgParcours = ['nom', 'ectsTotal', 'modalitesEnseignement', 'composanteInscription', 'regimes', 'modalitesAlternance', 'lieu', 'codeApogee', 'sep_org_responsables', 'respParcours', 'coRespParcours'];
         $presFormation = ['objectif', 'resultats', 'contenu', 'sep_pres_rythme', 'rythme', 'rythmePrecision'];
         $presParcours = ['objectif', 'motsCles', 'resultats', 'contenu', 'langue', 'niveauLangue', 'sep_pres_rythme', 'rythme', 'rythmePrecision', 'sep_pres_contacts', 'contactsParcours', 'sep_pres_apres', 'poursuiteEtudes', 'debouches', 'codesRome'];
 
         $paramDefs = [
-            ['param_organisation_formation', 'Organisation et localisation', 'ph:map-pin', 110, $orgFormation],
-            ['param_presentation_formation', 'Présentation', 'ph:notepad', 112, $presFormation],
-            ['param_structure_formation', 'Configuration de la structure', 'ph:tree-structure', 114, []],
-            ['param_structure_sans_parcours_formation', 'Configuration de la structure (sans parcours)', 'ph:tree-structure', 116, []],
-            ['param_bcc_sans_parcours_formation', 'BCC (sans parcours)', 'ph:graduation-cap', 118, []],
-            ['param_organisation_parcours', 'Organisation et localisation', 'ph:map-pin', 120, $orgParcours],
-            ['param_presentation_parcours', 'Présentation', 'ph:notepad', 122, $presParcours],
-            ['param_bcc_parcours', 'BCC', 'ph:graduation-cap', 124, []],
+            // clé, libellé, icône, position, champs, portée, entrée du canevas par défaut, rang dans ce canevas
+            ['param_organisation_formation', 'Organisation et localisation', 'ph:map-pin', 110, $orgFormation, FormScope::Formation, 'organisation', 10],
+            ['param_presentation_formation', 'Présentation', 'ph:notepad', 112, $presFormation, FormScope::Formation, 'presentation', 20],
+            ['param_organisation_parcours', 'Organisation et localisation', 'ph:map-pin', 120, $orgParcours, FormScope::Parcours, 'organisation', 10],
+            ['param_presentation_parcours', 'Présentation', 'ph:notepad', 122, $presParcours, FormScope::Parcours, 'presentation', 20],
         ];
         // règles d'onglet de démonstration (cf. App\Validation\ValidationRule)
         $rules = [
@@ -101,10 +97,13 @@ final class NodeTypeFixtures extends Fixture
                 new ValidationRule('alternance', ValidationRule::REQUIRED_IF, 'organisation', ['modalitesAlternance'], 'regimes', 'contains', 'FI_APP'),
             ],
         ];
-        foreach ($paramDefs as [$key, $label, $icon, $position, $fieldKeys]) {
+        foreach ($paramDefs as [$key, $label, $icon, $position, $fieldKeys, $scope, $entryKey, $entryPosition]) {
             $type = (new NodeType($key, $label))
                 ->setIcon($icon)
                 ->setFamily(NodeFamily::Parameter)
+                ->setScope($scope)
+                ->setDefaultEntryKey($entryKey)
+                ->setDefaultEntryPosition($entryPosition)
                 ->setPosition($position)
                 ->setCapabilities(array_fill_keys($fieldKeys, true))
                 ->setSystem(true);
