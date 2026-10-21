@@ -5,6 +5,7 @@
     <div class="block {{ class }}">
         {{ form_label(f, null, {label_attr: {class: 'text-[11px] font-medium uppercase tracking-wide', style: 'color:var(--c-muted)'}}) }}
         {{ form_widget(f, {attr: {class: 'mt-0.5 w-full rounded-md border px-2 py-1 text-sm', style: 'border-color:var(--c-border)'}}) }}
+        {{ form_help(f, {help_attr: {class: 'mt-0.5 text-[11px]', style: 'color:var(--c-muted)'}}) }}
         {{ form_errors(f) }}
     </div>
 {% endmacro %}

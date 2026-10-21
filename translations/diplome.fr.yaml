@@ -110,7 +110,7 @@ diplome:
       imposed_section_help: Nœuds qui doivent exister, placés d'office et verrouillés.
       rule_section_help: Contraintes supplémentaires, contrôlées en direct dans les formations.
       natures: Natures d'élément
-      natures_help: Clés séparées par des virgules (ex. ec, stage, sae). Elles qualifient les éléments du niveau feuille.
+      natures_help: "Sortes d'éléments du dernier niveau (ex. ec, stage, ressource, sae), séparées par des virgules. Chaque élément en reçoit une ; elle fixe les MCCC autorisées (onglet MCCC) et sert aux règles (ex. SAÉ ≥ 40 %)."
       imposed: Éléments imposés
       imposed_type: Type de nœud
       imposed_label: Libellé
@@ -135,7 +135,7 @@ diplome:
       preview: Aperçu de la maquette minimale
       preview_help: Maquette obtenue avec la plus petite durée autorisée, sans parcours (lecture seule, non enregistrée).
       bound:
-        none: aucune
+        none: libre
         min: au moins
         max: au plus
         between: entre
