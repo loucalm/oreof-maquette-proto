@@ -18,6 +18,7 @@ diplome:
     archive: Archiver
     unarchive: Désarchiver
     delete: Supprimer
+    delete_blocked: "Suppression impossible : ce diplôme est utilisé par %count% formation(s)."
     archive_confirm: 'Archiver le type « %label% » ? Il ne sera plus proposé à la création de formations ; les formations existantes sont conservées.'
     delete_confirm: 'Supprimer définitivement le type « %label% » et toutes ses versions ?'
     empty: Aucun type de diplôme.

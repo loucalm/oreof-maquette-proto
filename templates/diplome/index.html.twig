@@ -67,8 +67,9 @@
                             <button class="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100" style="color:#dc2626" title="{{ 'diplome.index.delete'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.index.delete'|trans({}, 'diplome') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
                         </form>
                     {% else %}
-                        {# emplacement vide : les icônes restent alignées d'une ligne à l'autre #}
-                        <span class="inline-block h-8 w-8" aria-hidden="true"></span>
+                        {# suppression impossible : poubelle grisée, la raison au survol #}
+                        <span class="inline-flex h-8 w-8 items-center justify-center rounded cursor-not-allowed" style="color:var(--c-muted);opacity:.45"
+                              title="{{ 'diplome.index.delete_blocked'|trans({'%count%': row.formations}, 'diplome') }}" aria-disabled="true" data-action="delete-blocked">{{ ux_icon('ph:trash', {class: 'icon'}) }}</span>
                     {% endif %}
                     </div>
                 </td>
