@@ -1,0 +1,8 @@
+{% import 'formation/param/_fields.html.twig' as fld %}
+{{ fld.label(f.label, f.required, f.help) }}
+<select name="b[domaine]" class="fld mt-1">
+    <option value="">{{ 'formation.fields.default_placeholder'|trans({}, 'formation') }}</option>
+    {% for d in referentiel('domaines') %}
+        <option value="{{ d }}" {{ value == d ? 'selected' }}>{{ d }}</option>
+    {% endfor %}
+</select>

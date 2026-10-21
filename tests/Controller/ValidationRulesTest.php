@@ -34,13 +34,13 @@ final class ValidationRulesTest extends WebTestCase
 
     private function saveParam(Formation $formation, string $section, array $p, array $entity = []): array
     {
-        $this->client->request('POST', sprintf('/formations/%d/parametre/%s', $formation->getId(), $section), ['p' => $p] + $entity, [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->client->request('POST', sprintf('/formations/%d/parametre/%s', $formation->getId(), $section), ['p' => $p, 'b' => $entity], [], ['HTTP_ACCEPT' => 'application/json']);
         self::assertResponseIsSuccessful();
 
         return json_decode((string) $this->client->getResponse()->getContent(), true);
     }
 
-    /** Champs d'organisation portés par l'entité Formation (envoyés hors `p`). */
+    /** Champs d'organisation portés par l'entité Formation (champs liés, envoyés sous `b`). */
     private const ENTITY = ['name' => 'Licence test', 'diplome' => 'Licence', 'domaine' => 'Droit, économie, gestion', 'composante' => 'UFR Sciences'];
 
     /** Organisation complète sauf ce que le test fait varier. */

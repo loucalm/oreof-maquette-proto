@@ -6,13 +6,17 @@ namespace App\Twig;
 
 use App\Controller\FormationController;
 use App\Controller\NodeTypeController;
+use App\Diplome\Spec\CanvasSpec;
 use App\Entity\Formation;
 use App\Entity\NodeType;
+use App\Formulaire\Builtin\BuiltinScreenRegistry;
+use App\Formulaire\CanvasResolver;
+use App\Formulaire\EntryCompletion;
+use App\Formulaire\Fiche\FicheFactory;
 use App\Maquette\AttributeCatalog;
 use App\Maquette\Doc\TreeNode;
 use App\Maquette\Maquette;
 use App\Maquette\McccValidator;
-use App\Repository\FieldDefRepository;
 use App\Repository\MccTypeRepository;
 use App\Repository\NodeTypeRepository;
 use App\Repository\ReferentielRepository;
@@ -32,12 +36,14 @@ final class MaquetteExtension extends AbstractExtension
         private readonly ReferentielRepository $referentiels,
         private readonly MccTypeRepository $mcctypes,
         private readonly McccValidator $mcccValidator,
-        private readonly FieldDefRepository $fields,
         private readonly \App\Validation\TabValidator $validator,
         private readonly \App\Maquette\BccReferences $bccRefs,
         private readonly \App\Maquette\NodeClipboard $clipboard,
         private readonly \App\Diplome\VersionMccc $versionMccc,
-        private readonly \App\Diplome\ParamTypeResolver $paramTypes,
+        private readonly CanvasResolver $canvas,
+        private readonly BuiltinScreenRegistry $builtins,
+        private readonly EntryCompletion $entries,
+        private readonly FicheFactory $fiches,
     ) {
     }
 
@@ -70,19 +76,18 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('bcc_competence_titles', $this->bccCompetenceTitles(...)),
             new TwigFunction('period_unit', $this->periodUnit(...)),
             new TwigFunction('param_sections', static fn () => FormationController::PARAM_SECTIONS),
-            new TwigFunction('param_status', fn (Formation $f, string $k) => $this->completion->formationParamStatus($f, $k)),
-            new TwigFunction('param_issues', fn (Formation $f, string $k) => $this->completion->formationParamIssues($f, $k)),
-            new TwigFunction('parcours_param_issues', fn (TreeNode $p, string $k) => $this->completion->parcoursParamIssues($p, $k)),
+            new TwigFunction('param_status', $this->paramStatus(...)),
+            new TwigFunction('param_issues', fn (Formation $f, string $k) => $this->entries->issues($this->fiches->formation($f), $k)),
+            new TwigFunction('parcours_param_issues', fn (TreeNode $p, string $k) => $this->entries->issues($this->fiches->forNode($p), $k)),
             // mentions « obligatoire si … » des champs d'un type (règles de ses onglets)
             new TwigFunction('field_rule_hints', fn (string $typeKey) => null !== ($t = $this->types->findOneByKey($typeKey)) ? $this->validator->hints($t) : []),
-            new TwigFunction('param_type_key', fn (?Formation $f, string $scope, string $key) => $this->paramTypes->typeKey($f, $scope, $key)),
-            new TwigFunction('param_active_fields', $this->paramActiveFields(...)),
-            new TwigFunction('param_field_value', fn (Formation $f, string $k, array $data) => $this->completion->formationFieldValue($f, $k, $data)),
+            new TwigFunction('param_active_fields', fn (string $key, ?Formation $f = null) => null === $f ? [] : $this->entries->formFields($f, CanvasSpec::FORMATION, $key)),
+            new TwigFunction('param_field_value', fn (Formation $f, string $k, array $data) => $this->fiches->formation($f)->value($k, $data)),
             new TwigFunction('bcc_status', $this->bccStatus(...)),
             new TwigFunction('parcours_param_sections', static fn () => FormationController::PARCOURS_PARAM_SECTIONS),
-            new TwigFunction('parcours_param_status', fn (TreeNode $p, string $k) => $this->completion->parcoursParamStatus($p, $k)),
-            new TwigFunction('parcours_param_active_fields', $this->parcoursParamActiveFields(...)),
-            new TwigFunction('parcours_field_value', fn (TreeNode $p, string $k, array $data) => $this->completion->parcoursFieldValue($p, $k, $data)),
+            new TwigFunction('parcours_param_status', fn (TreeNode $p, string $k) => $this->entries->status($this->fiches->forNode($p), $k)),
+            new TwigFunction('parcours_param_active_fields', fn (string $key, ?Formation $f = null) => null === $f ? [] : $this->entries->formFields($f, CanvasSpec::PARCOURS, $key)),
+            new TwigFunction('parcours_field_value', fn (TreeNode $p, string $k, array $data) => $this->fiches->forNode($p)->value($k, $data)),
             new TwigFunction('node_type_param_editable', static fn (NodeType $t) => \in_array($t->getKey(), NodeTypeController::EDITABLE_PARAM_KEYS, true)),
             new TwigFunction('referentiel', fn (string $key) => $this->referentiels->values($key)),
             // types de MCCC proposés pour un nœud : ceux de la version du type de diplôme (selon la nature
@@ -512,20 +517,15 @@ final class MaquetteExtension extends AbstractExtension
         return $out;
     }
 
-    /** Champs actifs d'une section « Paramètre de la formation » (organisation/presentation). @return list<FieldDef> */
-    public function paramActiveFields(string $key, ?Formation $formation = null): array
+    /** Statut d'une entrée de la fiche formation : celui de l'écran intégré, ou celui du formulaire. */
+    public function paramStatus(Formation $formation, string $key): string
     {
-        $type = $this->paramTypes->typeFor($formation, \App\Diplome\ParamTypeResolver::SCOPE_FORMATION, $key);
+        $entry = $this->canvas->forFormation($formation)->entry(CanvasSpec::FORMATION, $key);
+        if (null !== $entry && $entry->isBuiltin()) {
+            return $this->builtins->get(CanvasSpec::FORMATION, (string) $entry->builtin)?->status($formation, null) ?? 'ok';
+        }
 
-        return null !== $type ? $this->fields->activeOrderedFor($type) : [];
-    }
-
-    /** Équivalent de paramActiveFields() pour une section « Paramètre du parcours ». @return list<FieldDef> */
-    public function parcoursParamActiveFields(string $key, ?Formation $formation = null): array
-    {
-        $type = $this->paramTypes->typeFor($formation, \App\Diplome\ParamTypeResolver::SCOPE_PARCOURS, $key);
-
-        return null !== $type ? $this->fields->activeOrderedFor($type) : [];
+        return $this->entries->status($this->fiches->formation($formation), $key);
     }
 
     /** @return array<string, string> */

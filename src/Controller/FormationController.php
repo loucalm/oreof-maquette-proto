@@ -5,14 +5,12 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Diplome\FormationCreator;
-use App\Diplome\ParamTypeResolver;
 use App\Diplome\TypeDiplomeResolver;
 use App\Entity\Formation;
 use App\Enum\FormationPhase;
 use App\Maquette\Doc\TreeNode;
 use App\Maquette\Maquette;
 use App\Maquette\MaquetteBuilder;
-use App\Repository\FieldDefRepository;
 use App\Repository\FormationRepository;
 use App\Repository\NodeTypeRepository;
 use App\Repository\TypeDiplomeRepository;
@@ -31,7 +29,6 @@ final class FormationController extends AbstractController
         private readonly Maquette $maquette,
         private readonly RoleExtension $roles,
         private readonly TypeDiplomeResolver $typeResolver,
-        private readonly ParamTypeResolver $paramTypes,
     ) {
     }
 
@@ -264,77 +261,6 @@ final class FormationController extends AbstractController
         ]);
     }
 
-    #[Route('/formations/{fid}/parcours/{nid}/parametre/{key}', name: 'parcours_param', methods: ['GET'])]
-    public function parcoursParam(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid, string $key, FieldDefRepository $fields): Response
-    {
-        if (!isset(self::PARCOURS_PARAM_SECTIONS[$key])) {
-            throw $this->createNotFoundException();
-        }
-        $node = $this->parcoursNode($formation, $nid);
-        $type = $this->paramTypes->typeFor($formation, ParamTypeResolver::SCOPE_PARCOURS, $key);
-
-        return $this->render("formation/param/parcours_$key.html.twig", [
-            'formation' => $formation,
-            'parcours' => $node,
-            'key' => $key,
-            'label' => self::PARCOURS_PARAM_SECTIONS[$key],
-            'data' => $node->getParametre($key),
-            'fields' => null !== $type ? $fields->activeOrderedFor($type) : [],
-            'saveUrl' => $this->generateUrl('parcours_param_save', ['fid' => $formation->getId(), 'nid' => $nid, 'key' => $key]),
-        ]);
-    }
-
-    #[Route('/formations/{fid}/parcours/{nid}/parametre/{key}', name: 'parcours_param_save', methods: ['POST'])]
-    public function parcoursParamSave(
-        #[MapEntity(mapping: ['fid' => 'id'])] Formation $formation,
-        string $nid,
-        string $key,
-        Request $request,
-        \App\Maquette\Completion $completion,
-    ): Response {
-        if (!isset(self::PARCOURS_PARAM_SECTIONS[$key])) {
-            throw $this->createNotFoundException();
-        }
-        $doc = $this->maquette->open($formation);
-        $node = $this->pickParcours($formation, $nid);
-
-        $data = $node->getParametre($key);
-        foreach ($request->request->all('p') as $k => $v) {
-            $data[$k] = \is_string($v) ? trim($v) : $v;
-        }
-        $node->setParametre($key, array_filter(
-            $data,
-            static fn ($v) => $v !== '' && $v !== null && $v !== [],
-        ));
-
-        // section « organisation » : le nom et le volume d'ECTS sont portés par
-        // le nœud parcours lui-même.
-        if ($key === 'organisation') {
-            $nom = trim((string) $request->request->get('nom'));
-            if ($nom !== '') {
-                $node->setLabel($nom);
-            }
-            if ($request->request->has('ects')) {
-                $ects = $request->request->get('ects');
-                $node->setAttribute('ects', ($ects === '' || $ects === null) ? null : (int) $ects);
-            }
-        }
-
-        $this->maquette->save($formation, $doc);
-
-        // enregistrement en direct (Stimulus) : pas de flash ; statut et erreurs par champ recalculés
-        if ('json' === $request->getPreferredFormat()) {
-            return $this->json([
-                'status' => $completion->parcoursParamStatus($node, $key),
-                'issues' => $completion->parcoursParamIssues($node, $key),
-            ]);
-        }
-
-        $this->addFlash('success', sprintf('« %s » enregistré.', self::PARCOURS_PARAM_SECTIONS[$key]));
-
-        return $this->redirectToRoute('parcours_editor', ['fid' => $formation->getId(), 'nid' => $nid, 'param' => $key]);
-    }
-
     private function parcoursNode(Formation $formation, string $nid): TreeNode
     {
         return $this->pickParcours($formation, $nid);
@@ -351,7 +277,13 @@ final class FormationController extends AbstractController
     }
 
     #[Route('/formations/{id}/verifier', name: 'formation_check', methods: ['GET'])]
-    public function check(Formation $formation, MaquetteBuilder $builder, \App\Maquette\Completion $completion): Response
+    public function check(
+        Formation $formation,
+        MaquetteBuilder $builder,
+        \App\Maquette\Completion $completion,
+        \App\Formulaire\EntryCompletion $entries,
+        \App\Formulaire\Fiche\FicheFactory $fiches,
+    ): Response
     {
         $roots = $builder->build($formation);
         $doc = $this->maquette->open($formation);
@@ -359,7 +291,7 @@ final class FormationController extends AbstractController
         // sections de paramètres incomplètes (formation, puis chaque parcours)
         $sections = [];
         foreach (self::PARAM_SECTIONS as $key => $def) {
-            $status = $completion->formationParamStatus($formation, $key);
+            $status = $def['generic'] ? $entries->status($fiches->formation($formation), $key) : ([] === $formation->getStructure() ? 'empty' : 'ok');
             if ('ok' !== $status) {
                 $sections[] = ['label' => $def['label'], 'context' => null, 'status' => $status,
                     'url' => $this->generateUrl('formation_editor', ['id' => $formation->getId(), 'param' => $key])];
@@ -374,7 +306,7 @@ final class FormationController extends AbstractController
         }
         foreach ($doc->parcoursNodes() as $p) {
             foreach (self::PARCOURS_PARAM_SECTIONS as $key => $label) {
-                $status = $completion->parcoursParamStatus($p, $key);
+                $status = $entries->status($fiches->forNode($p), $key);
                 if ('ok' !== $status) {
                     $sections[] = ['label' => $label, 'context' => $p->getDisplayLabel(), 'status' => $status,
                         'url' => $this->generateUrl('parcours_editor', ['fid' => $formation->getId(), 'nid' => $p->getId(), 'param' => $key])];
@@ -630,68 +562,18 @@ final class FormationController extends AbstractController
 
     /** Écran intégré « Configuration de la structure » (cf. App\Formulaire\Builtin\StructureScreen). */
     #[Route('/formations/{id}/structure', name: 'formation_structure', methods: ['GET'])]
-    public function structure(Formation $formation, \App\Repository\DerogationRequestRepository $derogations, FieldDefRepository $fields): Response
+    public function structure(Formation $formation, \App\Repository\DerogationRequestRepository $derogations): Response
     {
-        return $this->param($formation, 'structure', $derogations, $fields);
-    }
-
-    #[Route('/formations/{id}/parametre/{key}', name: 'formation_param', methods: ['GET'])]
-    public function param(
-        Formation $formation,
-        string $key,
-        \App\Repository\DerogationRequestRepository $derogations,
-        FieldDefRepository $fields,
-    ): Response {
-        if (!isset(self::PARAM_SECTIONS[$key])) {
-            throw $this->createNotFoundException();
-        }
-        $type = 'structure' !== $key ? $this->paramTypes->typeFor($formation, ParamTypeResolver::SCOPE_FORMATION, $key) : null;
-
-        return $this->render("formation/param/$key.html.twig", [
+        return $this->render('formation/param/structure.html.twig', [
             'formation' => $formation,
-            'key' => $key,
-            'label' => self::PARAM_SECTIONS[$key]['label'],
-            'data' => $formation->getParametre($key),
-            'fields' => null !== $type ? $fields->activeOrderedFor($type) : [],
-            // seulement pour "structure"
-            'nodeCount' => $key === 'structure' ? \count($this->maquette->open($formation)->allNodes()) : 0,
+            'key' => 'structure',
+            'label' => self::PARAM_SECTIONS['structure']['label'],
+            'data' => $formation->getParametre('structure'),
+            'nodeCount' => \count($this->maquette->open($formation)->allNodes()),
             // le type de diplôme fige avec/sans parcours et la dimension temporelle (hors admin)
             'lockedByType' => null !== $this->typeResolver->versionFor($formation),
-            'derogations' => $key === 'structure' ? $derogations->findByFormation($formation) : [],
+            'derogations' => $derogations->findByFormation($formation),
         ]);
-    }
-
-    #[Route('/formations/{id}/parametre/{key}', name: 'formation_param_save', methods: ['POST'])]
-    public function paramSave(Formation $formation, string $key, Request $request, \App\Maquette\Completion $completion): Response
-    {
-        if (!isset(self::PARAM_SECTIONS[$key])) {
-            throw $this->createNotFoundException();
-        }
-        $doc = $this->maquette->open($formation);
-
-        // le bloc « Informations globale » de "organisation" édite l'entité elle-même
-        if ($key === 'organisation') {
-            $formation
-                ->setName(trim((string) $request->request->get('name')) ?: $formation->getName())
-                    ->setDomaine(trim((string) $request->request->get('domaine')) ?: null)
-                ->setComposante(trim((string) $request->request->get('composante')) ?: null);
-        }
-
-        $data = $request->request->all('p');
-        $doc->setFormationParam($key, array_filter($data, static fn ($v) => $v !== '' && $v !== null));
-        $this->maquette->save($formation, $doc);
-
-        // enregistrement en direct (Stimulus) : pas de flash ; statut et erreurs par champ recalculés
-        if ('json' === $request->getPreferredFormat()) {
-            return $this->json([
-                'status' => $completion->formationParamStatus($formation, $key),
-                'issues' => $completion->formationParamIssues($formation, $key),
-            ]);
-        }
-
-        $this->addFlash('success', sprintf('« %s » enregistré.', self::PARAM_SECTIONS[$key]['label']));
-
-        return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => $key]);
     }
 
     #[Route('/formations/{id}/reset', name: 'formation_reset', methods: ['POST'])]

@@ -1,22 +1,25 @@
+{# Gabarit générique d'une entrée de fiche : les sections Formation et Parcours
+   partagent la même structure ; les champs adossés à l'entité sont inclus depuis
+   templates/formation/param/bound/. #}
 {% import 'formation/param/_fields.html.twig' as fld %}
 <turbo-frame id="node-panel">
-<div class="panel-body" data-panel-active="param:{{ key }}">
+<div class="panel-body" data-panel-active="param:{{ entryKey }}">
     <div class="panel-head">
-        <h2 class="text-xl font-bold">{{ 'formation.param.panel_title'|trans({}, 'formation') }}</h2>
+        <h2 class="text-xl font-bold">{{ title }}</h2>
         <div class="text-sm text-gray-400">{{ label }}</div>
-        <div class="text-sm text-gray-400 mt-1">{{ formation.name }} › {{ label }}</div>
+        <div class="text-sm text-gray-400 mt-1">{{ breadcrumb|join(' › ') }}</div>
     </div>
 
     <div class="panel-scroll">
-    <form method="post" action="{{ path('formation_param_save', {id: formation.id, key: key}) }}" data-turbo-frame="_top"
-          data-controller="autosave" data-autosave-key-value="{{ key }}"
+    <form method="post" action="{{ saveUrl }}" data-turbo-frame="_top"
+          data-controller="autosave" data-autosave-key-value="{{ entryKey }}"
           class="panel-card space-y-5">
 
-        {% set issues = param_issues(formation, key) %}
-        {% set hints = field_rule_hints(param_type_key(formation, 'formation', key)) %}
         {% for f in fields %}
             {% if f.type == 'separator' %}
                 {{ fld.divider(f.label) }}
+            {% elseif f.key in fiche.bound|keys %}
+                <div>{% include 'formation/param/bound/' ~ fiche.fiche ~ '/' ~ f.key ~ '.html.twig' with {f: f, value: fiche.bound[f.key]} only %}</div>
             {% else %}
                 <div>{{ fld.field(f.key, f, data, issues[f.key] ?? [], hints[f.key] ?? null) }}</div>
             {% endif %}

@@ -176,7 +176,7 @@ final class FormationCreationTest extends WebTestCase
     {
         $this->create('L');
         $formation = $this->created();
-        $url = '/formations/'.$formation->getId().'/parametre/structure';
+        $url = '/formations/'.$formation->getId().'/structure';
 
         $this->client->request('POST', '/role/responsable');
         $this->client->request('GET', $url);

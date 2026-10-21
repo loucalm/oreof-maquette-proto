@@ -6,15 +6,10 @@ namespace App\Maquette;
 
 use App\Diplome\Check\StructureChecker;
 use App\Diplome\Check\StructureViolation;
-use App\Diplome\ParamTypeResolver;
 use App\Diplome\TypeDiplomeResolver;
-use App\Entity\FieldDef;
 use App\Entity\Formation;
-use App\Entity\NodeType;
 use App\Maquette\Doc\MaquetteDoc;
 use App\Maquette\Doc\TreeNode;
-use App\Repository\FieldDefRepository;
-use App\Repository\NodeTypeRepository;
 use App\Validation\TabValidator;
 
 /**
@@ -29,12 +24,9 @@ final class Completion
     public function __construct(
         private readonly AttributeCatalog $catalog,
         private readonly McccValidator $mcccValidator,
-        private readonly NodeTypeRepository $types,
-        private readonly FieldDefRepository $fields,
         private readonly TabValidator $validator,
         private readonly StructureChecker $structureChecker,
         private readonly TypeDiplomeResolver $resolver,
-        private readonly ParamTypeResolver $paramTypes,
     ) {
     }
 
@@ -216,138 +208,6 @@ final class Completion
             'structure' => ['incomplete' => \count($violations) - $blocking, 'blocking' => $blocking],
             'parcours' => $parcours,
         ];
-    }
-
-    /**
-     * Statut d'une section « Paramètre de la formation » (pastille de l'arbre) :
-     * « empty » si aucun champ requis n'est rempli, « ok » si tous le sont,
-     * « incomplete » sinon. Pilotée par les FieldDef.required actifs sur le
-     * NodeType `param_{key}_formation` — plus de liste de clés codée en dur.
-     */
-    public function formationParamStatus(Formation $formation, string $key): string
-    {
-        if ('structure' === $key) {
-            return [] === $formation->getStructure() ? 'empty' : 'ok';
-        }
-
-        $type = $this->paramTypes->typeFor($formation, ParamTypeResolver::SCOPE_FORMATION, $key);
-        $data = $formation->getParametre($key);
-
-        return null === $type ? 'empty' : $this->paramStatus($type, fn (string $k) => $this->formationFieldValue($formation, $k, $data));
-    }
-
-    /**
-     * Problèmes d'une section « Paramètre de la formation », par champ, pour les
-     * afficher sous chaque champ (obligatoire sous condition, bornes).
-     *
-     * @return array<string, list<string>>
-     */
-    public function formationParamIssues(Formation $formation, string $key): array
-    {
-        $type = $this->paramTypes->typeFor($formation, ParamTypeResolver::SCOPE_FORMATION, $key);
-        $data = $formation->getParametre($key);
-
-        return null === $type ? [] : $this->paramIssues($type, fn (string $k) => $this->formationFieldValue($formation, $k, $data));
-    }
-
-    /**
-     * Statut commun aux sections Paramètre : « empty » si rien de ce qui est attendu
-     * n'est fait, « ok » si tout l'est, « error » si une valeur saisie est invalide
-     * (bornes), « incomplete » sinon. Attendu = champs obligatoires actifs + règles
-     * de l'onglet déclenchées.
-     *
-     * @param callable(string): mixed $value
-     */
-    private function paramStatus(NodeType $type, callable $value): string
-    {
-        $fields = $this->fields->activeOrderedFor($type);
-        $required = array_values(array_filter($fields, static fn (FieldDef $f) => $f->isRequired()));
-        $check = $this->validator->check($type, $value, array_map(static fn (FieldDef $f) => $f->getKey(), $fields));
-
-        $expected = \count($required) + $check['units'];
-        $done = $check['units'] - \count($check['issues']);
-        foreach ($required as $f) {
-            $done += $this->isFilled($value($f->getKey())) ? 1 : 0;
-        }
-
-        return match (true) {
-            [] !== array_filter($check['issues'], static fn (array $i) => 'invalid' === $i['kind']) => 'error',
-            $done === $expected => 'ok',
-            0 === $done => 'empty',
-            default => 'incomplete',
-        };
-    }
-
-    /**
-     * @param callable(string): mixed $value
-     *
-     * @return array<string, list<string>>
-     */
-    private function paramIssues(NodeType $type, callable $value): array
-    {
-        $keys = array_map(static fn (FieldDef $f) => $f->getKey(), $this->fields->activeOrderedFor($type));
-        $out = [];
-        foreach ($this->validator->check($type, $value, $keys)['issues'] as $issue) {
-            $out[$issue['key']][] = $issue['label'];
-        }
-
-        return $out;
-    }
-
-    /**
-     * Valeur d'un champ « Paramètre de la formation » : lue sur l'entité pour les
-     * quelques champs verrouillés qui lui sont propres (cf. FieldDef::isLocked()),
-     * sinon dans le blob générique `parametres[section]`. Réutilisé à la fois pour
-     * le calcul de complétion et pour le rendu lecture seule (formation/view.html.twig).
-     *
-     * @param array<string, mixed> $data
-     */
-    public function formationFieldValue(Formation $formation, string $key, array $data): mixed
-    {
-        return match ($key) {
-            'name' => $formation->getName(),
-            'diplome' => $formation->getDiplome(),
-            'domaine' => $formation->getDomaine(),
-            'composante' => $formation->getComposante(),
-            default => $data[$key] ?? null,
-        };
-    }
-
-    /** Équivalent de formationParamStatus() pour une section « Paramètre du parcours ». */
-    public function parcoursParamStatus(TreeNode $parcours, string $key): string
-    {
-        $type = $this->paramTypes->typeFor($parcours->getFormation(), ParamTypeResolver::SCOPE_PARCOURS, $key);
-        $data = $parcours->getParametre($key);
-
-        return null === $type ? 'empty' : $this->paramStatus($type, fn (string $k) => $this->parcoursFieldValue($parcours, $k, $data));
-    }
-
-    /**
-     * Équivalent de formationParamIssues() pour une section « Paramètre du parcours ».
-     *
-     * @return array<string, list<string>>
-     */
-    public function parcoursParamIssues(TreeNode $parcours, string $key): array
-    {
-        $type = $this->paramTypes->typeFor($parcours->getFormation(), ParamTypeResolver::SCOPE_PARCOURS, $key);
-        $data = $parcours->getParametre($key);
-
-        return null === $type ? [] : $this->paramIssues($type, fn (string $k) => $this->parcoursFieldValue($parcours, $k, $data));
-    }
-
-    /** Équivalent de formationFieldValue() pour une section « Paramètre du parcours ». @param array<string, mixed> $data */
-    public function parcoursFieldValue(TreeNode $parcours, string $key, array $data): mixed
-    {
-        return match ($key) {
-            'nom' => $parcours->getLabel(),
-            'ectsTotal' => $parcours->getAttribute('ects'),
-            default => $data[$key] ?? null,
-        };
-    }
-
-    private function isFilled(mixed $v): bool
-    {
-        return !(null === $v || '' === $v || [] === $v);
     }
 
     /**

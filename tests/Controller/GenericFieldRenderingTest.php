@@ -112,7 +112,9 @@ final class GenericFieldRenderingTest extends WebTestCase
     {
         $factory = FormationFactory::create(static::getContainer());
         $formation = $factory->fromType('L', 3, withLeaves: true);
-        foreach (['structure', 'organisation', 'presentation'] as $section) {
+        $this->client->request('GET', sprintf('/formations/%d/structure', $formation->getId()));
+        self::assertResponseIsSuccessful('structure');
+        foreach (['organisation', 'presentation'] as $section) {
             $this->client->request('GET', sprintf('/formations/%d/parametre/%s', $formation->getId(), $section));
             self::assertResponseIsSuccessful($section);
         }
