@@ -123,7 +123,9 @@ export default class extends Controller {
             url = { focus: id };
         } else if (token.startsWith('param:')) {
             const key = token.slice(6);
-            target = this.element.querySelector(`a.nav-section[href*="/parametre/${key}"]`);
+            // lien de la fiche par sa clé de navigation (`<groupe>.<entrée>` pour le parcours unique), à défaut par son URL
+            target = this.element.querySelector(`a.nav-section[data-nav-key="${CSS.escape(key)}"]`)
+                || this.element.querySelector(`a.nav-section[href*="/parametre/${key}"]`);
             url = { param: key };
         } else if (token === 'parcours') {
             target = this.element.querySelector('a.nav-section[href*="/parcours"]');

@@ -93,8 +93,11 @@ final class GenericFieldRenderingTest extends WebTestCase
     public function testReadOnlyViewRendersChoiceLabelsThroughViewTemplates(): void
     {
         $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
-        $formation->setParametre('organisation', ['rncp' => 'oui']);
-        $this->em->flush();
+        // les données d'une fiche passent par la maquette (source de vérité pendant la requête)
+        $maquette = static::getContainer()->get(Maquette::class);
+        $doc = $maquette->open($formation);
+        $doc->setFormationParam('organisation', ['rncp' => 'oui']);
+        $maquette->save($formation, $doc);
         $crawler = $this->client->request('GET', '/formations/'.$formation->getId().'/voir');
 
         self::assertResponseIsSuccessful();

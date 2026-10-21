@@ -83,8 +83,8 @@ final class CanvasResolverTest extends DatabaseTestCase
             $defaults->formation,
         )));
 
-        $items = array_map(static fn (NavItem $i) => $i->number.' '.$i->key, $this->resolver->navigation($formation));
-        self::assertSame(['1 organisation', '2 bcc', '3 structure'], $items);
+        $items = array_map(static fn (NavItem $i) => $i->number.' '.$i->key.' '.($i->group ?? '-'), $this->resolver->navigation($formation));
+        self::assertSame(['1 organisation -', '2 bcc -', '3 structure -', '4 organisation parcours', '5 presentation parcours'], $items);
         self::assertNull($this->resolver->formEntry($formation, CanvasSpec::FORMATION, 'presentation'));
     }
 

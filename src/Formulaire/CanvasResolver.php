@@ -23,6 +23,9 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  */
 final class CanvasResolver
 {
+    /** Groupe de navigation des entrées du parcours unique d'une formation sans parcours. */
+    public const GROUP_PARCOURS = 'parcours';
+
     public function __construct(
         private readonly CanvasDefaults $defaults,
         private readonly BuiltinScreenRegistry $builtins,
@@ -78,7 +81,9 @@ final class CanvasResolver
 
     /**
      * Liens de la barre latérale : fiche parcours si `$parcours` est donné, fiche formation
-     * sinon ; entrées masquées, écrans qui ne s'appliquent pas et formulaires disparus exclus.
+     * sinon (suivie, pour une formation sans parcours, des entrées à formulaire de la fiche
+     * parcours, groupe GROUP_PARCOURS) ; entrées masquées, écrans qui ne s'appliquent pas et
+     * formulaires disparus exclus.
      *
      * @return list<NavItem>
      */
@@ -107,6 +112,17 @@ final class CanvasResolver
                 $status = null;
             }
             $items[] = new NavItem($fiche, $entry->key, $this->label($fiche, $entry), \count($items) + 1, $url, $status, null, $entry->isBuiltin());
+        }
+
+        // formation sans parcours : son parcours unique remplit les entrées à formulaire de la fiche parcours
+        if (null === $parcours && $formation->isSansParcours()) {
+            foreach ($this->forFormation($formation)->entries(CanvasSpec::PARCOURS) as $entry) {
+                if ($entry->hidden || $entry->isBuiltin() || null === $this->form($entry)) {
+                    continue;
+                }
+                $url = $this->urls->generate('parcours_unique_param', ['id' => $formation->getId(), 'key' => $entry->key]);
+                $items[] = new NavItem(CanvasSpec::PARCOURS, $entry->key, $this->label(CanvasSpec::PARCOURS, $entry), \count($items) + 1, $url, null, self::GROUP_PARCOURS, false);
+            }
         }
 
         return $items;

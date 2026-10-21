@@ -11,6 +11,7 @@ use App\Formulaire\EntryCompletion;
 use App\Formulaire\Fiche\FicheFactory;
 use App\Formulaire\Fiche\FicheTarget;
 use App\Formulaire\ResolvedField;
+use App\Maquette\Doc\TreeNode;
 use App\Maquette\Maquette;
 use App\Validation\TabValidator;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
@@ -58,7 +59,13 @@ final class FicheEntryController extends AbstractController
     #[Route('/formations/{fid}/parcours/{nid}/parametre/{key}', name: 'parcours_param', methods: ['GET'])]
     public function parcours(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid, string $key): Response
     {
-        return $this->show($this->parcoursFiche($formation, $nid), $key, $this->generateUrl('parcours_param_save', ['fid' => $formation->getId(), 'nid' => $nid, 'key' => $key]));
+        $fiche = $this->parcoursFiche($formation, $nid);
+        $builtin = $this->builtinUrl($formation, $key, $fiche->parcours());
+        if (null !== $builtin) {
+            return $this->redirect($builtin);
+        }
+
+        return $this->show($fiche, $key, $this->generateUrl('parcours_param_save', ['fid' => $formation->getId(), 'nid' => $nid, 'key' => $key]));
     }
 
     #[Route('/formations/{fid}/parcours/{nid}/parametre/{key}', name: 'parcours_param_save', methods: ['POST'])]
@@ -70,16 +77,17 @@ final class FicheEntryController extends AbstractController
     #[Route('/formations/{id}/parcours-unique/parametre/{key}', name: 'parcours_unique_param', methods: ['GET'])]
     public function parcoursUnique(Formation $formation, string $key): Response
     {
-        return $this->show($this->monoFiche($formation), $key, $this->generateUrl('parcours_unique_param_save', ['id' => $formation->getId(), 'key' => $key]));
+        return $this->show($this->monoFiche($formation), $key, $this->generateUrl('parcours_unique_param_save', ['id' => $formation->getId(), 'key' => $key]), CanvasResolver::GROUP_PARCOURS.'.'.$key);
     }
 
     #[Route('/formations/{id}/parcours-unique/parametre/{key}', name: 'parcours_unique_param_save', methods: ['POST'])]
     public function parcoursUniqueSave(Formation $formation, string $key, Request $request): Response
     {
-        return $this->save($this->monoFiche($formation), $key, $request, $this->generateUrl('formation_editor', ['id' => $formation->getId(), 'param' => 'parcours.'.$key]));
+        return $this->save($this->monoFiche($formation), $key, $request, $this->generateUrl('formation_editor', ['id' => $formation->getId(), 'param' => CanvasResolver::GROUP_PARCOURS.'.'.$key]));
     }
 
-    private function show(FicheTarget $fiche, string $key, string $saveUrl): Response
+    /** @param string|null $statusKey clé de la pastille de la barre latérale, si elle diffère de la clé d'entrée */
+    private function show(FicheTarget $fiche, string $key, string $saveUrl, ?string $statusKey = null): Response
     {
         $form = $this->entries->form($fiche->formation(), $fiche->fiche(), $key) ?? throw $this->createNotFoundException();
         $entry = $this->canvas->formEntry($fiche->formation(), $fiche->fiche(), $key);
@@ -98,6 +106,7 @@ final class FicheEntryController extends AbstractController
             'issues' => $this->entries->issues($fiche, $key),
             'hints' => $this->validator->hints($form),
             'saveUrl' => $saveUrl,
+            'statusKey' => $statusKey ?? $key,
         ]);
     }
 
@@ -150,14 +159,14 @@ final class FicheEntryController extends AbstractController
         return $this->fiches->mono($formation);
     }
 
-    /** URL de l'écran intégré dont c'est la clé dans la fiche formation, null sinon. */
-    private function builtinUrl(Formation $formation, string $key): ?string
+    /** URL de l'écran intégré dont c'est la clé dans la fiche (formation, ou parcours si `$parcours`), null sinon. */
+    private function builtinUrl(Formation $formation, string $key, ?TreeNode $parcours = null): ?string
     {
-        $entry = $this->canvas->forFormation($formation)->entry(CanvasSpec::FORMATION, $key);
+        $entry = $this->canvas->forFormation($formation)->entry(null !== $parcours ? CanvasSpec::PARCOURS : CanvasSpec::FORMATION, $key);
         if (null === $entry || !$entry->isBuiltin()) {
             return null;
         }
-        foreach ($this->canvas->navigation($formation) as $item) {
+        foreach ($this->canvas->navigation($formation, $parcours) as $item) {
             if ($item->key === $key) {
                 return $item->url;
             }

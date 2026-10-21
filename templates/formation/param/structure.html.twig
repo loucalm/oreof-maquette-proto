@@ -1,5 +1,4 @@
 {% import 'formation/param/_fields.html.twig' as fld %}
-{% set regimeChoices = referentiel('regimes_inscription') %}
 <turbo-frame id="node-panel">
 <div class="panel-body" data-panel-active="param:{{ key }}" data-controller="modal">
     <div class="panel-head">
@@ -76,75 +75,6 @@
                 </div>
             </div>
         </form>
-        {% endif %}
-
-        {# ── Propriétés du parcours invisible (mono-parcours) ── #}
-        {% if formation.isSansParcours %}
-            {{ fld.divider('formation.param.structure.divider_mono_props'|trans({}, 'formation')) }}
-            <p class="text-xs text-gray-500 -mt-2">
-                {{ 'formation.param.structure.mono_props_note'|trans({'%badge%': '<span class="type-badge">' ~ ux_icon('ph:compass', {class: 'icon'}) ~ ' ' ~ 'formation.graph.parcours_fallback'|trans({}, 'formation') ~ '</span>'}, 'formation')|raw }}
-            </p>
-            <form method="post" action="{{ path('formation_settings', {id: formation.id}) }}" data-turbo-frame="_top" class="space-y-4">
-                <input type="hidden" name="name" value="{{ formation.name }}">
-                <input type="hidden" name="diplome" value="{{ formation.diplome }}">
-                <input type="hidden" name="domaine" value="{{ formation.domaine }}">
-                <input type="hidden" name="avecParcours" value="0">
-
-                <div>
-                    {{ fld.label('formation.param.structure.intitule_mono_label'|trans({}, 'formation'), false, 'formation.param.structure.intitule_mono_help'|trans({}, 'formation')) }}
-                    {{ fld.text('intituleMono', data.intituleMono ?? '') }}
-                </div>
-
-                <div class="grid gap-4 md:grid-cols-2">
-                    <div>
-                        {{ fld.label('formation.param.structure.ects_total_label'|trans({}, 'formation'), true, 'formation.param.structure.ects_total_help'|trans({}, 'formation')) }}
-                        <input type="number" name="ectsTotal" value="{{ formation.ectsTotal }}" class="fld mt-1">
-                    </div>
-                    <div>
-                        {{ fld.label('formation.view.plabel.composante_inscription'|trans({}, 'formation'), true, 'formation.param.parcours_organisation.composante_help'|trans({}, 'formation')) }}
-                        <input name="composante" value="{{ formation.composante }}" class="fld mt-1">
-                    </div>
-                </div>
-
-                <div>
-                    {{ fld.label('formation.view.plabel.regimes'|trans({}, 'formation'), true, 'formation.param.parcours_organisation.multi_choice'|trans({}, 'formation')) }}
-                    <div class="grid gap-2 sm:grid-cols-2 mt-2 text-sm">
-                        {% set curRegimes = data.regimes ?? [] %}
-                        {% for rv, rl in regimeChoices %}
-                            <label class="flex items-center gap-2">
-                                <input type="checkbox" name="regimes[]" value="{{ rv }}" {{ rv in curRegimes ? 'checked' }}> {{ rl }}
-                            </label>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <div>
-                    {{ fld.label('formation.param.parcours_organisation.modalites_alternance_label'|trans({}, 'formation'), true) }}
-                    {{ fld.textarea('modalitesAlternance', data.modalitesAlternance ?? '', 'formation.param.parcours_organisation.modalites_alternance_help'|trans({}, 'formation')) }}
-                </div>
-
-                <div>
-                    {{ fld.label('formation.view.plabel.langue'|trans({}, 'formation'), true, 'formation.param.parcours_presentation.langue_help'|trans({}, 'formation')) }}
-                    {{ fld.select('langue', data.langue ?? '', referentiel('langues')) }}
-                </div>
-
-                {{ fld.divider('formation.param.parcours_presentation.divider_after'|trans({}, 'formation')) }}
-
-                <div>
-                    {{ fld.label('formation.view.plabel.poursuite_etudes'|trans({}, 'formation'), true) }}
-                    {{ fld.textarea('poursuiteEtudes', data.poursuiteEtudes ?? '', 'formation.param.parcours_presentation.poursuite_etudes_help'|trans({}, 'formation')) }}
-                </div>
-                <div>
-                    {{ fld.label('formation.view.plabel.debouches'|trans({}, 'formation'), true) }}
-                    {{ fld.textarea('debouches', data.debouches ?? '', 'formation.param.parcours_presentation.debouches_help'|trans({}, 'formation')) }}
-                </div>
-                <div>
-                    {{ fld.label('formation.param.parcours_presentation.codes_rome_label'|trans({}, 'formation'), true, 'formation.param.parcours_presentation.codes_rome_help'|trans({}, 'formation')) }}
-                    {{ fld.select('codesRome', data.codesRome ?? '', referentiel('codes_rome')) }}
-                </div>
-
-                <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
-            </form>
         {% endif %}
 
         {# ── Structure : la hiérarchie des TYPES de nœud ── #}

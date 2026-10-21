@@ -90,14 +90,13 @@
                 {{ 'formation.graph.period_range'|trans({'%unit%': unit, '%start%': n.periodeDebut, '%end%': n.periodeFin}, 'formation') }}
                 {%- if n.parcoursParent %} · {{ 'formation.index.parcours_specialization_of'|trans({'%parent%': n.parcoursParent.label ?: '—'}, 'formation') }}{% endif -%}
             </div>
-            {% for sect, slabel in {'organisation': 'formation.view.section_organisation'|trans({}, 'formation'), 'presentation': 'formation.view.section_presentation'|trans({}, 'formation')} %}
-                {% set pd = n.getParametre(sect) %}
-                {% set pfields = parcours_param_active_fields(sect, formation)|filter(f => field_type(f).input) %}
-                {% set shown = pfields|filter(f => parcours_field_value(n, f.key, pd) is not empty) %}
+            {% set pfiche = fiche_parcours(n) %}
+            {% for entry in fiche_entries(pfiche) %}
+                {% set shown = entry.fields|filter(f => pfiche.value(f.key, entry.data) is not empty) %}
                 {% if shown is not empty %}
-                    <div class="fld-cat">{{ slabel }}</div>
+                    <div class="fld-cat">{{ entry.label }}</div>
                     {% for f in shown %}
-                        {% set v = parcours_field_value(n, f.key, pd) %}
+                        {% set v = pfiche.value(f.key, entry.data) %}
                         <div class="flex flex-wrap gap-x-2 text-sm py-0.5">
                             <span class="text-gray-400">{{ f.label }} :</span>
                             <span class="text-gray-800 whitespace-pre-line">{{ v is iterable ? v|join(', ') : v }}</span>
@@ -204,17 +203,48 @@
 {# panneaux de détail des sections « Paramètre de la formation » #}
 {% macro paramdetails(formation) %}
     {% import _self as m %}
-    {% for key, section in param_sections() %}
-        {% set data = formation.getParametre(key) %}
-        <div data-rotree-target="detail" data-node="param:{{ key }}" hidden class="space-y-4">
+    {% set statuses = {} %}
+    {% for item in fiche_nav(formation) %}{% set statuses = statuses|merge({((item.group ? item.group ~ '.') ~ item.key): item.status}) %}{% endfor %}
+    {% set fiches = [{fiche: fiche_formation(formation), prefix: ''}] %}
+    {% if formation.isSansParcours %}{% set fiches = fiches|merge([{fiche: fiche_mono(formation), prefix: 'parcours.'}]) %}{% endif %}
+    {% for f in fiches %}
+    {% set fiche = f.fiche %}
+    {% for entry in fiche_entries(fiche) %}
+        {% set navKey = f.prefix ~ entry.key %}
+        <div data-rotree-target="detail" data-node="param:{{ navKey }}" hidden class="space-y-4">
             <div class="text-sm text-gray-400">{{ formation.name }} › {{ 'formation.view.formation_params_breadcrumb'|trans({}, 'formation') }}</div>
             <div class="flex flex-wrap items-center gap-2">
-                <span class="status-dot" data-status="{{ param_status(formation, key) }}"></span>
-                <h3 class="text-lg font-bold">{{ section.label }}</h3>
+                <span class="status-dot" data-status="{{ statuses[navKey] ?? 'empty' }}"></span>
+                <h3 class="text-lg font-bold">{{ entry.label }}</h3>
+            </div>
+            {% set present = entry.fields|filter(f => fiche.value(f.key, entry.data) is not empty) %}
+            {% if present is empty %}
+                <p class="text-sm text-gray-400 italic">{{ 'formation.view.section_empty'|trans({}, 'formation') }}</p>
+            {% else %}
+                <dl class="divide-y" style="border-color:var(--c-border)">
+                    {% for f in present %}
+                        <div class="grid gap-1 py-2 sm:grid-cols-[240px_1fr]">
+                            <dt class="text-sm text-gray-400">{{ f.label }}</dt>
+                            <dd class="text-sm text-gray-800">{{ field_view(f, fiche.value(f.key, entry.data)) }}</dd>
+                        </div>
+                    {% endfor %}
+                </dl>
+            {% endif %}
+            <a href="{{ path('formation_editor', {id: formation.id, param: navKey}) }}"
+               class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'formation.view.edit_section_button'|trans({}, 'formation') }}</a>
+        </div>
+    {% endfor %}
+    {% endfor %}
+
+    {# écran intégré « Configuration de la structure » : récapitulatif de la configuration #}
+    <div data-rotree-target="detail" data-node="param:structure" hidden class="space-y-4">
+            <div class="text-sm text-gray-400">{{ formation.name }} › {{ 'formation.view.formation_params_breadcrumb'|trans({}, 'formation') }}</div>
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="status-dot" data-status="{{ formation.structure is empty ? 'empty' : 'ok' }}"></span>
+                <h3 class="text-lg font-bold">{{ 'formation.editor.structure_section_label'|trans({}, 'formation') }}</h3>
             </div>
 
-            {% if not section.generic %}
-                <dl class="divide-y" style="border-color:var(--c-border)">
+            <dl class="divide-y" style="border-color:var(--c-border)">
                     {{ m.prow('formation.view.plabel.org_parcours'|trans({}, 'formation'), formation.avecParcours ? 'formation.view.multi_parcours_value'|trans({}, 'formation') : 'formation.editor.meta_mono_parcours'|trans({}, 'formation')) }}
                     {{ m.prow('formation.view.plabel.temporal_dimension'|trans({}, 'formation'),
                         formation.calendarSpan
@@ -232,43 +262,11 @@
                             {% endfor %}
                         </dd>
                     </div>
-                    {% set regimes = data.regimes ?? [] %}
-                    {% if regimes %}{{ m.prow('formation.view.plabel.regimes'|trans({}, 'formation'), regimes|join(', ')) }}{% endif %}
-                    {% if formation.isSansParcours %}
-                        {% for f in [
-                            {k: 'intituleMono', l: 'formation.view.plabel.intitule_mono'|trans({}, 'formation')},
-                            {k: 'langue', l: 'formation.view.plabel.langue'|trans({}, 'formation')},
-                            {k: 'modalitesAlternance', l: 'formation.view.plabel.modalites_alternance'|trans({}, 'formation')},
-                            {k: 'poursuiteEtudes', l: 'formation.view.plabel.poursuite_etudes'|trans({}, 'formation')},
-                            {k: 'debouches', l: 'formation.view.plabel.debouches'|trans({}, 'formation')},
-                            {k: 'codesRome', l: 'formation.view.plabel.codes_rome'|trans({}, 'formation')}
-                        ] %}
-                            {% if data[f.k] ?? null %}{{ m.prow(f.l, data[f.k]) }}{% endif %}
-                        {% endfor %}
-                    {% endif %}
                 </dl>
-            {% else %}
-                {% set allFields = param_active_fields(key, formation)|filter(f => field_type(f).input) %}
-                {% set present = allFields|filter(f => param_field_value(formation, f.key, data) is not empty) %}
-                {% if present is empty %}
-                    <p class="text-sm text-gray-400 italic">{{ 'formation.view.section_empty'|trans({}, 'formation') }}</p>
-                {% else %}
-                    <dl class="divide-y" style="border-color:var(--c-border)">
-                        {% for f in present %}
-                            {% set val = param_field_value(formation, f.key, data) %}
-                            <div class="grid gap-1 py-2 sm:grid-cols-[240px_1fr]">
-                                <dt class="text-sm text-gray-400">{{ f.label }}</dt>
-                                <dd class="text-sm text-gray-800">{{ field_view(f, val) }}</dd>
-                            </div>
-                        {% endfor %}
-                    </dl>
-                {% endif %}
-            {% endif %}
 
-            <a href="{{ path('formation_editor', {id: formation.id, param: key}) }}"
+            <a href="{{ path('formation_editor', {id: formation.id, param: 'structure'}) }}"
                class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'formation.view.edit_section_button'|trans({}, 'formation') }}</a>
         </div>
-    {% endfor %}
 {% endmacro %}
 
 {# liste lecture seule de blocs de compétences #}
@@ -373,11 +371,6 @@
             <div><div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{{ k }}</div><div class="text-sm mt-1">{{ v }}</div></div>
         {% endfor %}
     </div>
-    {% if formation.isSansParcours and (formation.getParametre('structure').regimes ?? []) %}
-        <div class="mt-3 pt-3 border-t text-xs text-gray-500" style="border-color:var(--c-border)">
-            {{ 'formation.view.plabel.regimes'|trans({}, 'formation') }} : <strong class="text-gray-700">{{ formation.getParametre('structure').regimes|join(', ') }}</strong>
-        </div>
-    {% endif %}
 </div>
 
 <div class="rounded-2xl border bg-white overflow-hidden" style="border-color:var(--c-border)" data-controller="rotree">
@@ -386,16 +379,22 @@
         <div class="border-b lg:border-b-0 lg:border-r overflow-y-auto p-3" style="border-color:var(--c-border)">
             <div class="px-2 pb-2 text-[11px] font-bold uppercase tracking-wide" style="color:var(--c-primary)">{{ 'formation.view.formation_params_breadcrumb'|trans({}, 'formation') }}</div>
             <div class="mb-4 space-y-0.5">
-                {% for key, section in param_sections() %}
-                    <div class="tree-row" data-action="click->rotree#select" data-rotree-id-param="param:{{ key }}">
-                        <span class="status-dot" data-status="{{ param_status(formation, key) }}"></span>
-                        <span class="tree-label tree-label-full">{{ section.label }}</span>
+                {% for item in fiche_nav(formation)|filter(i => not i.builtin) %}
+                    <div class="tree-row" data-action="click->rotree#select" data-rotree-id-param="param:{{ item.group ? item.group ~ '.' }}{{ item.key }}">
+                        <span class="status-dot" data-status="{{ item.status }}"></span>
+                        <span class="tree-label tree-label-full">{{ item.label }}</span>
                     </div>
                 {% endfor %}
-                <div class="tree-row" data-action="click->rotree#select" data-rotree-id-param="bcc">
-                    <span class="status-dot" data-status="{{ bcc_status(formation) }}"></span>
-                    <span class="tree-label tree-label-full">{{ 'formation.editor.bcc_section_label'|trans({}, 'formation') }}</span>
+                <div class="tree-row" data-action="click->rotree#select" data-rotree-id-param="param:structure">
+                    <span class="status-dot" data-status="{{ formation.structure is empty ? 'empty' : 'ok' }}"></span>
+                    <span class="tree-label tree-label-full">{{ 'formation.editor.structure_section_label'|trans({}, 'formation') }}</span>
                 </div>
+                {% if bcc_shown(formation) %}
+                    <div class="tree-row" data-action="click->rotree#select" data-rotree-id-param="bcc">
+                        <span class="status-dot" data-status="{{ bcc_status(formation) }}"></span>
+                        <span class="tree-label tree-label-full">{{ 'formation.editor.bcc_section_label'|trans({}, 'formation') }}</span>
+                    </div>
+                {% endif %}
                 {% if formation.avecParcours %}
                     <a href="{{ path('formation_parcours_graph', {id: formation.id}) }}" class="block rounded-md px-2 py-1.5 text-sm hover:bg-gray-50" style="color:var(--c-primary)">{{ ux_icon('ph:map-trifold', {class: 'icon'}) }} {{ 'formation.editor.ramification_section_label'|trans({}, 'formation') }}</a>
                 {% endif %}
@@ -415,7 +414,7 @@
                 {{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'formation.view.select_prompt'|trans({}, 'formation') }}
             </div>
             {{ m.paramdetails(formation) }}
-            {{ m.bccdetail(formation) }}
+            {% if bcc_shown(formation) %}{{ m.bccdetail(formation) }}{% endif %}
             {{ m.details(roots, catalog, domains) }}
         </div>
     </div>

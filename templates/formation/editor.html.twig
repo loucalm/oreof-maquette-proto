@@ -5,11 +5,10 @@
 {% set param = app.request.query.get('param') %}
 {% set bcc = app.request.query.get('bcc') %}
 {% set multi = formation.avecParcours %}
-{% set frameSrc = bcc ? path('bcc_editor', {fid: formation.id})
-    : (param ? path('formation_param', {id: formation.id, key: param})
-    : (focus ? path('node_panel', {fid: formation.id, nid: focus}) : null)) %}
-{# défaut multi-parcours : le graphe de ramification #}
-{% if not frameSrc and multi %}{% set frameSrc = path('formation_parcours_graph', {id: formation.id}) %}{% endif %}
+{# panneau ouvert : le lien courant de la fiche (param, bcc, ou par défaut l'écran qui le revendique), sinon le nœud ciblé #}
+{% set navItems = fiche_nav(formation, null, app.request.query.all) %}
+{% set currentItem = navItems|filter(i => i.current)|first %}
+{% set frameSrc = focus ? path('node_panel', {fid: formation.id, nid: focus}) : (currentItem ? currentItem.url : null) %}
 
 {% block body %}
 
@@ -138,29 +137,7 @@
             <div class="flex-1 overflow-y-auto">
                 <div class="px-4 py-3 border-b" style="border-color:var(--c-border)">
                     <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">{{ 'formation.editor.param_section_label'|trans({}, 'formation') }}</div>
-                    {% set sections = param_sections() %}
-                    <a href="{{ path('formation_param', {id: formation.id, key: 'organisation'}) }}" data-turbo-frame="node-panel"
-                       class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ param == 'organisation' ? 'is-active' }}">
-                        <span class="status-dot" data-status="{{ param_status(formation, 'organisation') }}" data-param-status-key="organisation"></span>1 | {{ sections.organisation.label }}
-                    </a>
-                    <a href="{{ path('formation_param', {id: formation.id, key: 'presentation'}) }}" data-turbo-frame="node-panel"
-                       class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ param == 'presentation' ? 'is-active' }}">
-                        <span class="status-dot" data-status="{{ param_status(formation, 'presentation') }}" data-param-status-key="presentation"></span>2 | {{ sections.presentation.label }}
-                    </a>
-                    {% if not multi %}
-                        <a href="{{ path('bcc_editor', {fid: formation.id}) }}" data-turbo-frame="node-panel"
-                           class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ bcc ? 'is-active' }}">
-                            <span class="status-dot" data-status="{{ bcc_status(formation) }}"></span>3 | {{ 'formation.editor.bcc_section_label'|trans({}, 'formation') }}
-                        </a>
-                    {% else %}
-                        <a href="{{ path('formation_parcours_graph', {id: formation.id}) }}" data-turbo-frame="node-panel"
-                           class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ (not param and not focus and not bcc) ? 'is-active' }}"
-                           style="color:var(--c-primary)">3 | {{ ux_icon('ph:map-trifold', {class: 'icon'}) }} {{ 'formation.editor.ramification_section_label'|trans({}, 'formation') }}</a>
-                    {% endif %}
-                    <a href="{{ path('formation_param', {id: formation.id, key: 'structure'}) }}" data-turbo-frame="node-panel"
-                       class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ param == 'structure' ? 'is-active' }}">
-                        <span class="status-dot" data-status="{{ param_status(formation, 'structure') }}"></span>4 | {{ sections.structure.label }}
-                    </a>
+                    {% include 'formation/_fiche_nav.html.twig' with {items: navItems} %}
                 </div>
 
                 {% if multi %}

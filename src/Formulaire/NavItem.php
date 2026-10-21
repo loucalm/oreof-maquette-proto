@@ -16,6 +16,7 @@ final readonly class NavItem
         public ?string $status,
         public ?string $group,
         public bool $builtin,
+        public bool $current = false,
     ) {
     }
 }

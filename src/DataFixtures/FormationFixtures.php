@@ -242,10 +242,13 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
                 'contenu' => "Programmation, algorithmique, mathématiques pour l'informatique, systèmes et réseaux, bases de données, développement web, projet tutoré.",
                 'rythme' => 'Temps plein',
         ]);
-        $doc->setFormationParam('structure', [
+        // fiche parcours de la formation sans parcours (parcours unique, cf. App\Formulaire\Fiche\MonoParcoursFiche)
+        $doc->setFormationParam('parcours.organisation', [
                 'regimes' => ['FI', 'FC'],
-                'langue' => 'Français',
                 'modalitesAlternance' => 'Sans objet (formation initiale à temps plein).',
+            ]);
+        $doc->setFormationParam('parcours.presentation', [
+                'langue' => 'Français',
                 'poursuiteEtudes' => "Master informatique, master MIAGE, écoles d'ingénieurs sur titre.",
                 'debouches' => 'Développeur, administrateur systèmes et bases de données, assistant chef de projet.',
                 'codesRome' => 'M1805 — Études et développement informatique',

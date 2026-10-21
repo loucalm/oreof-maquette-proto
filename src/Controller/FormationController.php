@@ -29,6 +29,7 @@ final class FormationController extends AbstractController
         private readonly Maquette $maquette,
         private readonly RoleExtension $roles,
         private readonly TypeDiplomeResolver $typeResolver,
+        private readonly \App\Formulaire\Fiche\ParcoursFicheTransfer $parcoursTransfer,
     ) {
     }
 
@@ -239,12 +240,6 @@ final class FormationController extends AbstractController
 
     // ─── éditeur d'un parcours (2e échelle, formations multi-parcours) ───
 
-    /** Sections « Paramètre du parcours » (portées par le nœud parcours). */
-    public const PARCOURS_PARAM_SECTIONS = [
-        'organisation' => 'Organisation et localisation',
-        'presentation' => 'Présentation',
-    ];
-
     #[Route('/formations/{fid}/parcours/{nid}', name: 'parcours_editor', methods: ['GET'])]
     public function parcoursEditor(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid, MaquetteBuilder $builder): Response
     {
@@ -281,41 +276,28 @@ final class FormationController extends AbstractController
         Formation $formation,
         MaquetteBuilder $builder,
         \App\Maquette\Completion $completion,
-        \App\Formulaire\EntryCompletion $entries,
-        \App\Formulaire\Fiche\FicheFactory $fiches,
+        \App\Formulaire\FicheNavigation $navigation,
+        \Symfony\Contracts\Translation\TranslatorInterface $translator,
     ): Response
     {
         $roots = $builder->build($formation);
         $doc = $this->maquette->open($formation);
 
-        // sections de paramètres incomplètes (formation, puis chaque parcours)
+        // entrées incomplètes des fiches (formation, puis chaque parcours), d'après le canevas de la version
         $sections = [];
-        foreach (self::PARAM_SECTIONS as $key => $def) {
-            $status = $def['generic'] ? $entries->status($fiches->formation($formation), $key) : ([] === $formation->getStructure() ? 'empty' : 'ok');
-            if ('ok' !== $status) {
-                $sections[] = ['label' => $def['label'], 'context' => null, 'status' => $status,
-                    'url' => $this->generateUrl('formation_editor', ['id' => $formation->getId(), 'param' => $key])];
-            }
-        }
-        if (!$formation->isAvecParcours()) {
-            $status = $completion->bccStatus($doc->competenceBlocs());
-            if ('ok' !== $status) {
-                $sections[] = ['label' => 'Référentiel de compétences (BCC)', 'context' => null, 'status' => $status,
-                    'url' => $this->generateUrl('formation_editor', ['id' => $formation->getId(), 'bcc' => 1])];
+        foreach ($navigation->items($formation) as $item) {
+            if (null !== $item->status && 'ok' !== $item->status) {
+                $context = null !== $item->group ? $translator->trans('formation.editor.nav_group.'.$item->group, [], 'formation') : null;
+                $sections[] = ['label' => $item->label, 'context' => $context, 'status' => $item->status,
+                    'url' => $this->generateUrl('formation_editor', ['id' => $formation->getId(), 'param' => \App\Formulaire\FicheNavigation::navKey($item)])];
             }
         }
         foreach ($doc->parcoursNodes() as $p) {
-            foreach (self::PARCOURS_PARAM_SECTIONS as $key => $label) {
-                $status = $entries->status($fiches->forNode($p), $key);
-                if ('ok' !== $status) {
-                    $sections[] = ['label' => $label, 'context' => $p->getDisplayLabel(), 'status' => $status,
-                        'url' => $this->generateUrl('parcours_editor', ['fid' => $formation->getId(), 'nid' => $p->getId(), 'param' => $key])];
+            foreach ($navigation->items($formation, $p) as $item) {
+                if (null !== $item->status && 'ok' !== $item->status) {
+                    $sections[] = ['label' => $item->label, 'context' => $p->getDisplayLabel(), 'status' => $item->status,
+                        'url' => $this->generateUrl('parcours_editor', ['fid' => $formation->getId(), 'nid' => $p->getId(), 'param' => $item->key])];
                 }
-            }
-            $status = $completion->bccStatus($p->getBccBlocs());
-            if ('ok' !== $status) {
-                $sections[] = ['label' => 'Référentiel de compétences (BCC)', 'context' => $p->getDisplayLabel(), 'status' => $status,
-                    'url' => $this->generateUrl('parcours_editor', ['fid' => $formation->getId(), 'nid' => $p->getId(), 'bcc' => 1])];
             }
         }
 
@@ -413,21 +395,6 @@ final class FormationController extends AbstractController
                 ? $request->request->getInt('calendarSpan') : null);
         }
 
-        // propriétés « formation mono-parcours » rangées dans parametres.structure
-        if ($request->request->has('regimes') || $request->request->has('p')) {
-            $data = $doc->formationParam('structure');
-            if ($request->request->has('regimes')) {
-                $data['regimes'] = array_values(array_filter($request->request->all('regimes')));
-            }
-            foreach ($request->request->all('p') as $k => $v) {
-                $data[$k] = \is_string($v) ? trim($v) : $v;
-            }
-            $doc->setFormationParam('structure', array_filter(
-                $data,
-                static fn ($v) => $v !== '' && $v !== null && $v !== [],
-            ));
-        }
-
         // le passage mono ↔ multi réorganise l'arbre pour que rien ne casse
         if ($wasMulti !== $willMulti) {
             $moved = $this->reshapeParcoursLevel($formation, $doc, $willMulti);
@@ -504,6 +471,8 @@ final class FormationController extends AbstractController
             if ($formation->getEctsTotal() !== null) {
                 $parcours->setAttribute('ects', $formation->getEctsTotal());
             }
+            // la fiche du parcours unique devient celle du parcours créé
+            $this->parcoursTransfer->toNode($formation, $doc, $parcours);
             foreach ($bodyRoots as $r) {
                 $doc->moveNode($r, $parcours, PHP_INT_MAX);
             }
@@ -525,6 +494,9 @@ final class FormationController extends AbstractController
                 }
             }
         }
+
+        // la fiche du premier parcours devient celle du parcours unique
+        $this->parcoursTransfer->fromNode($formation, $doc, $parcours[0]);
 
         foreach ($parcours as $p) {
             foreach ($p->getChildren() as $child) { // snapshot : moveNode reconstruit children
@@ -553,21 +525,14 @@ final class FormationController extends AbstractController
         return $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);
     }
 
-    public const PARAM_SECTIONS = [
-        // generic : champs pilotés par le catalogue (FieldDef) ; sinon écran dédié
-        'organisation' => ['label' => 'Organisation et localisation', 'generic' => true],
-        'presentation' => ['label' => 'Présentation', 'generic' => true],
-        'structure' => ['label' => 'Configuration de la structure', 'generic' => false],
-    ];
-
     /** Écran intégré « Configuration de la structure » (cf. App\Formulaire\Builtin\StructureScreen). */
     #[Route('/formations/{id}/structure', name: 'formation_structure', methods: ['GET'])]
-    public function structure(Formation $formation, \App\Repository\DerogationRequestRepository $derogations): Response
+    public function structure(Formation $formation, \App\Repository\DerogationRequestRepository $derogations, \Symfony\Contracts\Translation\TranslatorInterface $translator): Response
     {
         return $this->render('formation/param/structure.html.twig', [
             'formation' => $formation,
             'key' => 'structure',
-            'label' => self::PARAM_SECTIONS['structure']['label'],
+            'label' => $translator->trans('formation.editor.structure_section_label', [], 'formation'),
             'data' => $formation->getParametre('structure'),
             'nodeCount' => \count($this->maquette->open($formation)->allNodes()),
             // le type de diplôme fige avec/sans parcours et la dimension temporelle (hors admin)

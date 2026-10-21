@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Maquette;
 
 use App\Entity\Formation;
+use App\Formulaire\FicheNavigation;
 
 /**
  * Export de la maquette d'une formation.
@@ -21,6 +22,7 @@ final class MaquetteExporter
         private readonly Maquette $maquette,
         private readonly MaquetteBuilder $builder,
         private readonly BccReferences $bccRefs,
+        private readonly FicheNavigation $fiches,
     ) {
     }
 
@@ -60,10 +62,12 @@ final class MaquetteExporter
                 'avecParcours' => $formation->isAvecParcours(),
                 'ectsTotal' => $formation->getEctsTotal(),
                 'progress' => $this->builder->progress($roots),
-                'parametres' => $this->maquette->open($formation)->parametres,
+                // sans les entrées masquées par le canevas de la version, chaque entrée réduite aux champs de son formulaire
+                'parametres' => $this->fiches->visibleParametres($formation, $this->maquette->open($formation)->parametres),
             ],
             'arbre' => array_map(fn (NodeView $v) => $this->view($v), $roots),
-            'bcc' => $this->bcc($formation),
+            // référentiel masqué par le canevas : absent de l'export
+            'bcc' => $this->fiches->bccShown($formation) ? $this->bcc($formation) : [],
         ];
     }
 

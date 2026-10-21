@@ -137,6 +137,8 @@ formation:
     bcc_section_label: Référentiel de compétences (BCC)
     ramification_section_label: Arborescence des parcours
     structure_section_label: Configuration de la structure
+    nav_group:
+      parcours: Parcours
     parcours_list_label: Parcours
     no_parcours: Aucun parcours. Ajoutez-en un ci-dessous.
     no_skeleton_note: >-
