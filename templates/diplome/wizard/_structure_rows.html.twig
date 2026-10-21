@@ -41,8 +41,13 @@
 {# Grille d'une ligne de niveau, partagée avec l'en-tête du tableau (structure.html.twig). #}
 {% macro levelGrid() %}grid grid-cols-[minmax(10rem,1.4fr)_repeat(3,minmax(11rem,1fr))_4.5rem_auto] items-center gap-3{% endmacro %}
 
-{# Bloc d'un niveau : sa ligne de bornes, puis ses éléments imposés (panneau repliable), cf. levels_controller.js #}
-{% macro level(f, imposedRows = []) %}
+{#
+ Bloc d'un niveau : sa ligne de bornes, puis les éléments imposés qui doivent exister DANS chacun de ses
+ nœuds (ils sont du type du niveau suivant). Le dernier niveau n'en a pas. Cf. levels_controller.js.
+ `child` : libellé du niveau suivant (null pour le dernier) ; `grandchild` : vrai si les éléments imposés
+ ont eux-mêmes des enfants (surcharge du nombre d'enfants proposée).
+#}
+{% macro level(f, imposedRows = [], child = null, grandchild = false) %}
     {% import _self as m %}
     {% set btn = 'inline-flex h-7 w-7 items-center justify-center rounded hover:bg-gray-100' %}
     <div data-level-block class="rounded-md border" style="border-color:var(--c-border)">
@@ -60,24 +65,25 @@
                 {{ form_errors(f.startAt) }}
             </div>
             <div class="flex shrink-0 items-center gap-0.5">
-                <button type="button" data-action="levels#toggleImposed" class="inline-flex h-7 items-center gap-1 rounded px-1.5 text-xs hover:bg-gray-100" title="{{ 'diplome.wizard.structure.imposed_toggle'|trans({}, 'diplome') }}">{{ ux_icon('ph:push-pin', {class: 'icon'}) }}<span data-imposed-count>{{ imposedRows|length }}</span></button>
+                <button type="button" data-action="levels#toggleImposed" data-imposed-toggle {{ child is null and imposedRows is empty ? 'hidden' }} class="inline-flex h-7 items-center gap-1 rounded px-1.5 text-xs hover:bg-gray-100" title="{{ 'diplome.wizard.structure.imposed_toggle'|trans({}, 'diplome') }}">{{ ux_icon('ph:push-pin', {class: 'icon'}) }}<span data-imposed-count>{{ imposedRows|length }}</span></button>
                 <button type="button" data-action="levels#up" class="{{ btn }}" title="{{ 'diplome.wizard.structure.up'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.wizard.structure.up'|trans({}, 'diplome') }}">{{ ux_icon('ph:arrow-up', {class: 'icon'}) }}</button>
                 <button type="button" data-action="levels#down" class="{{ btn }}" title="{{ 'diplome.wizard.structure.down'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.wizard.structure.down'|trans({}, 'diplome') }}">{{ ux_icon('ph:arrow-down', {class: 'icon'}) }}</button>
                 <button type="button" data-action="levels#removeLevel" class="{{ btn }}" style="color:#dc2626" title="{{ 'diplome.wizard.structure.remove'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.wizard.structure.remove'|trans({}, 'diplome') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
             </div>
         </div>
+        {# toujours rendu (masqué) : un déplacement peut donner un niveau suivant au dernier #}
         <div data-imposed-panel class="border-t px-3 py-2 space-y-2" style="border-color:var(--c-border);background:#f8f9fb" {{ imposedRows is empty ? 'hidden' }}>
-            <div class="text-[11px] font-medium uppercase tracking-wide" style="color:var(--c-muted)">{{ 'diplome.wizard.structure.imposed_in_level'|trans({}, 'diplome') }}</div>
+            <div class="text-[11px] font-medium uppercase tracking-wide" style="color:var(--c-muted)">{{ 'diplome.wizard.structure.imposed_in_level'|trans({}, 'diplome') }} <span data-imposed-child-label class="normal-case">{{ child }}</span></div>
             <div data-imposed-list class="space-y-2">
-                {% for r in imposedRows %}{{ m.imposed(r) }}{% endfor %}
+                {% for r in imposedRows %}{{ m.imposed(r, grandchild) }}{% endfor %}
             </div>
             <button type="button" data-action="levels#addImposed" class="inline-flex items-center gap-1 rounded-md border bg-white px-2.5 py-1 text-xs hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'diplome.wizard.structure.add_imposed'|trans({}, 'diplome') }}</button>
         </div>
     </div>
 {% endmacro %}
 
-{# Élément imposé : son type est celui du niveau qui le contient (champ caché, recopié par levels_controller.js) #}
-{% macro imposed(f) %}
+{# Élément imposé : son type est celui du niveau suivant celui qui le contient (champ caché, recopié par levels_controller.js) #}
+{% macro imposed(f, grandchild = true) %}
     {% import _self as m %}
     <div data-imposed-row class="rounded-md border bg-white px-3 py-2" style="border-color:var(--c-border)">
         {{ form_widget(f.uid) }}
@@ -88,7 +94,7 @@
                 {{ m.field(f.label) }}
                 {{ m.field(f.position) }}
                 {{ m.field(f.nature) }}
-                {{ m.bound(f.countOverride) }}
+                <div data-imposed-children {{ not grandchild ? 'hidden' }}>{{ m.bound(f.countOverride) }}</div>
                 <div class="col-span-2 md:col-span-4">
                     {{ form_label(f.locked, null, {label_attr: {class: 'text-[11px] font-medium uppercase tracking-wide', style: 'color:var(--c-muted)'}}) }}
                     <div class="mt-1 text-sm [&_input]:mr-1 [&_label]:mr-4 [&_label]:inline-flex">{{ form_widget(f.locked) }}</div>

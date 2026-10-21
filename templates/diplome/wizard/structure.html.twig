@@ -48,14 +48,19 @@
             <span title="{{ 'diplome.wizard.structure.level_start_at'|trans({}, 'diplome') }}">{{ 'diplome.wizard.structure.level_start_at_short'|trans({}, 'diplome') }}</span>
             <span title="{{ 'diplome.wizard.structure.imposed_toggle'|trans({}, 'diplome') }}">{{ ux_icon('ph:push-pin', {class: 'icon'}) }}</span>
         </div>
-        {% set levelTypes = form.levels|map(l => l.typeKey.vars.value) %}
+        {# chaque niveau affiche les éléments imposés du niveau suivant : ils doivent exister dans chacun de ses nœuds #}
+        {% set levelViews = form.levels.children|filter(l => true)|merge([]) %}
+        {% set levelTypes = levelViews|map(l => l.typeKey.vars.value) %}
         <div data-levels-target="list" class="space-y-2">
-            {% for lv in form.levels %}
-                {{ rows.level(lv, form.imposed|filter(r => r.typeKey.vars.value == lv.typeKey.vars.value)) }}
+            {% for lv in levelViews %}
+                {% set next = levelViews[loop.index] ?? null %}
+                {% set childLabel = null %}
+                {% if next %}{% for c in next.typeKey.vars.choices %}{% if c.value == next.typeKey.vars.value %}{% set childLabel = c.label %}{% endif %}{% endfor %}{% endif %}
+                {{ rows.level(lv, next ? form.imposed.children|filter(r => r.typeKey.vars.value == next.typeKey.vars.value) : [], childLabel, (levelViews[loop.index + 1] ?? null) is not null) }}
             {% endfor %}
         </div>
-        {# éléments imposés dont le type n'est plus dans la chaîne : à rattacher ou retirer #}
-        {% set orphans = form.imposed|filter(r => r.typeKey.vars.value not in levelTypes) %}
+        {# éléments imposés dont le type n'a pas de niveau parent dans la chaîne : à rattacher ou retirer #}
+        {% set orphans = form.imposed.children|filter(r => r.typeKey.vars.value not in levelTypes|slice(1)) %}
         {% if orphans is not empty %}
             <div data-level-block class="mt-3 rounded-md border p-3 space-y-2" style="border-color:#fcd34d;background:#fffbeb">
                 <div class="text-xs" style="color:#92400e">{{ 'diplome.wizard.structure.imposed_orphans'|trans({}, 'diplome') }}</div>

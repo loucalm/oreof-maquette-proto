@@ -1,9 +1,10 @@
 import { Controller } from '@hotwired/stimulus';
 
 /**
- * Niveaux de la chaîne (étape Structure) : chaque niveau est un bloc qui porte ses éléments
- * imposés. Les blocs se déplacent dans la page et leur rang est recopié dans le champ
- * `position` ; un élément imposé prend le type du niveau qui le contient.
+ * Niveaux de la chaîne (étape Structure) : chaque niveau est un bloc qui porte les éléments
+ * imposés devant exister dans chacun de ses nœuds ; ils sont du type du niveau SUIVANT, et le
+ * dernier niveau n'en a pas. Les blocs se déplacent dans la page et leur rang est recopié dans
+ * le champ `position`.
  */
 export default class extends Controller {
     static targets = ['list'];
@@ -50,33 +51,35 @@ export default class extends Controller {
         list.insertAdjacentHTML('beforeend', this.imposedPrototypeValue.replaceAll('__name__', String(this.imposedIndexValue)));
         this.imposedIndexValue += 1;
         block.querySelector('[data-imposed-panel]').hidden = false;
-        this.syncBlock(block);
+        this.renumber();
     }
 
     removeImposed(event) {
-        const block = this.block(event);
         event.currentTarget.closest('[data-imposed-row]')?.remove();
-        if (block) this.syncBlock(block);
+        this.renumber();
     }
 
-    /** Le type d'un niveau change : ses éléments imposés le suivent. */
-    syncType(event) {
-        const block = this.block(event);
-        if (block) this.syncBlock(block);
-    }
-
-    syncBlock(block) {
-        const type = block.querySelector('[data-level-type]')?.value ?? '';
-        block.querySelectorAll('[data-imposed-type]').forEach((input) => { input.value = type; });
-        const count = block.querySelectorAll('[data-imposed-row]').length;
-        block.querySelectorAll('[data-imposed-count]').forEach((el) => { el.textContent = String(count); });
+    /** Le type d'un niveau change : les éléments imposés du niveau précédent le suivent. */
+    syncType() {
+        this.renumber();
     }
 
     renumber() {
-        this.listTarget.querySelectorAll(':scope > [data-level-block]').forEach((block, index) => {
+        const blocks = [...this.listTarget.querySelectorAll(':scope > [data-level-block]')];
+        blocks.forEach((block, index) => {
             const position = block.querySelector('[data-levels-target="position"]');
             if (position) position.value = String(index);
-            this.syncBlock(block);
+
+            const next = blocks[index + 1]?.querySelector('[data-level-type]');
+            const rows = block.querySelectorAll('[data-imposed-row]');
+            block.querySelectorAll('[data-imposed-type]').forEach((input) => { input.value = next?.value ?? ''; });
+            block.querySelectorAll('[data-imposed-child-label]').forEach((el) => { el.textContent = next?.selectedOptions[0]?.textContent ?? ''; });
+            block.querySelectorAll('[data-imposed-children]').forEach((el) => { el.hidden = !blocks[index + 2]; });
+            block.querySelectorAll('[data-imposed-count]').forEach((el) => { el.textContent = String(rows.length); });
+            const toggle = block.querySelector('[data-imposed-toggle]');
+            if (toggle) toggle.hidden = !next && rows.length === 0;
+            const panel = block.querySelector('[data-imposed-panel]');
+            if (panel && !next && rows.length === 0) panel.hidden = true;
         });
     }
 

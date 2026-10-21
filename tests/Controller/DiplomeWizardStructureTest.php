@@ -287,9 +287,14 @@ final class DiplomeWizardStructureTest extends WebTestCase
         $blocks->each(static function ($b) use (&$byType): void {
             $byType[$b->filter('[data-level-type] option[selected]')->attr('value')] = $b->filter('[data-imposed-row]')->count();
         });
-        self::assertSame(1, $byType['ec']);
-        self::assertSame(0, $byType['ue']);
+        // l'EC imposé « Stage » est rangé sous son niveau parent (UE) ; la feuille n'a pas d'éléments imposés
+        self::assertSame(1, $byType['ue']);
+        self::assertSame(0, $byType['ec']);
         self::assertSame('ec', $crawler->filter('[data-imposed-row] [data-imposed-type]')->attr('value'));
+        $leaf = $crawler->filter('[data-levels-target="list"] > [data-level-block]')->last();
+        self::assertNotNull($leaf->filter('[data-imposed-toggle]')->attr('hidden'));
+        // un EC imposé est une feuille : pas de surcharge du nombre de ses enfants
+        self::assertCount(0, $crawler->filter('[data-imposed-row] [data-imposed-children]:not([hidden])'));
     }
 
     public function testButDeclaresItsImposedNature(): void
