@@ -38,34 +38,39 @@
                 <td class="px-4 py-2.5" style="color:var(--c-muted)" data-col="bcc">{{ row.bcc ?? '—' }}</td>
                 <td class="px-4 py-2.5" data-col="formations">{{ row.formations }}</td>
                 <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ row.version ?? '—' }}</td>
-                <td class="px-4 py-2.5 text-right whitespace-nowrap">
+                <td class="px-4 py-2.5 whitespace-nowrap">
+                    <div class="flex items-center justify-end gap-0.5">
                     {% if row.versionId %}
-                        <a href="{{ path('diplome_edit', {id: t.id, versionId: row.versionId, step: row.editStep}) }}" class="text-xs hover:underline mr-2" data-action="edit">{{ 'diplome.index.edit'|trans({}, 'diplome') }}</a>
-                        <form method="post" action="{{ path('diplome_version_new', {id: t.id}) }}" class="inline mr-2">
+                        <a href="{{ path('diplome_edit', {id: t.id, versionId: row.versionId, step: row.editStep}) }}" data-action="edit" class="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100" title="{{ 'diplome.index.edit'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.index.edit'|trans({}, 'diplome') }}">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }}</a>
+                        <form method="post" action="{{ path('diplome_version_new', {id: t.id}) }}">
                             {% include 'diplome/_csrf.html.twig' %}
-                            <button class="text-xs hover:underline" data-action="new-version">{{ 'diplome.index.new_version'|trans({}, 'diplome') }}</button>
+                            <button data-action="new-version" class="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100" title="{{ 'diplome.index.new_version'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.index.new_version'|trans({}, 'diplome') }}">{{ ux_icon('ph:calendar-plus', {class: 'icon'}) }}</button>
                         </form>
-                        <a href="{{ path('diplome_wizard_start', {depuis: row.versionId}) }}" class="text-xs hover:underline mr-2" data-action="duplicate">{{ 'diplome.index.duplicate'|trans({}, 'diplome') }}</a>
+                        <a href="{{ path('diplome_wizard_start', {depuis: row.versionId}) }}" data-action="duplicate" class="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100" title="{{ 'diplome.index.duplicate'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.index.duplicate'|trans({}, 'diplome') }}">{{ ux_icon('ph:copy', {class: 'icon'}) }}</a>
                     {% endif %}
                     {% if t.archived %}
-                        <form method="post" action="{{ path('diplome_unarchive', {id: t.id}) }}" class="inline">
+                        <form method="post" action="{{ path('diplome_unarchive', {id: t.id}) }}">
                             {% include 'diplome/_csrf.html.twig' %}
-                            <button class="text-xs hover:underline">{{ 'diplome.index.unarchive'|trans({}, 'diplome') }}</button>
+                            <button class="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100" title="{{ 'diplome.index.unarchive'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.index.unarchive'|trans({}, 'diplome') }}">{{ ux_icon('ph:box-arrow-up', {class: 'icon'}) }}</button>
                         </form>
                     {% else %}
-                        <form method="post" action="{{ path('diplome_archive', {id: t.id}) }}" class="inline"
+                        <form method="post" action="{{ path('diplome_archive', {id: t.id}) }}"
                               data-controller="confirm" data-confirm-message-value="{{ 'diplome.index.archive_confirm'|trans({'%label%': t.label}, 'diplome') }}">
                             {% include 'diplome/_csrf.html.twig' %}
-                            <button class="text-xs hover:underline">{{ 'diplome.index.archive'|trans({}, 'diplome') }}</button>
+                            <button class="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100" title="{{ 'diplome.index.archive'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.index.archive'|trans({}, 'diplome') }}">{{ ux_icon('ph:archive-box', {class: 'icon'}) }}</button>
                         </form>
                     {% endif %}
                     {% if row.formations == 0 %}
-                        <form method="post" action="{{ path('diplome_delete', {id: t.id}) }}" class="inline"
+                        <form method="post" action="{{ path('diplome_delete', {id: t.id}) }}"
                               data-controller="confirm" data-confirm-message-value="{{ 'diplome.index.delete_confirm'|trans({'%label%': t.label}, 'diplome') }}">
                             {% include 'diplome/_csrf.html.twig' %}
-                            <button class="text-xs text-red-600 hover:underline ml-2">{{ 'diplome.index.delete'|trans({}, 'diplome') }}</button>
+                            <button class="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100" style="color:#dc2626" title="{{ 'diplome.index.delete'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.index.delete'|trans({}, 'diplome') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
                         </form>
+                    {% else %}
+                        {# emplacement vide : les icônes restent alignées d'une ligne à l'autre #}
+                        <span class="inline-block h-8 w-8" aria-hidden="true"></span>
                     {% endif %}
+                    </div>
                 </td>
             </tr>
         {% else %}
