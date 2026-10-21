@@ -1,10 +1,10 @@
 import { Controller } from '@hotwired/stimulus';
 
 /**
- * Niveaux de la chaîne (étape Structure) : chaque niveau est un bloc qui porte les éléments
- * imposés devant exister dans chacun de ses nœuds ; ils sont du type du niveau SUIVANT, et le
- * dernier niveau n'en a pas. Les blocs se déplacent dans la page et leur rang est recopié dans
- * le champ `position`.
+ * Niveaux de la chaîne (étape Structure). La punaise d'un niveau le rend imposé : des nœuds de ce
+ * type doivent exister dans chaque nœud du niveau parent ; ils se règlent dans le panneau sous la
+ * ligne. Le premier niveau, sans parent, ne peut pas être imposé. Les blocs se déplacent dans la
+ * page et leur rang est recopié dans le champ `position`.
  */
 export default class extends Controller {
     static targets = ['list'];
@@ -39,9 +39,16 @@ export default class extends Controller {
         this.renumber();
     }
 
-    toggleImposed(event) {
-        const panel = this.block(event)?.querySelector('[data-imposed-panel]');
-        if (panel) panel.hidden = !panel.hidden;
+    /** Punaise : sans élément imposé, en crée un ; sinon replie ou déplie leur réglage. */
+    pin(event) {
+        const block = this.block(event);
+        if (!block) return;
+        if (block.querySelectorAll('[data-imposed-row]').length === 0) {
+            this.addImposed(event);
+            return;
+        }
+        const panel = block.querySelector('[data-imposed-panel]');
+        panel.hidden = !panel.hidden;
     }
 
     addImposed(event) {
@@ -70,16 +77,20 @@ export default class extends Controller {
             const position = block.querySelector('[data-levels-target="position"]');
             if (position) position.value = String(index);
 
-            const next = blocks[index + 1]?.querySelector('[data-level-type]');
+            const type = block.querySelector('[data-level-type]');
+            const parent = blocks[index - 1]?.querySelector('[data-level-type]');
             const rows = block.querySelectorAll('[data-imposed-row]');
-            block.querySelectorAll('[data-imposed-type]').forEach((input) => { input.value = next?.value ?? ''; });
-            block.querySelectorAll('[data-imposed-child-label]').forEach((el) => { el.textContent = next?.selectedOptions[0]?.textContent ?? ''; });
-            block.querySelectorAll('[data-imposed-children]').forEach((el) => { el.hidden = !blocks[index + 2]; });
-            block.querySelectorAll('[data-imposed-count]').forEach((el) => { el.textContent = String(rows.length); });
+            block.querySelectorAll('[data-imposed-type]').forEach((input) => { input.value = type?.value ?? ''; });
+            block.querySelectorAll('[data-imposed-parent-label]').forEach((el) => { el.textContent = parent?.selectedOptions[0]?.textContent ?? '—'; });
+            block.querySelectorAll('[data-imposed-children]').forEach((el) => { el.hidden = !blocks[index + 1]; });
+
             const toggle = block.querySelector('[data-imposed-toggle]');
-            if (toggle) toggle.hidden = !next && rows.length === 0;
+            if (toggle) toggle.disabled = !parent && rows.length === 0;
+            block.querySelectorAll('[data-pin-on]').forEach((el) => { el.hidden = rows.length === 0; });
+            block.querySelectorAll('[data-pin-off]').forEach((el) => { el.hidden = rows.length > 0; });
+            block.querySelectorAll('[data-imposed-count]').forEach((el) => { el.textContent = String(rows.length); el.hidden = rows.length < 2; });
             const panel = block.querySelector('[data-imposed-panel]');
-            if (panel && !next && rows.length === 0) panel.hidden = true;
+            if (panel && rows.length === 0) panel.hidden = true;
         });
     }
 

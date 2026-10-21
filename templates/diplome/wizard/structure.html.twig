@@ -46,17 +46,17 @@
             <span>{{ 'diplome.wizard.structure.level_ects'|trans({}, 'diplome') }}</span>
             <span>{{ 'diplome.wizard.structure.level_ects_sum'|trans({}, 'diplome') }}</span>
             <span title="{{ 'diplome.wizard.structure.level_start_at'|trans({}, 'diplome') }}">{{ 'diplome.wizard.structure.level_start_at_short'|trans({}, 'diplome') }}</span>
-            <span title="{{ 'diplome.wizard.structure.imposed_toggle'|trans({}, 'diplome') }}">{{ ux_icon('ph:push-pin', {class: 'icon'}) }}</span>
+            <span title="{{ 'diplome.wizard.structure.imposed_pin'|trans({}, 'diplome') }}">{{ ux_icon('ph:push-pin', {class: 'icon'}) }}</span>
         </div>
-        {# chaque niveau affiche les éléments imposés du niveau suivant : ils doivent exister dans chacun de ses nœuds #}
+        {# la punaise d'un niveau rend ce niveau imposé : ses éléments imposés sont sous sa ligne #}
         {% set levelViews = form.levels.children|filter(l => true)|merge([]) %}
         {% set levelTypes = levelViews|map(l => l.typeKey.vars.value) %}
         <div data-levels-target="list" class="space-y-2">
             {% for lv in levelViews %}
-                {% set next = levelViews[loop.index] ?? null %}
-                {% set childLabel = null %}
-                {% if next %}{% for c in next.typeKey.vars.choices %}{% if c.value == next.typeKey.vars.value %}{% set childLabel = c.label %}{% endif %}{% endfor %}{% endif %}
-                {{ rows.level(lv, next ? form.imposed.children|filter(r => r.typeKey.vars.value == next.typeKey.vars.value) : [], childLabel, (levelViews[loop.index + 1] ?? null) is not null) }}
+                {% set prev = loop.index0 > 0 ? levelViews[loop.index0 - 1] : null %}
+                {% set parentLabel = null %}
+                {% if prev %}{% for c in prev.typeKey.vars.choices %}{% if c.value == prev.typeKey.vars.value %}{% set parentLabel = c.label %}{% endif %}{% endfor %}{% endif %}
+                {{ rows.level(lv, form.imposed.children|filter(r => r.typeKey.vars.value == lv.typeKey.vars.value), parentLabel, (levelViews[loop.index] ?? null) is not null) }}
             {% endfor %}
         </div>
         {# éléments imposés dont le type n'a pas de niveau parent dans la chaîne : à rattacher ou retirer #}

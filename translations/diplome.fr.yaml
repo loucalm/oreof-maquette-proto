@@ -108,8 +108,8 @@ diplome:
       level_start_at_short: N° départ
       level_section_help: Du premier niveau à la feuille. Les bornes s'appliquent dans chaque parent (« 3 à 6 UE » = dans chaque semestre).
       imposed_section_help: Nœuds qui doivent exister, placés d'office et verrouillés.
-      imposed_toggle: Éléments imposés dans chaque nœud de ce niveau (placés d'office et verrouillés)
-      imposed_in_level: "Doivent exister dans chaque nœud de ce niveau :"
+      imposed_pin: Imposer ce niveau (des nœuds de ce type doivent exister, placés d'office et verrouillés)
+      imposed_in_parent: "Imposé — doit exister dans chaque"
       imposed_orphans: Ces éléments imposés n'ont pas de niveau parent dans la chaîne (premier niveau ou type absent). Retirez-les ou ajoutez le niveau correspondant.
       rule_section_help: Contraintes supplémentaires, contrôlées en direct dans les formations.
       natures: Natures d'élément
@@ -131,7 +131,7 @@ diplome:
       rule_param_missing: 'Une règle : le paramètre « %param% » est obligatoire.'
       bound_invalid: 'Borne invalide : indiquez un nombre positif (et, pour « entre », un maximum au moins égal au minimum).'
       add_level: Ajouter un niveau
-      add_imposed: Imposer un élément
+      add_imposed: Imposer un autre élément de ce niveau
       add_rule: Ajouter une règle
       remove: Retirer
       up: Monter
