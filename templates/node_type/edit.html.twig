@@ -389,10 +389,16 @@
                                             {% if f.required %}<span class="pill ml-1" style="background:#fee2e2;color:#dc2626">{{ 'node_type.edit.field_required_badge'|trans({}, 'node_type') }}</span>{% endif %}
                                             {{ ui.origins(f, nodeType.parent is not null) }}
                                         </span>
-                                        <form method="post" action="{{ path('node_type_field_visibility', {id: nodeType.id, fieldId: f.id}) }}" class="shrink-0">
+                                        <span class="ml-auto flex shrink-0 items-center gap-1">
+                                        <form method="post" action="{{ path('node_type_field_visibility', {id: nodeType.id, fieldId: f.id}) }}">
                                             <input type="hidden" name="visible" value="1">
                                             <button class="inline-flex h-7 w-7 items-center justify-center rounded hover:bg-gray-200" title="{{ 'node_type.edit.show_field'|trans({}, 'node_type') }}" aria-label="{{ 'node_type.edit.show_field'|trans({}, 'node_type') }}">{{ ux_icon('ph:eye-slash', {class: 'icon'}) }}</button>
                                         </form>
+                                            <form method="post" action="{{ path('node_type_field_remove', {id: nodeType.id, fieldId: f.id}) }}"
+                                                  data-controller="confirm" data-confirm-message-value="{{ 'node_type.edit.remove_field_confirm'|trans({'%label%': f.label}, 'node_type') }}">
+                                                <button class="inline-flex h-7 w-7 items-center justify-center rounded hover:bg-gray-200" style="color:#dc2626" title="{{ 'common.remove'|trans({}, 'common') }}" aria-label="{{ 'common.remove'|trans({}, 'common') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
+                                            </form>
+                                        </span>
                                     </div>
                                 {% else %}
                                     {% set togglableDefault = not nodeType.isCapabilityLocked(f.key) %}
