@@ -82,7 +82,11 @@ final class StructureType extends AbstractType
     private function validateConsistency(array $data, ExecutionContextInterface $context): void
     {
         $natures = $data['natures'] ?? [];
-        $chain = array_values(array_filter(array_map(static fn ($l) => $l['typeKey'] ?? null, $data['levels'] ?? [])));
+        // la chaîne dans l'ordre des rangs soumis (cf. StructureStep::apply())
+        $levels = array_values($data['levels'] ?? []);
+        $order = array_keys($levels);
+        usort($order, static fn (int $a, int $b) => [(int) ($levels[$a]['position'] ?? $a), $a] <=> [(int) ($levels[$b]['position'] ?? $b), $b]);
+        $chain = array_values(array_filter(array_map(static fn (int $i) => $levels[$i]['typeKey'] ?? null, $order)));
         $add = static fn (string $id, array $params = []) => $context->buildViolation($id, $params)->setTranslationDomain('diplome')->addViolation();
 
         if (\count($chain) !== \count(array_unique($chain))) {

@@ -51,9 +51,10 @@ final class StructureStep extends AbstractWizardStep
             'duration' => $s->duration,
             'parcoursAllowed' => $s->parcoursAllowed,
             'natures' => $s->natures,
-            'levels' => array_map(static fn (LevelSpec $l) => [
+            'levels' => array_map(static fn (LevelSpec $l, int $i) => [
+                'position' => (string) $i,
                 'typeKey' => $l->typeKey, 'count' => $l->count, 'ects' => $l->ects, 'ectsSum' => $l->ectsSum, 'startAt' => $l->startAt,
-            ], $s->levels),
+            ], $s->levels, array_keys($s->levels)),
             'imposed' => array_map(static fn (ImposedElement $i) => [
                 'uid' => $i->uid, 'typeKey' => $i->typeKey, 'label' => $i->label, 'position' => $i->position,
                 'nature' => $i->nature, 'locked' => $i->locked, 'countOverride' => $i->countOverride,
@@ -67,10 +68,14 @@ final class StructureStep extends AbstractWizardStep
 
     public function apply(WizardDraft $draft, mixed $formData): void
     {
-        $levels = array_values(array_map(
-            static fn (array $l) => new LevelSpec((string) $l['typeKey'], $l['count'], $l['ects'], $l['ectsSum'], max(1, (int) ($l['startAt'] ?? 1))),
-            $formData['levels'] ?? [],
-        ));
+        // ordre de la chaîne : le rang soumis, à rang égal l'ordre des lignes
+        $rows = array_values($formData['levels'] ?? []);
+        $order = array_keys($rows);
+        usort($order, static fn (int $a, int $b) => [(int) ($rows[$a]['position'] ?? $a), $a] <=> [(int) ($rows[$b]['position'] ?? $b), $b]);
+        $levels = array_map(
+            static fn (int $i) => new LevelSpec((string) $rows[$i]['typeKey'], $rows[$i]['count'], $rows[$i]['ects'], $rows[$i]['ectsSum'], max(1, (int) ($rows[$i]['startAt'] ?? 1))),
+            $order,
+        );
         $chain = array_map(static fn (LevelSpec $l) => $l->typeKey, $levels);
 
         $imposed = [];

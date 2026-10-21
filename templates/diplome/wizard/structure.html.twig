@@ -24,40 +24,61 @@
         {{ rows.field(form.natures) }}
     </fieldset>
 
-    {% set sections = [
-        {field: form.levels, add: 'add_level', macro: 'level'},
-        {field: form.imposed, add: 'add_imposed', macro: 'imposed'},
-        {field: form.rules, add: 'add_rule', macro: 'rule'},
-    ] %}
-    {% for s in sections %}
-        {% set proto = s.macro == 'level' ? rows.level(s.field.vars.prototype) : (s.macro == 'imposed' ? rows.imposed(s.field.vars.prototype) : rows.rule(s.field.vars.prototype)) %}
-        <section class="{{ card }}" style="border-color:var(--c-border)" data-controller="collection" data-collection-prototype-value="{{ proto|e('html_attr') }}" data-collection-index-value="{{ s.field|keys|reduce((max, k) => k >= max ? k + 1 : max, 0) }}" data-section="{{ s.macro }}">
-            <div class="mb-3 flex items-start justify-between gap-3">
-                <div>
-                    <h3 class="text-sm font-semibold">{{ form_label(s.field) }}</h3>
-                    <p class="text-xs" style="color:var(--c-muted)">{{ ('diplome.wizard.structure.' ~ s.macro ~ '_section_help')|trans({}, 'diplome') }}</p>
-                </div>
-                <button type="button" data-action="collection#add" class="inline-flex shrink-0 items-center gap-1 rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ ('diplome.wizard.structure.' ~ s.add)|trans({}, 'diplome') }}</button>
+    {# Niveaux de la chaîne, chacun avec ses éléments imposés #}
+    {% set imposedIndex = form.imposed|keys|reduce((max, k) => k >= max ? k + 1 : max, 0) %}
+    <section class="{{ card }}" style="border-color:var(--c-border)" data-section="level" data-controller="levels"
+             data-levels-level-prototype-value="{{ rows.level(form.levels.vars.prototype)|e('html_attr') }}"
+             data-levels-level-index-value="{{ form.levels|keys|reduce((max, k) => k >= max ? k + 1 : max, 0) }}"
+             data-levels-imposed-prototype-value="{{ rows.imposed(form.imposed.vars.prototype)|e('html_attr') }}"
+             data-levels-imposed-index-value="{{ imposedIndex }}">
+        <div class="mb-3 flex items-start justify-between gap-3">
+            <div>
+                <h3 class="text-sm font-semibold">{{ form_label(form.levels) }}</h3>
+                <p class="text-xs" style="color:var(--c-muted)">{{ 'diplome.wizard.structure.level_section_help'|trans({}, 'diplome') }}</p>
             </div>
-            {{ form_errors(s.field) }}
-            {% if s.macro == 'level' %}
-                {# en-tête des colonnes, alignée sur les lignes (rows.levelGrid) #}
-                <div class="{{ rows.levelGrid() }} px-3 pb-1 text-[11px] font-medium uppercase tracking-wide" style="color:var(--c-muted)">
-                    <span>{{ 'diplome.wizard.structure.level_type'|trans({}, 'diplome') }}</span>
-                    <span>{{ 'diplome.wizard.structure.level_count'|trans({}, 'diplome') }}</span>
-                    <span>{{ 'diplome.wizard.structure.level_ects'|trans({}, 'diplome') }}</span>
-                    <span>{{ 'diplome.wizard.structure.level_ects_sum'|trans({}, 'diplome') }}</span>
-                    <span title="{{ 'diplome.wizard.structure.level_start_at'|trans({}, 'diplome') }}">{{ 'diplome.wizard.structure.level_start_at_short'|trans({}, 'diplome') }}</span>
-                    <span class="w-[5.5rem]"></span>
-                </div>
-            {% endif %}
-            <div data-collection-target="list" class="space-y-2">
-                {% for row in s.field %}
-                    {% if s.macro == 'level' %}{{ rows.level(row) }}{% elseif s.macro == 'imposed' %}{{ rows.imposed(row) }}{% else %}{{ rows.rule(row) }}{% endif %}
-                {% endfor %}
+            <button type="button" data-action="levels#addLevel" class="inline-flex shrink-0 items-center gap-1 rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'diplome.wizard.structure.add_level'|trans({}, 'diplome') }}</button>
+        </div>
+        {{ form_errors(form.levels) }}
+        {{ form_errors(form.imposed) }}
+        <div class="{{ rows.levelGrid() }} px-3 pb-1 text-[11px] font-medium uppercase tracking-wide" style="color:var(--c-muted)">
+            <span>{{ 'diplome.wizard.structure.level_type'|trans({}, 'diplome') }}</span>
+            <span>{{ 'diplome.wizard.structure.level_count'|trans({}, 'diplome') }}</span>
+            <span>{{ 'diplome.wizard.structure.level_ects'|trans({}, 'diplome') }}</span>
+            <span>{{ 'diplome.wizard.structure.level_ects_sum'|trans({}, 'diplome') }}</span>
+            <span title="{{ 'diplome.wizard.structure.level_start_at'|trans({}, 'diplome') }}">{{ 'diplome.wizard.structure.level_start_at_short'|trans({}, 'diplome') }}</span>
+            <span title="{{ 'diplome.wizard.structure.imposed_toggle'|trans({}, 'diplome') }}">{{ ux_icon('ph:push-pin', {class: 'icon'}) }}</span>
+        </div>
+        {% set levelTypes = form.levels|map(l => l.typeKey.vars.value) %}
+        <div data-levels-target="list" class="space-y-2">
+            {% for lv in form.levels %}
+                {{ rows.level(lv, form.imposed|filter(r => r.typeKey.vars.value == lv.typeKey.vars.value)) }}
+            {% endfor %}
+        </div>
+        {# éléments imposés dont le type n'est plus dans la chaîne : à rattacher ou retirer #}
+        {% set orphans = form.imposed|filter(r => r.typeKey.vars.value not in levelTypes) %}
+        {% if orphans is not empty %}
+            <div data-level-block class="mt-3 rounded-md border p-3 space-y-2" style="border-color:#fcd34d;background:#fffbeb">
+                <div class="text-xs" style="color:#92400e">{{ 'diplome.wizard.structure.imposed_orphans'|trans({}, 'diplome') }}</div>
+                <div data-imposed-list class="space-y-2">{% for r in orphans %}{{ rows.imposed(r) }}{% endfor %}</div>
             </div>
-        </section>
-    {% endfor %}
+        {% endif %}
+        {% do form.imposed.setRendered %}
+    </section>
+
+    {% set proto = rows.rule(form.rules.vars.prototype) %}
+    <section class="{{ card }}" style="border-color:var(--c-border)" data-controller="collection" data-collection-prototype-value="{{ proto|e('html_attr') }}" data-collection-index-value="{{ form.rules|keys|reduce((max, k) => k >= max ? k + 1 : max, 0) }}" data-section="rule">
+        <div class="mb-3 flex items-start justify-between gap-3">
+            <div>
+                <h3 class="text-sm font-semibold">{{ form_label(form.rules) }}</h3>
+                <p class="text-xs" style="color:var(--c-muted)">{{ 'diplome.wizard.structure.rule_section_help'|trans({}, 'diplome') }}</p>
+            </div>
+            <button type="button" data-action="collection#add" class="inline-flex shrink-0 items-center gap-1 rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'diplome.wizard.structure.add_rule'|trans({}, 'diplome') }}</button>
+        </div>
+        {{ form_errors(form.rules) }}
+        <div data-collection-target="list" class="space-y-2">
+            {% for row in form.rules %}{{ rows.rule(row) }}{% endfor %}
+        </div>
+    </section>
     {{ form_rest(form) }}
 {{ form_end(form, {render_rest: false}) }}
 

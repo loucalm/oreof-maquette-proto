@@ -263,6 +263,35 @@ final class DiplomeWizardStructureTest extends WebTestCase
         self::assertResponseStatusCodeSame(422);
     }
 
+    public function testLevelsAreOrderedByTheirPosition(): void
+    {
+        $payload = self::payload($this->startFrom('L'));
+        // UE et semestre échangés par leur rang (déplacement des blocs dans la page)
+        foreach ([0, 2, 1, 3] as $i => $position) {
+            $payload['levels'][$i]['position'] = (string) $position;
+        }
+        $payload['imposed'] = [];
+        $this->submit($payload);
+
+        self::assertResponseRedirects();
+        self::assertSame(['annee', 'ue', 'semestre', 'ec'], array_column($this->storedStructure()['levels'], 'typeKey'));
+    }
+
+    public function testImposedElementsAreShownInsideTheirLevel(): void
+    {
+        $this->startFrom('BUT');
+        $crawler = $this->client->request('GET', '/diplomes/nouveau/structure');
+
+        $blocks = $crawler->filter('[data-levels-target="list"] > [data-level-block]');
+        $byType = [];
+        $blocks->each(static function ($b) use (&$byType): void {
+            $byType[$b->filter('[data-level-type] option[selected]')->attr('value')] = $b->filter('[data-imposed-row]')->count();
+        });
+        self::assertSame(1, $byType['ec']);
+        self::assertSame(0, $byType['ue']);
+        self::assertSame('ec', $crawler->filter('[data-imposed-row] [data-imposed-type]')->attr('value'));
+    }
+
     public function testButDeclaresItsImposedNature(): void
     {
         $structure = $this->startFrom('BUT');

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Form\Diplome;
 
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -16,6 +17,8 @@ final class LevelSpecType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
+            // rang du niveau dans la chaîne (les blocs se déplacent dans la page, cf. levels_controller.js)
+            ->add('position', HiddenType::class, ['attr' => ['data-levels-target' => 'position']])
             ->add('typeKey', StructuralTypeKeyType::class, ['label' => 'diplome.wizard.structure.level_type', 'constraints' => [new Assert\NotBlank()]])
             ->add('count', BoundType::class, ['label' => 'diplome.wizard.structure.level_count'])
             ->add('ects', BoundType::class, ['label' => 'diplome.wizard.structure.level_ects'])

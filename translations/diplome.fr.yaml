@@ -108,6 +108,9 @@ diplome:
       level_start_at_short: N° départ
       level_section_help: Du premier niveau à la feuille. Les bornes s'appliquent dans chaque parent (« 3 à 6 UE » = dans chaque semestre).
       imposed_section_help: Nœuds qui doivent exister, placés d'office et verrouillés.
+      imposed_toggle: Éléments imposés de ce niveau (nœuds qui doivent exister, placés d'office et verrouillés)
+      imposed_in_level: Éléments imposés à ce niveau
+      imposed_orphans: Ces éléments imposés désignent un type absent de la chaîne. Retirez-les ou ajoutez le niveau correspondant.
       rule_section_help: Contraintes supplémentaires, contrôlées en direct dans les formations.
       natures: Natures d'élément
       natures_help: "Sortes d'éléments du dernier niveau (ex. ec, stage, ressource, sae), séparées par des virgules. Chaque élément en reçoit une ; elle fixe les MCCC autorisées (onglet MCCC) et sert aux règles (ex. SAÉ ≥ 40 %)."
@@ -128,7 +131,7 @@ diplome:
       rule_param_missing: 'Une règle : le paramètre « %param% » est obligatoire.'
       bound_invalid: 'Borne invalide : indiquez un nombre positif (et, pour « entre », un maximum au moins égal au minimum).'
       add_level: Ajouter un niveau
-      add_imposed: Ajouter un élément imposé
+      add_imposed: Imposer un élément à ce niveau
       add_rule: Ajouter une règle
       remove: Retirer
       up: Monter
