@@ -1,13 +1,94 @@
 {% extends wizard_layout|default('diplome/wizard/_layout.html.twig') %}
+
+{# Une ligne du canevas : une entrée de fiche, formulaire de la bibliothèque ou écran intégré. #}
+{% macro row(r, fiche, builtins, formLabels) %}
+    {% set builtin = r.builtin.vars.value %}
+    {% set screen = builtin ? builtins[fiche][builtin]|default({}) : {} %}
+    {% set defaultLabel = builtin ? screen.label|default('') : formLabels[r.form.vars.value]|default('') %}
+    <div data-canvas-row data-entry="{{ r.key.vars.value }}" class="rounded-md border p-3 flex gap-3 items-center {{ r.hidden.vars.checked ? 'opacity-60' : '' }}" style="border-color:var(--c-border)">
+        {{ form_widget(r.key) }}
+        {{ form_widget(r.builtin) }}
+        {{ form_widget(r.position) }}
+        <div class="flex gap-1 shrink-0 text-xs">
+            <button type="button" data-action="canvas#up" class="rounded border px-2 py-1 hover:bg-gray-50" style="border-color:var(--c-border)" title="{{ 'diplome.wizard.formulaires.up'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.wizard.formulaires.up'|trans({}, 'diplome') }}">↑</button>
+            <button type="button" data-action="canvas#down" class="rounded border px-2 py-1 hover:bg-gray-50" style="border-color:var(--c-border)" title="{{ 'diplome.wizard.formulaires.down'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.wizard.formulaires.down'|trans({}, 'diplome') }}">↓</button>
+        </div>
+        <div class="flex-1 min-w-0">
+            {{ form_widget(r.label, {attr: {placeholder: defaultLabel, 'aria-label': 'diplome.wizard.formulaires.label'|trans({}, 'diplome'), class: 'w-full rounded-md border px-2 py-1.5 text-sm', style: 'border-color:var(--c-border)'}}) }}
+            {{ form_errors(r.label) }}
+        </div>
+        {% if builtin %}
+            <div class="w-56 shrink-0">
+                <span class="inline-block text-xs px-2 py-1 rounded" style="background:var(--c-primary-soft)">{{ 'diplome.wizard.formulaires.builtin'|trans({}, 'diplome') }}</span>
+                {{ form_errors(r.form) }}
+            </div>
+            {% do r.form.setRendered %}
+            {% if screen.hideable|default(false) %}
+                <div class="flex items-center gap-2 text-sm whitespace-nowrap">
+                    {{ form_widget(r.hidden) }}
+                    {{ form_label(r.hidden) }}
+                </div>
+            {% else %}
+                {% do r.hidden.setRendered %}
+            {% endif %}
+        {% else %}
+            <div class="w-56 shrink-0">
+                {{ form_widget(r.form, {attr: {class: 'w-full rounded-md border px-2 py-1.5 text-sm', style: 'border-color:var(--c-border)'}}) }}
+                {{ form_errors(r.form) }}
+            </div>
+            <div class="flex items-center gap-2 text-sm whitespace-nowrap">
+                {{ form_widget(r.hidden) }}
+                {{ form_label(r.hidden) }}
+            </div>
+            <button type="button" data-action="canvas#remove" class="shrink-0 rounded border px-2 py-1 text-xs hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'diplome.wizard.formulaires.remove'|trans({}, 'diplome') }}</button>
+            {% if not r.key.vars.value %}
+                <span class="shrink-0 text-xs px-1.5 py-0.5 rounded" style="background:var(--c-primary-soft)">{{ 'diplome.wizard.formulaires.added'|trans({}, 'diplome') }}</span>
+            {% endif %}
+        {% endif %}
+    </div>
+{% endmacro %}
+
 {% block step_content %}
 <p class="text-sm mb-4" style="color:var(--c-muted)">{{ 'diplome.wizard.formulaires.help'|trans({}, 'diplome') }}</p>
-{{ form_start(form, {attr: {id: 'wizard-form', class: 'space-y-4'}}) }}
-    {% for field in form %}
-        {% if not field.rendered and field.vars.name != '_token' %}
-            {% include 'diplome/wizard/_field.html.twig' with {field: field} %}
-        {% endif %}
-    {% endfor %}
-{{ form_end(form) }}
+{{ form_start(form, {attr: {id: 'wizard-form', class: 'space-y-6'}}) }}
+    {{ form_errors(form) }}
+
+    <div class="grid gap-6 lg:grid-cols-[1fr_280px] items-start">
+        <div class="space-y-6">
+            {% for fiche in ['formation', 'parcours'] %}
+                {% set proto = _self.row(form[fiche].vars.prototype, fiche, builtins, formLabels) %}
+                <section class="rounded-lg border p-4" style="border-color:var(--c-border)" data-fiche="{{ fiche }}" data-controller="canvas" data-canvas-prototype-value="{{ proto|e('html_attr') }}" data-canvas-index-value="{{ form[fiche]|keys|reduce((max, k) => k >= max ? k + 1 : max, 0) }}">
+                    <h3 class="text-sm font-semibold">{{ ('diplome.wizard.formulaires.fiche.' ~ fiche)|trans({}, 'diplome') }}</h3>
+                    <p class="text-xs mt-1 mb-3" style="color:var(--c-muted)">{{ ('diplome.wizard.formulaires.fiche_help.' ~ fiche)|trans({}, 'diplome') }}</p>
+                    {{ form_errors(form[fiche]) }}
+                    <div data-canvas-target="list" class="space-y-2">
+                        {% for r in form[fiche] %}
+                            {{ _self.row(r, fiche, builtins, formLabels) }}
+                        {% endfor %}
+                    </div>
+                    <button type="button" data-action="canvas#add" class="mt-3 rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'diplome.wizard.formulaires.add'|trans({}, 'diplome') }}</button>
+                </section>
+            {% endfor %}
+        </div>
+
+        <aside class="rounded-lg border p-4" style="border-color:var(--c-border)">
+            <h3 class="text-sm font-semibold">{{ 'diplome.wizard.formulaires.library_title'|trans({}, 'diplome') }}</h3>
+            <p class="text-xs mt-1" style="color:var(--c-muted)">{{ 'diplome.wizard.formulaires.library_help'|trans({}, 'diplome') }}</p>
+            <div class="space-y-1 pt-3">
+                {% for item in library %}
+                    <div class="text-sm leading-tight" style="padding-left: {{ 12 * item.depth }}px">
+                        {% if item.depth > 0 %}<span style="color:var(--c-muted)">↳</span> {% endif %}
+                        <span>{{ item.form.label }}</span>
+                        <span class="text-xs" style="color:var(--c-muted)">({{ item.form.key }})</span>
+                        {% if item.form.parent %}<span class="text-xs px-1 py-0.5 rounded" style="background:var(--c-primary-soft)">{{ 'diplome.wizard.formulaires.variant'|trans({}, 'diplome') }}</span>{% endif %}
+                        <span class="text-xs" style="color:var(--c-muted)">{{ item.form.scope.value }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </aside>
+    </div>
+    {{ form_rest(form) }}
+{{ form_end(form, {render_rest: false}) }}
 {% endblock %}
 {% block step_next %}
     <button form="wizard-form" class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'diplome.wizard.next'|trans({}, 'diplome') }}</button>

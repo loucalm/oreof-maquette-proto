@@ -59,9 +59,6 @@ final class ConfigPresenter
     public function pathLabel(string $path): string
     {
         $segments = explode('.', $path);
-        if ('forms' === $segments[0] && isset($segments[1])) {
-            return $this->t('formulaires.slot.'.implode('.', \array_slice($segments, 1)));
-        }
         $parts = [];
         foreach ($segments as $segment) {
             if (ctype_digit($segment)) {
@@ -151,10 +148,11 @@ final class ConfigPresenter
         $rows = [];
         $canvas = $this->canvas->forConfig($config);
         foreach (CanvasSpec::FICHES as $fiche) {
+            $n = 0;
             foreach ($canvas->entries($fiche) as $entry) {
-                if (!$entry->isBuiltin()) {
-                    $rows[] = [$this->pathLabel('forms.'.$fiche.'.'.$entry->key), (string) $entry->form];
-                }
+                $prefix = $this->t('formulaires.fiche.'.$fiche).' — '.($entry->hidden ? '' : ++$n.' | ').$this->canvas->label($fiche, $entry);
+                $value = $entry->isBuiltin() ? $this->t('formulaires.builtin') : (string) $entry->form;
+                $rows[] = [$prefix, $value.($entry->hidden ? ' ('.$this->t('path.hidden').')' : '')];
             }
         }
 

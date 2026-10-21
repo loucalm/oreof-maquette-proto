@@ -114,7 +114,7 @@ final class DiplomeWizardStructureTest extends WebTestCase
         $payload['levels'][1]['count'] = ['mode' => 'exact', 'value' => '2'];
 
         $this->submit($payload);
-        self::assertResponseRedirects('/diplomes/nouveau/mccc');
+        self::assertResponseRedirects('/diplomes/nouveau/formulaires');
         $levels = $this->storedStructure()['levels'];
         self::assertSame('semestre', $levels[1]['typeKey']);
         self::assertSame(['min' => 2, 'max' => 2], $levels[1]['count']);
@@ -134,7 +134,7 @@ final class DiplomeWizardStructureTest extends WebTestCase
         $payload['rules'] = [];
 
         $this->submit($payload);
-        self::assertResponseRedirects('/diplomes/nouveau/mccc');
+        self::assertResponseRedirects('/diplomes/nouveau/formulaires');
         self::assertSame(['annee', 'ue', 'ec'], array_column($this->storedStructure()['levels'], 'typeKey'));
 
         $crawler = $this->client->request('GET', '/diplomes/nouveau/structure');
@@ -155,7 +155,7 @@ final class DiplomeWizardStructureTest extends WebTestCase
         ];
 
         $this->submit($payload);
-        self::assertResponseRedirects('/diplomes/nouveau/mccc');
+        self::assertResponseRedirects('/diplomes/nouveau/formulaires');
         $rule = $this->storedStructure()['rules'][0];
         self::assertSame('ratio', $rule['template']);
         self::assertSame(['attribute' => 'ects', 'numeratorNature' => 'sae', 'op' => '>=', 'percent' => 40], $rule['params']);
@@ -199,7 +199,7 @@ final class DiplomeWizardStructureTest extends WebTestCase
         self::assertCount(0, $crawler->filter('[name$="[params_required_element][imposed]"]'), 'le paramètre interne « imposed » ne doit pas être proposé');
 
         $this->submit(self::payload($structure));
-        self::assertResponseRedirects('/diplomes/nouveau/mccc');
+        self::assertResponseRedirects('/diplomes/nouveau/formulaires');
         $imposed = $this->storedStructure()['imposed'][0];
         self::assertSame('but-stage', $imposed['uid']);
         self::assertSame('ue', $imposed['parentLevel']);
@@ -257,7 +257,7 @@ final class DiplomeWizardStructureTest extends WebTestCase
     {
         $structure = $this->startFrom('LP');
         $this->submit(self::payload($structure));
-        self::assertResponseRedirects('/diplomes/nouveau/mccc');
+        self::assertResponseRedirects('/diplomes/nouveau/formulaires');
         self::assertSame($structure, $this->storedStructure());
     }
 
@@ -274,7 +274,7 @@ final class DiplomeWizardStructureTest extends WebTestCase
         $session->save();
 
         $this->submit(self::payload($draft->config()->structure->toArray()));
-        self::assertResponseRedirects('/diplomes/nouveau/mccc');
+        self::assertResponseRedirects('/diplomes/nouveau/formulaires');
         self::assertSame(['typeKey' => 'ec', 'imposed' => 'abc'], $this->storedStructure()['rules'][0]['params']);
     }
 }

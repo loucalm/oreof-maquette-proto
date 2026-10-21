@@ -62,12 +62,30 @@ diplome:
       help: Choisissez un type existant dont la configuration sera copiée, ou partez de zéro.
     formulaires:
       none: Aucun
-      help: Choisissez le formulaire utilisé pour chaque emplacement.
-      slot:
-        formation.organisation: Formation — organisation
-        formation.presentation: Formation — présentation
-        parcours.organisation: Parcours — organisation
-        parcours.presentation: Parcours — présentation
+      help: Le canevas des fiches telles que le responsable de formation les voit. Pour chaque entrée, choisissez son formulaire, renommez-la, masquez-la ou déplacez-la ; ajoutez une entrée propre au diplôme si besoin. Les écrans intégrés (BCC, structure, ramification) se placent mais ne se remplacent pas.
+      fiche:
+        formation: Fiche formation
+        parcours: Fiche parcours
+      fiche_help:
+        formation: Entrées de la barre latérale de la formation, dans cet ordre.
+        parcours: S'applique à chaque parcours, et au parcours unique d'une formation sans parcours.
+      label: Libellé de l'entrée
+      form: Formulaire
+      hidden: Masquer
+      builtin: Écran intégré
+      up: Monter
+      down: Descendre
+      remove: Retirer
+      add: Ajouter une entrée
+      added: ajoutée
+      library_title: Bibliothèque de formulaires
+      library_help: Commune à tous les diplômes. Une variante reprend son formulaire de départ et n'en garde que les écarts.
+      variant: variante
+      error:
+        no_form: "Fiche %fiche%, entrée « %label% » : choisissez un formulaire."
+        label_required: "Fiche %fiche% : une entrée ajoutée doit avoir un libellé."
+        not_hideable: "« %label% » ne peut pas être masqué."
+        locked_missing: "Fiche %fiche% : le champ « %field% » doit rester dans une entrée affichée."
     structure:
       help: Définissez la chaîne de niveaux du diplôme (du premier niveau à la feuille), les bornes de chaque niveau, les éléments imposés et les règles de validation.
       choose: Choisir…
@@ -182,6 +200,14 @@ diplome:
       sansNote: Sans note
       bccLevels: Niveaux de BCC
       bccLinkLevel: Niveau de BCC relié aux éléments
+      canvas: Formulaires
+      formation: Fiche formation
+      parcours: Fiche parcours
+      key: clé
+      form: formulaire
+      builtin: écran intégré
+      label: libellé
+      hidden: masquée
     recap:
       code_apogee: Code Apogée
       description: Description

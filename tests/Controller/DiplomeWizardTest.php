@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Controller;
 
 use App\Diplome\Wizard\DraftPublisher;
-use App\Diplome\Wizard\FormsStep;
 use App\Diplome\WizardDraft;
 use App\Entity\TypeDiplome;
 use App\Tests\Support\ResetsDatabase;
@@ -96,8 +95,8 @@ final class DiplomeWizardTest extends WebTestCase
         $this->submitInformations(['informations[label]' => 'Deust', 'informations[sigle]' => 'DEUST']);
 
         $crawler = $this->client->request('GET', '/diplomes/nouveau/formulaires');
-        $this->client->submit($crawler->filter('form#wizard-form')->form(['forms[formation_presentation]' => 'param_organisation_formation']));
-        self::assertResponseRedirects('/diplomes/nouveau/structure');
+        $this->client->submit($crawler->filter('form#wizard-form')->form(['canvas[formation][1][form]' => 'param_organisation_formation']));
+        self::assertResponseRedirects('/diplomes/nouveau/mccc');
 
         $crawler = $this->client->request('GET', '/diplomes/nouveau/recapitulatif');
         self::assertCount(1, $crawler->filter('[data-diff] [data-path="canvas.formation.1.form"]'));
@@ -154,27 +153,13 @@ final class DiplomeWizardTest extends WebTestCase
         }
     }
 
-    public function testFormsStepWritesTheCanvas(): void
-    {
-        $draft = $this->draft([]);
-        $draft->configData = ['forms' => ['formation.organisation' => 'param_presentation_formation']];
-
-        static::getContainer()->get(FormsStep::class)->apply($draft, ['formation_presentation' => 'param_organisation_formation']);
-
-        $canvas = $draft->config()->canvas;
-        self::assertArrayNotHasKey('forms', $draft->configData);
-        self::assertSame('param_organisation_formation', $canvas->entry('formation', 'presentation')->form);
-        // un emplacement laissé vide reprend le formulaire socle de l'entrée
-        self::assertSame('param_organisation_formation', $canvas->entry('formation', 'organisation')->form);
-    }
-
     public function testSummaryListsCopiedConfiguration(): void
     {
         $this->client->request('GET', '/diplomes/nouveau', ['depuis' => $this->licenceVersionId()]);
         $this->submitInformations(['informations[label]' => 'Deust', 'informations[sigle]' => 'DEUST', 'informations[description]' => 'Desc test']);
         $crawler = $this->client->request('GET', '/diplomes/nouveau/recapitulatif');
         $text = $crawler->filter('section')->text();
-        foreach (['Desc test', 'Code Apogée', 'Accrédité', 'Passage en CFVU', 'Durée', 'Niveau 1', 'Niveaux de BCC', 'Formation — présentation'] as $needle) {
+        foreach (['Desc test', 'Code Apogée', 'Accrédité', 'Passage en CFVU', 'Durée', 'Niveau 1', 'Niveaux de BCC', 'Fiche formation — 2 | Présentation'] as $needle) {
             self::assertStringContainsString($needle, $text);
         }
     }
@@ -190,37 +175,18 @@ final class DiplomeWizardTest extends WebTestCase
         }
     }
 
-    public function testFormsSlotsOnlyOfferFormsOfTheirScope(): void
-    {
-        $this->client->request('GET', '/diplomes/nouveau', ['depuis' => $this->licenceVersionId()]);
-        $this->submitInformations(['informations[label]' => 'Deust', 'informations[sigle]' => 'DEUST']);
-        $crawler = $this->client->request('GET', '/diplomes/nouveau/formulaires');
-
-        $selects = $crawler->filter('form#wizard-form select');
-        self::assertGreaterThan(0, $selects->count());
-        $selects->each(static function ($select): void {
-            // forms[<portée>_<section>] : la portée est le premier segment du nom d'emplacement
-            preg_match('/^forms\[([a-z]+)_/', $select->attr('name'), $m);
-            $values = array_filter($select->filter('option')->each(static fn ($o) => (string) $o->attr('value')));
-            self::assertNotEmpty($values);
-            foreach ($values as $value) {
-                self::assertStringEndsWith('_'.$m[1], $value);
-            }
-        });
-    }
-
     public function testPreviousSubmitsTheCurrentStep(): void
     {
         $this->client->request('GET', '/diplomes/nouveau', ['depuis' => $this->licenceVersionId()]);
         $this->submitInformations(['informations[label]' => 'Deust', 'informations[sigle]' => 'DEUST']);
 
         $crawler = $this->client->request('GET', '/diplomes/nouveau/formulaires');
-        $form = $crawler->filter('button[data-action="previous"]')->form(['forms[formation_presentation]' => 'param_organisation_formation']);
+        $form = $crawler->filter('button[data-action="previous"]')->form(['canvas[formation][1][form]' => 'param_organisation_formation']);
         $this->client->submit($form);
-        self::assertResponseRedirects('/diplomes/nouveau/depart');
+        self::assertResponseRedirects('/diplomes/nouveau/structure');
 
         $crawler = $this->client->request('GET', '/diplomes/nouveau/formulaires');
-        self::assertSame('param_organisation_formation', $crawler->filter('select[name="forms[formation_presentation]"] option[selected]')->attr('value'));
+        self::assertSame('param_organisation_formation', $crawler->filter('select[name="canvas[formation][1][form]"] option[selected]')->attr('value'));
     }
 
     public function testStepLinkSubmitsTheCurrentStepAndStaysOnErrors(): void
