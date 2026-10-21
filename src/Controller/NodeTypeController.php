@@ -7,6 +7,10 @@ namespace App\Controller;
 use App\Entity\FieldDef;
 use App\Entity\NodeType;
 use App\FieldType\FieldTypeRegistry;
+use App\Formulaire\FormResolver;
+use App\Formulaire\FormUsage;
+use App\Formulaire\ResolvedField;
+use App\Formulaire\VariantFactory;
 use App\Enum\NodeFamily;
 use App\Enum\NodeKind;
 use App\Maquette\Maquette;
@@ -39,23 +43,12 @@ final class NodeTypeController extends AbstractController
      */
     private const INTERNAL_KEYS = ['bloc_choix'];
 
-    /**
-     * Les 4 sections « Parameter » réellement pilotées par ce catalogue (cf.
-     * FormationController::param()/parcoursParam()) — les 4 autres (les 2 types
-     * « Configuration de la structure », UI de squelette totalement différente, et
-     * les 2 types BCC, qui ont leur propre éditeur dédié BccController) restent
-     * bloqués par assertEditable().
-     */
-    public const EDITABLE_PARAM_KEYS = [
-        'param_organisation_formation',
-        'param_presentation_formation',
-        'param_organisation_parcours',
-        'param_presentation_parcours',
-    ];
-
     public function __construct(
         private readonly FieldTypeRegistry $fieldTypes,
         private readonly TabValidator $validator,
+        private readonly FormResolver $forms,
+        private readonly FormUsage $usage,
+        private readonly VariantFactory $variants,
     ) {
     }
 
@@ -68,31 +61,33 @@ final class NodeTypeController extends AbstractController
             && !\in_array($t->getKey(), self::INTERNAL_KEYS, true);
 
         return $this->render('node_type/index.html.twig', [
-            'paramTypes' => array_values(array_filter($all, static fn (NodeType $t) => NodeFamily::Parameter === $t->getFamily())),
+            'library' => $this->library(array_values(array_filter($all, static fn (NodeType $t) => NodeFamily::Parameter === $t->getFamily()))),
             'elpTypes' => array_values(array_filter($all, $isElp)),
         ]);
     }
 
     /**
-     * Certains types « Parameter » (Configuration de la structure, BCC) ne pilotent
-     * toujours pas réellement de formulaire depuis ce catalogue : « Configuration de
-     * la structure » a sa propre UI de squelette (rien à voir avec une liste de
-     * champs), BCC a son propre éditeur dédié (BccController). Toute modification
-     * ici serait acceptée sans jamais avoir d'effet visible — bloqué plutôt que
-     * silencieusement inopérant. Organisation/Présentation (formation + parcours),
-     * elles, sont réellement pilotées par ce catalogue (cf. EDITABLE_PARAM_KEYS).
+     * Un formulaire de fiche utilisé par des formations ne se modifie qu'avec la confirmation
+     * d'impact (`confirmImpact`), comme une version de type de diplôme utilisée : la
+     * modification s'applique aussitôt à toutes les formations concernées.
      */
-    private function assertEditable(NodeType $nodeType): ?Response
+    private function impactGuard(NodeType $nodeType, Request $request): ?Response
     {
-        if (NodeFamily::Parameter !== $nodeType->getFamily() || \in_array($nodeType->getKey(), self::EDITABLE_PARAM_KEYS, true)) {
+        if (NodeFamily::Parameter !== $nodeType->getFamily() || $request->request->getBoolean('confirmImpact') || [] === $this->usage->formationsConcerned($nodeType)) {
             return null;
         }
-        $this->addFlash('warning', sprintf(
-            '« %s » n’est pas modifiable : cette section est encore codée en dur côté formation, pas pilotée par ce catalogue.',
-            $nodeType->getLabel(),
-        ));
+        if ($request->isXmlHttpRequest()) {
+            return new Response(null, Response::HTTP_CONFLICT);
+        }
+        $this->addFlash('warning', 'Ce formulaire est utilisé par des formations : cochez la confirmation d’impact pour le modifier.');
 
-        return $this->redirectToRoute('node_type_index');
+        return $this->redirectToRoute('node_type_edit', ['id' => $nodeType->getId()]);
+    }
+
+    /** Formulaire de fiche : ses réglages de champ (libellé, aide, obligatoire, onglet, ordre) lui sont propres. */
+    private static function isFicheForm(NodeType $nodeType): bool
+    {
+        return NodeFamily::Parameter === $nodeType->getFamily();
     }
 
     /** Champ verrouillé (cf. FieldDef::isLocked()) : visible/déplaçable dans le constructeur, jamais éditable ni retirable depuis là. */
@@ -114,11 +109,10 @@ final class NodeTypeController extends AbstractController
     public function edit(Request $request, EntityManagerInterface $em, ReferentielRepository $referentiels, FieldDefRepository $fields, NodeTypeRepository $types, RoleExtension $roles, ?NodeType $nodeType = null): Response
     {
         $isNew = $nodeType === null;
-        if (!$isNew && null !== ($blocked = $this->assertEditable($nodeType))) {
-            return $blocked;
-        }
-
         if ($request->isMethod('POST')) {
+            if (!$isNew && null !== ($blocked = $this->impactGuard($nodeType, $request))) {
+                return $blocked;
+            }
             $label = trim((string) $request->request->get('label')) ?: 'Type';
             // la clé n'est saisie que par le super-admin ; sinon générée (création) ou conservée (édition)
             $key = $roles->isSuperAdmin() ? trim((string) $request->request->get('key')) : '';
@@ -174,6 +168,10 @@ final class NodeTypeController extends AbstractController
             'form' => $isNew ? [] : $this->formBuilderData($nodeType, $fields),
             'rules' => $isNew ? [] : $this->rulesByTab($nodeType),
             'catalog' => $fields->allOrdered(),
+            'usage' => $isNew || !self::isFicheForm($nodeType) ? [] : $this->usage->versionsUsing($nodeType),
+            'concerned' => $isNew || !self::isFicheForm($nodeType) ? [] : $this->usage->formationsConcerned($nodeType),
+            'newParentFields' => !$isNew && $nodeType->isVariant() ? $this->forms->newParentFields($nodeType) : [],
+            'retour' => self::returnUrl($request),
         ]);
     }
 
@@ -182,6 +180,12 @@ final class NodeTypeController extends AbstractController
     {
         if ($nodeType->isSystem()) {
             $this->addFlash('warning', sprintf('« %s » est un type du socle : il ne peut pas être supprimé.', $nodeType->getLabel()));
+
+            return $this->redirectToRoute('node_type_index');
+        }
+
+        if ($this->usage->isUsed($nodeType) || $this->usage->hasVariants($nodeType)) {
+            $this->addFlash('warning', sprintf('Impossible de supprimer « %s » : un canevas de diplôme l’utilise, ou une variante en dérive.', $nodeType->getLabel()));
 
             return $this->redirectToRoute('node_type_index');
         }
@@ -212,7 +216,7 @@ final class NodeTypeController extends AbstractController
     #[Route('/administration/node-types/{id}/champs', name: 'node_type_field_add', methods: ['POST'])]
     public function fieldAdd(NodeType $nodeType, Request $request, EntityManagerInterface $em, FieldDefRepository $fields): Response
     {
-        if (null !== ($blocked = $this->assertEditable($nodeType))) {
+        if (null !== ($blocked = $this->impactGuard($nodeType, $request))) {
             return $blocked;
         }
 
@@ -241,28 +245,43 @@ final class NodeTypeController extends AbstractController
     #[Route('/administration/node-types/{id}/champs/{fieldId}', name: 'node_type_field_edit', methods: ['POST'], requirements: ['fieldId' => '\d+'])]
     public function fieldEdit(NodeType $nodeType, int $fieldId, Request $request, EntityManagerInterface $em, FieldDefRepository $fields): Response
     {
-        if (null !== ($blocked = $this->assertEditable($nodeType))) {
+        if (null !== ($blocked = $this->impactGuard($nodeType, $request))) {
             return $blocked;
         }
 
         $field = $fields->find($fieldId);
-        if (null === $field || !$nodeType->hasCapability($field->getKey())) {
+        if (null === $field || !\array_key_exists($field->getKey(), $this->forms->capabilities($nodeType))) {
             throw $this->createNotFoundException();
         }
         if (null !== ($blocked = $this->assertFieldEditable($field, $nodeType))) {
             return $blocked;
         }
 
-        $field->setLabel(trim((string) $request->request->get('label')) ?: $field->getLabel());
-
-        // un séparateur n'a qu'un libellé — inutile (et dangereux) de repasser par applyFieldRequest,
-        // qui réinitialiserait son type faute des autres champs du formulaire complet.
-        if ('separator' !== $field->getType()) {
-            $field->setTab((string) $request->request->get('tab', $field->getTab()));
-            $this->applyFieldRequest($field, $request);
+        $label = trim((string) $request->request->get('label'));
+        if (self::isFicheForm($nodeType)) {
+            // libellé, aide, obligatoire et onglet sont propres à ce formulaire ; le type et ses options restent partagés
+            $settings = '' !== $label ? ['label' => $label] : [];
+            if ('separator' !== $field->getType()) {
+                $settings += [
+                    'help' => trim((string) $request->request->get('help')) ?: null,
+                    'required' => $request->request->getBoolean('required'),
+                ];
+                if ($request->request->has('tab')) {
+                    $settings['tab'] = (string) $request->request->get('tab');
+                }
+                $this->applyFieldRequest($field, $request, false);
+            }
+            $nodeType->setFieldSetting($field->getKey(), $settings);
+        } else {
+            $field->setLabel('' !== $label ? $label : $field->getLabel());
+            // un séparateur n'a qu'un libellé — inutile (et dangereux) de repasser par applyFieldRequest,
+            // qui réinitialiserait son type faute des autres champs du formulaire complet.
+            if ('separator' !== $field->getType()) {
+                $field->setTab((string) $request->request->get('tab', $field->getTab()));
+                $this->applyFieldRequest($field, $request);
+            }
+            $this->setCapability($nodeType, $field->getKey(), true, $request->request->getBoolean('togglable'));
         }
-
-        $this->setCapability($nodeType, $field->getKey(), true, $request->request->getBoolean('togglable'));
         $em->flush();
         $this->addFlash('success', 'Champ modifié.');
 
@@ -273,7 +292,7 @@ final class NodeTypeController extends AbstractController
     #[Route('/administration/node-types/{id}/champs/separateur', name: 'node_type_separator_add', methods: ['POST'])]
     public function separatorAdd(NodeType $nodeType, Request $request, EntityManagerInterface $em, FieldDefRepository $fields): Response
     {
-        if (null !== ($blocked = $this->assertEditable($nodeType))) {
+        if (null !== ($blocked = $this->impactGuard($nodeType, $request))) {
             return $blocked;
         }
 
@@ -306,23 +325,38 @@ final class NodeTypeController extends AbstractController
     #[Route('/administration/node-types/{id}/champs/{tab}/reordonner', name: 'node_type_fields_reorder', methods: ['POST'])]
     public function fieldsReorder(NodeType $nodeType, string $tab, Request $request, EntityManagerInterface $em, FieldDefRepository $fields): Response
     {
-        if (null !== ($blocked = $this->assertEditable($nodeType))) {
+        if (null !== ($blocked = $this->impactGuard($nodeType, $request))) {
             return $blocked;
         }
 
-        $byKey = [];
-        $positions = [];
-        foreach ($fields->allOrdered() as $f) {
-            if ($f->getTab() === $tab && $nodeType->hasCapability($f->getKey())) {
-                $byKey[$f->getKey()] = $f;
-                $positions[] = $f->getPosition();
+        if (self::isFicheForm($nodeType)) {
+            $positions = [];
+            $keys = [];
+            foreach ($this->forms->fields($nodeType, true) as $f) {
+                if ($f->tab === $tab) {
+                    $keys[] = $f->getKey();
+                    $positions[] = $f->position;
+                }
             }
-        }
-        sort($positions);
+            sort($positions);
+            foreach (array_values(array_intersect((array) $request->request->all('chain'), $keys)) as $i => $key) {
+                $nodeType->setFieldSetting($key, ['position' => $positions[$i] ?? end($positions)]);
+            }
+        } else {
+            $byKey = [];
+            $positions = [];
+            foreach ($fields->allOrdered() as $f) {
+                if ($f->getTab() === $tab && $nodeType->hasCapability($f->getKey())) {
+                    $byKey[$f->getKey()] = $f;
+                    $positions[] = $f->getPosition();
+                }
+            }
+            sort($positions);
 
-        $orderedKeys = array_values(array_intersect((array) $request->request->all('chain'), array_keys($byKey)));
-        foreach ($orderedKeys as $i => $key) {
-            $byKey[$key]->setPosition($positions[$i] ?? end($positions));
+            $orderedKeys = array_values(array_intersect((array) $request->request->all('chain'), array_keys($byKey)));
+            foreach ($orderedKeys as $i => $key) {
+                $byKey[$key]->setPosition($positions[$i] ?? end($positions));
+            }
         }
         $em->flush();
 
@@ -335,9 +369,9 @@ final class NodeTypeController extends AbstractController
 
     /** Retire le champ du formulaire de ce type ; supprime le FieldDef du catalogue si plus aucun autre type ne l'utilise. */
     #[Route('/administration/node-types/{id}/champs/{fieldId}/supprimer', name: 'node_type_field_remove', methods: ['POST'], requirements: ['fieldId' => '\d+'])]
-    public function fieldRemove(NodeType $nodeType, int $fieldId, EntityManagerInterface $em, FieldDefRepository $fields, NodeTypeRepository $types): Response
+    public function fieldRemove(NodeType $nodeType, int $fieldId, Request $request, EntityManagerInterface $em, FieldDefRepository $fields, NodeTypeRepository $types): Response
     {
-        if (null !== ($blocked = $this->assertEditable($nodeType))) {
+        if (null !== ($blocked = $this->impactGuard($nodeType, $request))) {
             return $blocked;
         }
 
@@ -350,6 +384,15 @@ final class NodeTypeController extends AbstractController
         }
 
         $key = $field->getKey();
+        $parent = $nodeType->getParent();
+        if (null !== $parent && \array_key_exists($key, $this->forms->capabilities($parent))) {
+            // champ hérité : la variante le masque, le formulaire de départ le garde
+            $nodeType->setCapabilities(array_merge($nodeType->getCapabilities(), [$key => false]));
+            $em->flush();
+            $this->addFlash('info', 'Champ masqué dans cette variante.');
+
+            return $this->redirectToRoute('node_type_edit', ['id' => $nodeType->getId()]);
+        }
         $this->setCapability($nodeType, $key, false, false);
         $em->flush();
 
@@ -370,7 +413,7 @@ final class NodeTypeController extends AbstractController
     #[Route('/administration/node-types/{id}/regles', name: 'node_type_rule_add', methods: ['POST'])]
     public function ruleAdd(NodeType $nodeType, Request $request, EntityManagerInterface $em): Response
     {
-        if (null !== ($blocked = $this->assertEditable($nodeType))) {
+        if (null !== ($blocked = $this->impactGuard($nodeType, $request))) {
             return $blocked;
         }
 
@@ -414,9 +457,9 @@ final class NodeTypeController extends AbstractController
     }
 
     #[Route('/administration/node-types/{id}/regles/{ruleId}/supprimer', name: 'node_type_rule_remove', methods: ['POST'])]
-    public function ruleRemove(NodeType $nodeType, string $ruleId, EntityManagerInterface $em): Response
+    public function ruleRemove(NodeType $nodeType, string $ruleId, Request $request, EntityManagerInterface $em): Response
     {
-        if (null !== ($blocked = $this->assertEditable($nodeType))) {
+        if (null !== ($blocked = $this->impactGuard($nodeType, $request))) {
             return $blocked;
         }
 
@@ -425,6 +468,81 @@ final class NodeTypeController extends AbstractController
         $this->addFlash('info', 'Règle retirée.');
 
         return $this->redirectToRoute('node_type_edit', ['id' => $nodeType->getId()]);
+    }
+
+    /** Crée une variante du formulaire (bibliothèque) et ouvre son écran « Adapter ». */
+    #[Route('/administration/node-types/{id}/variante', name: 'node_type_variant_new', methods: ['POST'])]
+    public function variantNew(NodeType $nodeType, Request $request, EntityManagerInterface $em): Response
+    {
+        $variant = $this->variants->create($nodeType, (string) $request->request->get('label'));
+        $em->flush();
+        $this->addFlash('success', sprintf('Variante « %s » créée.', $variant->getLabel()));
+
+        return $this->redirectToRoute('node_type_edit', array_filter(['id' => $variant->getId(), 'retour' => self::returnUrl($request)]));
+    }
+
+    /** Affiche ou masque un champ dans ce formulaire ; un champ verrouillé reste affiché. */
+    #[Route('/administration/node-types/{id}/champs/{fieldId}/affichage', name: 'node_type_field_visibility', methods: ['POST'], requirements: ['fieldId' => '\d+'])]
+    public function fieldVisibility(NodeType $nodeType, int $fieldId, Request $request, EntityManagerInterface $em, FieldDefRepository $fields): Response
+    {
+        $field = $fields->find($fieldId);
+        if (null === $field || !\array_key_exists($field->getKey(), $this->forms->capabilities($nodeType))) {
+            throw $this->createNotFoundException();
+        }
+        if (null !== ($blocked = $this->impactGuard($nodeType, $request))) {
+            return $blocked;
+        }
+        if ($field->isLocked()) {
+            $this->addFlash('warning', sprintf('« %s » est un champ verrouillé : il reste affiché.', $field->getLabel()));
+
+            return $this->redirectToRoute('node_type_edit', ['id' => $nodeType->getId()]);
+        }
+        $nodeType->setCapabilities(array_merge($nodeType->getCapabilities(), [$field->getKey() => $request->request->getBoolean('visible')]));
+        $em->flush();
+
+        return $this->redirectToRoute('node_type_edit', ['id' => $nodeType->getId()]);
+    }
+
+    /** La variante prend acte des champs apparus dans son formulaire de départ. */
+    #[Route('/administration/node-types/{id}/nouveautes-vues', name: 'node_type_variant_ack', methods: ['POST'])]
+    public function variantAcknowledge(NodeType $nodeType, EntityManagerInterface $em): Response
+    {
+        $this->forms->acknowledgeParentFields($nodeType);
+        $em->flush();
+
+        return $this->redirectToRoute('node_type_edit', ['id' => $nodeType->getId()]);
+    }
+
+    /**
+     * Formulaires de fiche en arbre (formulaire de départ, puis ses variantes en retrait), avec le
+     * nombre de versions de diplôme qui les utilisent.
+     *
+     * @param list<NodeType> $forms
+     *
+     * @return list<array{type: NodeType, depth: int, usage: int}>
+     */
+    private function library(array $forms): array
+    {
+        $out = [];
+        $walk = function (?NodeType $parent, int $depth) use (&$walk, &$out, $forms): void {
+            foreach ($forms as $form) {
+                if ($form->getParent() === $parent) {
+                    $out[] = ['type' => $form, 'depth' => $depth, 'usage' => \count($this->usage->versionsUsing($form))];
+                    $walk($form, $depth + 1);
+                }
+            }
+        };
+        $walk(null, 0);
+
+        return $out;
+    }
+
+    /** URL de retour (canevas d'un diplôme), acceptée seulement si elle reste dans /diplomes/. */
+    private static function returnUrl(Request $request): ?string
+    {
+        $url = (string) ($request->query->get('retour') ?? $request->request->get('retour'));
+
+        return str_starts_with($url, '/diplomes/') ? $url : null;
     }
 
     /**
@@ -454,7 +572,8 @@ final class NodeTypeController extends AbstractController
         return $key;
     }
 
-    private function applyFieldRequest(FieldDef $field, Request $request): void
+    /** @param bool $presentation false pour un formulaire de fiche : obligatoire et aide sont réglés par formulaire */
+    private function applyFieldRequest(FieldDef $field, Request $request, bool $presentation = true): void
     {
         $options = [];
         foreach (preg_split('/\r?\n/', (string) $request->request->get('options')) ?: [] as $line) {
@@ -478,10 +597,13 @@ final class NodeTypeController extends AbstractController
             ->setReferentielKey($request->request->get('referentielKey'))
             ->setAllowExtra($request->request->getBoolean('allowExtra'))
             ->setQuickAdd($request->request->getBoolean('quickAdd'))
-            ->setRequired($request->request->getBoolean('required'))
-            ->setHelp($request->request->get('help'))
             ->setMin('' !== $min && null !== $min ? (float) $min : null)
             ->setMax('' !== $max && null !== $max ? (float) $max : null);
+        if ($presentation) {
+            $field
+                ->setRequired($request->request->getBoolean('required'))
+                ->setHelp($request->request->get('help'));
+        }
     }
 
     private function setCapability(NodeType $nodeType, string $key, bool $on, bool $togglable): void
@@ -510,11 +632,18 @@ final class NodeTypeController extends AbstractController
      * catalogue (les drapeaux hors-catalogue comme « mutualisable » n'y
      * apparaissent pas, ils sont gérés dans le bloc « Propriété de l'ELP »).
      *
-     * @return array<string, list<FieldDef>>
+     * @return array<string, list<FieldDef|ResolvedField>>
      */
     private function formBuilderData(NodeType $nodeType, FieldDefRepository $fields): array
     {
         $out = [];
+        if (self::isFicheForm($nodeType)) {
+            foreach ($this->forms->fields($nodeType, $nodeType->isVariant()) as $f) {
+                $out[$f->tab][] = $f;
+            }
+
+            return $out;
+        }
         foreach ($fields->activeOrderedFor($nodeType) as $f) {
             $out[$f->getTab()][] = $f;
         }

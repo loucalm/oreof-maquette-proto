@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Twig;
 
-use App\Controller\NodeTypeController;
 use App\Entity\Formation;
 use App\Entity\NodeType;
 use App\Formulaire\Fiche\FicheFactory;
@@ -77,7 +76,6 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('fiche_mono', fn (Formation $f) => $this->fiches->mono($f)),
             new TwigFunction('bcc_shown', fn (Formation $f) => $this->navigation->bccShown($f)),
             new TwigFunction('bcc_status', $this->bccStatus(...)),
-            new TwigFunction('node_type_param_editable', static fn (NodeType $t) => \in_array($t->getKey(), NodeTypeController::EDITABLE_PARAM_KEYS, true)),
             new TwigFunction('referentiel', fn (string $key) => $this->referentiels->values($key)),
             // types de MCCC proposés pour un nœud : ceux de la version du type de diplôme (selon la nature
             // de l'élément) ; sans version (formation non typée), tous ceux du catalogue

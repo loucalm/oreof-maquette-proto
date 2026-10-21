@@ -168,15 +168,76 @@
     </details>
 {% endmacro %}
 
+{# ─── badges d'origine : en quoi ce champ diffère de son formulaire de départ ─── #}
+{# Un formulaire sans parent n'hérite de rien : le badge « hérité » y est vide de sens. #}
+{% macro origins(f, hasParent) %}
+    {% for o in f.origins %}
+        {% if not (o == 'inherited' and not hasParent) %}
+            <span class="pill ml-1">{{ ('node_type.edit.origin.' ~ o)|trans({}, 'node_type') }}</span>
+        {% endif %}
+    {% endfor %}
+{% endmacro %}
+
 {% block body %}
 <turbo-frame id="admin-content">
-<div class="max-w-3xl mx-auto">
+<div class="max-w-3xl mx-auto" data-controller="impact">
+    {% if retour %}
+        <div class="mb-3">
+            <a href="{{ retour }}" data-turbo-frame="_top" class="text-sm hover:underline" style="color:var(--c-primary)">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'node_type.edit.back_to_canvas'|trans({}, 'node_type') }}</a>
+        </div>
+    {% endif %}
     <div class="text-xs" style="color:var(--c-muted)">
         <a href="{{ path('node_type_index') }}" data-turbo-frame="_top" class="hover:underline">{{ 'node_type.index.heading'|trans({}, 'node_type') }}</a> › {{ isNew ? 'node_type.edit.breadcrumb_new'|trans({}, 'node_type') : nodeType.label }}
     </div>
     <h1 class="text-xl font-bold mt-1 mb-5">{{ isNew ? 'node_type.edit.new_heading'|trans({}, 'node_type') : 'node_type.edit.edit_heading'|trans({'%label%': nodeType.label}, 'node_type') }}</h1>
 
     {% set isParam = not isNew and nodeType.family.value == 'parameter' %}
+
+    {# ─── variante : rappel du formulaire de départ ─── #}
+    {% if not isNew and nodeType.parent %}
+        {% set parentLink = '<a href="' ~ path('node_type_edit', {id: nodeType.parent.id}) ~ '" class="underline">' ~ nodeType.parent.label|e('html') ~ '</a>' %}
+        <div data-variant-of="{{ nodeType.parent.key }}" class="rounded-xl border px-4 py-3 mb-5" style="border-color:var(--c-border);background:#f8f9fb">
+            <div class="text-sm font-semibold">{{ 'node_type.edit.variant_of'|trans({'%parent%': parentLink}, 'node_type')|raw }}</div>
+            <p class="text-xs mt-1" style="color:var(--c-muted)">{{ 'node_type.edit.variant_help'|trans({}, 'node_type') }}</p>
+        </div>
+    {% endif %}
+
+    {# ─── diplômes utilisateurs : la modification s'applique à tous, d'où la confirmation ─── #}
+    {% if isParam %}
+        <div data-form-usage class="rounded-xl border px-4 py-3 mb-5" style="border-color:var(--c-border)">
+            <div class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">{{ 'node_type.edit.usage_title'|trans({}, 'node_type') }}</div>
+            {% if usage is not empty %}
+                <ul class="mt-2 space-y-1 text-sm">
+                    {% for v in usage %}
+                        <li>{{ v.typeDiplome.label }} — {{ v.anneeUniversitaire }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="mt-2 text-sm" style="color:var(--c-muted)">{{ 'node_type.edit.usage_none'|trans({}, 'node_type') }}</p>
+            {% endif %}
+            {% if concerned is not empty %}
+                <label class="mt-3 flex items-start gap-2 text-sm">
+                    <input type="checkbox" data-impact-confirm>
+                    <span>{{ 'node_type.edit.impact_confirm'|trans({'%count%': concerned|length}, 'node_type') }}</span>
+                </label>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {# ─── champs apparus dans le formulaire de départ depuis la dernière visite ─── #}
+    {% if newParentFields is not empty %}
+        <div data-new-parent-fields class="rounded-xl border px-4 py-3 mb-5" style="border-color:var(--c-border);background:#f8f9fb">
+            <div class="text-sm font-semibold">{{ 'node_type.edit.new_parent_fields'|trans({}, 'node_type') }}</div>
+            <ul class="mt-2 space-y-1 text-sm">
+                {% for f in newParentFields %}
+                    <li>{{ f.label }} <code class="text-xs" style="color:var(--c-muted)">{{ f.key }}</code></li>
+                {% endfor %}
+            </ul>
+            <form method="post" action="{{ path('node_type_variant_ack', {id: nodeType.id}) }}" class="mt-3 flex justify-end">
+                <button class="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'node_type.edit.new_parent_fields_ack'|trans({}, 'node_type') }}</button>
+            </form>
+        </div>
+    {% endif %}
 
     <form method="post" {{ isNew ? 'data-turbo-frame="_top"' }} class="rounded-xl border bg-white p-5 space-y-4 mb-5" style="border-color:var(--c-border)">
         <div class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">{{ 'node_type.edit.properties_title'|trans({}, 'node_type') }}</div>
@@ -318,13 +379,33 @@
                                         <span class="text-xs" style="color:var(--c-muted)">{{ fieldTypes[f.type] }}</span>
                                         <span class="pill" title="{{ 'node_type.edit.field_locked_title'|trans({}, 'node_type') }}">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }}</span>
                                     </div>
+                                {% elseif isParam and f.hidden %}
+                                    {# champ masqué dans ce formulaire : on ne peut plus l'éditer, seulement le réafficher #}
+                                    <div class="flex items-center gap-2 rounded-md border px-3 py-2 text-sm opacity-60" style="border-color:var(--c-border);background:#fafafa">
+                                        <span class="flex-1">{{ f.label }} <code class="text-xs" style="color:var(--c-muted)">{{ f.key }}</code>
+                                            {% if f.required %}<span class="pill ml-1" style="background:#fee2e2;color:#dc2626">{{ 'node_type.edit.field_required_badge'|trans({}, 'node_type') }}</span>{% endif %}
+                                            <span class="pill ml-1">{{ 'node_type.edit.hidden_badge'|trans({}, 'node_type') }}</span>
+                                            {{ ui.origins(f, nodeType.parent is not null) }}
+                                        </span>
+                                        <form method="post" action="{{ path('node_type_field_visibility', {id: nodeType.id, fieldId: f.id}) }}" class="shrink-0">
+                                            <input type="hidden" name="visible" value="1">
+                                            <button class="text-xs hover:underline">{{ 'node_type.edit.show_field'|trans({}, 'node_type') }}</button>
+                                        </form>
+                                    </div>
                                 {% else %}
                                     {% set togglableDefault = not nodeType.isCapabilityLocked(f.key) %}
                                     <details class="rounded-md border" style="border-color:var(--c-border)">
                                         <summary class="flex items-center justify-between gap-2 px-3 py-2 cursor-pointer text-sm">
                                             <span>{{ f.label }} <code class="text-xs" style="color:var(--c-muted)">{{ f.key }}</code>
+                                                {% if isParam %}{{ ui.origins(f, nodeType.parent is not null) }}{% endif %}
                                                 {% if not togglableDefault %}<span class="pill ml-1" title="{{ 'node_type.edit.not_togglable_title'|trans({}, 'node_type') }}">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }}</span>{% endif %}
                                             </span>
+                                            {% if isParam %}
+                                                <form method="post" action="{{ path('node_type_field_visibility', {id: nodeType.id, fieldId: f.id}) }}" onclick="event.stopPropagation()" class="shrink-0">
+                                                    <input type="hidden" name="visible" value="0">
+                                                    <button class="text-xs hover:underline">{{ 'node_type.edit.hide_field'|trans({}, 'node_type') }}</button>
+                                                </form>
+                                            {% endif %}
                                             <form method="post" action="{{ path('node_type_field_remove', {id: nodeType.id, fieldId: f.id}) }}" onclick="event.stopPropagation()"
                                                   data-controller="confirm" data-confirm-message-value="{{ 'node_type.edit.remove_field_confirm'|trans({'%label%': f.label}, 'node_type') }}">
                                                 <button class="text-xs text-red-600 hover:underline">{{ 'common.remove'|trans({}, 'common') }}</button>

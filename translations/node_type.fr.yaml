@@ -5,7 +5,13 @@ node_type:
     description: >-
       Créer les ELP / modifier les formulaires. La hiérarchie (qui contient qui) est propre à chaque
       formation, dans « Configuration de la structure ».
-    param_title: Formation / Parcours
+    param_title: Formulaires de fiche (formation / parcours)
+    library_help: Bibliothèque commune à tous les diplômes. Une variante reprend son formulaire de départ et n'en garde que les écarts ; elle suit les évolutions de son départ.
+    col_usage: Diplômes
+    usage_title: Nombre de versions de diplôme dont le canevas utilise ce formulaire (ou une de ses variantes)
+    variant_badge: variante
+    new_variant: Créer une variante
+    variant_label_placeholder: Libellé de la variante
     elp_title: Éléments pédagogique
     new_button: Nouveau type
     col_label: Libellé
@@ -26,6 +32,26 @@ node_type:
       compétences » et « Compétence » (référentiel BCC) ne sont pas non plus des ELP au sens de cette
       page : ils se gèrent depuis l'éditeur BCC de chaque formation, pas depuis un formulaire ici.
   edit:
+    variant_of: Variante de « %parent% »
+    variant_help: Ce formulaire reprend son formulaire de départ ; seuls ses écarts (champs masqués ou ajoutés, libellés, caractère obligatoire, ordre) sont enregistrés ici.
+    back_to_canvas: Retour au canevas du diplôme
+    usage_title: Utilisé par
+    usage_none: Aucun diplôme n'utilise ce formulaire.
+    impact_confirm: Je confirme que la modification s'applique aussitôt aux %count% formation(s) concernée(s).
+    new_parent_fields: "Nouveaux champs dans le formulaire de départ depuis votre dernière visite :"
+    new_parent_fields_ack: Vu
+    show_field: Afficher
+    hide_field: Masquer
+    hidden_badge: masqué
+    origin:
+      inherited: hérité
+      added: ajouté
+      hidden: masqué
+      label: libellé changé
+      help: aide changée
+      required: rendu obligatoire
+      optional: rendu facultatif
+      moved: déplacé
     new_title: Nouveau type
     breadcrumb_new: nouveau
     new_heading: Nouveau type d’ELP

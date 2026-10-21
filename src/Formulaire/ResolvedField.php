@@ -36,6 +36,11 @@ final readonly class ResolvedField
     ) {
     }
 
+    public function getId(): ?int
+    {
+        return $this->def->getId();
+    }
+
     public function getKey(): string
     {
         return $this->def->getKey();
@@ -64,6 +69,21 @@ final readonly class ResolvedField
     public function getPlaceholder(): ?string
     {
         return $this->def->getPlaceholder();
+    }
+
+    public function getReferentielKey(): ?string
+    {
+        return $this->def->getReferentielKey();
+    }
+
+    public function isAllowExtra(): bool
+    {
+        return $this->def->isAllowExtra();
+    }
+
+    public function isQuickAdd(): bool
+    {
+        return $this->def->isQuickAdd();
     }
 
     /** @return array<string, string> */

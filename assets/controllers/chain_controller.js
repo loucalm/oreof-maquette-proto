@@ -29,6 +29,11 @@ export default class extends Controller {
         const keys = [...this.element.querySelectorAll('[data-chain-key]')].map((r) => r.dataset.chainKey);
         const body = new URLSearchParams();
         keys.forEach((k) => body.append('chain[]', k));
+        // reordonnancer un formulaire utilisé modifie les diplômes concernés : l'accord
+        // de la page (« Je confirme… ») doit acompanhar la requête.
+        if (document.querySelector('[data-impact-confirm]')?.checked) {
+            body.append('confirmImpact', '1');
+        }
 
         try {
             await fetch(this.saveUrlValue, {

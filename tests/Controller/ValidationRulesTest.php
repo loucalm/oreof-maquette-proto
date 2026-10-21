@@ -107,12 +107,13 @@ final class ValidationRulesTest extends WebTestCase
     {
         $type = $this->em->getRepository(NodeType::class)->findOneBy(['key' => 'param_presentation_formation']);
         $url = '/administration/node-types/'.$type->getId().'/regles';
+        // formulaire utilisé par les formations de démonstration : confirmation d'impact
 
-        $this->client->request('POST', $url, ['kind' => 'one_of', 'tab' => 'presentation', 'fields' => ['objectif']]);
+        $this->client->request('POST', $url, ['kind' => 'one_of', 'tab' => 'presentation', 'fields' => ['objectif'], 'confirmImpact' => '1']);
         $this->em->clear();
         self::assertCount(0, $this->em->find(NodeType::class, $type->getId())->getValidationRules(), 'un seul champ : refusé');
 
-        $this->client->request('POST', $url, ['kind' => 'one_of', 'tab' => 'presentation', 'fields' => ['rythme', 'rythmePrecision']]);
+        $this->client->request('POST', $url, ['kind' => 'one_of', 'tab' => 'presentation', 'fields' => ['rythme', 'rythmePrecision'], 'confirmImpact' => '1']);
         $this->em->clear();
         $rules = $this->em->find(NodeType::class, $type->getId())->getValidationRules();
         self::assertCount(1, $rules);
@@ -122,7 +123,7 @@ final class ValidationRulesTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('body', 'Renseigner au moins un champ parmi');
 
-        $this->client->request('POST', $url.'/'.$rules[0]->id.'/supprimer');
+        $this->client->request('POST', $url.'/'.$rules[0]->id.'/supprimer', ['confirmImpact' => '1']);
         $this->em->clear();
         self::assertCount(0, $this->em->find(NodeType::class, $type->getId())->getValidationRules());
     }
