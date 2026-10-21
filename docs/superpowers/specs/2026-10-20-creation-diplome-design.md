@@ -4,6 +4,8 @@ Date : 20/10/2026. Dépôt : `oreof-maquette-proto` (prototype de maquette ORéO
 
 Ce document couvre l'ensemble de la refonte et détaille le **chantier 1** (page Diplômes, assistant, structure). Les chantiers 2 à 5 sont cadrés mais feront chacun l'objet d'un document à part.
 
+> **État (21/10/2026)** : le chantier 1 est implémenté et fusionné dans `master`. Le fonctionnement réel est décrit dans `docs/diplomes.md`. Les arbitrages pris pendant la réalisation, qui précisent ou corrigent ce document, sont rassemblés au **§10** ; en cas d'écart, le §10 fait foi.
+
 ## 1. Intention
 
 Aujourd'hui, dans le prototype, un diplôme n'est qu'un libellé tiré d'un référentiel (`referentiel('diplomes')`), relié à un seul `StructureTemplate` (`StructureTemplate::diplome`, unique). Ce modèle est copié une fois dans la formation à sa création (`FormationController::create`, `TemplateApplier`). Le diplôme ne porte ni ses règles de structure, ni ses règles de MCCC, ni le format de ses blocs de compétences. Pour la Licence, il a fallu décrire à la main 3 années × 2 semestres, alors qu'ils sont structurellement identiques.
@@ -128,7 +130,7 @@ Ce choix suppose que le rendu des formulaires soit vraiment générique. Ce n'es
 
 **Blocs à choix.** Un bloc « 1 parmi N » compte pour 1 dans les bornes de son niveau. Règles possibles sur ses enfants (mêmes ECTS, nombre de choix).
 
-**Éléments imposés.** Un nœud précis imposé à une position donnée, ex. « UE Stage » dans le dernier semestre, avec ses verrous (non supprimable, non dupliquable — mécanique `locked` déjà présente dans `TemplateApplier`). Un élément imposé peut aussi surcharger une borne pour une position précise (ex. S6 : 2 à 4 UE).
+**Éléments imposés.** Un nœud précis imposé à une position donnée, ex. « UE Stage » dans le dernier semestre, avec ses verrous (non supprimable, non dupliquable — mécanique `locked` déjà présente dans `TemplateApplier`). Un élément imposé peut aussi surcharger une borne pour une position précise (ex. S6 : 2 à 4 UE). *Précisé par A6 et A18 (§10) : la position sert à placer l'élément ; le contrôle vérifie sa présence dans la portée, ou sous chaque hôte en position `all`.*
 
 **Natures d'élément.** Le type déclare les natures disponibles au niveau feuille (EC classique, ressource, SAÉ, stage, projet, mémoire…), chacune pouvant avoir son jeu de MCCC (étape 5).
 
@@ -173,8 +175,8 @@ Ajouter un type de champ ne doit plus demander de modifier le panneau, et aucun 
 
 ## 8. Contraintes
 
-- Conventions du dépôt (`AGENTS.md`) : attributs PHP, autowiring, contrôleurs fins, Form et Validator de Symfony, migrations Doctrine (le prototype n'en a pas encore : `schema:create`), tests `WebTestCase` / `KernelTestCase` (base SQLite dédiée `var/test.db`, déjà en place).
-- Protection CSRF et contrôle de rôle côté serveur sur toutes les nouvelles routes.
+- Conventions du dépôt (`AGENTS.md`) : attributs PHP, autowiring, contrôleurs fins, Form et Validator de Symfony, pas de migrations Doctrine dans le prototype (`schema:create`, voir A19), tests `WebTestCase` / `KernelTestCase` (base SQLite dédiée `var/test.db`, déjà en place).
+- Protection CSRF et contrôle de rôle côté serveur sur toutes les nouvelles routes (appliqué, voir A17).
 - Le prototype reste jetable mais doit rester transposable dans ORéOF v2 : vocabulaire métier, couture avec le DTO `StructureParcours` de v2 (finalité exports), cf. `AUDIT.md` §5.
 - Les données de démonstration (fixtures) doivent recréer au moins Licence, LP, Master, M2E et BUT par configuration, pour prouver le principe directeur.
 
@@ -196,3 +198,38 @@ Ajouter un type de champ ne doit plus demander de modifier le panneau, et aucun 
 - Règles : écrites par l'admin → catalogue de gabarits paramétrables (§6.4).
 
 **Points encore ouverts** : aucun bloquant pour planifier le chantier 1. À vérifier côté métier : niveau de rattachement aux BCC pour le M2E.
+
+## 10. Arbitrages pris pendant la réalisation
+
+Décisions prises pendant l'implémentation du chantier 1 (20-21/10/2026), sur les points que ce document laissait ouverts ou formulait mal. Elles font foi en cas d'écart avec les sections précédentes.
+
+**Modèle**
+- **A5 — Nature d'élément.** La nature d'un élément (`ec`, `stage`, `ressource`, `sae`…) est un attribut de nœud distinct, `natureElement`. Elle ne remplace pas l'attribut existant `nature` (obligatoire / à choix). Ses options viennent des natures déclarées par la version (`FieldDef::optionsSource = version_natures`).
+- **A6 — Parent d'un élément imposé.** Le niveau parent d'un élément imposé est toujours le niveau juste au-dessus de son type dans la chaîne ; il est déduit, pas saisi. Le stage du BUT est donc imposé sous la dernière UE, pas sous le semestre.
+- **A7 — Numérotation.** Le numéro de départ d'un niveau (LP : semestres 5 et 6) change l'indice, pas le format d'affichage (pas de préfixe « S »).
+- **A12 — Natures déclarées.** Les natures d'un élément imposé et des paramètres de règle de type « nature » doivent faire partie des natures déclarées par le type. Le BUT déclare `stage`.
+- **A15 — Durée et ramification.** La borne de durée se mesure par cursus : pour chaque parcours feuille, ses périodes plus celles de ses parcours parents (portail compris). Un parcours qui a des sous-parcours n'est pas mesuré seul. Sans ramification, rien ne change.
+- **A16 — Référentiel national.** Le niveau national d'une année se retrouve par son rang, jamais par un libellé du type « BUT1 ».
+- **A18 — Présence d'un élément imposé.** En position `first`, `last` ou numéro, l'élément est présent s'il existe un nœud `_imposed = uid` dans la portée (parcours, ou cursus en ramification) : la position ne sert qu'à le placer. Agrandir la maquette n'est donc pas bloqué. En position `all`, l'élément est attendu sous chaque hôte (violation portée par l'hôte) ; l'éditeur le place d'office sous un nouvel hôte et la propagation complète chaque hôte une seule fois.
+
+**Règles et contrôle**
+- **A8 — Ratio.** Un ratio « ≥ / > » est une exigence de minimum (non bloquante) ; « ≤ / < » une exigence de maximum (bloquante) ; une portée sans feuille est conforme.
+- **A9 — Paramètres internes.** Un paramètre de gabarit marqué interne (ex. l'identifiant de l'élément imposé de `required_element`) n'est jamais montré à l'admin et est conservé tel quel à l'enregistrement.
+- **A10 — Gabarit inconnu.** Une règle dont le gabarit n'existe plus est signalée (« Règle inconnue »), sans bloquer ni lever d'erreur.
+- **Contrôle à l'enregistrement.** Seule une violation bloquante nouvelle, ou aggravée, refuse une modification. Une maquette déjà hors bornes n'empêche pas de modifier autre chose. Annuler, rétablir et restaurer une révision ne sont jamais bloqués. Une action refusée doit être refaite une fois la dérogation accordée ; rien n'est mis en attente.
+- **Dérogations.** Une dérogation porte une clé de règle, un nœud et une valeur ; elle couvre jusqu'à cette valeur (`:max`), à partir de cette valeur (`:min`), ou sans condition (`imposed:`). Une valeur constatée inconnue n'est jamais couverte.
+
+**Assistant et édition**
+- **A11 — Étapes en services.** Chaque étape de l'assistant est une classe (`WizardStepInterface`) découverte automatiquement ; les mêmes classes servent d'onglets à l'édition d'une version.
+- **A13 — Onglet Informations en édition.** Il modifie le type lui-même (libellé, description, code Apogée, accrédité, passage en CFVU). Le sigle est figé dès qu'une formation utilise le type ; l'année d'une version ne se modifie pas.
+- **Navigation de l'assistant.** « Précédent » et la barre latérale enregistrent l'étape courante avant de changer d'étape. Revenir à l'assistant reprend le brouillon, sauf demande explicite de recommencer.
+- **Formulaires de paramètres.** Seul le formulaire de l'emplacement est choisi par le type ; les formulaires des niveaux de structure sont les types d'ELP de la chaîne eux-mêmes.
+
+**Sécurité, données, transition**
+- **A1 à A4 — Transition.** Les types de démonstration ont repris les anciens libellés de diplôme le temps de la transition ; les anciens templates de structure (`StructureTemplate`, `TemplateApplier`…) ont ensuite été supprimés.
+- **A14 / A19 — Base de données.** Pas de migrations dans le prototype. Après un changement de schéma, `make db-reset` est nécessaire et efface les données locales ; il n'est jamais lancé sans l'accord de l'utilisateur.
+- **A17 — CSRF.** Les formulaires de l'assistant et toutes les actions `diplome_*` portent un jeton CSRF (sans état, déjà configuré).
+- **Création de formation.** Réservée à l'admin côté serveur ; validée entièrement avant écriture et faite dans une transaction.
+
+**Valeurs de démonstration à confirmer côté métier** : ratio « SAÉ ≥ 40 % des ECTS par semestre » du BUT ; 2 semestres de 30 ECTS par année du BUT ; niveau de rattachement aux BCC du M2E (dernier niveau, en attendant).
+
