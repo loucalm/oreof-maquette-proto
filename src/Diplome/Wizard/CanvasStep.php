@@ -121,6 +121,7 @@ final class CanvasStep extends AbstractWizardStep
 
         return [
             'builtins' => $builtins,
+            'formIds' => array_combine(array_map(static fn (NodeType $t) => $t->getKey(), $forms), array_map(static fn (NodeType $t) => $t->getId(), $forms)),
             'formLabels' => array_combine(array_map(static fn (NodeType $t) => $t->getKey(), $forms), array_map(static fn (NodeType $t) => $t->getLabel(), $forms)),
             'library' => $this->library($forms),
         ];

@@ -78,6 +78,9 @@ diplome:
       remove: Retirer
       add: Ajouter une entrée
       added: ajoutée
+      adapt: Adapter
+      adapt_help: Crée une variante de ce formulaire pour ce diplôme et la choisit pour l'entrée.
+      modify: Modifier
       library_title: Bibliothèque de formulaires
       library_help: Commune à tous les diplômes. Une variante reprend son formulaire de départ et n'en garde que les écarts.
       variant: variante
