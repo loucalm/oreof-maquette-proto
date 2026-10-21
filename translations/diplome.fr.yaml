@@ -105,6 +105,10 @@ diplome:
       level_ects: ECTS de chaque nœud
       level_ects_sum: Somme des ECTS des enfants
       level_start_at: Numéro de départ
+      level_start_at_short: N° départ
+      level_section_help: Du premier niveau à la feuille. Les bornes s'appliquent dans chaque parent (« 3 à 6 UE » = dans chaque semestre).
+      imposed_section_help: Nœuds qui doivent exister, placés d'office et verrouillés.
+      rule_section_help: Contraintes supplémentaires, contrôlées en direct dans les formations.
       natures: Natures d'élément
       natures_help: Clés séparées par des virgules (ex. ec, stage, sae). Elles qualifient les éléments du niveau feuille.
       imposed: Éléments imposés

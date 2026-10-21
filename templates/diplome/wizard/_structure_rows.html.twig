@@ -1,37 +1,58 @@
 {# Lignes des collections de l'étape Structure (aussi utilisées pour le prototype d'ajout). #}
+{% set inputClass = 'w-full rounded-md border px-2 py-1 text-sm' %}
+
 {% macro field(f, class = '') %}
     <div class="block {{ class }}">
-        {{ form_label(f, null, {label_attr: {class: 'text-xs font-medium'}}) }}
-        {{ form_widget(f, {attr: {class: 'mt-1 w-full rounded-md border px-2 py-1.5 text-sm', style: 'border-color:var(--c-border)'}}) }}
+        {{ form_label(f, null, {label_attr: {class: 'text-[11px] font-medium uppercase tracking-wide', style: 'color:var(--c-muted)'}}) }}
+        {{ form_widget(f, {attr: {class: 'mt-0.5 w-full rounded-md border px-2 py-1 text-sm', style: 'border-color:var(--c-border)'}}) }}
         {{ form_errors(f) }}
     </div>
 {% endmacro %}
 
+{# Borne compacte : mode, puis un nombre (deux pour « entre », aucun pour « aucune »), cf. bound_controller.js #}
+{% macro boundWidget(f) %}
+    <div class="flex items-center gap-1" data-controller="bound">
+        {{ form_widget(f.mode, {attr: {class: 'rounded-md border px-1.5 py-1 text-sm', style: 'border-color:var(--c-border)', 'data-bound-target': 'mode', 'data-action': 'bound#update'}}) }}
+        {{ form_widget(f.value, {attr: {class: 'w-14 rounded-md border px-1.5 py-1 text-sm', style: 'border-color:var(--c-border)', 'data-bound-target': 'value'}}) }}
+        <span class="text-xs" style="color:var(--c-muted)" data-bound-target="upper">–</span>
+        {{ form_widget(f.upper, {attr: {class: 'w-14 rounded-md border px-1.5 py-1 text-sm', style: 'border-color:var(--c-border)', 'data-bound-target': 'upper'}}) }}
+    </div>
+    {{ form_errors(f) }}
+{% endmacro %}
+
 {% macro bound(f) %}
+    {% import _self as m %}
     <div class="block">
-        {{ form_label(f, null, {label_attr: {class: 'text-xs font-medium'}}) }}
-        {{ form_widget(f, {attr: {class: 'mt-1 flex gap-1 items-center'}}) }}
-        {{ form_errors(f) }}
+        {{ form_label(f, null, {label_attr: {class: 'text-[11px] font-medium uppercase tracking-wide', style: 'color:var(--c-muted)'}}) }}
+        <div class="mt-0.5">{{ m.boundWidget(f) }}</div>
     </div>
 {% endmacro %}
 
 {% macro controls() %}
-    <div class="flex gap-1 shrink-0 text-xs">
-        <button type="button" data-action="collection#up" class="rounded border px-2 py-1 hover:bg-gray-50" style="border-color:var(--c-border)" title="{{ 'diplome.wizard.structure.up'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.wizard.structure.up'|trans({}, 'diplome') }}">↑</button>
-        <button type="button" data-action="collection#down" class="rounded border px-2 py-1 hover:bg-gray-50" style="border-color:var(--c-border)" title="{{ 'diplome.wizard.structure.down'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.wizard.structure.down'|trans({}, 'diplome') }}">↓</button>
-        <button type="button" data-action="collection#remove" class="rounded border px-2 py-1 hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'diplome.wizard.structure.remove'|trans({}, 'diplome') }}</button>
+    {% set btn = 'inline-flex h-7 w-7 items-center justify-center rounded hover:bg-gray-100' %}
+    <div class="flex shrink-0 items-center gap-0.5">
+        <button type="button" data-action="collection#up" class="{{ btn }}" title="{{ 'diplome.wizard.structure.up'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.wizard.structure.up'|trans({}, 'diplome') }}">{{ ux_icon('ph:arrow-up', {class: 'icon'}) }}</button>
+        <button type="button" data-action="collection#down" class="{{ btn }}" title="{{ 'diplome.wizard.structure.down'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.wizard.structure.down'|trans({}, 'diplome') }}">{{ ux_icon('ph:arrow-down', {class: 'icon'}) }}</button>
+        <button type="button" data-action="collection#remove" class="{{ btn }}" style="color:#dc2626" title="{{ 'diplome.wizard.structure.remove'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.wizard.structure.remove'|trans({}, 'diplome') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
     </div>
 {% endmacro %}
 
+{# Grille d'une ligne de niveau, partagée avec l'en-tête du tableau (structure.html.twig). #}
+{% macro levelGrid() %}grid grid-cols-[minmax(10rem,1.4fr)_repeat(3,minmax(11rem,1fr))_4.5rem_auto] items-center gap-3{% endmacro %}
+
 {% macro level(f) %}
     {% import _self as m %}
-    <div data-collection-row data-level-row class="rounded-md border p-3 flex gap-3 items-start" style="border-color:var(--c-border)">
-        <div class="flex-1 grid grid-cols-5 gap-3">
-            {{ m.field(f.typeKey, 'col-span-2') }}
-            {{ m.bound(f.count) }}
-            {{ m.bound(f.ects) }}
-            {{ m.bound(f.ectsSum) }}
-            {{ m.field(f.startAt) }}
+    <div data-collection-row data-level-row class="{{ m.levelGrid() }} rounded-md border px-3 py-2" style="border-color:var(--c-border)">
+        <div>
+            {{ form_widget(f.typeKey, {attr: {class: 'w-full rounded-md border px-2 py-1 text-sm', style: 'border-color:var(--c-border)', 'aria-label': f.typeKey.vars.label|trans({}, 'diplome')}}) }}
+            {{ form_errors(f.typeKey) }}
+        </div>
+        {{ m.boundWidget(f.count) }}
+        {{ m.boundWidget(f.ects) }}
+        {{ m.boundWidget(f.ectsSum) }}
+        <div>
+            {{ form_widget(f.startAt, {attr: {class: 'w-full rounded-md border px-2 py-1 text-sm', style: 'border-color:var(--c-border)', 'aria-label': f.startAt.vars.label|trans({}, 'diplome')}}) }}
+            {{ form_errors(f.startAt) }}
         </div>
         {{ m.controls() }}
     </div>
@@ -39,41 +60,45 @@
 
 {% macro imposed(f) %}
     {% import _self as m %}
-    <div data-collection-row data-imposed-row class="rounded-md border p-3 flex gap-3 items-start" style="border-color:var(--c-border)">
+    <div data-collection-row data-imposed-row class="rounded-md border px-3 py-2" style="border-color:var(--c-border)">
         {{ form_widget(f.uid) }}
-        <div class="flex-1 grid grid-cols-4 gap-3">
-            {{ m.field(f.typeKey) }}
-            {{ m.field(f.label, 'col-span-2') }}
-            {{ m.field(f.position) }}
-            {{ m.field(f.nature) }}
-            {{ m.bound(f.countOverride) }}
-            <div class="col-span-2">
-                {{ form_label(f.locked, null, {label_attr: {class: 'text-xs font-medium'}}) }}
-                <div class="mt-1 flex gap-3 text-sm">{{ form_widget(f.locked) }}</div>
+        <div class="flex items-start gap-3">
+            <div class="flex-1 grid grid-cols-2 gap-x-3 gap-y-2 md:grid-cols-[1fr_1.6fr_7rem_8rem]">
+                {{ m.field(f.typeKey) }}
+                {{ m.field(f.label) }}
+                {{ m.field(f.position) }}
+                {{ m.field(f.nature) }}
+                {{ m.bound(f.countOverride) }}
+                <div class="col-span-2 md:col-span-3">
+                    {{ form_label(f.locked, null, {label_attr: {class: 'text-[11px] font-medium uppercase tracking-wide', style: 'color:var(--c-muted)'}}) }}
+                    <div class="mt-1 text-sm [&_input]:mr-1 [&_label]:mr-4 [&_label]:inline-flex">{{ form_widget(f.locked) }}</div>
+                </div>
             </div>
+            {{ m.controls() }}
         </div>
-        {{ m.controls() }}
     </div>
 {% endmacro %}
 
 {% macro rule(f) %}
     {% import _self as m %}
-    <div data-collection-row data-rule-row data-controller="rule-params" class="rounded-md border p-3 flex gap-3 items-start" style="border-color:var(--c-border)">
+    <div data-collection-row data-rule-row data-controller="rule-params" class="rounded-md border px-3 py-2" style="border-color:var(--c-border)">
         {{ form_widget(f.uid) }}
-        <div class="flex-1 space-y-3">
-            <div class="grid grid-cols-3 gap-3">
-                {{ m.field(f.template) }}
-                {{ m.field(f.scopeLevel) }}
-                {{ m.field(f.severity) }}
-            </div>
-            {% for group in f %}{% if group.vars.name starts with 'params_' %}
-                <div data-rule-params-target="group" data-template="{{ group.vars.name|slice(7) }}" class="grid grid-cols-4 gap-3">
-                    {% for param in group %}
-                        {{ m.field(param) }}
-                    {% endfor %}
+        <div class="flex items-start gap-3">
+            <div class="flex-1 space-y-2">
+                <div class="grid grid-cols-[1.6fr_1fr_1fr] gap-3">
+                    {{ m.field(f.template) }}
+                    {{ m.field(f.scopeLevel) }}
+                    {{ m.field(f.severity) }}
                 </div>
-            {% endif %}{% endfor %}
+                {% for group in f %}{% if group.vars.name starts with 'params_' %}
+                    <div data-rule-params-target="group" data-template="{{ group.vars.name|slice(7) }}" class="grid grid-cols-2 gap-3 md:grid-cols-4">
+                        {% for param in group %}
+                            {{ m.field(param) }}
+                        {% endfor %}
+                    </div>
+                {% endif %}{% endfor %}
+            </div>
+            {{ m.controls() }}
         </div>
-        {{ m.controls() }}
     </div>
 {% endmacro %}

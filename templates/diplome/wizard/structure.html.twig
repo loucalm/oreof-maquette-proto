@@ -17,9 +17,10 @@
 {{ form_start(form, {attr: {id: 'wizard-form', class: 'space-y-6'}}) }}
     {{ form_errors(form) }}
 
-    <fieldset class="grid grid-cols-3 gap-3 items-start">
+    {% set card = 'rounded-lg border p-4' %}
+    <fieldset class="{{ card }} grid gap-4 md:grid-cols-[auto_auto_1fr] md:items-end" style="border-color:var(--c-border)">
         {{ rows.bound(form.duration) }}
-        <label class="flex items-center gap-2 text-sm pt-5">{{ form_widget(form.parcoursAllowed) }} {{ form_label(form.parcoursAllowed) }}</label>
+        <label class="flex items-center gap-2 text-sm md:pb-1.5">{{ form_widget(form.parcoursAllowed) }} {{ form_label(form.parcoursAllowed) }}</label>
         {{ rows.field(form.natures) }}
     </fieldset>
 
@@ -30,21 +31,37 @@
     ] %}
     {% for s in sections %}
         {% set proto = s.macro == 'level' ? rows.level(s.field.vars.prototype) : (s.macro == 'imposed' ? rows.imposed(s.field.vars.prototype) : rows.rule(s.field.vars.prototype)) %}
-        <section data-controller="collection" data-collection-prototype-value="{{ proto|e('html_attr') }}" data-collection-index-value="{{ s.field|keys|reduce((max, k) => k >= max ? k + 1 : max, 0) }}" data-section="{{ s.macro }}">
-            <h3 class="text-sm font-semibold mb-2">{{ form_label(s.field) }}</h3>
+        <section class="{{ card }}" style="border-color:var(--c-border)" data-controller="collection" data-collection-prototype-value="{{ proto|e('html_attr') }}" data-collection-index-value="{{ s.field|keys|reduce((max, k) => k >= max ? k + 1 : max, 0) }}" data-section="{{ s.macro }}">
+            <div class="mb-3 flex items-start justify-between gap-3">
+                <div>
+                    <h3 class="text-sm font-semibold">{{ form_label(s.field) }}</h3>
+                    <p class="text-xs" style="color:var(--c-muted)">{{ ('diplome.wizard.structure.' ~ s.macro ~ '_section_help')|trans({}, 'diplome') }}</p>
+                </div>
+                <button type="button" data-action="collection#add" class="inline-flex shrink-0 items-center gap-1 rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ ('diplome.wizard.structure.' ~ s.add)|trans({}, 'diplome') }}</button>
+            </div>
             {{ form_errors(s.field) }}
+            {% if s.macro == 'level' %}
+                {# en-tête des colonnes, alignée sur les lignes (rows.levelGrid) #}
+                <div class="{{ rows.levelGrid() }} px-3 pb-1 text-[11px] font-medium uppercase tracking-wide" style="color:var(--c-muted)">
+                    <span>{{ 'diplome.wizard.structure.level_type'|trans({}, 'diplome') }}</span>
+                    <span>{{ 'diplome.wizard.structure.level_count'|trans({}, 'diplome') }}</span>
+                    <span>{{ 'diplome.wizard.structure.level_ects'|trans({}, 'diplome') }}</span>
+                    <span>{{ 'diplome.wizard.structure.level_ects_sum'|trans({}, 'diplome') }}</span>
+                    <span title="{{ 'diplome.wizard.structure.level_start_at'|trans({}, 'diplome') }}">{{ 'diplome.wizard.structure.level_start_at_short'|trans({}, 'diplome') }}</span>
+                    <span class="w-[5.5rem]"></span>
+                </div>
+            {% endif %}
             <div data-collection-target="list" class="space-y-2">
                 {% for row in s.field %}
                     {% if s.macro == 'level' %}{{ rows.level(row) }}{% elseif s.macro == 'imposed' %}{{ rows.imposed(row) }}{% else %}{{ rows.rule(row) }}{% endif %}
                 {% endfor %}
             </div>
-            <button type="button" data-action="collection#add" class="mt-2 rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ('diplome.wizard.structure.' ~ s.add)|trans({}, 'diplome') }}</button>
         </section>
     {% endfor %}
     {{ form_rest(form) }}
 {{ form_end(form, {render_rest: false}) }}
 
-<section data-preview class="mt-8 border-t pt-5" style="border-color:var(--c-border)">
+<section data-preview class="mt-6 rounded-lg border p-4" style="border-color:var(--c-border);background:#f8f9fb">
     <h3 class="text-sm font-semibold mb-1">{{ 'diplome.wizard.structure.preview'|trans({}, 'diplome') }}</h3>
     <p class="text-xs mb-3" style="color:var(--c-muted)">{{ 'diplome.wizard.structure.preview_help'|trans({}, 'diplome') }}</p>
     {% if previewError %}
