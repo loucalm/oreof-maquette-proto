@@ -160,6 +160,9 @@ diplome:
       error:
         no_level: Définissez au moins un niveau.
         duplicate_level: Un même type de nœud ne peut pas figurer deux fois dans la chaîne.
+        element_missing: "La chaîne doit se terminer par %element%"
+        element_not_last: "%element% doit être le dernier niveau"
+        ec_link_level: "Seul le niveau juste au-dessus d'%element% peut recevoir des coefficients"
         duration_level_not_in_chain: Le niveau qui compte la durée doit figurer dans la chaîne de niveaux.
         duration_level_not_temporal: Le niveau qui compte la durée doit être un niveau de temps (année, semestre…).
         duration_intermediate_not_exact: Pour compter la durée sur ce niveau, chaque niveau situé entre le premier et lui doit avoir un nombre exact par parent.

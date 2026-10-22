@@ -99,6 +99,7 @@ final class StructureType extends AbstractType
             $add('diplome.wizard.structure.error.duplicate_level');
         }
         $this->validateDuration($data, $levels, $order, $chain, $context);
+        $this->validateElementLevel($levels, $order, $chain, $context);
         foreach ($data['imposed'] ?? [] as $i => $imposed) {
             $row = ['%n%' => $i + 1];
             $at = array_search($imposed['typeKey'] ?? null, $chain, true);
@@ -124,6 +125,33 @@ final class StructureType extends AbstractType
                 if ('nature' === $param->type && '' !== $value && !\in_array($value, $natures, true)) {
                     $add('diplome.wizard.structure.error.unknown_nature', $row + ['%nature%' => $value]);
                 }
+            }
+        }
+    }
+
+    /**
+     * Le niveau élément (EC) ferme la chaîne, et seul le niveau juste au-dessus de lui peut rattacher les EC par coefficient
+     * (sans être le premier niveau).
+     *
+     * @param list<array<string, mixed>> $levels
+     * @param list<int>                  $order
+     * @param list<string>               $chain
+     */
+    private function validateElementLevel(array $levels, array $order, array $chain, ExecutionContextInterface $context): void
+    {
+        $element = $this->nodeTypes->findElementLevel();
+        if (null === $element || [] === $chain) {
+            return;
+        }
+        $params = ['%element%' => $element->getLabel()];
+        $last = \count($chain) - 1;
+        if ($chain[$last] !== $element->getKey()) {
+            $id = \in_array($element->getKey(), $chain, true) ? 'diplome.wizard.structure.error.element_not_last' : 'diplome.wizard.structure.error.element_missing';
+            $context->buildViolation($id, $params)->setTranslationDomain('diplome')->addViolation();
+        }
+        foreach (array_values($order) as $at => $i) {
+            if (LevelSpec::EC_COEFFICIENT === ($levels[$i]['ecLink'] ?? null) && !(1 <= $at && $at === $last - 1)) {
+                $context->buildViolation('diplome.wizard.structure.error.ec_link_level', $params)->setTranslationDomain('diplome')->addViolation();
             }
         }
     }

@@ -10,7 +10,7 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-/** Choix d'un type de nœud de la famille structurelle (année, semestre, UE, EC…), par sa clé. */
+/** Choix d'un type de nœud de la famille structurelle (année, semestre, UE, EC…), par sa clé ; une variante de type n'est pas un niveau. */
 final class StructuralTypeKeyType extends AbstractType
 {
     public function __construct(private readonly NodeTypeRepository $nodeTypes)
@@ -36,7 +36,7 @@ final class StructuralTypeKeyType extends AbstractType
     {
         $choices = [];
         foreach ($this->nodeTypes->findAllOrdered() as $type) {
-            if (NodeFamily::Structural === $type->getFamily()) {
+            if (NodeFamily::Structural === $type->getFamily() && !$type->isVariant()) {
                 $choices[$type->getLabel().' ('.$type->getKey().')'] = $type->getKey();
             }
         }

@@ -67,6 +67,7 @@ final class NodeTypeFixtures extends Fixture
                 ->setChoiceTransformable($choiceTransformable)
                 // le code de l'ELP n'est obligatoire que pour les éléments constitutifs (feuilles évaluées)
                 ->setCodeRequired('ec' === $key)
+                ->setElementLevel('ec' === $key)
                 ->setSystem($system);
 
             $manager->persist($type);

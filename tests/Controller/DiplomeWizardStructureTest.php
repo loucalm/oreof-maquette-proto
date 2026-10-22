@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Controller;
 
 use App\Diplome\WizardDraft;
+use App\Entity\NodeType;
 use App\Entity\TypeDiplome;
 use App\Tests\Support\ResetsDatabase;
 use App\Tests\Support\SameOriginCsrf;
@@ -107,6 +108,65 @@ final class DiplomeWizardStructureTest extends WebTestCase
     private function storedStructure(): array
     {
         return $this->client->getRequest()->getSession()->get(WizardDraft::SESSION_KEY)->config()->structure->toArray();
+    }
+
+    /** @param list<string> $chain */
+    private function chainPayload(array $chain): array
+    {
+        $payload = self::payload($this->startFrom('L'));
+        $payload['levels'] = array_map(static fn (string $key) => ['typeKey' => $key, 'count' => ['mode' => 'none'], 'ects' => ['mode' => 'none'], 'ectsSum' => ['mode' => 'none'], 'startAt' => 1, 'ecLink' => 'contains'], $chain);
+        $payload['duration'] = ['levelKey' => '', 'bound' => ['mode' => 'none']];
+        $payload['imposed'] = [];
+        $payload['rules'] = [];
+
+        return $payload;
+    }
+
+    public function testChainMustEndWithElementLevel(): void
+    {
+        $crawler = $this->submit($this->chainPayload(['annee', 'semestre', 'ue']));
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('La chaîne doit se terminer par EC', $crawler->text());
+
+        $crawler = $this->submit($this->chainPayload(['annee', 'ec', 'ue']));
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('EC doit être le dernier niveau', $crawler->text());
+
+        $this->submit($this->chainPayload(['annee', 'semestre', 'ue', 'ec']));
+        self::assertResponseRedirects('/diplomes/nouveau/formulaires');
+    }
+
+    public function testVariantsNotProposed(): void
+    {
+        $variant = (new NodeType('ue_variante', 'UE variante'))->setParent($this->em->getRepository(NodeType::class)->findOneBy(['key' => 'ue']));
+        $this->em->persist($variant);
+        $this->em->flush();
+        static::getContainer()->get('services_resetter')->reset();
+
+        $this->startFrom('L');
+        $crawler = $this->client->request('GET', '/diplomes/nouveau/structure');
+        self::assertGreaterThan(0, $crawler->filter('select option[value="ue"]')->count());
+        self::assertCount(0, $crawler->filter('select option[value="ue_variante"]'));
+    }
+
+    public function testEcLinkOnlyAboveElementLevel(): void
+    {
+        $payload = $this->chainPayload(['annee', 'semestre', 'ue', 'ec']);
+        $payload['levels'][1]['ecLink'] = 'coefficient';
+        $crawler = $this->submit($payload);
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('Seul le niveau juste au-dessus d\'EC peut recevoir des coefficients', $crawler->text());
+
+        $payload = $this->chainPayload(['annee', 'ec']);
+        $payload['levels'][0]['ecLink'] = 'coefficient';
+        $crawler = $this->submit($payload);
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('Seul le niveau juste au-dessus d\'EC peut recevoir des coefficients', $crawler->text());
+
+        $payload = $this->chainPayload(['annee', 'semestre', 'ue', 'ec']);
+        $payload['levels'][2]['ecLink'] = 'coefficient';
+        $this->submit($payload);
+        self::assertResponseRedirects('/diplomes/nouveau/formulaires');
     }
 
     public function testExactlyTwoSemestersIsStoredAsExactBound(): void

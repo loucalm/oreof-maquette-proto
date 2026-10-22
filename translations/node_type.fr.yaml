@@ -83,6 +83,8 @@ node_type:
     elp_params_legend: Paramètre de l’ELP
     mutualisable_label: Mutualisable / raccrochable
     choice_transformable_label: Transformable en bloc de choix
+    element_level_label: Niveau élément (dernier niveau de toute chaîne, comme EC)
+    element_level_help: Un seul type de nœud porte ce réglage ; une variante ne le peut pas.
     numbering_legend: Numérotation
     numbered_label: Numérotation automatique
     number_style_label: Type de numérotation

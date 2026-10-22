@@ -158,6 +158,7 @@ final class NodeTypeController extends AbstractController
                     ->setGlobalNumbering(!$request->request->getBoolean('heritee'))
                     ->setChoiceTransformable($request->request->getBoolean('choiceTransformable'));
 
+                $this->applyElementLevel($nodeType, $request, $types);
                 $this->setCapability($nodeType, 'mutualisable', $request->request->getBoolean('mutualisable'), true);
             }
 
@@ -609,6 +610,32 @@ final class NodeTypeController extends AbstractController
     }
 
     /** Clé dérivée du libellé (« Unité d'enseignement » → unite_d_enseignement), suffixée _2, _3… si déjà prise. */
+    /** Le réglage « niveau élément » : un seul type structurel, jamais une variante. Sans le marqueur du champ, rien ne change. */
+    private function applyElementLevel(NodeType $nodeType, Request $request, NodeTypeRepository $types): void
+    {
+        if (!$request->request->getBoolean('elementLevelForm')) {
+            return;
+        }
+        $wanted = $request->request->getBoolean('elementLevel');
+        if (!$wanted || $nodeType->isElementLevel()) {
+            $nodeType->setElementLevel($wanted && NodeFamily::Structural === $nodeType->getFamily() && !$nodeType->isVariant());
+
+            return;
+        }
+        if ($nodeType->isVariant() || NodeFamily::Structural !== $nodeType->getFamily()) {
+            $this->addFlash('warning', 'Une variante ne peut pas être le niveau élément.');
+
+            return;
+        }
+        $owner = $types->findElementLevel();
+        if (null !== $owner && $owner !== $nodeType) {
+            $this->addFlash('warning', sprintf('Le niveau élément est déjà porté par %s.', $owner->getLabel()));
+
+            return;
+        }
+        $nodeType->setElementLevel(true);
+    }
+
     private function uniqueKey(string $label, NodeTypeRepository $types): string
     {
         $base = (new AsciiSlugger())->slug($label, '_')->lower()->toString() ?: 'type';

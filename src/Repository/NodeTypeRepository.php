@@ -58,6 +58,18 @@ class NodeTypeRepository extends ServiceEntityRepository implements ResetInterfa
         return $this->indexed;
     }
 
+    /** Le type qui joue le rôle d'EC (réglage « niveau élément »), ou null s'il n'est pas désigné. */
+    public function findElementLevel(): ?NodeType
+    {
+        foreach ($this->findAllOrdered() as $type) {
+            if ($type->isElementLevel()) {
+                return $type;
+            }
+        }
+
+        return null;
+    }
+
     public function reset(): void
     {
         $this->indexed = null;

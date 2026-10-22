@@ -317,6 +317,14 @@
                 <input type="checkbox" name="choiceTransformable" value="1" {{ (nodeType.choiceTransformable ?? true) ? 'checked' }}>
                 {{ 'node_type.edit.choice_transformable_label'|trans({}, 'node_type') }}
             </label>
+            {% if not (nodeType is not null and nodeType.variant) and (isNew or nodeType.family.value == 'structural') %}
+            <input type="hidden" name="elementLevelForm" value="1">
+            <label class="mt-2 flex items-center gap-2 text-sm">
+                <input type="checkbox" name="elementLevel" value="1" {{ (nodeType.elementLevel ?? false) ? 'checked' }}>
+                {{ 'node_type.edit.element_level_label'|trans({}, 'node_type') }}
+            </label>
+            <span class="text-[11px]" style="color:var(--c-muted)">{{ 'node_type.edit.element_level_help'|trans({}, 'node_type') }}</span>
+            {% endif %}
         </fieldset>
 
         <fieldset class="rounded-md border p-3" style="border-color:var(--c-border)">

@@ -116,6 +116,10 @@ class NodeType
     #[ORM\Column]
     private bool $codeRequired = false;
 
+    /** Ce type est-il le niveau élément (EC), dernier niveau de toute chaîne ? Un seul type le porte, jamais une variante. */
+    #[ORM\Column(options: ['default' => false])]
+    private bool $elementLevel = false;
+
     /** Type "socle" livré par les fixtures — informatif, non bloquant dans le proto. */
     #[ORM\Column]
     private bool $system = false;
@@ -365,6 +369,18 @@ class NodeType
     public function setCodeRequired(bool $codeRequired): self
     {
         $this->codeRequired = $codeRequired;
+
+        return $this;
+    }
+
+    public function isElementLevel(): bool
+    {
+        return $this->elementLevel;
+    }
+
+    public function setElementLevel(bool $elementLevel): self
+    {
+        $this->elementLevel = $elementLevel;
 
         return $this;
     }
