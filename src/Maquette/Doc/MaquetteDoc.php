@@ -183,11 +183,11 @@ final class MaquetteDoc
     }
 
     /**
-     * Retire $node (et toute sa descendance) de l'arbre. Un nœud imposé par un
-     * template n'est retiré qu'avec $force (réorganisation interne, pas une
+     * Retire $node (et toute sa descendance) de l'arbre. Un nœud verrouillé contre
+     * la suppression n'est retiré qu'avec $force (réorganisation interne, pas une
      * suppression demandée par l'utilisateur).
      *
-     * @return bool false si le nœud (ou un de ses descendants) est imposé et n'a pas été retiré
+     * @return bool false si le nœud (ou un de ses descendants) est verrouillé et n'a pas été retiré
      */
     public function removeNode(TreeNode $node, bool $force = false): bool
     {
@@ -197,7 +197,7 @@ final class MaquetteDoc
             }
             foreach ($this->descendants($node) as $d) {
                 if ($d->isLocked('delete')) {
-                    return false; // ne pas emporter un descendant imposé avec son parent libre
+                    return false; // ne pas emporter un descendant verrouillé avec son parent libre
                 }
             }
         }

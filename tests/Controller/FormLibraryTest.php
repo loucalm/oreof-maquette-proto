@@ -94,7 +94,7 @@ final class FormLibraryTest extends WebTestCase
 
     public function testModificationOfUsedFormRequiresImpactConfirmation(): void
     {
-        FormationFactory::create(static::getContainer())->fromType('BUT', 3);
+        FormationFactory::create(static::getContainer())->fromType('BUT', 6);
         $socle = $this->form('param_presentation_formation');
         $url = sprintf('/administration/node-types/%d/champs/%d', $socle->getId(), $this->fieldDef('objectif')->getId());
         $edit = ['label' => 'But', 'type' => 'textarea', 'required' => '1'];
@@ -115,7 +115,7 @@ final class FormLibraryTest extends WebTestCase
     public function testUsedFormCannotBeDeleted(): void
     {
         $variant = $this->variantOf('param_presentation_formation');
-        $formation = FormationFactory::create(static::getContainer())->fromType('BUT', 3);
+        $formation = FormationFactory::create(static::getContainer())->fromType('BUT', 6);
         $this->changeEntry($formation, CanvasSpec::FORMATION, 'presentation', static fn (CanvasEntry $e) => new CanvasEntry($e->key, $variant->getKey(), null, $e->label, $e->hidden));
 
         $this->client->request('POST', sprintf('/node-types/%d/delete', $variant->getId()));

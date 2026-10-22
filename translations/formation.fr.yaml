@@ -46,7 +46,7 @@ formation:
     name_placeholder: Formation exemple
     name_help: Nommer votre formation
     diplome_field: Type de diplôme
-    diplome_help: Le type de diplôme fixe la structure de départ, ses bornes et ses éléments imposés. Les types archivés ne sont plus proposés.
+    diplome_help: Le type de diplôme fixe la structure de départ, ses bornes et ses règles. Les types archivés ne sont plus proposés.
     type_option_bounds: 'durée %duration%'
     type_option_no_parcours: sans parcours
     duree_field: Durée de la formation
@@ -86,7 +86,7 @@ formation:
     filter_all: Tout
     filter_todo: À compléter
     drag_title: Glisser pour déplacer
-    locked_title: ELP imposé par le diplôme
+    locked_title: ELP verrouillé
     ref_title: Référence calculée
     choice_count_title: Nombre à choisir parmi les options de ce bloc
     choice_count: '%chosen% parmi %total%'
@@ -510,9 +510,9 @@ formation:
         %link_open%voir / éditer les types%link_close%.
       reset_confirm: >-
         Vider tous les éléments pédagogiques de l'arbre ? (le squelette et les éléments pédagogiques
-        imposés sont conservés)
+        verrouillés sont conservés)
       reset_button: Vider les ELP
       derogation_note: >-
         Pour ajouter, déplacer ou supprimer quelque chose que le type de diplôme ne prévoit pas
-        (typiquement un ELP imposé) — bouton %flag_icon% dans la barre d'actions de l'arborescence.
+        (typiquement un ELP verrouillé) — bouton %flag_icon% dans la barre d'actions de l'arborescence.
       no_derogation: Aucune demande envoyée pour cette formation.

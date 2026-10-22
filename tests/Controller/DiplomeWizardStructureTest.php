@@ -75,20 +75,15 @@ final class DiplomeWizardStructureTest extends WebTestCase
                 'ecLink' => $l['ecLink'],
             ];
         }
-        $imposed = [];
-        foreach ($s['imposed'] as $i) {
-            $imposed[] = ['uid' => $i['uid'], 'typeKey' => $i['typeKey'], 'label' => $i['label'], 'position' => $i['position'], 'nature' => $i['nature'], 'locked' => $i['locked'], 'countOverride' => self::bound($i['countOverride'])];
-        }
         $rules = [];
         foreach ($s['rules'] as $r) {
-            $rules[] = ['uid' => $r['uid'], 'template' => $r['template'], 'scopeLevel' => $r['scopeLevel'], 'scopePosition' => $r['scopePosition'] ?? 'all', 'severity' => $r['severity'], 'params_'.$r['template'] => array_diff_key($r['params'], ['imposed' => 1])]; // le champ interne n'est jamais envoyé
+            $rules[] = ['uid' => $r['uid'], 'template' => $r['template'], 'scopeLevel' => $r['scopeLevel'], 'scopePosition' => $r['scopePosition'] ?? 'all', 'severity' => $r['severity'], 'params_'.$r['template'] => $r['params']];
         }
 
         $payload = [
             'duration' => ['levelKey' => $s['duration']['levelKey'] ?? '', 'bound' => self::bound($s['duration']['bound'] ?? null)],
             'natures' => implode(', ', array_column($s['natures'], 'key')),
             'levels' => $levels,
-            'imposed' => $imposed,
             'rules' => $rules,
         ];
         if ($s['parcoursAllowed']) {
@@ -116,7 +111,6 @@ final class DiplomeWizardStructureTest extends WebTestCase
         $payload = self::payload($this->startFrom('L'));
         $payload['levels'] = array_map(static fn (string $key) => ['typeKey' => $key, 'count' => ['mode' => 'none'], 'ects' => ['mode' => 'none'], 'ectsSum' => ['mode' => 'none'], 'startAt' => 1, 'ecLink' => 'contains'], $chain);
         $payload['duration'] = ['levelKey' => '', 'bound' => ['mode' => 'none']];
-        $payload['imposed'] = [];
         $payload['rules'] = [];
 
         return $payload;
@@ -217,8 +211,7 @@ final class DiplomeWizardStructureTest extends WebTestCase
         $payload = self::payload($this->startFrom('L'));
         unset($payload['levels'][1]);
         $payload['levels'] = array_values($payload['levels']);
-        // sans semestre, les éléments de niveau supérieur ne peuvent plus viser un semestre
-        $payload['imposed'] = [];
+        // sans semestre, les règles ne peuvent plus viser un semestre
         $payload['rules'] = [];
 
         $this->submit($payload);
@@ -279,28 +272,20 @@ final class DiplomeWizardStructureTest extends WebTestCase
         self::assertCount(6, $crawler->filter('[data-preview] [data-node-type="semestre"]'));
     }
 
-    public function testImposedElementUsesLevelAboveAsParentAndHidesInternalParam(): void
+    public function testButStageObligationsAreRules(): void
     {
         $structure = $this->startFrom('BUT');
         $crawler = $this->client->request('GET', '/diplomes/nouveau/structure');
-        self::assertCount(1, $crawler->filter('[name$="[params_required_element][typeKey]"]'), 'le gabarit « élément imposé » est proposé');
-        self::assertCount(0, $crawler->filter('[name$="[params_required_element][imposed]"]'), 'le paramètre interne « imposed » ne doit pas être proposé');
+        self::assertCount(0, $crawler->filter('[name$="[params_required_element][typeKey]"]'), 'le gabarit « élément imposé » a disparu');
+        self::assertCount(0, $crawler->filter('[name^="structure[imposed]"]'));
 
         $this->submit(self::payload($structure));
         self::assertResponseRedirects('/diplomes/nouveau/formulaires');
-        $imposed = $this->storedStructure()['imposed'][0];
-        self::assertSame('but-stage', $imposed['uid']);
-        self::assertSame('ue', $imposed['parentLevel']);
-        self::assertSame('stage', $imposed['nature']);
-    }
-
-    public function testImposedElementOutsideChainIsRejected(): void
-    {
-        $payload = self::payload($this->startFrom('L'));
-        $payload['imposed'][] = ['uid' => '', 'typeKey' => 'bloc_formation', 'label' => 'X', 'position' => 'last', 'nature' => '', 'countOverride' => ['mode' => 'none']];
-
-        $this->submit($payload);
-        self::assertResponseStatusCodeSame(422);
+        $stored = $this->storedStructure();
+        self::assertArrayNotHasKey('imposed', $stored);
+        $stages = array_values(array_filter($stored['rules'], static fn (array $r) => 'min_element_type' === $r['template']));
+        self::assertSame(['2', '4', '6'], array_column($stages, 'scopePosition'));
+        self::assertSame(['nature' => 'stage', 'min' => 1], $stages[0]['params']);
     }
 
     public function testBetweenBoundWithInvertedValuesIsRejected(): void
@@ -324,41 +309,25 @@ final class DiplomeWizardStructureTest extends WebTestCase
         self::assertSame($start['duration'], $this->storedStructure()['duration']);
     }
 
-    public function testSummaryListsImposedElementsAndRules(): void
+    public function testSummaryListsRules(): void
     {
         $this->startFrom('BUT');
         $crawler = $this->client->request('GET', '/diplomes/nouveau/recapitulatif');
         self::assertResponseIsSuccessful();
-        self::assertStringContainsString('Stage', $crawler->text());
+        self::assertStringContainsString('Au moins N EC d\'un type', $crawler->text());
         self::assertStringContainsString('Part d\'un attribut pour une nature d\'élément', $crawler->text());
-        self::assertStringNotContainsString('Identifiant de l\'élément imposé', $crawler->text());
+        self::assertStringNotContainsString('Éléments imposés', $crawler->text());
     }
 
     public function testUndeclaredNatureIsRejected(): void
     {
         $payload = self::payload($this->startFrom('L'));
-        $payload['imposed'][] = ['uid' => '', 'typeKey' => 'ue', 'label' => 'X', 'position' => 'last', 'nature' => 'sae', 'countOverride' => ['mode' => 'none']];
+        $payload['rules'][] = ['uid' => '', 'template' => 'min_element_type', 'scopeLevel' => 'semestre', 'scopePosition' => 'last', 'severity' => 'error', 'params_min_element_type' => ['nature' => 'sae', 'min' => '1']];
         $this->submit($payload);
         self::assertResponseStatusCodeSame(422);
 
         $payload = self::payload($this->startFrom('L'));
         $payload['rules'][] = ['uid' => '', 'template' => 'ratio', 'scopeLevel' => 'semestre', 'severity' => 'error', 'params_ratio' => ['attribute' => 'ects', 'numeratorNature' => 'sae', 'op' => '>=', 'percent' => '40']];
-        $this->submit($payload);
-        self::assertResponseStatusCodeSame(422);
-    }
-
-    public function testImposedPositionAndNatureAreChoices(): void
-    {
-        $this->startFrom('BUT');
-        $crawler = $this->client->request('GET', '/diplomes/nouveau/structure');
-
-        $positions = $crawler->filter('select[name="structure[imposed][0][position]"] option')->each(static fn ($o) => $o->attr('value'));
-        self::assertSame(['all', 'first', 'last', '1', '2'], \array_slice($positions, 0, 5));
-        $natures = array_values(array_filter($crawler->filter('select[name="structure[imposed][0][nature]"] option')->each(static fn ($o) => (string) $o->attr('value'))));
-        self::assertSame(['ressource', 'sae', 'stage'], $natures);
-
-        $payload = self::payload($this->startFrom('BUT'));
-        $payload['imposed'][0]['position'] = 'n’importe quoi';
         $this->submit($payload);
         self::assertResponseStatusCodeSame(422);
     }
@@ -370,35 +339,22 @@ final class DiplomeWizardStructureTest extends WebTestCase
         foreach ([0, 2, 1, 3] as $i => $position) {
             $payload['levels'][$i]['position'] = (string) $position;
         }
-        $payload['imposed'] = [];
         $this->submit($payload);
 
         self::assertResponseRedirects();
         self::assertSame(['annee', 'ue', 'semestre', 'ec'], array_column($this->storedStructure()['levels'], 'typeKey'));
     }
 
-    public function testImposedElementsAreShownInsideTheirLevel(): void
+    public function testLevelsHaveNoImposedElementControls(): void
     {
         $this->startFrom('BUT');
         $crawler = $this->client->request('GET', '/diplomes/nouveau/structure');
 
-        $blocks = $crawler->filter('[data-levels-target="list"] > [data-level-block]');
-        $byType = [];
-        $blocks->each(static function ($b) use (&$byType): void {
-            $byType[$b->filter('[data-level-type] option[selected]')->attr('value')] = $b->filter('[data-imposed-row]')->count();
-        });
-        // la punaise d'un niveau rend ce niveau imposé : l'EC « Stage » est sous la ligne EC
-        self::assertSame(1, $byType['ec']);
-        self::assertSame(0, $byType['ue']);
-        self::assertSame('ec', $crawler->filter('[data-imposed-row] [data-imposed-type]')->attr('value'));
-        // le premier niveau n'a pas de parent : il ne peut pas être imposé
-        $first = $crawler->filter('[data-levels-target="list"] > [data-level-block]')->first();
-        self::assertNotNull($first->filter('[data-imposed-toggle]')->attr('disabled'));
-        // un EC imposé est une feuille : pas de surcharge du nombre de ses enfants
-        self::assertCount(0, $crawler->filter('[data-imposed-row] [data-imposed-children]:not([hidden])'));
+        self::assertCount(4, $crawler->filter('[data-levels-target="list"] > [data-level-block]'));
+        self::assertCount(0, $crawler->filter('[data-imposed-row], [data-imposed-toggle], [data-imposed-panel]'));
     }
 
-    public function testButDeclaresItsImposedNature(): void
+    public function testButDeclaresItsStageType(): void
     {
         $structure = $this->startFrom('BUT');
         self::assertContains('stage', array_column($structure['natures'], 'key'));
@@ -410,23 +366,6 @@ final class DiplomeWizardStructureTest extends WebTestCase
         $this->submit(self::payload($structure));
         self::assertResponseRedirects('/diplomes/nouveau/formulaires');
         self::assertSame($structure, $this->storedStructure());
-    }
-
-    public function testInternalRuleParamSurvivesSubmission(): void
-    {
-        $structure = $this->startFrom('L');
-        $this->submit(self::payload($structure));
-        $session = $this->client->getRequest()->getSession();
-        $draft = $session->get(WizardDraft::SESSION_KEY);
-        $config = $draft->configData;
-        $config['structure']['rules'] = [['uid' => 'r-imp', 'template' => 'required_element', 'params' => ['typeKey' => 'ec', 'imposed' => 'abc'], 'scopeLevel' => 'ue', 'severity' => 'error']];
-        $draft->configData = $config;
-        $session->set(WizardDraft::SESSION_KEY, $draft);
-        $session->save();
-
-        $this->submit(self::payload($draft->config()->structure->toArray()));
-        self::assertResponseRedirects('/diplomes/nouveau/formulaires');
-        self::assertSame(['typeKey' => 'ec', 'imposed' => 'abc'], $this->storedStructure()['rules'][0]['params']);
     }
 
     public function testRemovingUsedEcTypeIsRefused(): void
@@ -441,6 +380,6 @@ final class DiplomeWizardStructureTest extends WebTestCase
         $payload['natures'] = 'ec';
         $crawler = $this->submit($payload);
         self::assertResponseStatusCodeSame(422);
-        self::assertStringContainsString('Le type stage est utilisé par une règle', $crawler->text());
+        self::assertStringContainsString('Le type Stage est utilisé par une règle', $crawler->text());
     }
 }

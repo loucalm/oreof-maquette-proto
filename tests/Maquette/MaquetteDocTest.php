@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Maquette;
 
+use App\Diplome\Check\StructureChecker;
+use App\Entity\Formation;
 use App\Maquette\Maquette;
 use App\Tests\Support\DatabaseTestCase;
 use App\Tests\Support\FormationFactory;
@@ -22,13 +24,41 @@ final class MaquetteDocTest extends DatabaseTestCase
 
     public function testRemoveNodeRefusesLockedNode(): void
     {
-        // l'élément imposé d'une Licence professionnelle est verrouillé contre la suppression
-        $doc = $this->maquette->open($this->factory->fromType('LP', 1));
-        $imposed = current(array_filter($doc->allNodes(), static fn ($n) => null !== $n->getAttribute('_imposed')));
-        self::assertTrue($imposed->isLocked('delete'));
+        $doc = $this->maquette->open($this->factory->fromType('L', 3, withLeaves: true));
+        $ue = $this->factory->first($doc, 'ue');
+        $ue->locked = ['delete'];
 
-        self::assertFalse($doc->removeNode($imposed));
-        self::assertNotNull($doc->node($imposed->nid));
+        self::assertFalse($doc->removeNode($ue));
+        self::assertNotNull($doc->node($ue->nid));
+    }
+
+    public function testLegacyImposedNodesStayOrdinary(): void
+    {
+        // une maquette enregistrée avant la suppression des éléments imposés : nœud marqué `_imposed` et verrouillé
+        $source = $this->factory->fromType('L', 3, withLeaves: true);
+        $arbre = $source->getArbre();
+        $arbre[0]['attributes']['_imposed'] = 'lp-projet-stage';
+        $arbre[0]['locked'] = ['delete'];
+        $nid = $arbre[0]['nid'];
+        $legacy = (new Formation('Formation ancienne'))
+            ->setTypeDiplome($source->getTypeDiplome())
+            ->setAnneeUniversitaire($source->getAnneeUniversitaire())
+            ->setStructure($source->getStructure())
+            ->setArbre($arbre);
+        $this->em->persist($legacy);
+        $this->em->flush();
+
+        $reopened = $this->maquette->open($legacy);
+        $node = $reopened->node($nid);
+        self::assertNotNull($node);
+        self::assertNull($node->getAttribute('_imposed'));
+        self::assertSame([], $node->getLocked());
+
+        $violations = static::getContainer()->get(StructureChecker::class)->check($reopened, $legacy->getTypeDiplome()->latestVersion()->config());
+        self::assertSame([], array_filter($violations, static fn ($v) => str_starts_with($v->ruleKey, 'imposed:')));
+
+        self::assertTrue($reopened->removeNode($node));
+        self::assertNull($reopened->node($nid));
     }
 
     public function testRemoveNodeForceRemovesLockedNodeAndItsSubtree(): void

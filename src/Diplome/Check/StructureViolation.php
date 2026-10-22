@@ -9,7 +9,7 @@ namespace App\Diplome\Check;
  *
  * `ruleKey` est stable (contrat avec le blocage des modifications) :
  * `level:<typeKey>:count|ects|ectsSum:min|max`, `duration:min|max`,
- * `imposed:<uid>`, `lock:<typeKey>`, `rule:<uid>:min|max` (ou `rule:<uid>` sans borne).
+ * `lock:<typeKey>`, `rule:<uid>:min|max` (ou `rule:<uid>` sans borne).
  * `scopeNid` : nœud concerné ('' pour la racine d'une maquette mono-parcours).
  */
 final readonly class StructureViolation

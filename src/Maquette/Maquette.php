@@ -121,6 +121,21 @@ final class Maquette
     }
 
     /**
+     * Enregistre la structure de départ générée d'après le type de diplôme, sans le garde : les
+     * obligations encore à remplir (ex. « au moins 1 EC Stage dans le dernier semestre ») y sont des
+     * écarts de départ, qui servent de référence aux modifications suivantes (cf. StructureGuard).
+     */
+    public function saveGenerated(Formation $formation, MaquetteDoc $doc, string $label): void
+    {
+        $this->bypassGuard = true;
+        try {
+            $this->save($formation, $doc, $label);
+        } finally {
+            $this->bypassGuard = false;
+        }
+    }
+
+    /**
      * Réapplique l'état d'une révision comme état courant. L'état remplacé
      * est lui-même archivé (via save()) : une restauration reste annulable.
      */

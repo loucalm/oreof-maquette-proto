@@ -36,7 +36,7 @@ final class BccFormatTest extends WebTestCase
     }
 
     /** Formation d'un type à trois niveaux de BCC qui porte un référentiel national de test. */
-    private function nationalFormation(string $typeKey = 'BUT', int $duration = 3, bool $avecParcours = false): Formation
+    private function nationalFormation(string $typeKey = 'BUT', int $duration = 6, bool $avecParcours = false): Formation
     {
         $formation = $this->factory()->fromType($typeKey, $duration, avecParcours: $avecParcours);
         $niveau = static fn (int $n) => ['ordre' => $n, 'annee' => 'Niveau '.$n.' (an)', 'libelle' => "Niveau $n", 'acs' => [['code' => sprintf('AC%d1.01', $n), 'libelle' => "Apprentissage $n"]]];
@@ -97,7 +97,7 @@ final class BccFormatTest extends WebTestCase
 
     public function testFormationWithoutReferentialKeepsEditableBlocsWhateverItsType(): void
     {
-        foreach (['L' => 3, 'BUT' => 3] as $typeKey => $duration) {
+        foreach (['L' => 3, 'BUT' => 6] as $typeKey => $duration) {
             $formation = $this->factory()->fromType($typeKey, $duration);
 
             $this->client->request('GET', '/formations/'.$formation->getId().'/bcc');

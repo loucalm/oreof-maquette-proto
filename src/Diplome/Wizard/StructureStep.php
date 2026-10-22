@@ -7,7 +7,6 @@ namespace App\Diplome\Wizard;
 use App\Diplome\Rule\RuleTemplateRegistry;
 use App\Diplome\Spec\DurationSpec;
 use App\Diplome\Spec\EcType;
-use App\Diplome\Spec\ImposedElement;
 use App\Diplome\Spec\LevelSpec;
 use App\Diplome\Spec\RuleSpec;
 use App\Diplome\Spec\StructureSpec;
@@ -16,7 +15,7 @@ use App\Diplome\WizardDraft;
 use App\Form\Diplome\RuleSpecType;
 use App\Form\Diplome\StructureType;
 
-/** Étape « Structure » : niveaux, bornes, éléments imposés et règles du type de diplôme. */
+/** Étape « Structure » : niveaux, bornes, types d'EC et règles du type de diplôme. */
 final class StructureStep extends AbstractWizardStep
 {
     public function __construct(
@@ -60,10 +59,6 @@ final class StructureStep extends AbstractWizardStep
                 'typeKey' => $l->typeKey, 'count' => $l->count, 'ects' => $l->ects, 'ectsSum' => $l->ectsSum, 'startAt' => $l->startAt,
                 'locked' => $l->locked, 'ecLink' => $l->ecLink,
             ], $s->levels, array_keys($s->levels)),
-            'imposed' => array_map(static fn (ImposedElement $i) => [
-                'uid' => $i->uid, 'typeKey' => $i->typeKey, 'label' => $i->label, 'position' => $i->position,
-                'nature' => $i->nature, 'locked' => $i->locked, 'countOverride' => $i->countOverride,
-            ], $s->imposed),
             'rules' => array_map(fn (RuleSpec $r) => [
                 'uid' => $r->uid, 'template' => $r->template, 'scopeLevel' => $r->scopeLevel, 'scopePosition' => $r->scopePosition, 'severity' => $r->severity,
                 RuleSpecType::PARAMS_PREFIX.$r->template => $r->params,
@@ -83,22 +78,6 @@ final class StructureStep extends AbstractWizardStep
         );
         $chain = array_map(static fn (LevelSpec $l) => $l->typeKey, $levels);
 
-        $imposed = [];
-        foreach ($formData['imposed'] ?? [] as $i) {
-            $at = array_search($i['typeKey'], $chain, true);
-            $imposed[] = new ImposedElement(
-                '' !== (string) ($i['uid'] ?? '') ? (string) $i['uid'] : 'imp-'.bin2hex(random_bytes(4)),
-                (string) $i['typeKey'],
-                trim((string) $i['label']),
-                // le niveau parent d'un élément imposé est celui situé juste au-dessus de son type
-                false === $at || 0 === $at ? '' : $chain[$at - 1],
-                '' !== (string) ($i['position'] ?? '') ? (string) $i['position'] : 'all',
-                '' !== (string) ($i['nature'] ?? '') ? (string) $i['nature'] : null,
-                array_values(array_map('strval', $i['locked'] ?? [])),
-                $i['countOverride'],
-            );
-        }
-
         // les paramètres internes ne sont pas saisis : on les reprend de la règle de même uid
         $previous = [];
         foreach ($draft->config()->structure->rules as $existing) {
@@ -116,12 +95,17 @@ final class StructureStep extends AbstractWizardStep
             );
         }
 
-        // durée : à défaut de niveau choisi, le premier de la chaîne ; sans borne, pas de durée imposée
+        // durée : à défaut de niveau choisi, le premier de la chaîne ; sans borne, pas de durée fixée
         $bound = $formData['duration']['bound'] ?? null;
         $duration = null === $bound ? null : new DurationSpec('' !== (string) ($formData['duration']['levelKey'] ?? '') ? (string) $formData['duration']['levelKey'] : ($chain[0] ?? ''), $bound);
-        // interim (écran refait plus tard) : les natures saisies en texte deviennent des types d'EC dont le libellé est la clé
-        $natures = array_map(static fn (string $key) => new EcType($key, $key), array_values($formData['natures'] ?? []));
-        $structure = new StructureSpec($levels, (bool) $formData['parcoursAllowed'], $duration, $natures, $imposed, $rules);
+        // interim (écran refait plus tard) : les natures saisies en texte deviennent des types d'EC ; un type déjà déclaré
+        // garde son libellé, un nouveau prend sa clé pour libellé
+        $labels = [];
+        foreach ($draft->config()->structure->natures as $type) {
+            $labels[$type->key] = $type->label;
+        }
+        $natures = array_map(static fn (string $key) => new EcType($key, $labels[$key] ?? $key), array_values($formData['natures'] ?? []));
+        $structure = new StructureSpec($levels, (bool) $formData['parcoursAllowed'], $duration, $natures, $rules);
         $config = $draft->configData;
         $config['structure'] = $structure->toArray();
         $draft->configData = $config;

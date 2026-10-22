@@ -135,17 +135,12 @@ final class RuleTemplatesTest extends DatabaseTestCase
         self::assertSame(['e1', 'c1'], array_column($context['leaves'], 'nid'));
     }
 
-    public function testRequiredElementAndAttributeSumAndValue(): void
+    public function testAttributeSumAndValue(): void
     {
         $semestre = $this->node('s1', 'semestre', children: [
             $this->node('u1', 'ue', ['ects' => 12]),
             $this->node('st', 'stage', ['ects' => 18, 'natureElement' => 'stage']),
         ]);
-
-        $required = $this->registry->get('required_element')->compile(['typeKey' => 'stage', 'nature' => 'stage']);
-        self::assertTrue($this->check($required, $semestre)[0]->valid);
-        $missing = $this->registry->get('required_element')->compile(['typeKey' => 'stage', 'nature' => 'sae']);
-        self::assertFalse($this->check($missing, $semestre)[0]->valid);
 
         $sum = $this->registry->get('attribute_sum')->compile(['attribute' => 'ects', 'min' => 30, 'max' => 30]);
         self::assertTrue($this->check($sum, $semestre)[0]->valid);
@@ -154,20 +149,6 @@ final class RuleTemplatesTest extends DatabaseTestCase
         $value = $this->registry->get('attribute_value')->compile(['attribute' => 'ects', 'max' => 15]);
         self::assertCount(1, $value);
         self::assertFalse($this->check($value, $semestre)[0]->valid);
-    }
-
-    public function testRequiredElementWithImposedUidMatchesOnlyThatElement(): void
-    {
-        $semestre = $this->node('s1', 'semestre', children: [
-            $this->node('u1', 'ue'),
-            $this->node('u2', 'ue', ['_imposed' => 'y']),
-        ]);
-        $template = $this->registry->get('required_element');
-
-        self::assertFalse($this->check($template->compile(['typeKey' => 'ue', 'imposed' => 'x']), $semestre)[0]->valid);
-        self::assertTrue($this->check($template->compile(['typeKey' => 'ue', 'imposed' => 'y']), $semestre)[0]->valid);
-        // sans `imposed`, n'importe quel élément du type convient
-        self::assertTrue($this->check($template->compile(['typeKey' => 'ue']), $semestre)[0]->valid);
     }
 
     public function testMinElementType(): void
@@ -198,7 +179,7 @@ final class RuleTemplatesTest extends DatabaseTestCase
     public function testEveryTemplateIsDiscoveredByTheRegistry(): void
     {
         self::assertEqualsCanonicalizing(
-            ['child_count', 'attribute_sum', 'attribute_value', 'ratio', 'same_child_value', 'required_element', 'min_element_type'],
+            ['child_count', 'attribute_sum', 'attribute_value', 'ratio', 'same_child_value', 'min_element_type'],
             array_keys($this->registry->all()),
         );
     }

@@ -56,8 +56,7 @@ class DerogationRequestRepository extends ServiceEntityRepository
     /**
      * Dérogation accordée pour cette règle sur ce nœud qui couvre la valeur constatée.
      * Règles de couverture (cf. DerogationRequest::covers) : clé en `:max` → couverte si
-     * actual <= valeur accordée ; en `:min` → actual >= valeur accordée ; `imposed:*` → couverte
-     * sans comparaison ; toute autre clé → actual == valeur accordée, ou sans comparaison si
+     * actual <= valeur accordée ; en `:min` → actual >= valeur accordée ; toute autre clé → actual == valeur accordée, ou sans comparaison si
      * aucune valeur n'est accordée. `$actual` null (valeur inconnue) ne couvre jamais une
      * règle `:min`/`:max` : on échoue fermé.
      */

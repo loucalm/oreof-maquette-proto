@@ -56,7 +56,7 @@ final class StructureInstantiatorTest extends DatabaseTestCase
     {
         $doc = $this->build('LP', 1);
         $formation = $doc->formation;
-        static::getContainer()->get(Maquette::class)->save($formation, $doc, 'Création');
+        static::getContainer()->get(Maquette::class)->saveGenerated($formation, $doc, 'Création');
         $views = static::getContainer()->get(MaquetteBuilder::class)->build($formation);
         $refs = array_map(static fn ($v) => $v->ref, $views[0]->children);
         self::assertSame(['5', '6'], $refs);
@@ -71,40 +71,27 @@ final class StructureInstantiatorTest extends DatabaseTestCase
         self::assertSame(['annee', 'bloc_formation', 'ec'], $doc->formation->getStructure());
     }
 
-    public function testImposedElementIsCreatedLockedInLastSemester(): void
+    public function testObligationsAreRulesNotGeneratedNodes(): void
     {
+        // LP : projet tutoré et stage du dernier semestre sont des règles, rien n'est placé ni verrouillé d'office
         $doc = $this->build('LP', 1);
-        $semestres = $this->ofType($doc, 'semestre');
-        $last = end($semestres);
-        $imposed = array_values(array_filter($last->children, static fn ($n) => 'lp-projet-stage' === $n->getAttribute('_imposed')));
-        self::assertCount(1, $imposed);
-        self::assertSame('Projet tutoré et stage', $imposed[0]->label);
-        self::assertTrue($imposed[0]->isLocked('delete'));
-        self::assertSame($imposed[0], end($last->children));
-        self::assertCount(0, array_filter($semestres[0]->children, static fn ($n) => null !== $n->getAttribute('_imposed')));
+        self::assertCount(0, $this->ofType($doc, 'ec'));
+        self::assertSame([], array_filter($doc->allNodes(), static fn ($n) => [] !== $n->getLocked()));
     }
 
     public function testMultiParcoursBuildsLevelsInsideOneParcours(): void
     {
-        $doc = $this->build('BUT', 3, true);
+        $doc = $this->build('BUT', 6, true);
         self::assertTrue($doc->formation->isAvecParcours());
         self::assertCount(1, $doc->roots);
         self::assertSame('parcours', $doc->roots[0]->typeKey);
         self::assertCount(3, $doc->roots[0]->children);
-        $stage = array_values(array_filter($this->ofType($doc, 'ec'), static fn ($n) => 'but-stage' === $n->getAttribute('_imposed')));
-        self::assertCount(1, $stage);
-        self::assertSame('ue', $stage[0]->parent->typeKey);
-        self::assertSame('stage', $stage[0]->getAttribute('natureElement'));
+        self::assertCount(30, $this->ofType($doc, 'ue')); // 5 UE par semestre
     }
 
     public function testDurationOnSemesters(): void
     {
-        $type = $this->em->getRepository(TypeDiplome::class)->findOneByKey('BUT');
-        $version = $type->latestVersion();
-        $data = $version->config()->toArray();
-        $data['structure']['duration'] = ['levelKey' => 'semestre', 'bound' => ['min' => 6, 'max' => 6]];
-        $version->setConfig(\App\Diplome\Spec\VersionConfig::fromArray($data));
-
+        // le BUT compte sa durée en semestres (exactement 6)
         $doc = $this->build('BUT', 6);
         self::assertCount(3, $this->ofType($doc, 'annee'));
         self::assertCount(6, $this->ofType($doc, 'semestre'));

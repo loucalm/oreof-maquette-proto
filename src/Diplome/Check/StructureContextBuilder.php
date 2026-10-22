@@ -84,21 +84,6 @@ final class StructureContextBuilder
         ];
     }
 
-    /**
-     * Contexte de présence sous un hôte : `children` = tous ses nœuds structurels descendants.
-     *
-     * @return array<string, list<array<string, mixed>>>
-     */
-    public function hostPresenceContextFor(TreeNode $host, ?VersionConfig $config = null): array
-    {
-        $nodes = [];
-        foreach ($this->structural($host->getChildren()) as $child) {
-            $this->collectAll($child, $nodes);
-        }
-
-        return ['children' => array_map(fn (TreeNode $n): array => $this->row($n, $config), $nodes), 'leaves' => []];
-    }
-
     /** @return list<?TreeNode> le parcours feuille puis ses parcours parents ([null] en mono-parcours) */
     private function cursusChain(?TreeNode $leaf): array
     {

@@ -6,26 +6,20 @@ namespace App\Diplome;
 
 use App\Diplome\Spec\Bound;
 use App\Diplome\Spec\DurationMath;
-use App\Diplome\Spec\ImposedElement;
 use App\Entity\TypeDiplomeVersion;
 use App\Maquette\Doc\MaquetteDoc;
-use App\Maquette\Doc\TreeNode;
 
 /**
  * Génère la maquette de départ d'une formation depuis une version de type de
  * diplôme : premier niveau en autant d'exemplaires que la durée l'impose (`duration` est
  * exprimée en nœuds du niveau de durée, cf. DurationMath), chaque niveau suivant au
  * minimum de sa borne `count` (1 à défaut) sous chaque parent, jusqu'au niveau
- * feuille exclu, puis les éléments imposés (verrouillés, marqués `_imposed`).
+ * feuille exclu.
  *
  * ⚠️ Écrase la structure existante.
  */
 final class StructureInstantiator
 {
-    public function __construct(private readonly ImposedHostLocator $locator)
-    {
-    }
-
     public function instantiate(MaquetteDoc $doc, TypeDiplomeVersion $version, int $duration, bool $avecParcours): void
     {
         $structure = $version->config()->structure;
@@ -40,9 +34,6 @@ final class StructureInstantiator
         if ($avecParcours && !$structure->parcoursAllowed) {
             throw new \InvalidArgumentException('Ce type de diplôme n’autorise pas les parcours.');
         }
-        foreach ($structure->imposed as $imposed) {
-            $this->assertImposedValid($imposed, $chain);
-        }
 
         $doc->formation->setAvecParcours($avecParcours)->setStructure($chain);
         $doc->roots = [];
@@ -54,8 +45,6 @@ final class StructureInstantiator
         $leafIndex = \count($chain) - 1;
 
         foreach ($containers as $container) {
-            /** @var array<string, list<TreeNode>> $byLevel nœuds créés, par niveau, dans l'ordre de l'arbre */
-            $byLevel = [];
             $parents = [$container];
             foreach ($chain as $i => $typeKey) {
                 if ($i === $leafIndex) {
@@ -68,14 +57,7 @@ final class StructureInstantiator
                         $created[] = $doc->addNode($parent?->nid, $typeKey);
                     }
                 }
-                $byLevel[$typeKey] = $parents = $created;
-            }
-
-            foreach ($structure->imposed as $imposed) {
-                $hosts = $byLevel[$imposed->parentLevel] ?? [];
-                foreach ($this->locator->select($hosts, $imposed->position) as $host) {
-                    ImposedHostLocator::addTo($doc, $host, $imposed);
-                }
+                $parents = $created;
             }
         }
         $doc->reindex();
@@ -85,14 +67,5 @@ final class StructureInstantiator
     public static function acceptsDuration(?Bound $bound, int $n): bool
     {
         return $n >= 1 && (null === $bound || ((null === $bound->min || $n >= $bound->min) && (null === $bound->max || $n <= $bound->max)));
-    }
-
-    /** @param list<string> $chain */
-    private function assertImposedValid(ImposedElement $imposed, array $chain): void
-    {
-        $at = array_search($imposed->typeKey, $chain, true);
-        if (false === $at || 0 === $at || $chain[$at - 1] !== $imposed->parentLevel) {
-            throw new \InvalidArgumentException(sprintf('Élément imposé « %s » : le niveau parent doit être celui situé juste au-dessus de « %s » dans la chaîne.', $imposed->uid, $imposed->typeKey));
-        }
     }
 }

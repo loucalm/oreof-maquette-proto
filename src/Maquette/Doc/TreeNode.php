@@ -19,6 +19,9 @@ use App\Enum\NodeFamily;
  */
 final class TreeNode
 {
+    /** Attribut d'une ancienne forme de maquette, retiré au chargement (cf. fromArray()). */
+    private const LEGACY_MARKER = '_imposed';
+
     /** @var list<TreeNode> */
     public array $children = [];
 
@@ -304,7 +307,7 @@ final class TreeNode
         return $this;
     }
 
-    // ─── verrous « nœud imposé » (Phase 5 ; vide avant) ───
+    // ─── verrous de nœud (actions interdites au responsable) ───
 
     /** @return list<string> */
     public function getLocked(): array
@@ -410,14 +413,23 @@ final class TreeNode
     /** @param array<string, mixed> $raw */
     public static function fromArray(array $raw): self
     {
+        $attributes = \is_array($raw['attributes'] ?? null) ? $raw['attributes'] : [];
+        $locked = array_values(array_filter((array) ($raw['locked'] ?? []), 'is_string'));
+        // marqueur d'une ancienne forme (nœud ajouté d'office par le type de diplôme) : le nœud
+        // redevient ordinaire, sans le marqueur ni les verrous qui l'accompagnaient
+        if (\array_key_exists(self::LEGACY_MARKER, $attributes)) {
+            unset($attributes[self::LEGACY_MARKER]);
+            $locked = [];
+        }
+
         return new self(
             nid: (string) ($raw['nid'] ?? ''),
             typeKey: (string) ($raw['type'] ?? ''),
             label: (string) ($raw['label'] ?? ''),
             code: isset($raw['code']) && $raw['code'] !== '' ? (string) $raw['code'] : null,
-            attributes: \is_array($raw['attributes'] ?? null) ? $raw['attributes'] : [],
+            attributes: $attributes,
             capabilityOverrides: \is_array($raw['capabilityOverrides'] ?? null) ? $raw['capabilityOverrides'] : null,
-            locked: array_values(array_filter((array) ($raw['locked'] ?? []), 'is_string')),
+            locked: $locked,
             mutualized: (bool) ($raw['mutualized'] ?? false),
             mutualizedFrom: isset($raw['mutualizedFrom']) && $raw['mutualizedFrom'] !== '' ? (string) $raw['mutualizedFrom'] : null,
         );

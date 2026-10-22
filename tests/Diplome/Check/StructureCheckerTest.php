@@ -114,25 +114,25 @@ final class StructureCheckerTest extends DatabaseTestCase
         self::assertSame(5, $found[0]->actual);
     }
 
-    public function testMissingImposedElementIsBlocking(): void
+    public function testLpObligationsAreBlockingUntilFilled(): void
     {
         $doc = $this->build('LP', 1);
-        self::assertSame([], $this->withKey($this->checker->check($doc, $this->config), 'imposed:lp-projet-stage'));
-
         $semestres = $this->ofType($doc, 'semestre');
         $last = end($semestres);
-        $imposed = array_values(array_filter($last->getChildren(), static fn ($n) => 'lp-projet-stage' === $n->getAttribute('_imposed')));
-        $doc->removeNode($imposed[0], true);
 
-        $found = $this->withKey($this->checker->check($doc, $this->config), 'imposed:lp-projet-stage');
+        $found = $this->withKey($this->checker->check($doc, $this->config), 'rule:lp-stage:min');
         self::assertCount(1, $found);
         self::assertTrue($found[0]->blocking);
-        self::assertSame('', $found[0]->scopeNid, 'portée de la présence : la racine en mono-parcours');
+        self::assertSame($last->nid, $found[0]->scopeNid, 'portée : le dernier semestre');
+
+        $doc->addNode($last->getChildren()[0]->nid, 'ec', 'Stage')->setAttribute('natureElement', 'stage');
+        self::assertSame([], $this->withKey($this->checker->check($doc, $this->config), 'rule:lp-stage:min'));
+        self::assertCount(1, $this->withKey($this->checker->check($doc, $this->config), 'rule:lp-projet-tutore:min'));
     }
 
     public function testDefaultNatureIsTheSameForChecksAndMccc(): void
     {
-        $doc = $this->build('BUT', 3);
+        $doc = $this->build('BUT', 6);
         $ue = $this->ofType($doc, 'ue')[0];
         $ec = $doc->addNode($ue->nid, 'ec', 'Sans nature');
 
@@ -177,23 +177,6 @@ final class StructureCheckerTest extends DatabaseTestCase
         self::assertSame('Règle inconnue : gabarit_disparu', $found[0]->message);
     }
 
-    public function testCountOverrideReplacesLevelBoundOnItsHostOnly(): void
-    {
-        $doc = $this->build('LP', 1);
-        $array = $this->config->toArray();
-        $array['structure']['imposed'][0]['countOverride'] = ['min' => 1, 'max' => 2];
-        $config = VersionConfig::fromArray($array);
-
-        $semestres = $this->ofType($doc, 'semestre');
-        $last = end($semestres);
-        while (\count($last->getChildren()) < 4) {
-            $doc->addNode($last->nid, 'ue');
-        }
-        $keys = array_map(static fn ($v) => $v->ruleKey.'@'.$v->scopeNid, $this->checker->check($doc, $config));
-        self::assertContains('level:ue:count:max@'.$last->nid, $keys);
-        self::assertNotContains('level:ue:count:min@'.$last->nid, $keys);
-    }
-
     /** Portail d'une année + sous-parcours de $years années chacun (ramification), dans une Licence (durée 3 à 4). */
     private function ramified(int $years, int $subs = 2): MaquetteDoc
     {
@@ -236,10 +219,9 @@ final class StructureCheckerTest extends DatabaseTestCase
 
     public function testDurationCountsDescendants(): void
     {
-        $doc = $this->build('BUT', 3);
-        $data = $this->config->toArray();
-        $data['structure']['duration'] = ['levelKey' => 'semestre', 'bound' => ['min' => 6, 'max' => 6]];
-        $config = VersionConfig::fromArray($data);
+        // le BUT compte sa durée en semestres (exactement 6)
+        $doc = $this->build('BUT', 6);
+        $config = $this->config;
 
         $found = array_filter($this->checker->check($doc, $config), static fn ($v) => str_starts_with($v->ruleKey, 'duration:'));
         self::assertSame([], array_values($found));

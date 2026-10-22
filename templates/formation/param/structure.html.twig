@@ -81,7 +81,7 @@
         {{ fld.divider('formation.param.structure.divider_structure'|trans({}, 'formation')) }}
 
         {% if not is_admin() %}
-            {# vue responsable : la hiérarchie des niveaux est imposée, lecture seule #}
+            {# vue responsable : la hiérarchie des niveaux est fixée par le diplôme, lecture seule #}
             <p class="text-xs text-gray-500 -mt-2">
                 {{ 'formation.param.structure.readonly_note'|trans({}, 'formation') }}
             </p>

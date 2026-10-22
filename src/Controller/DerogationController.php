@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
- * Dérogations à la structure imposée par un type de diplôme : le responsable décrit
+ * Dérogations à la structure fixée par un type de diplôme : le responsable décrit
  * par texte ce qu'il voudrait (typiquement sur un ELP verrouillé), l'admin
  * SES traite la demande — il applique lui-même la modification avec ses
  * propres droits d'édition, puis marque la demande approuvée/refusée. Aucun
@@ -91,7 +91,7 @@ final class DerogationController extends AbstractController
         $derogation->resolve($status, $request->request->get('adminNote'));
         $em->flush();
 
-        // approbation avec levée du verrou : l'élément imposé redevient modifiable pour le responsable
+        // approbation avec levée du verrou : le nœud verrouillé redevient modifiable pour le responsable
         $unlocked = null;
         if (DerogationStatus::Approved === $status && $request->request->getBoolean('unlock') && null !== $derogation->getNodeId()) {
             $formation = $derogation->getFormation();

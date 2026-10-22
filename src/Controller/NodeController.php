@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Diplome\ImposedPropagator;
-use App\Diplome\TypeDiplomeResolver;
 use App\Entity\Formation;
 use App\Maquette\AttributeCatalog;
 use App\Maquette\Doc\MaquetteDoc;
@@ -33,8 +31,6 @@ final class NodeController extends AbstractController
         private readonly Maquette $maquette,
         private readonly MaquetteBuilder $builder,
         private readonly AttributeCatalog $catalog,
-        private readonly ImposedPropagator $imposed,
-        private readonly TypeDiplomeResolver $diplomes,
     ) {
     }
 
@@ -213,12 +209,12 @@ final class NodeController extends AbstractController
                 : $this->redirectToRoute('formation_editor', ['id' => $formation->getId(), 'param' => 'structure']);
         }
 
-        // structure imposée : un nœud existant de ce type à cet emplacement peut fermer la position à tout autre ajout
+        // nœud verrouillé : un nœud existant de ce type à cet emplacement peut fermer la position à tout autre ajout
         $siblings = $parent?->getChildren() ?? $doc->roots;
         foreach ($siblings as $sibling) {
             if ($sibling->typeKey === $typeKey && $sibling->isLocked('add')) {
                 $this->addFlash('warning', sprintf(
-                    'La structure imposée par le diplôme ne permet pas d’ajouter un autre « %s » ici.',
+                    'Un « %s » verrouillé ferme cet emplacement : impossible d’en ajouter un autre ici.',
                     $type->getLabel(),
                 ));
 
@@ -239,7 +235,6 @@ final class NodeController extends AbstractController
             }
         }
         $this->applyChoiceNature($node, $parent);
-        $this->completeImposed($formation, $doc, $node);
         $this->maquette->save($formation, $doc);
         $this->addFlash('success', sprintf('%s ajouté.', $type->getLabel()));
         $this->offerUndo($formation);
@@ -265,7 +260,7 @@ final class NodeController extends AbstractController
         if (!$this->reparentAllowed($node, $newParent)) {
             return new JsonResponse(['ok' => false, 'error' => 'hierarchy'], 422);
         }
-        // nœud imposé : réordonnancement entre frères OK, changement de parent refusé
+        // nœud verrouillé : réordonnancement entre frères OK, changement de parent refusé
         if ($node->isLocked('move') && $newParent !== $node->getParent()) {
             return new JsonResponse(['ok' => false, 'error' => 'locked'], 422);
         }
@@ -279,7 +274,7 @@ final class NodeController extends AbstractController
 
     /**
      * Monte / descend un nœud d'un cran parmi ses frères de même famille
-     * (alternative clavier au glisser-déposer). Autorisé sur un nœud imposé :
+     * (alternative clavier au glisser-déposer). Autorisé sur un nœud verrouillé :
      * seul le changement de parent lui est interdit.
      */
     #[Route('/formations/{fid}/nodes/{nid}/shift/{dir}', name: 'node_shift', methods: ['POST'], requirements: ['dir' => 'up|down'])]
@@ -318,7 +313,7 @@ final class NodeController extends AbstractController
 
         if ($node->isLocked('duplicate')) {
             $this->addFlash('warning', sprintf(
-                '« %s » fait partie de la structure imposée par le diplôme : il ne peut pas être dupliqué.',
+                '« %s » est verrouillé : il ne peut pas être dupliqué.',
                 $node->getDisplayLabel(),
             ));
 
@@ -326,7 +321,6 @@ final class NodeController extends AbstractController
         }
 
         $copy = $doc->duplicateNode($node);
-        $this->completeImposed($formation, $doc, $copy);
         $this->maquette->save($formation, $doc);
         $this->addFlash('success', sprintf('« %s » dupliqué.', $node->getDisplayLabel()));
         $this->offerUndo($formation);
@@ -342,7 +336,7 @@ final class NodeController extends AbstractController
 
         if ($node->isLocked('delete')) {
             $this->addFlash('warning', sprintf(
-                '« %s » fait partie de la structure imposée par le diplôme : il ne peut pas être supprimé.',
+                '« %s » est verrouillé : il ne peut pas être supprimé.',
                 $node->getDisplayLabel(),
             ));
 
@@ -352,7 +346,7 @@ final class NodeController extends AbstractController
         $parcours = $this->parcoursAncestor($node);
         if (!$doc->removeNode($node)) {
             $this->addFlash('warning', sprintf(
-                '« %s » contient un élément imposé par le diplôme : il ne peut pas être supprimé.',
+                '« %s » contient un élément verrouillé : il ne peut pas être supprimé.',
                 $node->getDisplayLabel(),
             ));
 
@@ -436,7 +430,6 @@ final class NodeController extends AbstractController
             $this->stripContent($copy); // consolidation : squelette seulement
         }
         $this->applyChoiceNature($copy, $target);
-        $this->completeImposed($formation, $doc, $copy);
         $this->maquette->save($formation, $doc);
         $this->addFlash('success', sprintf('« %s » raccroché depuis « %s ».', $source->getDisplayLabel(), $sourceFormation->getName()));
 
@@ -474,7 +467,7 @@ final class NodeController extends AbstractController
         $copy = $doc->importSubtree($info['node'], $parent);
         $copy->setMutualizedFrom($from);
         $copy->setAttribute('_sourceHash', $info['node']->contentHash());
-        $copy->locked = $node->locked; // un emplacement imposé le reste après mise à jour
+        $copy->locked = $node->locked; // un emplacement verrouillé le reste après mise à jour
         $doc->moveNode($copy, $parent, $index);
         $doc->removeNode($node, true);
         $this->applyChoiceNature($copy, $parent);
@@ -564,18 +557,6 @@ final class NodeController extends AbstractController
     }
 
     // ─── helpers ──────────────────────────────────────────────
-
-    /**
-     * Un nœud créé dans l'éditeur (ajouté, dupliqué, raccroché) peut être un nouvel hôte d'élément
-     * imposé en position `all` : l'élément y est placé d'office, sans quoi le garde refuserait l'ajout.
-     */
-    private function completeImposed(Formation $formation, MaquetteDoc $doc, TreeNode $created): void
-    {
-        $config = $this->diplomes->configFor($formation);
-        if (null !== $config) {
-            $this->imposed->complete($doc, $config, $created);
-        }
-    }
 
     private function node(Formation $formation, string $nid): TreeNode
     {

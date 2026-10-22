@@ -42,7 +42,7 @@
         </div>
         <div class="text-sm text-gray-400">
             {{ T }}{% if view.ref %} <span class="font-bold" style="color:var(--c-primary)">{{ view.ref }}</span>{% endif %}
-            {%- if node.isLocked('delete') %} <span class="imposed-badge" title="{{ 'node.panel.locked_title'|trans({}, 'node') }}">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ 'node.panel.imposed_badge'|trans({}, 'node') }}</span>{% endif -%}
+            {%- if node.isLocked('delete') %} <span class="locked-badge" title="{{ 'node.panel.locked_title'|trans({}, 'node') }}">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ 'node.panel.locked_badge'|trans({}, 'node') }}</span>{% endif -%}
         </div>
         <div class="text-sm text-gray-400 mt-1">
             {{ formation.name }}

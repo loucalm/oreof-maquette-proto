@@ -184,7 +184,7 @@ export default class extends Controller {
         if (this.hasDelButtonTarget) {
             this.delButtonTarget.disabled = !activeId || lockedDel;
             this.delButtonTarget.title = lockedDel
-                ? 'ELP imposé par le diplôme : suppression impossible'
+                ? 'ELP verrouillé : suppression impossible'
                 : 'Supprimer l’ELP sélectionné';
             if (activeId && !lockedDel && this.hasDelUrlValue) {
                 this.delFormTarget.action = this.delUrlValue.replace('__ID__', activeId);
@@ -202,7 +202,7 @@ export default class extends Controller {
             this.derogContextTarget.textContent = !activeId
                 ? 'Décrivez ce que vous voudriez ajouter, déplacer ou supprimer, et pourquoi.'
                 : (lockedDel || lockedMove)
-                    ? `« ${name} » fait partie de la structure imposée par le diplôme. Expliquez ce que vous voudriez faire (le supprimer, le déplacer…) et pourquoi.`
+                    ? `« ${name} » est verrouillé. Expliquez ce que vous voudriez faire (le supprimer, le déplacer…) et pourquoi.`
                     : `À propos de « ${name} ». Décrivez ce que vous voudriez ajouter, déplacer ou supprimer, et pourquoi.`;
         }
 
@@ -322,7 +322,7 @@ export default class extends Controller {
      * ou à la racine si c'est le type racine.
      */
     canDropHere(evt) {
-        // nœud imposé : réordonnancement entre frères OK, changement de parent refusé
+        // nœud verrouillé : réordonnancement entre frères OK, changement de parent refusé
         if (evt.dragged?.dataset.lockedMove === '1' && evt.to !== evt.from) return false;
 
         if (!this.hasChainValue) return true;

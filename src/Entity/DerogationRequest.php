@@ -10,7 +10,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Demande de dérogation à la structure imposée par le type de diplôme —
+ * Demande de dérogation à la structure fixée par le type de diplôme —
  * un responsable de formation décrit par texte ce qu'il voudrait ajouter/
  * déplacer/supprimer et qui n'est pas prévu (typiquement un ELP verrouillé,
  * cf. TreeNode::isLocked()) ; un admin SES traite la demande (il applique
@@ -106,16 +106,13 @@ class DerogationRequest
 
     /**
      * La dérogation tolère-t-elle cette valeur constatée ?
-     * `:max` → actual <= accordé ; `:min` → actual >= accordé ; `imposed:*` → sans comparaison ;
+     * `:max` → actual <= accordé ; `:min` → actual >= accordé ;
      * toute autre clé → actual == accordé (ou sans comparaison si aucune valeur n'est accordée).
      */
     public function covers(float|int|null $actual): bool
     {
         if (null === $this->ruleKey) {
             return false;
-        }
-        if (str_starts_with($this->ruleKey, 'imposed:')) {
-            return true;
         }
         if (null === $this->allowedValue) {
             return !str_ends_with($this->ruleKey, ':max') && !str_ends_with($this->ruleKey, ':min');

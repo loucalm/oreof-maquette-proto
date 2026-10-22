@@ -116,7 +116,7 @@ final class FormationController extends AbstractController
         }
 
         $this->addFlash('success', sprintf(
-            'Formation « %s » créée d\'après le type de diplôme %s : sa structure de départ respecte les bornes du diplôme, et ses éléments imposés ne peuvent pas être supprimés.',
+            'Formation « %s » créée d\'après le type de diplôme %s : sa structure de départ respecte les bornes du diplôme.',
             $name, $type->getLabel(),
         ));
 
@@ -505,7 +505,7 @@ final class FormationController extends AbstractController
             foreach ($p->getChildren() as $child) { // snapshot : moveNode reconstruit children
                 $doc->moveNode($child, null, PHP_INT_MAX);
             }
-            $doc->removeNode($p, true); // contenu déjà remonté : un parcours imposé ne doit pas rester orphelin
+            $doc->removeNode($p, true); // contenu déjà remonté : un parcours verrouillé ne doit pas rester orphelin
         }
 
         return true;
@@ -558,7 +558,7 @@ final class FormationController extends AbstractController
         $this->addFlash(
             $kept > 0 ? 'warning' : 'info',
             $kept > 0
-                ? sprintf('Structure vidée, sauf %d élément(s) imposé(s) par le type de diplôme (non supprimables).', $kept)
+                ? sprintf('Structure vidée, sauf %d élément(s) verrouillé(s) (non supprimables).', $kept)
                 : 'Structure vidée.',
         );
 

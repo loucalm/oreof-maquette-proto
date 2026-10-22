@@ -25,13 +25,10 @@
         {{ rows.field(form.natures) }}
     </fieldset>
 
-    {# Niveaux de la chaîne, chacun avec ses éléments imposés #}
-    {% set imposedIndex = form.imposed|keys|reduce((max, k) => k >= max ? k + 1 : max, 0) %}
+    {# Niveaux de la chaîne #}
     <section class="{{ card }}" style="border-color:var(--c-border)" data-section="level" data-controller="levels"
              data-levels-level-prototype-value="{{ rows.level(form.levels.vars.prototype)|e('html_attr') }}"
-             data-levels-level-index-value="{{ form.levels|keys|reduce((max, k) => k >= max ? k + 1 : max, 0) }}"
-             data-levels-imposed-prototype-value="{{ rows.imposed(form.imposed.vars.prototype)|e('html_attr') }}"
-             data-levels-imposed-index-value="{{ imposedIndex }}">
+             data-levels-level-index-value="{{ form.levels|keys|reduce((max, k) => k >= max ? k + 1 : max, 0) }}">
         <div class="mb-3 flex items-start justify-between gap-3">
             <div>
                 <h3 class="text-sm font-semibold">{{ form_label(form.levels) }}</h3>
@@ -40,35 +37,17 @@
             <button type="button" data-action="levels#addLevel" class="inline-flex shrink-0 items-center gap-1 rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'diplome.wizard.structure.add_level'|trans({}, 'diplome') }}</button>
         </div>
         {{ form_errors(form.levels) }}
-        {{ form_errors(form.imposed) }}
         <div class="{{ rows.levelGrid() }} px-3 pb-1 text-[11px] font-medium uppercase tracking-wide" style="color:var(--c-muted)">
             <span>{{ 'diplome.wizard.structure.level_type'|trans({}, 'diplome') }}</span>
             <span>{{ 'diplome.wizard.structure.level_count'|trans({}, 'diplome') }}</span>
             <span>{{ 'diplome.wizard.structure.level_ects'|trans({}, 'diplome') }}</span>
             <span>{{ 'diplome.wizard.structure.level_ects_sum'|trans({}, 'diplome') }}</span>
             <span title="{{ 'diplome.wizard.structure.level_start_at'|trans({}, 'diplome') }}">{{ 'diplome.wizard.structure.level_start_at_short'|trans({}, 'diplome') }}</span>
-            <span title="{{ 'diplome.wizard.structure.imposed_pin'|trans({}, 'diplome') }}">{{ ux_icon('ph:push-pin', {class: 'icon'}) }}</span>
+            <span></span>
         </div>
-        {# la punaise d'un niveau rend ce niveau imposé : ses éléments imposés sont sous sa ligne #}
-        {% set levelViews = form.levels.children|filter(l => true)|merge([]) %}
-        {% set levelTypes = levelViews|map(l => l.typeKey.vars.value) %}
         <div data-levels-target="list" class="space-y-2">
-            {% for lv in levelViews %}
-                {% set prev = loop.index0 > 0 ? levelViews[loop.index0 - 1] : null %}
-                {% set parentLabel = null %}
-                {% if prev %}{% for c in prev.typeKey.vars.choices %}{% if c.value == prev.typeKey.vars.value %}{% set parentLabel = c.label %}{% endif %}{% endfor %}{% endif %}
-                {{ rows.level(lv, form.imposed.children|filter(r => r.typeKey.vars.value == lv.typeKey.vars.value), parentLabel, (levelViews[loop.index] ?? null) is not null) }}
-            {% endfor %}
+            {% for lv in form.levels %}{{ rows.level(lv) }}{% endfor %}
         </div>
-        {# éléments imposés dont le type n'a pas de niveau parent dans la chaîne : à rattacher ou retirer #}
-        {% set orphans = form.imposed.children|filter(r => r.typeKey.vars.value not in levelTypes|slice(1)) %}
-        {% if orphans is not empty %}
-            <div data-level-block class="mt-3 rounded-md border p-3 space-y-2" style="border-color:#fcd34d;background:#fffbeb">
-                <div class="text-xs" style="color:#92400e">{{ 'diplome.wizard.structure.imposed_orphans'|trans({}, 'diplome') }}</div>
-                <div data-imposed-list class="space-y-2">{% for r in orphans %}{{ rows.imposed(r) }}{% endfor %}</div>
-            </div>
-        {% endif %}
-        {% do form.imposed.setRendered %}
     </section>
 
     {% set proto = rows.rule(form.rules.vars.prototype) %}

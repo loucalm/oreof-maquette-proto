@@ -9,9 +9,8 @@ node:
     paste_blocked_phase: "Consolidation de l'offre : seul le squelette est modifiable"
     paste_blocked_self: "Ce sont les données de cet élément : rien à coller"
     paste_blocked_no_field: Aucun champ copié n'est utilisé par cet élément
-    locked_title: Cet ELP fait partie de la structure imposée par le diplôme
-    locked_badge: imposé
-    imposed_badge: Imposé par le diplôme
+    locked_title: Cet ELP est verrouillé
+    locked_badge: Verrouillé
     copied_from: 'Copie de « %node% » (%formation%).'
     source_changed: La source a changé depuis la copie.
     refresh_from_source: Mettre à jour depuis la source
@@ -41,7 +40,7 @@ node:
     parent_label: ELP parent
     parent_help: Emplacement autorisé par le squelette de la formation
     root_option: — Racine de la formation —
-    parent_locked_help: Emplacement imposé par le diplôme — non modifiable.
+    parent_locked_help: Emplacement verrouillé — non modifiable.
     no_location_help: >-
       Aucun emplacement : le squelette ne prévoit pas ce type sous un autre élément pédagogique.
     label_field: Libellé
@@ -111,7 +110,7 @@ node:
     jump_to_help: Passe rapidement d'un niveau de la structure à un autre.
     fields_title: Champs affichés sur cet ELP
     fields_note: >-
-      Cochez les champs à faire apparaître. Les champs %admin_badge% sont imposés par l'administrateur
+      Cochez les champs à faire apparaître. Les champs %admin_badge% sont fixés par l'administrateur
       du type.
     mutualisable_label: ELP mutualisable / accrochable
     admin_badge: admin

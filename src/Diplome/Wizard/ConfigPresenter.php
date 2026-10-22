@@ -6,7 +6,6 @@ namespace App\Diplome\Wizard;
 
 use App\Diplome\Rule\RuleTemplateRegistry;
 use App\Diplome\Spec\Bound;
-use App\Diplome\Spec\ImposedElement;
 use App\Diplome\Spec\RuleSpec;
 use App\Diplome\Spec\CanvasSpec;
 use App\Diplome\Spec\VersionConfig;
@@ -105,24 +104,11 @@ final class ConfigPresenter
             $rows[] = [$this->t('recap.level', ['%n%' => $i + 1]), $level->typeKey.([] === $details ? '' : ' ('.implode(', ', $details).')')];
         }
         $rows[] = [$this->t('recap.natures'), [] === $s->natures ? '—' : implode(', ', $s->natureKeys())];
-        foreach ([] === $s->imposed ? [null] : $s->imposed as $imposed) {
-            $rows[] = [$this->t('recap.imposed'), null === $imposed ? '—' : $this->imposedLine($imposed)];
-        }
         foreach ([] === $s->rules ? [null] : $s->rules as $rule) {
             $rows[] = [$this->t('recap.rules'), null === $rule ? '—' : $this->ruleLine($rule)];
         }
 
         return $rows;
-    }
-
-    private function imposedLine(ImposedElement $i): string
-    {
-        $parts = [$i->typeKey.(null === $i->nature ? '' : ' ('.$i->nature.')'), $this->t('recap.imposed_position', ['%position%' => $i->position, '%level%' => $i->parentLevel])];
-        if (null !== $i->countOverride) {
-            $parts[] = $this->t('recap.level_count').' '.$this->boundLabel($i->countOverride);
-        }
-
-        return $i->label.' — '.implode(', ', $parts);
     }
 
     private function ruleLine(RuleSpec $rule): string

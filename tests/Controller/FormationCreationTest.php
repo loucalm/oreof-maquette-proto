@@ -83,10 +83,10 @@ final class FormationCreationTest extends WebTestCase
         // références calculées des semestres : numérotation de la version du type (LP : à partir de 5)
         self::assertSame(['5', '6', '7', '8'], $this->labelsOf($formation, 'semestre'));
 
-        // l'élément imposé du diplôme est présent, verrouillé contre la suppression
-        $imposed = array_values(array_filter($doc->allNodes(), static fn ($n) => 'lp-projet-stage' === $n->getAttribute('_imposed')));
-        self::assertCount(1, $imposed);
-        self::assertTrue($imposed[0]->isLocked('delete'));
+        // les obligations du diplôme (projet tutoré, stage) restent à remplir : écarts signalés, pas un refus de création
+        $keys = array_map(static fn ($v) => $v->ruleKey, static::getContainer()->get(\App\Maquette\Completion::class)->structureViolations($doc));
+        self::assertContains('rule:lp-stage:min', $keys);
+        self::assertContains('rule:lp-projet-tutore:min', $keys);
     }
 
     public function testDurationOutsideBoundsIsRefused(): void
@@ -248,10 +248,10 @@ final class FormationCreationTest extends WebTestCase
 
     public function testAFailedGenerationLeavesNoFormationAndNoServerError(): void
     {
-        // version dont l'élément imposé est mal placé : la génération échoue APRÈS l'écriture de la formation
+        // version sans niveau : la génération échoue APRÈS l'écriture de la formation
         $version = $this->em->getRepository(TypeDiplome::class)->findOneByKey('L')->latestVersion();
         $config = $version->config()->toArray();
-        $config['structure']['imposed'] = [['uid' => 'mal-place', 'typeKey' => 'ue', 'label' => 'X', 'parentLevel' => 'annee', 'position' => 'last', 'locked' => []]];
+        $config['structure']['levels'] = [];
         $version->setConfig(\App\Diplome\Spec\VersionConfig::fromArray($config));
         $this->em->flush();
 

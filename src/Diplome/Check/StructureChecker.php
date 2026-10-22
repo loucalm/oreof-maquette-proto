@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Diplome\Check;
 
-use App\Diplome\ImposedHostLocator;
 use App\Diplome\Rule\CompiledRule;
 use App\Diplome\Rule\RuleTemplateRegistry;
 use App\Diplome\Spec\Bound;
@@ -18,8 +17,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Vérifie une maquette contre la configuration de sa version : bornes des
- * niveaux (nombre, ECTS, somme d'ECTS), durée, éléments imposés et règles
- * paramétrées. Tout passe par les gabarits de règles et RuleEvaluator.
+ * niveaux (nombre, ECTS, somme d'ECTS), durée et règles paramétrées. Tout passe par les gabarits de règles et RuleEvaluator.
  */
 final class StructureChecker
 {
@@ -27,7 +25,6 @@ final class StructureChecker
         private readonly RuleTemplateRegistry $templates,
         private readonly RuleEvaluator $evaluator,
         private readonly StructureContextBuilder $contexts,
-        private readonly ImposedHostLocator $locator,
         private readonly ScopeSelector $selector,
         private readonly TranslatorInterface $translator,
     ) {
@@ -43,10 +40,9 @@ final class StructureChecker
 
         /** @var array<string, array<string, list<array<string, mixed>>>> $cache */
         $cache = [];
-        $run = function (string $prefix, string $template, array $params, array $scopes, bool $forceWarning = false, ?callable $paramsFor = null, bool $cursus = false) use ($doc, $config, &$cache, &$violations): void {
+        $run = function (string $prefix, string $template, array $params, array $scopes, bool $forceWarning = false, bool $cursus = false) use ($doc, $config, &$cache, &$violations): void {
             foreach ($scopes as $scope) {
-                $scopeParams = null !== $paramsFor ? $paramsFor($scope, $params) : $params;
-                foreach ($this->templates->get($template)->compile($scopeParams) as $compiled) {
+                foreach ($this->templates->get($template)->compile($params) as $compiled) {
                     $ctx = $cursus
                         ? ($cache['presence:'.($scope?->nid ?? '')] ??= $this->contexts->cursusPresenceContextFor($doc, $scope, $config))
                         : ($cache[$scope?->nid ?? ''] ??= $this->contexts->contextFor($doc, $scope, $config));
@@ -60,57 +56,20 @@ final class StructureChecker
 
         // la durée compte les nœuds du niveau choisi dans tout le cursus (descendants compris)
         if (null !== $structure->duration) {
-            $run('duration', 'child_count', ['childType' => $structure->duration->levelKey] + self::bounds($structure->duration->bound), $this->contexts->cursusScopes($doc), false, null, true);
-        }
-
-        // surcharges de borne : nid de l'hôte → typeKey enfant → borne
-        $overrides = [];
-        foreach ($structure->imposed as $imposed) {
-            if (null === $imposed->countOverride) {
-                continue;
-            }
-            foreach ($this->locator->hostsIn($doc, $imposed) as $host) {
-                $overrides[$host->nid][$imposed->typeKey] = $imposed->countOverride;
-            }
+            $run('duration', 'child_count', ['childType' => $structure->duration->levelKey] + self::bounds($structure->duration->bound), $this->contexts->cursusScopes($doc), false, true);
         }
 
         foreach ($levels as $i => $level) {
             $parents = 0 === $i ? $rootScopes : $this->nodesOfType($doc, $levels[$i - 1]->typeKey);
             $key = 'level:'.$level->typeKey;
             if (null !== $level->count) {
-                $run($key.':count', 'child_count', ['childType' => $level->typeKey], $parents, false,
-                    static fn (?TreeNode $scope, array $p): array => $p + self::bounds($overrides[$scope?->nid ?? ''][$level->typeKey] ?? $level->count));
+                $run($key.':count', 'child_count', ['childType' => $level->typeKey] + self::bounds($level->count), $parents);
             }
             if (null !== $level->ects) {
                 $run($key.':ects', 'attribute_value', ['attribute' => 'ects'] + self::bounds($level->ects), $parents);
             }
             if (null !== $level->ectsSum) {
                 $run($key.':ectsSum', 'attribute_sum', ['attribute' => 'ects'] + self::bounds($level->ectsSum), $this->nodesOfType($doc, $level->typeKey));
-            }
-        }
-
-        // first / last / « n » : présence dans la portée (cursus ; racine en mono), la position ne sert qu'au placement ;
-        // all : présence sous chaque nœud du niveau parent (un portail partagé n'est contrôlé qu'une fois)
-        foreach ($structure->imposed as $imposed) {
-            $params = ['typeKey' => $imposed->typeKey, 'nature' => $imposed->nature ?? '', 'imposed' => $imposed->uid];
-            $label = sprintf('Élément imposé manquant : %s', '' !== $imposed->label ? $imposed->label : $imposed->typeKey);
-            $targets = [];
-            foreach ($this->locator->scopes($doc) as $scope) {
-                if (!$imposed->isEveryHost()) {
-                    $targets[] = [$scope, $cache['presence:'.($scope?->nid ?? '')] ??= $this->contexts->cursusPresenceContextFor($doc, $scope, $config)];
-                    continue;
-                }
-                foreach ($this->locator->levelNodesIn($doc, $scope, $imposed) as $host) {
-                    $targets[$host->nid] = [$host, $cache['host:'.$host->nid] ??= $this->contexts->hostPresenceContextFor($host, $config)];
-                }
-            }
-            foreach ($targets as [$scope, $ctx]) {
-                foreach ($this->templates->get('required_element')->compile($params) as $compiled) {
-                    $violation = $this->evaluate('imposed:'.$imposed->uid, new CompiledRule($compiled->node, true, $label), $scope, $ctx, false);
-                    if (null !== $violation) {
-                        $violations[] = $violation;
-                    }
-                }
             }
         }
 

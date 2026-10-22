@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Diplome\ImposedPropagator;
 use App\Diplome\NextVersionCreator;
 use App\Diplome\VersionUsage;
 use App\Diplome\Wizard\WizardStepInterface;
@@ -29,8 +28,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * les étapes éditables de l'assistant deviennent des onglets, chacun enregistré
  * seul. Une version utilisée par des formations n'est enregistrée qu'avec la
  * confirmation d'impact ; les bornes et règles s'appliquent aussitôt (le garde de
- * structure relit la version). Création de la version suivante et propagation
- * des éléments imposés aux formations.
+ * structure relit la version). Création de la version suivante.
  */
 final class DiplomeEditController extends AbstractController
 {
@@ -41,7 +39,6 @@ final class DiplomeEditController extends AbstractController
         private readonly TypeDiplomeVersionRepository $versions,
         private readonly VersionUsage $usage,
         private readonly NextVersionCreator $nextVersion,
-        private readonly ImposedPropagator $propagator,
         private readonly EntityManagerInterface $em,
         private readonly TranslatorInterface $translator,
     ) {
@@ -92,24 +89,6 @@ final class DiplomeEditController extends AbstractController
             return $this->redirectToRoute('diplome_index');
         }
         $this->addFlash('success', $this->translator->trans('diplome.edit.version_created', ['%year%' => $version->getAnneeUniversitaire()], 'diplome'));
-
-        return $this->redirectToRoute('diplome_edit', ['id' => $type->getId(), 'versionId' => $version->getId(), 'step' => $this->steps->editableKeys()[0]]);
-    }
-
-    #[Route('/diplomes/{id}/propager/{versionId}', name: 'diplome_version_propagate', requirements: self::REQUIREMENTS, methods: ['POST'])]
-    #[IsCsrfTokenValid(DiplomeController::CSRF_ID, tokenKey: DiplomeController::CSRF_FIELD)]
-    public function propagate(TypeDiplome $type, int $versionId): RedirectResponse
-    {
-        $version = $this->version($type, $versionId);
-        $result = $this->propagator->propagateVersion($version);
-        foreach ($result->refused as $refusal) {
-            $this->addFlash('error', $this->translator->trans('diplome.edit.propagate_refused', ['%formation%' => $refusal['formation']->getName(), '%message%' => $refusal['message']], 'diplome'));
-        }
-        if ([] === $result->refused) {
-            $this->addFlash('success', $this->translator->trans('diplome.edit.propagated', ['%count%' => $result->touched], 'diplome'));
-        } else {
-            $this->addFlash('error', $this->translator->trans('diplome.edit.propagated_partial', ['%count%' => $result->touched, '%refused%' => \count($result->refused)], 'diplome'));
-        }
 
         return $this->redirectToRoute('diplome_edit', ['id' => $type->getId(), 'versionId' => $version->getId(), 'step' => $this->steps->editableKeys()[0]]);
     }

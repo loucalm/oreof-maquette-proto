@@ -95,7 +95,7 @@ diplome:
         not_hideable: "« %label% » ne peut pas être masqué."
         locked_missing: "Fiche %fiche% : le champ « %field% » doit rester dans une entrée affichée."
     structure:
-      help: Définissez la chaîne de niveaux du diplôme (du premier niveau à la feuille), les bornes de chaque niveau, les éléments imposés et les règles de validation.
+      help: Définissez la chaîne de niveaux du diplôme (du premier niveau à la feuille), les bornes de chaque niveau, les types d'EC et les règles de validation.
       choose: Choisir…
       duration: Durée (nombre de nœuds du premier niveau)
       parcours_allowed: Parcours autorisés
@@ -113,23 +113,9 @@ diplome:
         coefficient: Pondérés par coefficient
       duration_level: Niveau qui compte la durée
       level_section_help: Du premier niveau à la feuille. Les bornes s'appliquent dans chaque parent (« 3 à 6 UE » = dans chaque semestre).
-      imposed_section_help: Nœuds qui doivent exister, placés d'office et verrouillés.
-      imposed_pin: Imposer ce niveau (des nœuds de ce type doivent exister, placés d'office et verrouillés)
-      imposed_in_parent: "Imposé — doit exister dans chaque"
-      imposed_orphans: Ces éléments imposés n'ont pas de niveau parent dans la chaîne (premier niveau ou type absent). Retirez-les ou ajoutez le niveau correspondant.
       rule_section_help: Contraintes supplémentaires, contrôlées en direct dans les formations.
       natures: Natures d'élément
       natures_help: "Sortes d'éléments du dernier niveau (ex. ec, stage, ressource, sae), séparées par des virgules. Chaque élément en reçoit une ; elle fixe les MCCC autorisées (onglet MCCC) et sert aux règles (ex. SAÉ ≥ 40 %)."
-      imposed: Éléments imposés
-      imposed_type: Type de nœud
-      imposed_label: Libellé
-      imposed_position: Position
-      imposed_position_help: Parmi les nœuds du niveau situé juste au-dessus.
-      imposed_position_invalid: Choisissez une position dans la liste.
-      imposed_nature: Nature
-      imposed_nature_any: Toutes
-      imposed_locked: Verrous
-      imposed_count: Nombre d'enfants (surcharge)
       rules: Règles
       rule_template: Gabarit de règle
       rule_scope: Portée (niveau)
@@ -139,7 +125,6 @@ diplome:
       rule_param_missing: 'Une règle : le paramètre « %param% » est obligatoire.'
       bound_invalid: 'Borne invalide : indiquez un nombre positif (et, pour « entre », un maximum au moins égal au minimum).'
       add_level: Ajouter un niveau
-      add_imposed: Imposer un autre élément de ce niveau
       add_rule: Ajouter une règle
       remove: Retirer
       up: Monter
@@ -152,10 +137,6 @@ diplome:
         max: au plus
         between: entre
         exact: exactement
-      lock:
-        add: ajout
-        delete: suppression
-        duplicate: duplication
       severity:
         error: bloquante
         warning: avertissement
@@ -171,7 +152,6 @@ diplome:
         duration_level_not_temporal: Le niveau qui compte la durée doit être un niveau de temps (année, semestre…).
         duration_intermediate_not_exact: Pour compter la durée sur ce niveau, chaque niveau situé entre le premier et lui doit avoir un nombre exact par parent.
         duration_not_divisible: "La durée (%duration%) n'est pas un multiple de %factor% %unit% par %parent%"
-        imposed_level: 'Élément imposé %n% : son type doit figurer dans la chaîne, sous le premier niveau.'
         rule_scope: 'Règle %n% : la portée doit être un niveau de la chaîne.'
         rule_position: 'La position doit être « all », « first », « last » ou un numéro.'
         ec_type_used_rule: 'Le type %type% est utilisé par une règle : retirez d''abord la règle.'
@@ -226,7 +206,6 @@ diplome:
       duration: Durée
       parcoursAllowed: Parcours autorisés
       natures: Natures d'élément
-      imposed: Éléments imposés
       rules: Règles
       mccc: MCCC
       types: types
@@ -254,11 +233,9 @@ diplome:
       parcours: Parcours autorisés
       level: 'Niveau %n%'
       level_count: nombre
-      imposed_position: 'position %position% parmi les nœuds « %level% »'
       rule_scope: 'portée « %level% »'
       level_ects_sum: somme ECTS
       natures: Natures d'élément
-      imposed: Éléments imposés
       rules: Règles
       bcc_levels: Niveaux de BCC
       none: Aucun formulaire choisi
@@ -283,11 +260,6 @@ diplome:
     impact_title: '{1} Cette version s''applique à 1 formation|]1,Inf[ Cette version s''applique à %count% formations'
     confirm_impact: 'Je confirme : la modification s''appliquera aux formations concernées.'
     impact_required: Cochez la confirmation d'impact pour enregistrer une version utilisée par des formations.
-    propagate: Propager aux formations
-    propagate_help: Ajoute les éléments imposés manquants et réapplique leurs verrous.
-    propagated: '{0} Aucun élément à propager.|{1} 1 nœud touché.|]1,Inf[ %count% nœuds touchés.'
-    propagated_partial: 'Propagation incomplète : %count% nœud(s) touché(s), %refused% formation(s) refusée(s).'
-    propagate_refused: 'Propagation refusée pour « %formation% » : %message%'
   flash:
     created: 'Type « %label% » créé.'
     archived: 'Type « %label% » archivé.'

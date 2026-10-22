@@ -138,7 +138,7 @@ final class DiplomeCanvasStepTest extends WebTestCase
     public function testEditTabRequiresImpactConfirmation(): void
     {
         $but = $this->em->getRepository(TypeDiplome::class)->findOneBy(['key' => 'BUT']);
-        FormationFactory::create(static::getContainer())->fromType('BUT', 3);
+        FormationFactory::create(static::getContainer())->fromType('BUT', 6);
         $path = sprintf('/diplomes/%d/versions/%d/formulaires', $but->getId(), $but->latestVersion()->getId());
         $crawler = $this->client->request('GET', $path);
         $values = $crawler->filter('form#wizard-form')->form()->getPhpValues();

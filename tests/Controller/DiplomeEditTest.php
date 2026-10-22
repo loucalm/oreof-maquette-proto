@@ -49,7 +49,7 @@ final class DiplomeEditTest extends WebTestCase
         $maquette = static::getContainer()->get(Maquette::class);
         $doc = $maquette->open($formation);
         static::getContainer()->get(StructureInstantiator::class)->instantiate($doc, $type->latestVersion(), $duration, false);
-        $maquette->save($formation, $doc, 'Création');
+        $maquette->saveGenerated($formation, $doc, 'Création');
 
         return $formation;
     }
@@ -58,7 +58,7 @@ final class DiplomeEditTest extends WebTestCase
     {
         $type = $this->type('BUT');
         // un EC de nature « sae » dans une formation BUT
-        $formation = $this->formationOf('BUT', 3);
+        $formation = $this->formationOf('BUT', 6);
         $maquette = static::getContainer()->get(Maquette::class);
         $doc = $maquette->open($formation);
         $ue = current(array_filter($doc->allNodes(), static fn (TreeNode $n) => 'ue' === $n->typeKey));
@@ -69,7 +69,7 @@ final class DiplomeEditTest extends WebTestCase
         $crawler = $this->client->request('GET', $this->editPath($type, 'mccc'));
         self::assertResponseIsSuccessful();
         // une ligne par nature déclarée, avec ses types et son profil
-        self::assertSame(['ressource', 'sae', 'stage'], $crawler->filter('fieldset[data-nature]')->each(static fn ($n) => $n->attr('data-nature')));
+        self::assertSame(['ressource', 'sae', 'stage', 'portfolio'], $crawler->filter('fieldset[data-nature]')->each(static fn ($n) => $n->attr('data-nature')));
 
         $values = $crawler->filter('form#wizard-form')->form()->getPhpValues();
         $values['mcc_config']['natures'][1]['types'] = ['CC'];
@@ -85,7 +85,7 @@ final class DiplomeEditTest extends WebTestCase
         $crawler = $this->client->request('GET', sprintf('/formations/%d/nodes/%s', $formation->getId(), $ec->nid));
         self::assertSame(['CC'], $crawler->filter('input[type=radio][name="attr_mccc[type]"]')->each(static fn ($n) => $n->attr('value')));
         // la nature se choisit parmi celles de la version
-        self::assertSame(['', 'ressource', 'sae', 'stage'], $crawler->filter('select[name=attr_natureElement] option')->each(static fn ($n) => $n->attr('value')));
+        self::assertSame(['', 'ressource', 'sae', 'stage', 'portfolio'], $crawler->filter('select[name=attr_natureElement] option')->each(static fn ($n) => $n->attr('value')));
     }
 
     public function testBccLevelsAndLinkLevelAreStored(): void
@@ -174,21 +174,17 @@ final class DiplomeEditTest extends WebTestCase
         self::assertResponseStatusCodeSame(404);
     }
 
-    public function testPropagateButtonAddsMissingImposedElement(): void
+    public function testNoMorePropagationToFormations(): void
     {
-        $formation = $this->formationOf('LP');
+        $this->formationOf('LP');
         $type = $this->type('LP');
-        $config = $type->latestVersion()->config()->toArray();
-        $config['structure']['imposed'][] = ['uid' => 'lp-nouveau', 'typeKey' => 'ue', 'label' => 'Nouvelle UE imposée', 'parentLevel' => 'semestre', 'position' => 'last', 'locked' => ['delete']];
-        $type->latestVersion()->setConfig(\App\Diplome\Spec\VersionConfig::fromArray($config));
-        $this->em->flush();
+
+        $crawler = $this->client->request('GET', $this->editPath($type, 'structure'));
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('[data-action="propagate"]'));
 
         $this->client->request('POST', sprintf('/diplomes/%d/propager/%d', $type->getId(), $type->latestVersion()->getId()), ['_csrf_token' => $this->csrfToken()]);
-        self::assertResponseRedirects();
-
-        $this->em->clear();
-        $doc = static::getContainer()->get(Maquette::class)->open($this->em->find(Formation::class, $formation->getId()));
-        self::assertCount(1, array_filter($doc->allNodes(), static fn (TreeNode $n) => 'lp-nouveau' === $n->getAttribute('_imposed')));
+        self::assertResponseStatusCodeSame(404);
     }
 
     public function testBccLinkLevelDefaultsToLastLevel(): void

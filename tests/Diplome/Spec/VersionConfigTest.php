@@ -24,11 +24,6 @@ final class VersionConfigTest extends TestCase
                 'parcoursAllowed' => true,
                 'duration' => ['levelKey' => 'annee', 'bound' => ['min' => 1, 'max' => 3]],
                 'natures' => [['key' => 'ec', 'label' => 'EC'], ['key' => 'stage', 'label' => 'Stage']],
-                'imposed' => [[
-                    'uid' => 'imp-1', 'typeKey' => 'ec', 'label' => 'Stage', 'parentLevel' => 'semestre',
-                    'position' => 'last', 'nature' => 'stage', 'locked' => ['label', 'ects'],
-                    'countOverride' => ['min' => 1, 'max' => 1],
-                ]],
                 'rules' => [[
                     'uid' => 'r-1', 'template' => 'ects_sum', 'params' => ['total' => 180],
                     'scopeLevel' => 'annee', 'severity' => 'warning', 'scopePosition' => 'last',
@@ -45,6 +40,14 @@ final class VersionConfigTest extends TestCase
         ];
 
         self::assertSame($raw, VersionConfig::fromArray($raw)->toArray());
+    }
+
+    public function testLegacyImposedKeyIsIgnored(): void
+    {
+        // configurations et brouillons enregistrés avant la suppression des éléments imposés
+        $spec = StructureSpec::fromArray(['levels' => [['typeKey' => 'annee']], 'imposed' => [['uid' => 'imp-1', 'typeKey' => 'ec', 'position' => 'last']]]);
+
+        self::assertArrayNotHasKey('imposed', $spec->toArray());
     }
 
     public function testLegacyFormsSurviveUntilACanvasIsWritten(): void
@@ -85,7 +88,6 @@ final class VersionConfigTest extends TestCase
             'parcoursAllowed' => false,
             'duration' => ['levelKey' => 'semestre', 'bound' => ['min' => 6, 'max' => 6]],
             'natures' => [['key' => 'stage', 'label' => 'Stage']],
-            'imposed' => [],
             'rules' => [],
         ];
         $spec = StructureSpec::fromArray(['levels' => [['typeKey' => 'annee'], ['typeKey' => 'semestre', 'locked' => true, 'ecLink' => 'contains']], 'duration' => $raw['duration'], 'natures' => $raw['natures']]);

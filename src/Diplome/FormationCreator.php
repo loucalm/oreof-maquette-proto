@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Diplome;
 
-use App\Diplome\Check\StructureViolationException;
 use App\Diplome\Spec\DurationMath;
 use App\Diplome\Spec\DurationSpec;
 use App\Entity\Formation;
@@ -78,7 +77,7 @@ final class FormationCreator
         }
 
         try {
-            // tout ou rien : un échec de génération ou du garde de structure ne laisse aucune formation
+            // tout ou rien : un échec de génération ne laisse aucune formation
             return $this->em->wrapInTransaction(function () use ($name, $type, $year, $duration, $avecParcours, $phase, $domaine, $composante, $version, $structure): Formation {
                 $formation = (new Formation($name))
                     ->setTypeDiplome($type)
@@ -93,11 +92,11 @@ final class FormationCreator
 
                 $doc = $this->maquette->open($formation);
                 $this->instantiator->instantiate($doc, $version, $duration, $avecParcours);
-                $this->maquette->save($formation, $doc, 'Création');
+                $this->maquette->saveGenerated($formation, $doc, 'Création');
 
                 return $formation;
             });
-        } catch (\InvalidArgumentException|StructureViolationException $e) {
+        } catch (\InvalidArgumentException $e) {
             throw new \DomainException($this->t('formation.creation.error.invalid', ['%type%' => $type->getLabel(), '%message%' => $e->getMessage()]), 0, $e);
         }
     }

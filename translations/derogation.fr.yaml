@@ -7,7 +7,6 @@ derogation:
     label: 'Écart demandé sur la règle'
     bound_max: maximum
     bound_min: minimum
-    bound_imposed: élément imposé
     bound_lock: niveau verrouillé
     bound_other: règle
     root: racine de la maquette
@@ -19,7 +18,7 @@ derogation:
     heading: Demandes de dérogation
     description: >-
       Un responsable de formation a demandé, par texte, d’ajouter/déplacer/supprimer quelque chose que
-      le type de diplôme ne prévoit pas (typiquement un ELP imposé). Traitez la demande en appliquant
+      le type de diplôme ne prévoit pas (typiquement un ELP verrouillé). Traitez la demande en appliquant
       vous-même la modification nécessaire dans la formation, puis marquez-la ci-dessous.
     empty: Aucune demande de dérogation pour l’instant.
     general_request: Demande générale

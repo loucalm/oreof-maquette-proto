@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\DataFixtures;
 
+use App\Diplome\Spec\DurationMath;
 use App\Diplome\StructureInstantiator;
 use App\Entity\Formation;
 use App\Entity\TypeDiplome;
@@ -17,7 +18,7 @@ use Doctrine\Persistence\ObjectManager;
 /**
  * Formations de démo. Les formations typées (Licence, Licence multi-parcours, BUT) sont créées comme
  * à l'écran : structure de départ générée par StructureInstantiator d'après la version du type de
- * diplôme (donc dans ses bornes et avec ses éléments imposés), puis complétée. Le certificat court
+ * diplôme (donc dans ses bornes), puis complétée. Le certificat court
  * reste volontairement sans type de diplôme (structure libre, dimension temporelle en semaines).
  */
 final class FormationFixtures extends Fixture implements DependentFixtureInterface
@@ -64,17 +65,18 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
      */
     private function start(string $name, TypeDiplome $type, int $duration, bool $avecParcours): array
     {
+        $version = $type->latestVersion() ?? throw new \LogicException('Type de démo sans version.');
         $formation = (new Formation($name))
             ->setTypeDiplome($type)
             ->setAnneeUniversitaire(TypeDiplomeFixtures::YEAR)
             ->setDomaine('Sciences, technologies, santé')
             ->setComposante('UFR Sciences Exactes et Naturelles')
-            ->setCalendarSpan($duration);
+            ->setCalendarSpan(intdiv($duration, DurationMath::factor($version->config()->structure))); // durée en nœuds du niveau de durée, période en années
         $this->manager->persist($formation);
         $this->manager->flush();
 
         $doc = $this->maquette->open($formation);
-        $this->instantiator->instantiate($doc, $type->latestVersion() ?? throw new \LogicException('Type de démo sans version.'), $duration, $avecParcours);
+        $this->instantiator->instantiate($doc, $version, $duration, $avecParcours);
 
         return [$formation, $doc];
     }
@@ -313,16 +315,20 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
 
     private function butInfo(): void
     {
-        [$formation, $doc] = $this->start('BUT Informatique (démo)', $this->butType, 3, false);
+        [$formation, $doc] = $this->start('BUT Informatique (démo)', $this->butType, 6, false);
 
         $semestre = $this->semestres($doc)[0];
-        $ue = $this->fill($semestre->getChildren()[0], 'UE 1.1 — Réaliser un développement d’application', ['ects' => 30, 'nature' => 'obligatoire']);
+        $ue = $this->fill($semestre->getChildren()[0], 'UE 1.1 — Réaliser un développement d’application', ['ects' => 6, 'nature' => 'obligatoire']);
         $this->ec($doc, $ue, 'Ressource R1.01 — Initiation au développement', ['natureElement' => 'ressource', 'ects' => 10]);
         $this->ec($doc, $ue, 'SAÉ 1.01 — Implémentation d’un besoin client', ['natureElement' => 'sae', 'ects' => 10]);
+        // un stage dans les semestres 2, 4 et 6 (règles « Au moins 1 EC Stage » du BUT)
+        foreach ([2, 4, 6] as $n) {
+            $this->ec($doc, $this->semestres($doc)[$n - 1]->getChildren()[0], sprintf('Stage S%d', $n), ['natureElement' => 'stage']);
+        }
         foreach ($this->semestres($doc) as $s) {
             foreach ($s->getChildren() as $u) {
                 if (null === $u->getAttribute('ects')) {
-                    $u->setAttribute('ects', 30);
+                    $u->setAttribute('ects', 6); // 5 UE × 6 = 30 ECTS par semestre
                 }
             }
         }

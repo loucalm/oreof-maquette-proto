@@ -41,14 +41,8 @@
 {# Grille d'une ligne de niveau, partagée avec l'en-tête du tableau (structure.html.twig). #}
 {% macro levelGrid() %}grid grid-cols-[minmax(10rem,1.4fr)_repeat(3,minmax(11rem,1fr))_4.5rem_auto] items-center gap-3{% endmacro %}
 
-{#
- Bloc d'un niveau : sa ligne de bornes, et la punaise qui rend ce niveau imposé (des nœuds de ce type
- doivent exister dans chaque nœud du niveau parent). Le panneau sous la ligne règle ces éléments
- imposés. Cf. levels_controller.js.
- `parent` : libellé du niveau parent (null pour le premier niveau, qui ne peut pas être imposé) ;
- `hasChildren` : vrai si le niveau a un niveau enfant (surcharge du nombre d'enfants proposée).
-#}
-{% macro level(f, imposedRows = [], parent = null, hasChildren = false) %}
+{# Bloc d'un niveau : sa ligne de bornes, puis le verrou et le rattachement des EC. Cf. levels_controller.js. #}
+{% macro level(f) %}
     {% import _self as m %}
     {% set btn = 'inline-flex h-7 w-7 items-center justify-center rounded hover:bg-gray-100' %}
     <div data-level-block class="rounded-md border" style="border-color:var(--c-border)">
@@ -66,13 +60,6 @@
                 {{ form_errors(f.startAt) }}
             </div>
             <div class="flex shrink-0 items-center gap-0.5">
-                <button type="button" data-action="levels#pin" data-imposed-toggle {{ parent is null ? 'disabled' }}
-                        class="inline-flex h-7 items-center gap-0.5 rounded px-1.5 text-xs hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
-                        title="{{ 'diplome.wizard.structure.imposed_pin'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.wizard.structure.imposed_pin'|trans({}, 'diplome') }}">
-                    <span data-pin-off {{ imposedRows is not empty ? 'hidden' }}>{{ ux_icon('ph:push-pin', {class: 'icon'}) }}</span>
-                    <span data-pin-on {{ imposedRows is empty ? 'hidden' }} style="color:var(--c-primary)">{{ ux_icon('ph:push-pin-fill', {class: 'icon'}) }}</span>
-                    <span data-imposed-count {{ imposedRows|length < 2 ? 'hidden' }}>{{ imposedRows|length }}</span>
-                </button>
                 <button type="button" data-action="levels#up" class="{{ btn }}" title="{{ 'diplome.wizard.structure.up'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.wizard.structure.up'|trans({}, 'diplome') }}">{{ ux_icon('ph:arrow-up', {class: 'icon'}) }}</button>
                 <button type="button" data-action="levels#down" class="{{ btn }}" title="{{ 'diplome.wizard.structure.down'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.wizard.structure.down'|trans({}, 'diplome') }}">{{ ux_icon('ph:arrow-down', {class: 'icon'}) }}</button>
                 <button type="button" data-action="levels#removeLevel" class="{{ btn }}" style="color:#dc2626" title="{{ 'diplome.wizard.structure.remove'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.wizard.structure.remove'|trans({}, 'diplome') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
@@ -82,40 +69,6 @@
             <label class="inline-flex items-center gap-1">{{ form_widget(f.locked) }} {{ form_label(f.locked) }}</label>
             <label class="inline-flex items-center gap-1">{{ form_label(f.ecLink) }} {{ form_widget(f.ecLink, {attr: {class: 'rounded-md border px-1.5 py-0.5 text-xs', style: 'border-color:var(--c-border)'}}) }}</label>
             {{ form_errors(f.locked) }}{{ form_errors(f.ecLink) }}
-        </div>
-        <div data-imposed-panel class="border-t px-3 py-2 space-y-2" style="border-color:var(--c-border);background:#f8f9fb" {{ imposedRows is empty ? 'hidden' }}>
-            <div class="flex items-center gap-1 text-xs" style="color:var(--c-muted)">
-                {{ ux_icon('ph:push-pin-fill', {class: 'icon'}) }}
-                <span>{{ 'diplome.wizard.structure.imposed_in_parent'|trans({}, 'diplome') }} <strong data-imposed-parent-label>{{ parent }}</strong></span>
-            </div>
-            <div data-imposed-list class="space-y-2">
-                {% for r in imposedRows %}{{ m.imposed(r, hasChildren) }}{% endfor %}
-            </div>
-            <button type="button" data-action="levels#addImposed" class="inline-flex items-center gap-1 rounded-md border bg-white px-2.5 py-1 text-xs hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'diplome.wizard.structure.add_imposed'|trans({}, 'diplome') }}</button>
-        </div>
-    </div>
-{% endmacro %}
-
-{# Élément imposé : son type est celui du niveau dont la punaise est active (champ caché, recopié par levels_controller.js) #}
-{% macro imposed(f, hasChildren = true) %}
-    {% import _self as m %}
-    <div data-imposed-row class="rounded-md border bg-white px-3 py-2" style="border-color:var(--c-border)">
-        {{ form_widget(f.uid) }}
-        <input type="hidden" name="{{ f.typeKey.vars.full_name }}" value="{{ f.typeKey.vars.value }}" data-imposed-type>
-        {% do f.typeKey.setRendered %}
-        <div class="flex items-start gap-3">
-            <div class="flex-1 grid grid-cols-2 gap-x-3 gap-y-2 md:grid-cols-[1.6fr_9rem_8rem_auto]">
-                {{ m.field(f.label) }}
-                {{ m.field(f.position) }}
-                {{ m.field(f.nature) }}
-                <div data-imposed-children {{ not hasChildren ? 'hidden' }}>{{ m.bound(f.countOverride) }}</div>
-                <div class="col-span-2 md:col-span-4">
-                    {{ form_label(f.locked, null, {label_attr: {class: 'text-[11px] font-medium uppercase tracking-wide', style: 'color:var(--c-muted)'}}) }}
-                    <div class="mt-1 text-sm [&_input]:mr-1 [&_label]:mr-4 [&_label]:inline-flex">{{ form_widget(f.locked) }}</div>
-                </div>
-            </div>
-            {{ form_errors(f.typeKey) }}
-            <button type="button" data-action="levels#removeImposed" class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded hover:bg-gray-100" style="color:#dc2626" title="{{ 'diplome.wizard.structure.remove'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.wizard.structure.remove'|trans({}, 'diplome') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
         </div>
     </div>
 {% endmacro %}

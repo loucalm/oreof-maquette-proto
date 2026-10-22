@@ -13,8 +13,8 @@ use Doctrine\Persistence\ObjectManager;
 
 /**
  * Types de diplôme de démonstration (Licence, LP, Master, M2E, BUT), chacun avec
- * une version 2026-2027, par configuration seulement. Les valeurs BUT (ratio SAÉ)
- * sont indicatives, à confirmer par le métier.
+ * une version 2026-2027, par configuration seulement. Les valeurs BUT (ratio SAÉ,
+ * stages) sont indicatives, à confirmer par le métier.
  */
 final class TypeDiplomeFixtures extends Fixture implements DependentFixtureInterface
 {
@@ -86,14 +86,17 @@ final class TypeDiplomeFixtures extends Fixture implements DependentFixtureInter
         $c = $licence;
         $c['structure']['duration'] = ['min' => 1, 'max' => 2];
         $c['structure']['levels'][1]['startAt'] = 5;
-        $c['structure']['imposed'] = [[
-            'uid' => 'lp-projet-stage',
-            'typeKey' => 'ue',
-            'label' => 'Projet tutoré et stage',
-            'parentLevel' => 'semestre',
-            'position' => 'last',
-            'locked' => ['delete', 'duplicate'],
-        ]];
+        // le dernier semestre porte au moins un projet tutoré et un stage (règles d'obligation, cf. spec §6.5)
+        $c['structure']['natures'] = [
+            ['key' => 'ec', 'label' => 'EC'],
+            ['key' => 'projet_tutore', 'label' => 'Projet tutoré'],
+            ['key' => 'stage', 'label' => 'Stage'],
+        ];
+        $c['structure']['rules'] = [
+            self::minElementType('lp-projet-tutore', 'projet_tutore', 'last'),
+            self::minElementType('lp-stage', 'stage', 'last'),
+        ];
+        $c['mccc']['projet_tutore'] = ['types' => ['CC'], 'profile' => 'master'];
         $c['mccc']['ec']['profile'] = 'master';
         $c['mccc']['stage']['profile'] = 'master';
 
@@ -144,37 +147,58 @@ final class TypeDiplomeFixtures extends Fixture implements DependentFixtureInter
                 'levels' => [
                     ['typeKey' => 'annee'],
                     ['typeKey' => 'semestre', 'count' => ['min' => 2, 'max' => 2], 'ectsSum' => ['min' => 30, 'max' => 30]],
-                    ['typeKey' => 'ue'],
+                    // 5 UE par semestre, figées ; les EC y sont rattachés par coefficient
+                    ['typeKey' => 'ue', 'count' => ['min' => 5, 'max' => 5], 'locked' => true, 'ecLink' => 'coefficient'],
                     ['typeKey' => 'ec'],
                 ],
                 'parcoursAllowed' => true,
-                'duration' => ['min' => 3, 'max' => 3],
-                'natures' => ['ressource', 'sae', 'stage'],
-                'imposed' => [[
-                    'uid' => 'but-stage',
-                    'typeKey' => 'ec',
-                    'label' => 'Stage',
-                    'parentLevel' => 'ue',
-                    'position' => 'last',
-                    'nature' => 'stage',
-                    'locked' => ['delete'],
-                ]],
-                'rules' => [[
-                    'uid' => 'but-ratio-sae',
-                    'template' => 'ratio',
-                    'params' => ['attribute' => 'ects', 'numeratorNature' => 'sae', 'op' => '>=', 'percent' => 40],
-                    'scopeLevel' => 'semestre',
-                    'severity' => 'error',
-                ]],
+                'duration' => ['levelKey' => 'semestre', 'bound' => ['min' => 6, 'max' => 6]],
+                'natures' => [
+                    ['key' => 'ressource', 'label' => 'Ressource'],
+                    ['key' => 'sae', 'label' => 'SAÉ'],
+                    ['key' => 'stage', 'label' => 'Stage'],
+                    ['key' => 'portfolio', 'label' => 'Portfolio'],
+                ],
+                'rules' => [
+                    [
+                        'uid' => 'but-ratio-sae',
+                        'template' => 'ratio',
+                        'params' => ['attribute' => 'ects', 'numeratorNature' => 'sae', 'op' => '>=', 'percent' => 40],
+                        'scopeLevel' => 'semestre',
+                        'severity' => 'error',
+                    ],
+                    // valeurs de démonstration (spec §6.5) : un stage dans les semestres 2, 4 et 6
+                    self::minElementType('but-stage-s2', 'stage', '2'),
+                    self::minElementType('but-stage-s4', 'stage', '4'),
+                    self::minElementType('but-stage-s6', 'stage', '6'),
+                ],
             ],
             'mccc' => [
                 'ressource' => ['types' => ['CC'], 'profile' => null],
                 'sae' => ['types' => ['CC'], 'profile' => null],
                 'stage' => ['types' => ['CT'], 'profile' => null],
+                'portfolio' => ['types' => ['CC'], 'profile' => null],
             ],
             'options' => ['quitus' => false, 'assiduite' => false, 'sansNote' => false],
             'bccLevels' => ['Compétence', 'Niveau', 'Apprentissage critique'],
             'bccLinkLevel' => 2,
+        ];
+    }
+
+    /**
+     * Règle « Au moins 1 EC d'un type » dans le semestre désigné (`first`, `last` ou numéro affiché).
+     *
+     * @return array<string, mixed>
+     */
+    private static function minElementType(string $uid, string $nature, string $position): array
+    {
+        return [
+            'uid' => $uid,
+            'template' => 'min_element_type',
+            'params' => ['nature' => $nature, 'min' => 1],
+            'scopeLevel' => 'semestre',
+            'scopePosition' => $position,
+            'severity' => 'error',
         ];
     }
 }

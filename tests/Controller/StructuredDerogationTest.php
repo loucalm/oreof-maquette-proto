@@ -116,17 +116,17 @@ final class StructuredDerogationTest extends WebTestCase
         self::assertNull($this->repo()->grantedCovering($f, 'duration:max', '', 5));
     }
 
-    public function testMinimumImposedAndSinglePartRules(): void
+    public function testMinimumLockAndSinglePartRules(): void
     {
         $f = $this->formation();
         $this->granted($f, 'level:ue:count:min', 'S1', 3.0);
-        $this->granted($f, 'imposed:abc', 'S1', null);
+        $this->granted($f, 'lock:ue', 'S1', null);
         $this->granted($f, 'rule:r1', 'S1', 5.0);
         $this->granted($f, 'rule:r2', 'S1', null);
 
         self::assertNotNull($this->repo()->grantedCovering($f, 'level:ue:count:min', 'S1', 3));
         self::assertNull($this->repo()->grantedCovering($f, 'level:ue:count:min', 'S1', 2));
-        self::assertNotNull($this->repo()->grantedCovering($f, 'imposed:abc', 'S1', 0));
+        self::assertNotNull($this->repo()->grantedCovering($f, 'lock:ue', 'S1', 0));
         self::assertNotNull($this->repo()->grantedCovering($f, 'rule:r1', 'S1', 5));
         self::assertNull($this->repo()->grantedCovering($f, 'rule:r1', 'S1', 6));
         self::assertNotNull($this->repo()->grantedCovering($f, 'rule:r2', 'S1', 42));

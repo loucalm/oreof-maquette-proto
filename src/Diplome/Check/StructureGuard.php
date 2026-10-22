@@ -78,7 +78,7 @@ final class StructureGuard
         }
     }
 
-    /** L'écart à la borne a-t-il augmenté ? Sans valeur chiffrée (élément imposé, règle simple) : non. */
+    /** L'écart à la borne a-t-il augmenté ? Sans valeur chiffrée (règle simple) : non. */
     private static function isWorse(StructureViolation $old, StructureViolation $new): bool
     {
         if (null === $old->actual || null === $new->actual) {
