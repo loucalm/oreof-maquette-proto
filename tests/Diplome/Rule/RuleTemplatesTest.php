@@ -170,6 +170,20 @@ final class RuleTemplatesTest extends DatabaseTestCase
         self::assertTrue($this->check($template->compile(['typeKey' => 'ue']), $semestre)[0]->valid);
     }
 
+    public function testMinElementType(): void
+    {
+        $rules = $this->registry->get('min_element_type')->compile(['nature' => 'stage', 'min' => 1]);
+        self::assertCount(1, $rules);
+        self::assertTrue($rules[0]->blocking);
+        self::assertSame('min', $rules[0]->part);
+
+        $without = $this->node('s1', 'semestre', children: [$this->node('u1', 'ue', children: [$this->node('e1', 'ec', ['natureElement' => 'ec'])])]);
+        self::assertFalse($this->check($rules, $without)[0]->valid);
+
+        $with = $this->node('s1', 'semestre', children: [$this->node('u1', 'ue', children: [$this->node('e1', 'ec', ['natureElement' => 'stage'])])]);
+        self::assertTrue($this->check($rules, $with)[0]->valid);
+    }
+
     public function testRootScopes(): void
     {
         $mono = $this->doc([$this->node('a', 'annee')]);
@@ -184,7 +198,7 @@ final class RuleTemplatesTest extends DatabaseTestCase
     public function testEveryTemplateIsDiscoveredByTheRegistry(): void
     {
         self::assertEqualsCanonicalizing(
-            ['child_count', 'attribute_sum', 'attribute_value', 'ratio', 'same_child_value', 'required_element'],
+            ['child_count', 'attribute_sum', 'attribute_value', 'ratio', 'same_child_value', 'required_element', 'min_element_type'],
             array_keys($this->registry->all()),
         );
     }

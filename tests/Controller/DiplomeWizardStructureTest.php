@@ -81,7 +81,7 @@ final class DiplomeWizardStructureTest extends WebTestCase
         }
         $rules = [];
         foreach ($s['rules'] as $r) {
-            $rules[] = ['uid' => $r['uid'], 'template' => $r['template'], 'scopeLevel' => $r['scopeLevel'], 'severity' => $r['severity'], 'params_'.$r['template'] => array_diff_key($r['params'], ['imposed' => 1])]; // le champ interne n'est jamais envoyé
+            $rules[] = ['uid' => $r['uid'], 'template' => $r['template'], 'scopeLevel' => $r['scopeLevel'], 'scopePosition' => $r['scopePosition'] ?? 'all', 'severity' => $r['severity'], 'params_'.$r['template'] => array_diff_key($r['params'], ['imposed' => 1])]; // le champ interne n'est jamais envoyé
         }
 
         $payload = [
@@ -233,7 +233,7 @@ final class DiplomeWizardStructureTest extends WebTestCase
     public function testAddingRatioRuleStoresTemplateAndParams(): void
     {
         $payload = self::payload($this->startFrom('L'));
-        $payload['natures'] = 'ec, sae';
+        $payload['natures'] = 'ec, stage, sae';
         $payload['rules'][] = [
             'uid' => '',
             'template' => 'ratio',
@@ -427,5 +427,20 @@ final class DiplomeWizardStructureTest extends WebTestCase
         $this->submit(self::payload($draft->config()->structure->toArray()));
         self::assertResponseRedirects('/diplomes/nouveau/formulaires');
         self::assertSame(['typeKey' => 'ec', 'imposed' => 'abc'], $this->storedStructure()['rules'][0]['params']);
+    }
+
+    public function testRemovingUsedEcTypeIsRefused(): void
+    {
+        $payload = self::payload($this->startFrom('LP'));
+        $payload['rules'][] = ['uid' => '', 'template' => 'min_element_type', 'scopeLevel' => 'semestre', 'scopePosition' => 'last', 'severity' => 'error', 'params_min_element_type' => ['nature' => 'stage', 'min' => '1']];
+        $this->submit($payload);
+        self::assertResponseRedirects('/diplomes/nouveau/formulaires');
+        self::assertSame('last', $this->storedStructure()['rules'][0]['scopePosition']);
+
+        $payload = self::payload($this->storedStructure());
+        $payload['natures'] = 'ec';
+        $crawler = $this->submit($payload);
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('Le type stage est utilisé par une règle', $crawler->text());
     }
 }

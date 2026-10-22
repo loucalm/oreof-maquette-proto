@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Diplome\Spec;
 
-/** Règle de validation paramétrée d'un diplôme : gabarit + paramètres, portée et gravité (`error` | `warning`). */
+/** Règle de validation paramétrée d'un diplôme : gabarit + paramètres, portée (niveau et position : `all`, `first`, `last` ou numéro affiché) et gravité (`error` | `warning`). */
 final readonly class RuleSpec
 {
     public const ERROR = 'error';
@@ -19,6 +19,7 @@ final readonly class RuleSpec
         public array $params,
         public string $scopeLevel,
         public string $severity,
+        public string $scopePosition = 'all',
     ) {
     }
 
@@ -31,11 +32,12 @@ final readonly class RuleSpec
             $a['params'] ?? [],
             (string) ($a['scopeLevel'] ?? ''),
             (string) ($a['severity'] ?? self::ERROR),
+            '' !== (string) ($a['scopePosition'] ?? '') ? (string) $a['scopePosition'] : 'all',
         );
     }
 
     /**
-     * Forme canonique : uid, template, params, scopeLevel, severity.
+     * Forme canonique : uid, template, params, scopeLevel, severity, scopePosition.
      *
      * @return array<string, mixed>
      */
@@ -47,6 +49,7 @@ final readonly class RuleSpec
             'params' => $this->params,
             'scopeLevel' => $this->scopeLevel,
             'severity' => $this->severity,
+            'scopePosition' => $this->scopePosition,
         ];
     }
 }

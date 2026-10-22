@@ -53,6 +53,8 @@ final class StructureStep extends AbstractWizardStep
             'duration' => ['levelKey' => $s->duration?->levelKey, 'bound' => $s->duration?->bound],
             'parcoursAllowed' => $s->parcoursAllowed,
             'natures' => $s->natureKeys(),
+            // lecture seule pour la validation (types d'EC retirés mais encore utilisés), non soumis
+            'usage' => ['labels' => array_column(array_map(static fn (EcType $t) => $t->toArray(), $s->natures), 'label', 'key'), 'mccc' => array_keys($draft->config()->mccc)],
             'levels' => array_map(static fn (LevelSpec $l, int $i) => [
                 'position' => (string) $i,
                 'typeKey' => $l->typeKey, 'count' => $l->count, 'ects' => $l->ects, 'ectsSum' => $l->ectsSum, 'startAt' => $l->startAt,
@@ -63,7 +65,7 @@ final class StructureStep extends AbstractWizardStep
                 'nature' => $i->nature, 'locked' => $i->locked, 'countOverride' => $i->countOverride,
             ], $s->imposed),
             'rules' => array_map(fn (RuleSpec $r) => [
-                'uid' => $r->uid, 'template' => $r->template, 'scopeLevel' => $r->scopeLevel, 'severity' => $r->severity,
+                'uid' => $r->uid, 'template' => $r->template, 'scopeLevel' => $r->scopeLevel, 'scopePosition' => $r->scopePosition, 'severity' => $r->severity,
                 RuleSpecType::PARAMS_PREFIX.$r->template => $r->params,
             ], $s->rules),
         ];
@@ -110,6 +112,7 @@ final class StructureStep extends AbstractWizardStep
                 $this->params((string) $r['template'], $r[RuleSpecType::PARAMS_PREFIX.$r['template']] ?? [], $previous[(string) ($r['uid'] ?? '')] ?? []),
                 (string) $r['scopeLevel'],
                 (string) $r['severity'],
+                '' !== (string) ($r['scopePosition'] ?? '') ? (string) $r['scopePosition'] : 'all',
             );
         }
 

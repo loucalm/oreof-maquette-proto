@@ -58,6 +58,13 @@ final class RuleSpecType extends AbstractType
                 'attr' => ['data-rule-params-target' => 'template', 'data-action' => 'change->rule-params#sync'],
             ])
             ->add('scopeLevel', StructuralTypeKeyType::class, ['label' => 'diplome.wizard.structure.rule_scope', 'constraints' => [new Assert\NotBlank()]])
+            ->add('scopePosition', TextType::class, [
+                'label' => 'diplome.wizard.structure.rule_position',
+                'help' => 'diplome.wizard.structure.rule_position_help',
+                'required' => false,
+                'empty_data' => 'all',
+                'constraints' => [new Assert\Regex(pattern: '/^(all|first|last|[1-9]\d*)$/', message: 'diplome.wizard.structure.error.rule_position')],
+            ])
             ->add('severity', ChoiceType::class, [
                 'label' => 'diplome.wizard.structure.rule_severity',
                 'choices' => ['diplome.wizard.structure.severity.error' => RuleSpec::ERROR, 'diplome.wizard.structure.severity.warning' => RuleSpec::WARNING],

@@ -133,6 +133,8 @@ diplome:
       rules: Règles
       rule_template: Gabarit de règle
       rule_scope: Portée (niveau)
+      rule_position: Position dans le niveau
+      rule_position_help: 'all (tous), first, last ou le numéro affiché (ex. 6 pour S6 en LP)'
       rule_severity: Gravité
       rule_param_missing: 'Une règle : le paramètre « %param% » est obligatoire.'
       bound_invalid: 'Borne invalide : indiquez un nombre positif (et, pour « entre », un maximum au moins égal au minimum).'
@@ -171,6 +173,9 @@ diplome:
         duration_not_divisible: "La durée (%duration%) n'est pas un multiple de %factor% %unit% par %parent%"
         imposed_level: 'Élément imposé %n% : son type doit figurer dans la chaîne, sous le premier niveau.'
         rule_scope: 'Règle %n% : la portée doit être un niveau de la chaîne.'
+        rule_position: 'La position doit être « all », « first », « last » ou un numéro.'
+        ec_type_used_rule: 'Le type %type% est utilisé par une règle : retirez d''abord la règle.'
+        ec_type_used_mccc: 'Le type %type% est utilisé par un jeu MCCC : retirez-le d''abord de l''étape MCCC.'
         unknown_nature: 'Ligne %n% : la nature « %nature% » n''est pas déclarée dans les natures d''élément du type.'
         unknown_nature_short: Cette nature n'est pas déclarée dans les natures d'élément.
     mccc:

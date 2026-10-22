@@ -19,6 +19,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
@@ -88,6 +89,8 @@ final class StructureType extends AbstractType
     private function validateConsistency(array $data, ExecutionContextInterface $context): void
     {
         $natures = $data['natures'] ?? [];
+        $initial = $context->getRoot() instanceof FormInterface ? $context->getRoot()->getConfig()->getData() : null;
+        $usage = \is_array($initial) ? ($initial['usage'] ?? []) : [];
         // la chaîne dans l'ordre des rangs soumis (cf. StructureStep::apply())
         $levels = array_values($data['levels'] ?? []);
         $order = array_keys($levels);
@@ -129,8 +132,17 @@ final class StructureType extends AbstractType
             foreach ($this->templates->get($key)->params() as $param) {
                 $value = (string) ($rule[RuleSpecType::PARAMS_PREFIX.$key][$param->name] ?? '');
                 if ('nature' === $param->type && '' !== $value && !\in_array($value, $natures, true)) {
-                    $add('diplome.wizard.structure.error.unknown_nature', $row + ['%nature%' => $value]);
+                    $label = $usage['labels'][$value] ?? null;
+                    null !== $label
+                        ? $add('diplome.wizard.structure.error.ec_type_used_rule', ['%type%' => $label])
+                        : $add('diplome.wizard.structure.error.unknown_nature', $row + ['%nature%' => $value]);
                 }
+            }
+        }
+        // un type d'EC retiré ne doit plus avoir de jeu MCCC (indexé par clé de type)
+        foreach ($usage['mccc'] ?? [] as $key) {
+            if (isset($usage['labels'][$key]) && !\in_array($key, $natures, true)) {
+                $add('diplome.wizard.structure.error.ec_type_used_mccc', ['%type%' => $usage['labels'][$key]]);
             }
         }
     }

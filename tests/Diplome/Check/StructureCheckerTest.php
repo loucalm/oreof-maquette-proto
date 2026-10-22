@@ -250,4 +250,37 @@ final class StructureCheckerTest extends DatabaseTestCase
         self::assertCount(1, $found);
         self::assertSame(5, $found[0]->actual);
     }
+
+    public function testRuleOnLastSemesterOnly(): void
+    {
+        $doc = $this->build('LP', 1);
+        $array = $this->config->toArray();
+        $array['structure']['rules'][] = ['uid' => 'stage-s6', 'template' => 'min_element_type', 'params' => ['nature' => 'stage', 'min' => 1], 'scopeLevel' => 'semestre', 'scopePosition' => 'last', 'severity' => 'error'];
+        $config = VersionConfig::fromArray($array);
+
+        $semestres = $this->ofType($doc, 'semestre');
+        $last = end($semestres);
+        $ue = $doc->addNode($last->nid, 'ue');
+        $ec = $doc->addNode($ue->nid, 'ec', 'Stage');
+        $ec->setAttribute('natureElement', 'stage');
+
+        self::assertSame([], $this->withKey($this->checker->check($doc, $config), 'rule:stage-s6:min'));
+
+        $doc->removeNode($ec, true);
+        $found = $this->withKey($this->checker->check($doc, $config), 'rule:stage-s6:min');
+        self::assertCount(1, $found);
+        self::assertSame($last->nid, $found[0]->scopeNid);
+        self::assertTrue($found[0]->blocking);
+    }
+
+    public function testRuleOnDisplayedNumber(): void
+    {
+        $doc = $this->build('LP', 1);
+        $array = $this->config->toArray();
+        $array['structure']['rules'][] = ['uid' => 'stage-n', 'template' => 'min_element_type', 'params' => ['nature' => 'stage', 'min' => 1], 'scopeLevel' => 'semestre', 'scopePosition' => '5', 'severity' => 'error'];
+
+        $found = $this->withKey($this->checker->check($doc, VersionConfig::fromArray($array)), 'rule:stage-n:min');
+        self::assertCount(1, $found);
+        self::assertSame($this->ofType($doc, 'semestre')[0]->nid, $found[0]->scopeNid);
+    }
 }

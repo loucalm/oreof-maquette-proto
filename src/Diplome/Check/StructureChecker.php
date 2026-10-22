@@ -9,6 +9,7 @@ use App\Diplome\Rule\CompiledRule;
 use App\Diplome\Rule\RuleTemplateRegistry;
 use App\Diplome\Spec\Bound;
 use App\Diplome\Spec\RuleSpec;
+use App\Diplome\Spec\StructureSpec;
 use App\Diplome\Spec\VersionConfig;
 use App\Maquette\Doc\MaquetteDoc;
 use App\Maquette\Doc\TreeNode;
@@ -27,6 +28,7 @@ final class StructureChecker
         private readonly RuleEvaluator $evaluator,
         private readonly StructureContextBuilder $contexts,
         private readonly ImposedHostLocator $locator,
+        private readonly ScopeSelector $selector,
         private readonly TranslatorInterface $translator,
     ) {
     }
@@ -125,7 +127,7 @@ final class StructureChecker
                 );
                 continue;
             }
-            $run('rule:'.$rule->uid, $rule->template, $rule->params, $this->nodesOfType($doc, $rule->scopeLevel), RuleSpec::WARNING === $rule->severity);
+            $run('rule:'.$rule->uid, $rule->template, $rule->params, $this->ruleScopes($doc, $structure, $rule), RuleSpec::WARNING === $rule->severity);
         }
 
         return $violations;
@@ -159,6 +161,33 @@ final class StructureChecker
         }
 
         return \is_float($v) && floor($v) === $v ? (int) $v : $v;
+    }
+
+    /**
+     * Nœuds de portée d'une règle : tous ceux du niveau, ou, en portée positionnelle, ceux désignés cursus par cursus.
+     *
+     * @return list<TreeNode>
+     */
+    private function ruleScopes(MaquetteDoc $doc, StructureSpec $structure, RuleSpec $rule): array
+    {
+        if (ScopeSelector::ALL === $rule->scopePosition) {
+            return $this->nodesOfType($doc, $rule->scopeLevel);
+        }
+        $startAt = 1;
+        foreach ($structure->levels as $level) {
+            if ($level->typeKey === $rule->scopeLevel) {
+                $startAt = $level->startAt;
+            }
+        }
+        $scopes = [];
+        foreach ($this->contexts->cursusScopes($doc) as $cursus) {
+            $atLevel = array_values(array_filter($this->contexts->cursusNodes($doc, $cursus), static fn (TreeNode $n): bool => $n->typeKey === $rule->scopeLevel));
+            foreach ($this->selector->select($atLevel, $rule->scopePosition, $startAt) as $node) {
+                $scopes[$node->nid] = $node; // un portail partagé par plusieurs cursus n'est contrôlé qu'une fois
+            }
+        }
+
+        return array_values($scopes);
     }
 
     /** @return list<TreeNode> */

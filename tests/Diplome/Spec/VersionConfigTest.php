@@ -31,7 +31,7 @@ final class VersionConfigTest extends TestCase
                 ]],
                 'rules' => [[
                     'uid' => 'r-1', 'template' => 'ects_sum', 'params' => ['total' => 180],
-                    'scopeLevel' => 'annee', 'severity' => 'warning',
+                    'scopeLevel' => 'annee', 'severity' => 'warning', 'scopePosition' => 'last',
                 ]],
             ],
             'canvas' => [
