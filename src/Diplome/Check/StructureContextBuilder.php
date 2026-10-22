@@ -53,23 +53,6 @@ final class StructureContextBuilder
     }
 
     /**
-     * Contexte d'un cursus : ses périodes propres plus celles de ses parcours parents (le portail compris).
-     *
-     * @return array<string, list<array<string, mixed>>>
-     */
-    public function cursusContextFor(MaquetteDoc $doc, ?TreeNode $leaf, ?VersionConfig $config = null): array
-    {
-        $context = ['children' => [], 'leaves' => []];
-        foreach ($this->cursusChain($leaf) as $scope) {
-            $own = $this->contextFor($doc, $scope, $config);
-            $context['children'] = [...$context['children'], ...$own['children']];
-            $context['leaves'] = [...$context['leaves'], ...$own['leaves']];
-        }
-
-        return $context;
-    }
-
-    /**
      * Tous les nœuds structurels d'un cursus, dans l'ordre de l'arbre : ceux des parcours parents
      * (portail d'abord), puis ceux du parcours feuille ; toute la maquette en mono-parcours.
      *

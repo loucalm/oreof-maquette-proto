@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Diplome;
 
 use App\Diplome\Spec\Bound;
+use App\Diplome\Spec\DurationMath;
 use App\Diplome\Spec\ImposedElement;
 use App\Entity\TypeDiplomeVersion;
 use App\Maquette\Doc\MaquetteDoc;
@@ -12,7 +13,8 @@ use App\Maquette\Doc\TreeNode;
 
 /**
  * Génère la maquette de départ d'une formation depuis une version de type de
- * diplôme : premier niveau en `duration` exemplaires, chaque niveau suivant au
+ * diplôme : premier niveau en autant d'exemplaires que la durée l'impose (`duration` est
+ * exprimée en nœuds du niveau de durée, cf. DurationMath), chaque niveau suivant au
  * minimum de sa borne `count` (1 à défaut) sous chaque parent, jusqu'au niveau
  * feuille exclu, puis les éléments imposés (verrouillés, marqués `_imposed`).
  *
@@ -34,6 +36,7 @@ final class StructureInstantiator
         if (!self::acceptsDuration($structure->duration?->bound, $duration)) {
             throw new \InvalidArgumentException(sprintf('Durée %d hors des bornes du type de diplôme.', $duration));
         }
+        $firstLevelCount = DurationMath::firstLevelCount($structure, $duration);
         if ($avecParcours && !$structure->parcoursAllowed) {
             throw new \InvalidArgumentException('Ce type de diplôme n’autorise pas les parcours.');
         }
@@ -58,7 +61,7 @@ final class StructureInstantiator
                 if ($i === $leafIndex) {
                     break;
                 }
-                $count = 0 === $i ? $duration : max(1, $structure->levels[$i]->count?->min ?? 1);
+                $count = 0 === $i ? $firstLevelCount : max(1, $structure->levels[$i]->count?->min ?? 1);
                 $created = [];
                 foreach ($parents as $parent) {
                     for ($n = 0; $n < $count; ++$n) {

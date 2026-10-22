@@ -46,7 +46,7 @@ final class StructureChecker
                 $scopeParams = null !== $paramsFor ? $paramsFor($scope, $params) : $params;
                 foreach ($this->templates->get($template)->compile($scopeParams) as $compiled) {
                     $ctx = $cursus
-                        ? ($cache['cursus:'.($scope?->nid ?? '')] ??= $this->contexts->cursusContextFor($doc, $scope, $config))
+                        ? ($cache['presence:'.($scope?->nid ?? '')] ??= $this->contexts->cursusPresenceContextFor($doc, $scope, $config))
                         : ($cache[$scope?->nid ?? ''] ??= $this->contexts->contextFor($doc, $scope, $config));
                     $violation = $this->evaluate($prefix, $compiled, $scope, $ctx, $forceWarning);
                     if (null !== $violation) {
@@ -56,9 +56,9 @@ final class StructureChecker
             }
         };
 
-        $firstLevel = $levels[0]->typeKey ?? null;
-        if (null !== $firstLevel && null !== $structure->duration) {
-            $run('duration', 'child_count', ['childType' => $firstLevel] + self::bounds($structure->duration->bound), $this->contexts->cursusScopes($doc), false, null, true);
+        // la durée compte les nœuds du niveau choisi dans tout le cursus (descendants compris)
+        if (null !== $structure->duration) {
+            $run('duration', 'child_count', ['childType' => $structure->duration->levelKey] + self::bounds($structure->duration->bound), $this->contexts->cursusScopes($doc), false, null, true);
         }
 
         // surcharges de borne : nid de l'hôte → typeKey enfant → borne

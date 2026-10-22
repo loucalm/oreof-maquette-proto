@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Diplome\Spec\Bound;
+use App\Diplome\Spec\DurationSpec;
 use App\Entity\TypeDiplome;
 use App\Diplome\Wizard\WizardStepRegistry;
 use App\Repository\FormationRepository;
+use App\Repository\NodeTypeRepository;
 use App\Repository\TypeDiplomeRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -31,6 +32,7 @@ final class DiplomeController extends AbstractController
 
     public function __construct(
         private readonly TypeDiplomeRepository $types,
+        private readonly NodeTypeRepository $nodeTypes,
         private readonly FormationRepository $formations,
         private readonly WizardStepRegistry $steps,
         private readonly EntityManagerInterface $em,
@@ -57,7 +59,7 @@ final class DiplomeController extends AbstractController
             $rows[] = [
                 'type' => $type,
                 'basedOn' => null === $basedOnKey ? null : ($labelsByKey[$basedOnKey] ?? $basedOnKey),
-                'duration' => $this->durationLabel($config?->structure->duration?->bound),
+                'duration' => $this->durationLabel($config?->structure->duration),
                 'bcc' => null === $config || [] === $config->bccLevels ? null : implode(' › ', $config->bccLevels),
                 'formations' => $this->formations->countByTypeDiplome($type),
                 'version' => $latest?->getAnneeUniversitaire(),
@@ -110,9 +112,11 @@ final class DiplomeController extends AbstractController
         return $this->redirectToRoute('diplome_index');
     }
 
-    private function durationLabel(?Bound $bound): ?string
+    /** « 3 à 4 années », « 6 semestres » : la durée dans l'unité du niveau qui la compte. */
+    private function durationLabel(?DurationSpec $duration): ?string
     {
-        if (null === $bound || (null === $bound->min && null === $bound->max)) {
+        $bound = $duration?->bound;
+        if (null === $duration || null === $bound || (null === $bound->min && null === $bound->max)) {
             return null;
         }
         $key = match (true) {
@@ -121,7 +125,9 @@ final class DiplomeController extends AbstractController
             null !== $bound->min => 'min',
             default => 'max',
         };
+        $unit = mb_strtolower($this->nodeTypes->findOneByKey($duration->levelKey)?->getLabel() ?? $duration->levelKey);
+        $plural = ($bound->max ?? $bound->min ?? 0) > 1 ? 's' : '';
 
-        return $this->translator->trans('diplome.index.duration_'.$key, ['%n%' => $bound->min, '%min%' => $bound->min, '%max%' => $bound->max], 'diplome');
+        return $this->translator->trans('diplome.index.duration_'.$key, ['%n%' => $bound->min, '%min%' => $bound->min, '%max%' => $bound->max, '%unit%' => $unit.$plural], 'diplome');
     }
 }

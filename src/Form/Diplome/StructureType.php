@@ -5,6 +5,12 @@ declare(strict_types=1);
 namespace App\Form\Diplome;
 
 use App\Diplome\Rule\RuleTemplateRegistry;
+use App\Diplome\Spec\Bound;
+use App\Diplome\Spec\DurationMath;
+use App\Diplome\Spec\DurationSpec;
+use App\Diplome\Spec\LevelSpec;
+use App\Diplome\Spec\StructureSpec;
+use App\Repository\NodeTypeRepository;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\CallbackTransformer;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
@@ -24,7 +30,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
  */
 final class StructureType extends AbstractType
 {
-    public function __construct(private readonly RuleTemplateRegistry $templates)
+    public function __construct(private readonly RuleTemplateRegistry $templates, private readonly NodeTypeRepository $nodeTypes)
     {
     }
 
@@ -92,6 +98,7 @@ final class StructureType extends AbstractType
         if (\count($chain) !== \count(array_unique($chain))) {
             $add('diplome.wizard.structure.error.duplicate_level');
         }
+        $this->validateDuration($data, $levels, $order, $chain, $context);
         foreach ($data['imposed'] ?? [] as $i => $imposed) {
             $row = ['%n%' => $i + 1];
             $at = array_search($imposed['typeKey'] ?? null, $chain, true);
@@ -119,5 +126,42 @@ final class StructureType extends AbstractType
                 }
             }
         }
+    }
+
+    /**
+     * La durée se compte sur un niveau temporel de la chaîne, précédé de niveaux au nombre exact, et son
+     * minimum comme son maximum doivent pouvoir se répartir en années entières (cf. DurationMath).
+     *
+     * @param list<array<string, mixed>> $levels lignes soumises
+     * @param list<int>                  $order  indices des lignes dans l'ordre de la chaîne
+     * @param list<string>               $chain
+     */
+    private function validateDuration(array $data, array $levels, array $order, array $chain, ExecutionContextInterface $context): void
+    {
+        $bound = $data['duration']['bound'] ?? null;
+        if (!$bound instanceof Bound) {
+            return;
+        }
+        $levelKey = '' !== (string) ($data['duration']['levelKey'] ?? '') ? (string) $data['duration']['levelKey'] : ($chain[0] ?? '');
+        $specs = array_map(static fn (int $i) => new LevelSpec((string) ($levels[$i]['typeKey'] ?? ''), $levels[$i]['count'] ?? null), $order);
+        $structure = new StructureSpec($specs, false, new DurationSpec($levelKey, $bound));
+        $temporal = [];
+        foreach ($this->nodeTypes->findAllIndexed() as $key => $type) {
+            if ($type->isTemporel()) {
+                $temporal[] = $key;
+            }
+        }
+        $problem = DurationMath::problem($structure, $temporal);
+        if (null === $problem) {
+            return;
+        }
+        $labels = $this->nodeTypes->findAllIndexed();
+        $label = static fn (string $key): string => mb_strtolower(isset($labels[$key]) ? $labels[$key]->getLabel() : $key);
+        $context->buildViolation($problem, [
+            '%duration%' => $bound->min ?? $bound->max,
+            '%factor%' => DurationMath::factor($structure),
+            '%unit%' => $label($levelKey).'s',
+            '%parent%' => $label($chain[0] ?? ''),
+        ])->setTranslationDomain('diplome')->atPath('duration')->addViolation();
     }
 }

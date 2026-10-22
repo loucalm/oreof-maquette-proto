@@ -6,6 +6,7 @@ namespace App\Diplome;
 
 use App\Diplome\Check\StructureViolationException;
 use App\Diplome\Spec\Bound;
+use App\Diplome\Spec\DurationMath;
 use App\Entity\Formation;
 use App\Entity\TypeDiplome;
 use App\Enum\FormationPhase;
@@ -69,14 +70,14 @@ final class FormationCreator
 
         try {
             // tout ou rien : un échec de génération ou du garde de structure ne laisse aucune formation
-            return $this->em->wrapInTransaction(function () use ($name, $type, $year, $duration, $avecParcours, $phase, $domaine, $composante, $version): Formation {
+            return $this->em->wrapInTransaction(function () use ($name, $type, $year, $duration, $avecParcours, $phase, $domaine, $composante, $version, $structure): Formation {
                 $formation = (new Formation($name))
                     ->setTypeDiplome($type)
                     ->setDomaine($domaine)
                     ->setComposante($composante)
                     ->setPhase($phase)
                     ->setAnneeUniversitaire($year)
-                    ->setCalendarSpan($duration);
+                    ->setCalendarSpan(intdiv($duration, DurationMath::factor($structure)));
 
                 $this->em->persist($formation);
                 $this->em->flush();

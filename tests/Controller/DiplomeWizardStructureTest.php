@@ -225,6 +225,18 @@ final class DiplomeWizardStructureTest extends WebTestCase
         self::assertResponseStatusCodeSame(422);
     }
 
+    public function testDurationNotDivisibleIsRefused(): void
+    {
+        $start = $this->startFrom('L');
+        $payload = self::payload($start);
+        $payload['duration'] = ['levelKey' => 'semestre', 'bound' => self::bound(['min' => 5, 'max' => 5])];
+
+        $crawler = $this->submit($payload);
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('La durée (5) n\'est pas un multiple de 2 semestres par année', $crawler->text());
+        self::assertSame($start['duration'], $this->storedStructure()['duration']);
+    }
+
     public function testSummaryListsImposedElementsAndRules(): void
     {
         $this->startFrom('BUT');

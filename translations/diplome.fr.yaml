@@ -26,10 +26,10 @@ diplome:
     duplicate: Dupliquer
     edit: Modifier
     new_version: Nouvelle version
-    duration_exact: '%n% ans'
-    duration_range: '%min% à %max% ans'
-    duration_min: 'au moins %min% ans'
-    duration_max: 'au plus %max% ans'
+    duration_exact: '%n% %unit%'
+    duration_range: '%min% à %max% %unit%'
+    duration_min: 'au moins %min% %unit%'
+    duration_max: 'au plus %max% %unit%'
   wizard:
     title: Nouveau diplôme
     heading: Nouveau type de diplôme
@@ -160,6 +160,10 @@ diplome:
       error:
         no_level: Définissez au moins un niveau.
         duplicate_level: Un même type de nœud ne peut pas figurer deux fois dans la chaîne.
+        duration_level_not_in_chain: Le niveau qui compte la durée doit figurer dans la chaîne de niveaux.
+        duration_level_not_temporal: Le niveau qui compte la durée doit être un niveau de temps (année, semestre…).
+        duration_intermediate_not_exact: Pour compter la durée sur ce niveau, chaque niveau situé entre le premier et lui doit avoir un nombre exact par parent.
+        duration_not_divisible: "La durée (%duration%) n'est pas un multiple de %factor% %unit% par %parent%"
         imposed_level: 'Élément imposé %n% : son type doit figurer dans la chaîne, sous le premier niveau.'
         rule_scope: 'Règle %n% : la portée doit être un niveau de la chaîne.'
         unknown_nature: 'Ligne %n% : la nature « %nature% » n''est pas déclarée dans les natures d''élément du type.'

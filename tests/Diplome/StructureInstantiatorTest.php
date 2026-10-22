@@ -96,4 +96,29 @@ final class StructureInstantiatorTest extends DatabaseTestCase
         self::assertSame('ue', $stage[0]->parent->typeKey);
         self::assertSame('stage', $stage[0]->getAttribute('natureElement'));
     }
+
+    public function testDurationOnSemesters(): void
+    {
+        $type = $this->em->getRepository(TypeDiplome::class)->findOneByKey('BUT');
+        $version = $type->latestVersion();
+        $data = $version->config()->toArray();
+        $data['structure']['duration'] = ['levelKey' => 'semestre', 'bound' => ['min' => 6, 'max' => 6]];
+        $version->setConfig(\App\Diplome\Spec\VersionConfig::fromArray($data));
+
+        $doc = $this->build('BUT', 6);
+        self::assertCount(3, $this->ofType($doc, 'annee'));
+        self::assertCount(6, $this->ofType($doc, 'semestre'));
+    }
+
+    public function testDurationNotMultipleOfTheFactorIsRefused(): void
+    {
+        $type = $this->em->getRepository(TypeDiplome::class)->findOneByKey('BUT');
+        $version = $type->latestVersion();
+        $data = $version->config()->toArray();
+        $data['structure']['duration'] = ['levelKey' => 'semestre', 'bound' => ['min' => 5, 'max' => 6]];
+        $version->setConfig(\App\Diplome\Spec\VersionConfig::fromArray($data));
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->build('BUT', 5);
+    }
 }

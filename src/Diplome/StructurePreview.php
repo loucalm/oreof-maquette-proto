@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Diplome;
 
+use App\Diplome\Spec\DurationMath;
 use App\Diplome\Spec\StructureSpec;
 use App\Diplome\Spec\VersionConfig;
 use App\Entity\Formation;
@@ -36,7 +37,10 @@ final class StructurePreview
         $version = (new TypeDiplomeVersion(new TypeDiplome('apercu', 'Aperçu', 'APERCU'), '0000-0001'))
             ->setConfig(new VersionConfig($structure, null, [], [], ['quitus' => false, 'assiduite' => false, 'sansNote' => false], [], 0));
         $doc = new MaquetteDoc(new Formation('Aperçu'), $this->nodeTypes->findAllIndexed());
-        $this->instantiator->instantiate($doc, $version, max(1, $structure->duration?->bound->min ?? 1), false);
+        // durée minimale (en nœuds du niveau de durée), arrondie au multiple du facteur
+        $factor = DurationMath::factor($structure);
+        $duration = (int) (ceil(max(1, $structure->duration?->bound->min ?? 1) / $factor) * $factor);
+        $this->instantiator->instantiate($doc, $version, $duration, false);
 
         return $doc->pedagogicalRoots();
     }

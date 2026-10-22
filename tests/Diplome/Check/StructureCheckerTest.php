@@ -233,4 +233,21 @@ final class StructureCheckerTest extends DatabaseTestCase
         self::assertSame($doc->parcoursNodes()[1]->nid, $found[0]->scopeNid);
         self::assertSame(2, $found[0]->actual);
     }
+
+    public function testDurationCountsDescendants(): void
+    {
+        $doc = $this->build('BUT', 3);
+        $data = $this->config->toArray();
+        $data['structure']['duration'] = ['levelKey' => 'semestre', 'bound' => ['min' => 6, 'max' => 6]];
+        $config = VersionConfig::fromArray($data);
+
+        $found = array_filter($this->checker->check($doc, $config), static fn ($v) => str_starts_with($v->ruleKey, 'duration:'));
+        self::assertSame([], array_values($found));
+
+        $semestres = $this->ofType($doc, 'semestre');
+        $doc->removeNode(end($semestres), true);
+        $found = $this->withKey($this->checker->check($doc, $config), 'duration:min');
+        self::assertCount(1, $found);
+        self::assertSame(5, $found[0]->actual);
+    }
 }
