@@ -69,8 +69,8 @@ final class DiplomeWizardStructureTest extends WebTestCase
             $levels[] = ($l['locked'] ? ['locked' => '1'] : []) + [
                 'typeKey' => $l['typeKey'],
                 'count' => self::bound($l['count']),
-                'ects' => self::bound($l['ects']),
-                'ectsSum' => self::bound($l['ectsSum']),
+                'ectsMode' => null !== $l['ectsSum'] ? 'sum' : (null !== $l['ects'] ? 'node' : 'free'),
+                'ectsBound' => self::bound($l['ectsSum'] ?? $l['ects']),
                 'startAt' => $l['startAt'],
                 'ecLink' => $l['ecLink'],
             ];
@@ -82,7 +82,7 @@ final class DiplomeWizardStructureTest extends WebTestCase
 
         $payload = [
             'duration' => ['levelKey' => $s['duration']['levelKey'] ?? '', 'bound' => self::bound($s['duration']['bound'] ?? null)],
-            'natures' => implode(', ', array_column($s['natures'], 'key')),
+            'natures' => array_map(static fn (array $t) => ['key' => $t['key'], 'label' => $t['label']], $s['natures']),
             'levels' => $levels,
             'rules' => $rules,
         ];
@@ -109,7 +109,7 @@ final class DiplomeWizardStructureTest extends WebTestCase
     private function chainPayload(array $chain): array
     {
         $payload = self::payload($this->startFrom('L'));
-        $payload['levels'] = array_map(static fn (string $key) => ['typeKey' => $key, 'count' => ['mode' => 'none'], 'ects' => ['mode' => 'none'], 'ectsSum' => ['mode' => 'none'], 'startAt' => 1, 'ecLink' => 'contains'], $chain);
+        $payload['levels'] = array_map(static fn (string $key) => ['typeKey' => $key, 'count' => ['mode' => 'none'], 'ectsMode' => 'free', 'ectsBound' => ['mode' => 'none'], 'startAt' => 1, 'ecLink' => 'contains'], $chain);
         $payload['duration'] = ['levelKey' => '', 'bound' => ['mode' => 'none']];
         $payload['rules'] = [];
 
@@ -226,7 +226,7 @@ final class DiplomeWizardStructureTest extends WebTestCase
     public function testAddingRatioRuleStoresTemplateAndParams(): void
     {
         $payload = self::payload($this->startFrom('L'));
-        $payload['natures'] = 'ec, stage, sae';
+        $payload['natures'] = [['key' => 'ec', 'label' => 'ec'], ['key' => 'stage', 'label' => 'stage'], ['key' => '', 'label' => 'SAE']];
         $payload['rules'][] = [
             'uid' => '',
             'template' => 'ratio',
@@ -242,6 +242,8 @@ final class DiplomeWizardStructureTest extends WebTestCase
         self::assertSame(['attribute' => 'ects', 'numeratorNature' => 'sae', 'op' => '>=', 'percent' => 40], $rule['params']);
         self::assertSame('semestre', $rule['scopeLevel']);
         self::assertNotSame('', $rule['uid']);
+        // un type d'EC ajouté reçoit une clé dérivée de son libellé
+        self::assertContains(['key' => 'sae', 'label' => 'SAE'], $this->storedStructure()['natures']);
     }
 
     public function testUnknownTemplateIsRejected(): void
@@ -350,7 +352,7 @@ final class DiplomeWizardStructureTest extends WebTestCase
         $this->startFrom('BUT');
         $crawler = $this->client->request('GET', '/diplomes/nouveau/structure');
 
-        self::assertCount(4, $crawler->filter('[data-levels-target="list"] > [data-level-block]'));
+        self::assertCount(4, $crawler->filter('[data-tree-level]'));
         self::assertCount(0, $crawler->filter('[data-imposed-row], [data-imposed-toggle], [data-imposed-panel]'));
     }
 
@@ -377,9 +379,130 @@ final class DiplomeWizardStructureTest extends WebTestCase
         self::assertSame('last', $this->storedStructure()['rules'][0]['scopePosition']);
 
         $payload = self::payload($this->storedStructure());
-        $payload['natures'] = 'ec';
+        $payload['natures'] = [['key' => 'ec', 'label' => 'ec']];
         $crawler = $this->submit($payload);
         self::assertResponseStatusCodeSame(422);
         self::assertStringContainsString('Le type Stage est utilisé par une règle', $crawler->text());
+    }
+
+    public function testTreeShowsLevelsInOrder(): void
+    {
+        $this->startFrom('L');
+        $crawler = $this->client->request('GET', '/diplomes/nouveau/structure');
+        self::assertResponseIsSuccessful();
+
+        self::assertSame(['annee', 'semestre', 'ue', 'ec'], $crawler->filter('[data-tree-level]')->each(static fn ($n) => $n->attr('data-tree-level')));
+        $semestre = $crawler->filter('[data-tree-level="semestre"]')->text();
+        self::assertStringContainsString('× 2', $semestre);
+        self::assertStringContainsString('30 ECTS', $semestre);
+        self::assertStringContainsString('3 à 6', $crawler->filter('[data-tree-level="ue"]')->text());
+        self::assertCount(1, $crawler->filter('[data-tree-level="ec"][data-element-level]'));
+        self::assertCount(1, $crawler->filter('[data-tree-level][data-element-level]'));
+        // le premier niveau affiche son nombre déduit de la durée (3 à 4 années)
+        self::assertStringContainsString('3 à 4', $crawler->filter('[data-tree-level="annee"]')->text());
+        // aucun panneau ouvert au chargement
+        self::assertCount(0, $crawler->filter('[data-level-panel]:not([hidden])'));
+        self::assertCount(4, $crawler->filter('[data-level-panel]'));
+    }
+
+    public function testDurationListsOnlyTemporalLevels(): void
+    {
+        $temporal = [];
+        foreach ($this->em->getRepository(NodeType::class)->findAll() as $type) {
+            if ($type->isTemporel()) {
+                $temporal[] = $type->getKey();
+            }
+        }
+        foreach (['L' => ['annee', 'semestre', 'ue', 'ec'], 'M2E' => ['annee', 'bloc_formation', 'ec']] as $key => $chain) {
+            $this->startFrom($key);
+            $crawler = $this->client->request('GET', '/diplomes/nouveau/structure');
+            $options = $crawler->filter('select[name="structure[duration][levelKey]"] option')->each(static fn ($n) => $n->attr('value'));
+            self::assertSame(array_values(array_intersect($chain, $temporal)), $options, $key);
+            self::assertNotSame([], $options);
+        }
+    }
+
+    public static function demoTypes(): iterable
+    {
+        foreach (['L', 'LP', 'M', 'M2E', 'BUT'] as $key) {
+            yield $key => [$key];
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('demoTypes')]
+    public function testRoundTripKeepsStructure(string $key): void
+    {
+        $structure = $this->startFrom($key);
+        $crawler = $this->client->request('GET', '/diplomes/nouveau/structure');
+        $this->client->submit($crawler->filter('form#wizard-form')->form());
+
+        self::assertResponseRedirects('/diplomes/nouveau/formulaires');
+        self::assertSame($structure, $this->storedStructure());
+    }
+
+    public function testLockAndEcLinkAreSaved(): void
+    {
+        $payload = self::payload($this->startFrom('L'));
+        $payload['levels'][2]['locked'] = '1';
+        $payload['levels'][2]['count'] = ['mode' => 'exact', 'value' => '4'];
+        $payload['levels'][2]['ecLink'] = 'coefficient';
+        $this->submit($payload);
+        self::assertResponseRedirects('/diplomes/nouveau/formulaires');
+
+        $ue = $this->storedStructure()['levels'][2];
+        self::assertTrue($ue['locked']);
+        self::assertSame(['min' => 4, 'max' => 4], $ue['count']);
+        self::assertSame('coefficient', $ue['ecLink']);
+
+        $crawler = $this->client->request('GET', '/diplomes/nouveau/structure');
+        self::assertCount(1, $crawler->filter('[data-tree-level="ue"] [data-icon="locked"]:not([hidden])'));
+        self::assertCount(1, $crawler->filter('[data-tree-level="semestre"] [data-icon="editable"]:not([hidden])'));
+        self::assertStringContainsString('coef. vers les UE', $crawler->filter('[data-tree-level="ec"]')->text());
+    }
+
+    public function testEctsModeMapsToBounds(): void
+    {
+        $payload = self::payload($this->startFrom('L'));
+        $payload['levels'][1]['ectsMode'] = 'sum';
+        $payload['levels'][1]['ectsBound'] = ['mode' => 'exact', 'value' => '30'];
+        $payload['levels'][2]['ectsMode'] = 'node';
+        $payload['levels'][2]['ectsBound'] = ['mode' => 'max', 'value' => '10'];
+        $payload['levels'][3]['ectsMode'] = 'free';
+        $payload['levels'][3]['ectsBound'] = ['mode' => 'exact', 'value' => '5'];
+        $this->submit($payload);
+        self::assertResponseRedirects('/diplomes/nouveau/formulaires');
+
+        $levels = $this->storedStructure()['levels'];
+        self::assertSame(['min' => 30, 'max' => 30], $levels[1]['ectsSum']);
+        self::assertNull($levels[1]['ects']);
+        self::assertSame(['max' => 10], $levels[2]['ects']);
+        self::assertNull($levels[2]['ectsSum']);
+        self::assertNull($levels[3]['ects']);
+        self::assertNull($levels[3]['ectsSum']);
+
+        $crawler = $this->client->request('GET', '/diplomes/nouveau/structure');
+        self::assertStringContainsString('≤ 10 ECTS', $crawler->filter('[data-tree-level="ue"]')->text());
+    }
+
+    public function testEcTypesAreTagsWithLinksToFormsAndMccc(): void
+    {
+        $this->startFrom('LP');
+        $crawler = $this->client->request('GET', '/diplomes/nouveau/structure');
+
+        $tags = $crawler->filter('[data-level-panel] [data-ec-type]');
+        self::assertCount(3, $tags);
+        self::assertStringContainsString('3 types', $crawler->filter('[data-tree-level="ec"]')->text());
+        // même navigation que la barre latérale : l'étape courante est soumise vers l'étape visée
+        self::assertCount(3, $tags->filter('button[name="goto"][value="formulaires"]'));
+        self::assertCount(3, $tags->filter('button[name="goto"][value="mccc"]'));
+    }
+
+    public function testRenamingEcTypeKeepsItsKey(): void
+    {
+        $payload = self::payload($this->startFrom('LP'));
+        $payload['natures'][2]['label'] = 'Stage en entreprise';
+        $this->submit($payload);
+        self::assertResponseRedirects('/diplomes/nouveau/formulaires');
+        self::assertContains(['key' => 'stage', 'label' => 'Stage en entreprise'], $this->storedStructure()['natures']);
     }
 }

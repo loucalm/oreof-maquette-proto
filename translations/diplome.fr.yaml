@@ -95,27 +95,72 @@ diplome:
         not_hideable: "« %label% » ne peut pas être masqué."
         locked_missing: "Fiche %fiche% : le champ « %field% » doit rester dans une entrée affichée."
     structure:
-      help: Définissez la chaîne de niveaux du diplôme (du premier niveau à la feuille), les bornes de chaque niveau, les types d'EC et les règles de validation.
+      help: "La structure se lit de haut en bas, comme on la décrit : cliquez sur un niveau pour le régler dans le panneau de droite."
       choose: Choisir…
       duration: Durée (nombre de nœuds du premier niveau)
       parcours_allowed: Parcours autorisés
       levels: Niveaux de la chaîne
       level_type: Type de nœud
       level_count: Nombre par parent
-      level_ects: ECTS de chaque nœud
-      level_ects_sum: Somme des ECTS des enfants
+      level_ects: ECTS
+      level_ects_bound: Valeur des ECTS
       level_start_at: Numéro de départ
       level_start_at_short: N° départ
-      level_locked: Niveau figé
-      level_ec_link: Rattachement des éléments
+      level_locked: Dans la formation
+      level_ec_link: Rattachement des EC
+      locked:
+        'no': modifiable
+        'yes': verrouillé
       ec_link:
-        contains: Contenus dans le niveau
-        coefficient: Pondérés par coefficient
+        contains: sont rangés dedans
+        coefficient: lui apportent un coefficient
+      ects_mode:
+        free: libres
+        node: saisis à ce niveau
+        sum: somme du niveau en dessous
+      ec_type_label: Libellé du type d'EC
+      tree:
+        lasts: Dure
+        locked: Verrouillé dans la formation
+        editable: Modifiable dans la formation
+        duration_level: Niveau qui compte la durée
+        invalid: Ce niveau a une erreur
+        count:
+          exact: '× %n%'
+          between: '%min% à %max%'
+          min: 'au moins %n%'
+          max: 'au plus %n%'
+        ects:
+          exact: '%n% ECTS'
+          between: '%min% à %max% ECTS'
+          min: '≥ %n% ECTS'
+          max: '≤ %n% ECTS'
+        types_one: '%n% type'
+        types_many: '%n% types'
+        coef: 'coef. vers les %level%'
+        coef_note: 'Effet dans les formations : à venir'
+        add_level: niveau
+        add_level_none: Tous les types de nœud sont déjà dans la chaîne.
+        add_rule: règle
+        add_ec_type: type d'EC
+        remove_ec_type: Retirer ce type d'EC
+        remove_level: Retirer ce niveau
+        up: Monter
+        down: Descendre
+        panel_help: Cliquez sur un niveau de l'arbre pour voir et changer ses réglages.
+        count_per: 'Nombre par %parent%'
+        count_first: Le nombre de ce niveau découle de la durée.
+        locked_label: Dans la formation
+        ec_link_label: 'Les %element%…'
+        ects_label: ECTS
+        more: Plus de réglages
+        link_fiche: fiche
+        link_mccc: MCCC
       duration_level: Niveau qui compte la durée
       level_section_help: Du premier niveau à la feuille. Les bornes s'appliquent dans chaque parent (« 3 à 6 UE » = dans chaque semestre).
       rule_section_help: Contraintes supplémentaires, contrôlées en direct dans les formations.
-      natures: Natures d'élément
-      natures_help: "Sortes d'éléments du dernier niveau (ex. ec, stage, ressource, sae), séparées par des virgules. Chaque élément en reçoit une ; elle fixe les MCCC autorisées (onglet MCCC) et sert aux règles (ex. SAÉ ≥ 40 %)."
+      natures: Types d'EC
+      natures_help: "Chaque EC reçoit un type ; il choisit sa fiche (onglet Formulaires) et ses MCCC (onglet MCCC), et sert aux règles (ex. SAÉ ≥ 40 %)."
       rules: Règles
       rule_template: Gabarit de règle
       rule_scope: Portée (niveau)
@@ -144,6 +189,8 @@ diplome:
         no_level: Définissez au moins un niveau.
         locked_exact: Un niveau verrouillé a un nombre exact.
         duplicate_level: Un même type de nœud ne peut pas figurer deux fois dans la chaîne.
+        duplicate_ec_type: Deux types d'EC ont la même clé (libellés trop proches).
+        ec_type_label: Un type d'EC doit avoir un libellé.
         element_undefined: "Aucun type de nœud n'est désigné comme niveau élément (réglage d'un type de nœud)."
         element_missing: "La chaîne doit se terminer par %element%"
         element_not_last: "%element% doit être le dernier niveau"

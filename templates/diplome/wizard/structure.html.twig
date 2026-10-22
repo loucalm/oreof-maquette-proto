@@ -11,71 +11,218 @@
     </ul>
 {% endmacro %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .st-grid { display: grid; gap: 1.25rem; grid-template-areas: "tree" "panel" "rest"; }
+        .st-tree { grid-area: tree; } .st-panel { grid-area: panel; } .st-rest { grid-area: rest; }
+        @media (min-width: 900px) {
+            .st-grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); grid-template-rows: auto 1fr; grid-template-areas: "tree panel" "rest panel"; }
+            .st-panel { border-left: 1px solid var(--c-border); padding-left: 1.25rem; }
+            .st-panel > [data-level-panel] { position: sticky; top: 1rem; }
+        }
+        @media (max-width: 899px) { .st-panel { border-top: 1px solid var(--c-border); padding-top: 1rem; } }
+        .st-muted { color: var(--c-muted); }
+        .st-lab { display: block; font-size: 12px; color: var(--c-muted); margin-bottom: 2px; }
+        .st-duration { background: #f4f8ff; border-radius: 6px; padding: 8px 10px; }
+        .st-level { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 6px; margin: 2px 0; cursor: pointer; }
+        .st-level:hover { background: #f4f6f9; }
+        .st-level[aria-selected="true"] { background: #e8effc; outline: 1px solid #b4c8f0; }
+        .st-level[data-element-level] .st-name { color: #5b3fb0; }
+        .st-ic { width: 18px; display: inline-flex; justify-content: center; }
+        .st-name { font-weight: 600; }
+        .st-summary { color: var(--c-muted); }
+        .st-coef { font-size: 12px; color: #5b3fb0; }
+        .st-invalid { color: #dc2626; font-size: 10px; }
+        .st-add { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--c-primary); padding: 4px 10px; border-radius: 6px; }
+        .st-add:hover { background: #f4f6f9; }
+        .st-menu { position: absolute; z-index: 10; margin-top: 4px; min-width: 12rem; background: #fff; border: 1px solid var(--c-border); border-radius: 8px; padding: 4px; box-shadow: 0 4px 12px rgb(0 0 0 / .08); }
+        .st-menu button { display: block; width: 100%; text-align: left; padding: 4px 8px; border-radius: 4px; font-size: 14px; }
+        .st-menu button:hover { background: #f4f6f9; }
+        .st-tag { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--c-border); border-radius: 999px; padding: 2px 4px 2px 10px; font-size: 13px; background: #faf8ff; }
+        .st-tag-input { border: 0; background: transparent; padding: 0; font-size: 13px; font-weight: 600; color: #5b3fb0; min-width: 3rem; }
+        .st-link { font-size: 11px; color: var(--c-primary); text-decoration: underline; }
+        .st-tag-remove { display: inline-flex; color: #dc2626; padding: 2px; border-radius: 999px; }
+    </style>
+{% endblock %}
+
 {% block step_content %}
 {% import 'diplome/wizard/_structure_rows.html.twig' as rows %}
-<p class="text-sm mb-4" style="color:var(--c-muted)">{{ 'diplome.wizard.structure.help'|trans({}, 'diplome') }}</p>
-{{ form_start(form, {attr: {id: 'wizard-form', class: 'space-y-6'}}) }}
+{% import 'diplome/wizard/_structure_tree.html.twig' as st %}
+{% set t = 'diplome.wizard.structure.tree.' %}
+
+{# Niveaux dans l'ordre de la chaîne (rang soumis, à rang égal l'ordre des lignes), comme StructureStep::apply(). #}
+{% set levels = form.levels|sort((a, b) => (a.position.vars.value matches '/^\\d+$/' ? a.position.vars.value : 0) <=> (b.position.vars.value matches '/^\\d+$/' ? b.position.vars.value : 0))|slice(0) %}
+{% set keys = levels|map(lv => lv.typeKey.vars.value) %}
+{% set elementLabel = '' %}{% for nt in nodeTypes %}{% if nt.element %}{% set elementLabel = nt.label %}{% endif %}{% endfor %}
+{% set durationKey = form.duration.levelKey.vars.value ?: (keys|first) %}
+
+{# Nombre déduit du premier niveau : durée ÷ produit des nombres des niveaux jusqu'au niveau de durée (cf. DurationMath). #}
+{% set factor = 1 %}{% set durationFound = durationKey == (keys|first) %}
+{% for lv in levels|slice(1) %}
+    {% if not durationFound %}
+        {% set factor = factor * ((lv.count.value.vars.value matches '/^\\d+$/') and lv.count.value.vars.value > 0 ? lv.count.value.vars.value : 1) %}
+        {% set durationFound = lv.typeKey.vars.value == durationKey %}
+    {% endif %}
+{% endfor %}
+{% set d = form.duration.bound %}
+{% set firstCount = '' %}
+{% if durationFound and d.value.vars.value matches '/^\\d+$/' %}
+    {% set firstCount = st.boundText('count', d.mode.vars.value, (d.value.vars.value / factor)|round(0, 'ceil'), (d.upper.vars.value matches '/^\\d+$/' ? (d.upper.vars.value / factor)|round(0, 'floor') : ''))|trim %}
+{% endif %}
+
+{# Liens « fiche » / « MCCC » des types d'EC : mêmes étapes que la barre latérale. #}
+{% set editing = version is defined and type is defined %}
+{% set links = {
+    fiche: {step: 'formulaires', url: editing and 'formulaires' in steps ? path('diplome_edit', {id: type.id, versionId: version.id, step: 'formulaires'}) : null},
+    mccc: {step: 'mccc', url: editing and 'mccc' in steps ? path('diplome_edit', {id: type.id, versionId: version.id, step: 'mccc'}) : null},
+} %}
+
+{% set labels = {
+    count: {exact: (t ~ 'count.exact')|trans({}, 'diplome'), between: (t ~ 'count.between')|trans({}, 'diplome'), min: (t ~ 'count.min')|trans({}, 'diplome'), max: (t ~ 'count.max')|trans({}, 'diplome')},
+    ects: {exact: (t ~ 'ects.exact')|trans({}, 'diplome'), between: (t ~ 'ects.between')|trans({}, 'diplome'), min: (t ~ 'ects.min')|trans({}, 'diplome'), max: (t ~ 'ects.max')|trans({}, 'diplome')},
+    typesOne: (t ~ 'types_one')|trans({}, 'diplome'),
+    typesMany: (t ~ 'types_many')|trans({}, 'diplome'),
+    coef: (t ~ 'coef')|trans({}, 'diplome'),
+    countPer: (t ~ 'count_per')|trans({}, 'diplome'),
+} %}
+
+<p class="text-sm mb-4 st-muted">{{ 'diplome.wizard.structure.help'|trans({}, 'diplome') }}</p>
+<div data-controller="structure-tree"
+     data-structure-tree-labels-value="{{ labels|json_encode|e('html_attr') }}"
+     data-structure-tree-row-prototype-value="{{ st.row('__name__', '', '', {depth: 0, locked: false, duration: false, element: false, temporal: false, summary: '', coef: ''})|e('html_attr') }}"
+     data-structure-tree-panel-prototype-value="{{ st.panel('__name__', form.levels.vars.prototype, {label: '', parentLabel: '', element: false, elementLabel: elementLabel, first: false, natures: null, parcours: null, links: links})|e('html_attr') }}"
+     data-structure-tree-ec-type-prototype-value="{{ st.ecType(form.natures.vars.prototype, links)|e('html_attr') }}"
+     data-structure-tree-index-value="{{ form.levels|keys|reduce((max, k) => k >= max ? k + 1 : max, 0) }}"
+     data-structure-tree-ec-type-index-value="{{ form.natures|keys|reduce((max, k) => k >= max ? k + 1 : max, 0) }}">
+{{ form_start(form, {attr: {id: 'wizard-form', novalidate: 'novalidate', 'data-action': 'change->structure-tree#changed input->structure-tree#changed'}}) }}
     {{ form_errors(form) }}
-
-    {% set card = 'rounded-lg border p-4' %}
-    <fieldset class="{{ card }} grid gap-4 md:grid-cols-[auto_auto_1fr] md:items-end" style="border-color:var(--c-border)">
-        {{ rows.field(form.duration.levelKey) }}
-        {{ rows.bound(form.duration.bound) }}
-        <label class="flex items-center gap-2 text-sm md:pb-1.5">{{ form_widget(form.parcoursAllowed) }} {{ form_label(form.parcoursAllowed) }}</label>
-        {{ rows.field(form.natures) }}
-    </fieldset>
-
-    {# Niveaux de la chaîne #}
-    <section class="{{ card }}" style="border-color:var(--c-border)" data-section="level" data-controller="levels"
-             data-levels-level-prototype-value="{{ rows.level(form.levels.vars.prototype)|e('html_attr') }}"
-             data-levels-level-index-value="{{ form.levels|keys|reduce((max, k) => k >= max ? k + 1 : max, 0) }}">
-        <div class="mb-3 flex items-start justify-between gap-3">
-            <div>
-                <h3 class="text-sm font-semibold">{{ form_label(form.levels) }}</h3>
-                <p class="text-xs" style="color:var(--c-muted)">{{ 'diplome.wizard.structure.level_section_help'|trans({}, 'diplome') }}</p>
+    <div class="st-grid">
+        <div class="st-tree min-w-0 space-y-4">
+            {# Durée : « Dure [borne] [niveau temporel de la chaîne ▾] » #}
+            <div class="st-duration flex flex-wrap items-center gap-2 text-sm">
+                <span>{{ (t ~ 'lasts')|trans({}, 'diplome') }}</span>
+                <div data-structure-tree-target="durationBound">{{ rows.boundWidget(form.duration.bound) }}</div>
+                {% set f = form.duration.levelKey %}
+                <select id="{{ f.vars.id }}" name="{{ f.vars.full_name }}" data-structure-tree-target="durationLevel" aria-label="{{ f.vars.label|trans({}, 'diplome') }}"
+                        class="rounded-md border px-1.5 py-1 text-sm" style="border-color:var(--c-border)">
+                    {% for k in keys %}{% if nodeTypes[k].temporal ?? false %}
+                        <option value="{{ k }}" {{ k == durationKey ? 'selected' }}>{{ st.lowerLabel(nodeTypes[k].label ?? k) }}</option>
+                    {% endif %}{% endfor %}
+                </select>
+                {% do f.setRendered %}
             </div>
-            <button type="button" data-action="levels#addLevel" class="inline-flex shrink-0 items-center gap-1 rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'diplome.wizard.structure.add_level'|trans({}, 'diplome') }}</button>
-        </div>
-        {{ form_errors(form.levels) }}
-        <div class="{{ rows.levelGrid() }} px-3 pb-1 text-[11px] font-medium uppercase tracking-wide" style="color:var(--c-muted)">
-            <span>{{ 'diplome.wizard.structure.level_type'|trans({}, 'diplome') }}</span>
-            <span>{{ 'diplome.wizard.structure.level_count'|trans({}, 'diplome') }}</span>
-            <span>{{ 'diplome.wizard.structure.level_ects'|trans({}, 'diplome') }}</span>
-            <span>{{ 'diplome.wizard.structure.level_ects_sum'|trans({}, 'diplome') }}</span>
-            <span title="{{ 'diplome.wizard.structure.level_start_at'|trans({}, 'diplome') }}">{{ 'diplome.wizard.structure.level_start_at_short'|trans({}, 'diplome') }}</span>
-            <span></span>
-        </div>
-        <div data-levels-target="list" class="space-y-2">
-            {% for lv in form.levels %}{{ rows.level(lv) }}{% endfor %}
-        </div>
-    </section>
+            {{ form_errors(form.duration) }}{{ form_errors(form.duration.levelKey) }}
 
-    {% set proto = rows.rule(form.rules.vars.prototype) %}
-    <section class="{{ card }}" style="border-color:var(--c-border)" data-controller="collection" data-collection-prototype-value="{{ proto|e('html_attr') }}" data-collection-index-value="{{ form.rules|keys|reduce((max, k) => k >= max ? k + 1 : max, 0) }}" data-section="rule">
-        <div class="mb-3 flex items-start justify-between gap-3">
-            <div>
+            {# L'arbre : une ligne par niveau #}
+            <div data-structure-tree-target="tree" data-section="level">
+                {{ form_errors(form.levels) }}
+                {% set elementIndex = null %}
+                {% for lv in levels %}
+                    {% set key = lv.typeKey.vars.value %}
+                    {% set type = nodeTypes[key] ?? {label: key, temporal: false, element: false} %}
+                    {% set coefAbove = type.element and not loop.first and levels|length >= 3 and (levels|slice(-2, 1)|first).ecLink.vars.value == 'coefficient' %}
+                    {% set parts = [] %}
+                    {% set c = loop.first ? firstCount : st.boundText('count', lv.count.mode.vars.value, lv.count.value.vars.value, lv.count.upper.vars.value)|trim %}
+                    {% if c is not empty %}{% set parts = parts|merge([c]) %}{% endif %}
+                    {% if lv.ectsMode.vars.value != 'free' %}
+                        {% set e = st.boundText('ects', lv.ectsBound.mode.vars.value, lv.ectsBound.value.vars.value, lv.ectsBound.upper.vars.value)|trim %}
+                        {% if e is not empty %}{% set parts = parts|merge([e]) %}{% endif %}
+                    {% endif %}
+                    {% if type.element %}
+                        {% set parts = parts|merge([(form.natures|length == 1 ? labels.typesOne : labels.typesMany)|replace({'%n%': form.natures|length})]) %}
+                    {% endif %}
+                    {% set aboveKey = (levels|slice(-2, 1)|first).typeKey.vars.value %}
+                    {% set coefLabel = coefAbove ? (nodeTypes[aboveKey].label ?? aboveKey) : '' %}
+                    {{ st.row(lv.vars.name, key, type.label, {
+                        depth: coefAbove ? loop.index0 - 1 : loop.index0,
+                        locked: lv.locked.vars.value == '1',
+                        duration: key == durationKey and form.duration.bound.mode.vars.value != 'none',
+                        element: type.element,
+                        temporal: type.temporal,
+                        summary: parts|join(' · '),
+                        coef: coefAbove ? labels.coef|replace({'%level%': coefLabel}) : '',
+                        invalid: not lv.vars.valid,
+                    }) }}
+                {% endfor %}
+                <div class="relative" style="margin-left: {{ max(0, levels|length - 1) * 22 }}px" data-structure-tree-target="addWrap">
+                    <button type="button" class="st-add" data-action="structure-tree#toggleAddMenu" aria-haspopup="true">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ (t ~ 'add_level')|trans({}, 'diplome') }}</button>
+                    <div class="st-menu" data-structure-tree-target="addMenu" hidden>
+                        {% for nt in nodeTypes %}{% if not nt.element %}
+                            <button type="button" data-action="structure-tree#addLevel" data-type-key="{{ nt.key }}" data-type-label="{{ nt.label }}" data-temporal="{{ nt.temporal ? '1' : '0' }}">{{ nt.label }}</button>
+                        {% endif %}{% endfor %}
+                        <p class="px-2 py-1 text-xs st-muted" data-add-empty hidden>{{ (t ~ 'add_level_none')|trans({}, 'diplome') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="st-rest min-w-0 space-y-4">
+            {# Règles d'obligation, sous l'arbre #}
+            {% set proto = rows.rule(form.rules.vars.prototype) %}
+            <section class="border-t pt-3" style="border-color:var(--c-border)" data-controller="collection" data-collection-prototype-value="{{ proto|e('html_attr') }}" data-collection-index-value="{{ form.rules|keys|reduce((max, k) => k >= max ? k + 1 : max, 0) }}" data-section="rule">
                 <h3 class="text-sm font-semibold">{{ form_label(form.rules) }}</h3>
-                <p class="text-xs" style="color:var(--c-muted)">{{ 'diplome.wizard.structure.rule_section_help'|trans({}, 'diplome') }}</p>
-            </div>
-            <button type="button" data-action="collection#add" class="inline-flex shrink-0 items-center gap-1 rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'diplome.wizard.structure.add_rule'|trans({}, 'diplome') }}</button>
+                <p class="text-xs st-muted">{{ 'diplome.wizard.structure.rule_section_help'|trans({}, 'diplome') }}</p>
+                {{ form_errors(form.rules) }}
+                <div data-collection-target="list" class="mt-2 space-y-2">
+                    {% for row in form.rules %}{{ rows.rule(row) }}{% endfor %}
+                </div>
+                <button type="button" data-action="collection#add" class="st-add mt-1">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ (t ~ 'add_rule')|trans({}, 'diplome') }}</button>
+            </section>
+
+            {# Aperçu de la maquette minimale, replié #}
+            <details class="rounded-lg border p-3" style="border-color:var(--c-border);background:#f8f9fb">
+                <summary class="cursor-pointer text-sm font-semibold">{{ 'diplome.wizard.structure.preview'|trans({}, 'diplome') }}</summary>
+                <section data-preview class="mt-2">
+                    <p class="text-xs mb-3 st-muted">{{ 'diplome.wizard.structure.preview_help'|trans({}, 'diplome') }}</p>
+                    {% if previewError %}
+                        <p class="text-sm" style="color:var(--c-danger, #b91c1c)" data-preview-error>{{ previewError }}</p>
+                    {% else %}
+                        {{ _self.tree(preview) }}
+                    {% endif %}
+                </section>
+            </details>
         </div>
-        {{ form_errors(form.rules) }}
-        <div data-collection-target="list" class="space-y-2">
-            {% for row in form.rules %}{{ rows.rule(row) }}{% endfor %}
+
+        {# Panneau de réglages : un bloc par niveau, un seul visible #}
+        <aside class="st-panel min-w-0" data-structure-tree-target="panels">
+            <p class="text-sm st-muted" data-structure-tree-target="help">{{ (t ~ 'panel_help')|trans({}, 'diplome') }}</p>
+            {% set naturesRendered = false %}
+            {% for lv in levels %}
+                {% set key = lv.typeKey.vars.value %}
+                {% set type = nodeTypes[key] ?? {label: key, temporal: false, element: false} %}
+                {% set coefAbove = type.element and levels|length >= 3 and (levels|slice(-2, 1)|first).ecLink.vars.value == 'coefficient' %}
+                {% set parentKey = loop.first ? '' : keys[loop.index0 - (coefAbove ? 2 : 1)] %}
+                {{ st.panel(lv.vars.name, lv, {
+                    label: type.label,
+                    parentLabel: loop.first ? '' : (nodeTypes[parentKey].label ?? parentKey),
+                    element: type.element,
+                    elementLabel: elementLabel,
+                    first: loop.first,
+                    ecLinkField: not loop.first and loop.index0 == levels|length - 2 and (nodeTypes[keys|last].element ?? false),
+                    natures: type.element and not naturesRendered ? form.natures : null,
+                    parcours: loop.first ? form.parcoursAllowed : null,
+                    links: links,
+                }) }}
+                {% if type.element %}{% set naturesRendered = true %}{% endif %}
+            {% endfor %}
+        </aside>
+    </div>
+    {# chaîne sans niveau élément (version à corriger) : les types d'EC restent saisissables #}
+    {% if not naturesRendered %}
+        <div class="mt-4" data-ec-types>
+            <span class="st-lab">{{ form_label(form.natures) }}</span>
+            <div class="flex flex-wrap gap-1.5" data-structure-tree-target="ecTypeList">{% for nt in form.natures %}{{ st.ecType(nt, links) }}{% endfor %}</div>
+            <button type="button" data-action="structure-tree#addEcType" class="st-add mt-1">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ (t ~ 'add_ec_type')|trans({}, 'diplome') }}</button>
+            {{ form_errors(form.natures) }}
         </div>
-    </section>
+        {% do form.natures.setRendered %}
+    {% endif %}
+    {% if levels is empty %}{{ st.parcours(form.parcoursAllowed) }}{% endif %}
+    {% do form.natures.setRendered %}{% do form.levels.setRendered %}{% do form.rules.setRendered %}
     {{ form_rest(form) }}
 {{ form_end(form, {render_rest: false}) }}
-
-<section data-preview class="mt-6 rounded-lg border p-4" style="border-color:var(--c-border);background:#f8f9fb">
-    <h3 class="text-sm font-semibold mb-1">{{ 'diplome.wizard.structure.preview'|trans({}, 'diplome') }}</h3>
-    <p class="text-xs mb-3" style="color:var(--c-muted)">{{ 'diplome.wizard.structure.preview_help'|trans({}, 'diplome') }}</p>
-    {% if previewError %}
-        <p class="text-sm" style="color:var(--c-danger, #b91c1c)" data-preview-error>{{ previewError }}</p>
-    {% else %}
-        {{ _self.tree(preview) }}
-    {% endif %}
-</section>
+</div>
 {% endblock %}
 {% block step_next %}
     <button form="wizard-form" class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'diplome.wizard.next'|trans({}, 'diplome') }}</button>

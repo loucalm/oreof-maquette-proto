@@ -1,0 +1,147 @@
+{#
+    Arbre épuré de l'étape Structure : une ligne par niveau (résumé court) et, pour chaque niveau, un bloc de
+    réglages dans le panneau de droite. Rien ici ne connaît une clé de type de nœud : ce que l'arbre doit savoir
+    d'un type (libellé, temporel, niveau élément) vient de `nodeTypes` (StructureStep::viewData()).
+    Les résumés sont recalculés en direct par structure_tree_controller.js, avec les mêmes textes.
+#}
+
+{# Borne en phrase courte : « × 3 », « 3 à 6 », « au moins 2 », « au plus 4 » (kind = count) ou « 30 ECTS », « ≤ 10 ECTS » (kind = ects). #}
+{% macro boundText(kind, mode, v, u) -%}
+    {%- set p = 'diplome.wizard.structure.tree.' ~ kind ~ '.' -%}
+    {%- if mode == 'exact' and v is not same as('') and v is not null -%}{{ (p ~ 'exact')|trans({'%n%': v}, 'diplome') }}
+    {%- elseif mode == 'between' and v is not same as('') and v is not null -%}{{ (p ~ 'between')|trans({'%min%': v, '%max%': u}, 'diplome') }}
+    {%- elseif mode == 'min' and v is not same as('') and v is not null -%}{{ (p ~ 'min')|trans({'%n%': v}, 'diplome') }}
+    {%- elseif mode == 'max' and v is not same as('') and v is not null -%}{{ (p ~ 'max')|trans({'%n%': v}, 'diplome') }}
+    {%- endif -%}
+{%- endmacro %}
+
+{# Libellé dans une phrase : « Semestre » → « semestre », mais « UE » reste « UE ». #}
+{% macro lowerLabel(l) -%}
+    {{- l|length > 1 and l|slice(1, 1) == l|slice(1, 1)|lower ? l|slice(0, 1)|lower ~ l|slice(1) : l -}}
+{%- endmacro %}
+
+{# Ligne d'un niveau dans l'arbre. `o` : depth, locked, duration, element, temporal, summary, coef (mention « coef. vers les … »). #}
+{% macro row(index, key, label, o) %}
+    {% set t = 'diplome.wizard.structure.tree.' %}
+    <div data-tree-level="{{ key }}" data-index="{{ index }}" {{ o.temporal ? 'data-temporal' }} {{ o.element ? 'data-element-level' }} {{ o.locked ? 'data-locked' }}
+         role="button" tabindex="0" aria-selected="false" data-action="click->structure-tree#select keydown.enter->structure-tree#select"
+         class="st-level" style="margin-left: {{ o.depth * 22 }}px">
+        <span class="st-ic" data-icon="locked" title="{{ (t ~ 'locked')|trans({}, 'diplome') }}" {{ o.locked ? '' : 'hidden' }}>{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }}</span>
+        <span class="st-ic" data-icon="editable" title="{{ (t ~ 'editable')|trans({}, 'diplome') }}" {{ o.locked ? 'hidden' }}>{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }}</span>
+        <span class="st-name" data-level-label>{{ label }}</span>
+        <span class="st-summary" data-summary>{{ o.summary }}</span>
+        <span class="st-ic st-muted" data-icon="duration" title="{{ (t ~ 'duration_level')|trans({}, 'diplome') }}" {{ o.duration ? '' : 'hidden' }}>{{ ux_icon('ph:hourglass-medium', {class: 'icon'}) }}</span>
+        <span class="st-coef" data-coef title="{{ (t ~ 'coef_note')|trans({}, 'diplome') }}" {{ o.coef ? '' : 'hidden' }}>{{ o.coef }}</span>
+        <span class="st-invalid" data-invalid-mark title="{{ (t ~ 'invalid')|trans({}, 'diplome') }}" {{ o.invalid|default(false) ? '' : 'hidden' }}>●</span>
+    </div>
+{% endmacro %}
+
+{# Lien vers une autre étape de la même version : lien d'onglet en édition, sinon bouton de navigation de l'assistant (comme la barre latérale). #}
+{% macro stepLink(link, name) %}
+    {% set text = ('diplome.wizard.structure.tree.link_' ~ name)|trans({}, 'diplome') %}
+    {% if link.url is not null %}
+        <a href="{{ link.url }}" data-link="{{ name }}" class="st-link">{{ text }}</a>
+    {% else %}
+        <button type="submit" form="wizard-form" name="goto" value="{{ link.step }}" formnovalidate data-link="{{ name }}" class="st-link">{{ text }}</button>
+    {% endif %}
+{% endmacro %}
+
+{# Étiquette d'un type d'EC : libellé modifiable, clé cachée, liens « fiche » et « MCCC », retrait. #}
+{% macro ecType(f, links) %}
+    {% import _self as m %}
+    <span data-ec-type class="st-tag">
+        {{ form_widget(f.key) }}
+        {{ form_widget(f.label, {attr: {class: 'st-tag-input', size: max(6, f.label.vars.value|length), 'aria-label': 'diplome.wizard.structure.ec_type_label'|trans({}, 'diplome')}}) }}
+        {{ m.stepLink(links.fiche, 'fiche') }}
+        {{ m.stepLink(links.mccc, 'mccc') }}
+        <button type="button" data-action="structure-tree#removeEcType" class="st-tag-remove" title="{{ 'diplome.wizard.structure.tree.remove_ec_type'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.wizard.structure.tree.remove_ec_type'|trans({}, 'diplome') }}">{{ ux_icon('ph:x', {class: 'icon'}) }}</button>
+        {{ form_errors(f.label) }}
+    </span>
+{% endmacro %}
+
+{#
+    Bloc de réglages d'un niveau (masqué tant que le niveau n'est pas sélectionné), dans l'ordre du §5.3 de la spec :
+    nombre par parent, statut, rattachement des EC, ECTS, puis « Plus de réglages ».
+    `o` : label, parentLabel, element, elementLabel, first, ecLinkField (niveau juste au-dessus du niveau élément), natures (formulaire des types d'EC, niveau élément seulement),
+    parcours (case « Parcours autorisés », premier niveau seulement), links.
+#}
+{% macro panel(index, lv, o) %}
+    {% import _self as m %}
+    {% import 'diplome/wizard/_structure_rows.html.twig' as rows %}
+    {% set t = 'diplome.wizard.structure.tree.' %}
+    {% set sel = 'rounded-md border px-1.5 py-1 text-sm' %}
+    <div data-level-panel data-index="{{ index }}" {{ o.element ? 'data-element-level' }} {{ lv.vars.valid ? '' : 'data-invalid' }} hidden class="space-y-3">
+        <div class="flex items-center justify-between gap-2">
+            <h3 class="font-semibold" data-level-label>{{ o.label }}</h3>
+            {% if not o.element %}
+                {% set btn = 'inline-flex h-7 w-7 items-center justify-center rounded hover:bg-gray-100' %}
+                <div class="flex shrink-0 items-center gap-0.5">
+                    <button type="button" data-action="structure-tree#up" class="{{ btn }}" title="{{ (t ~ 'up')|trans({}, 'diplome') }}" aria-label="{{ (t ~ 'up')|trans({}, 'diplome') }}">{{ ux_icon('ph:arrow-up', {class: 'icon'}) }}</button>
+                    <button type="button" data-action="structure-tree#down" class="{{ btn }}" title="{{ (t ~ 'down')|trans({}, 'diplome') }}" aria-label="{{ (t ~ 'down')|trans({}, 'diplome') }}">{{ ux_icon('ph:arrow-down', {class: 'icon'}) }}</button>
+                    <button type="button" data-action="structure-tree#remove" class="{{ btn }}" style="color:#dc2626" title="{{ (t ~ 'remove_level')|trans({}, 'diplome') }}" aria-label="{{ (t ~ 'remove_level')|trans({}, 'diplome') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
+                </div>
+            {% endif %}
+        </div>
+        {{ form_widget(lv.position) }}
+        {{ form_widget(lv.typeKey, {attr: {hidden: 'hidden', 'data-field': 'typeKey'}}) }}
+        {{ form_errors(lv.typeKey) }}
+
+        <div data-count-field {{ o.first ? 'hidden' }}>
+            <span class="st-lab" data-count-label>{{ (t ~ 'count_per')|trans({'%parent%': m.lowerLabel(o.parentLabel)|trim}, 'diplome') }}</span>
+            {{ rows.boundWidget(lv.count) }}
+        </div>
+        <p class="text-sm st-muted" data-count-derived {{ o.first ? '' : 'hidden' }}>{{ (t ~ 'count_first')|trans({}, 'diplome') }}</p>
+
+        <div>
+            <span class="st-lab">{{ (t ~ 'locked_label')|trans({}, 'diplome') }}</span>
+            {{ form_widget(lv.locked, {attr: {class: sel, style: 'border-color:var(--c-border)', 'data-field': 'locked'}}) }}
+            {{ form_errors(lv.locked) }}
+        </div>
+
+        <div data-ec-link-field {{ o.ecLinkField|default(false) ? '' : 'hidden' }}>
+            <span class="st-lab">{{ (t ~ 'ec_link_label')|trans({'%element%': o.elementLabel}, 'diplome') }}</span>
+            {{ form_widget(lv.ecLink, {attr: {class: sel, style: 'border-color:var(--c-border)', 'data-field': 'ecLink'}}) }}
+            <p class="mt-0.5 text-[11px] st-muted" data-ec-link-note {{ lv.ecLink.vars.value == 'coefficient' ? '' : 'hidden' }}>{{ (t ~ 'coef_note')|trans({}, 'diplome') }}</p>
+            {{ form_errors(lv.ecLink) }}
+        </div>
+
+        <div>
+            <span class="st-lab">{{ (t ~ 'ects_label')|trans({}, 'diplome') }}</span>
+            <div class="flex flex-wrap items-center gap-2">
+                {{ form_widget(lv.ectsMode, {attr: {class: sel, style: 'border-color:var(--c-border)', 'data-field': 'ectsMode'}}) }}
+                <div data-ects-bound {{ lv.ectsMode.vars.value == 'free' ? 'hidden' }}>{{ rows.boundWidget(lv.ectsBound) }}</div>
+            </div>
+            {{ form_errors(lv.ectsMode) }}
+        </div>
+
+        {% if o.natures is not null %}
+            <div data-ec-types>
+                <span class="st-lab">{{ form_label(o.natures) }}</span>
+                <div class="flex flex-wrap gap-1.5" data-structure-tree-target="ecTypeList">
+                    {% for nt in o.natures %}{{ m.ecType(nt, o.links) }}{% endfor %}
+                </div>
+                <button type="button" data-action="structure-tree#addEcType" class="st-add mt-1">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ (t ~ 'add_ec_type')|trans({}, 'diplome') }}</button>
+                {{ form_help(o.natures, {help_attr: {class: 'mt-0.5 text-[11px] st-muted'}}) }}
+                {{ form_errors(o.natures) }}
+            </div>
+        {% endif %}
+
+        <details class="text-sm">
+            <summary class="cursor-pointer st-muted">{{ (t ~ 'more')|trans({}, 'diplome') }}</summary>
+            <div class="mt-2 space-y-2">
+                <label class="block">
+                    <span class="st-lab">{{ form_label(lv.startAt) }}</span>
+                    {{ form_widget(lv.startAt, {attr: {class: 'w-20 rounded-md border px-2 py-1 text-sm', style: 'border-color:var(--c-border)'}}) }}
+                    {{ form_errors(lv.startAt) }}
+                </label>
+                <div data-parcours-slot>{% if o.parcours is not null %}{{ m.parcours(o.parcours) }}{% endif %}</div>
+            </div>
+        </details>
+        {{ form_errors(lv) }}
+    </div>
+{% endmacro %}
+
+{# Case « Parcours autorisés » : elle suit le premier niveau (déplacée par le contrôleur quand la chaîne change). #}
+{% macro parcours(f) %}
+    <label class="flex items-center gap-2" data-structure-tree-target="parcours">{{ form_widget(f) }} {{ form_label(f) }}</label>
+{% endmacro %}

@@ -268,4 +268,26 @@ final class DiplomeEditTest extends WebTestCase
         $saved = $this->em->getRepository(TypeDiplome::class)->findOneBy(['sigle' => 'M2X']);
         self::assertSame('Master M2E bis', $saved->getLabel());
     }
+
+    public function testStructureTabRendersTree(): void
+    {
+        $type = $this->type('BUT');
+        $crawler = $this->client->request('GET', $this->editPath($type, 'structure'));
+        self::assertResponseIsSuccessful();
+        self::assertSame(['annee', 'semestre', 'ue', 'ec'], $crawler->filter('[data-tree-level]')->each(static fn ($n) => $n->attr('data-tree-level')));
+        self::assertStringContainsString('coef. vers les UE', $crawler->filter('[data-tree-level="ec"]')->text());
+        $links = $crawler->filter('[data-ec-type] a[data-link="fiche"]');
+        self::assertGreaterThan(0, $links->count());
+        self::assertSame($this->editPath($type, 'formulaires'), $links->first()->attr('href'));
+        self::assertSame($this->editPath($type, 'mccc'), $crawler->filter('[data-ec-type] a[data-link="mccc"]')->first()->attr('href'));
+
+        // enregistrer l'onglet tel quel ne change rien (le BUT de démo a une formation : confirmation demandée)
+        $before = $type->latestVersion()->config()->structure->toArray();
+        $form = $crawler->filter('form#wizard-form')->form();
+        $form['confirmImpact']->tick();
+        $this->client->submit($form);
+        self::assertResponseRedirects($this->editPath($type, 'structure'));
+        $this->em->clear();
+        self::assertSame($before, $this->type('BUT')->latestVersion()->config()->structure->toArray());
+    }
 }

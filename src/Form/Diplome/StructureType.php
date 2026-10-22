@@ -12,22 +12,18 @@ use App\Diplome\Spec\LevelSpec;
 use App\Diplome\Spec\StructureSpec;
 use App\Repository\NodeTypeRepository;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\CallbackTransformer;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
-use Symfony\Component\Form\FormEvent;
-use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
- * Étape « Structure » : durée, parcours, chaîne de niveaux, natures d'élément
- * et règles. Les données sont un tableau (`levels`, `rules` : listes de tableaux ;
- * `duration` : {levelKey, bound} ; `natures` : liste de clés).
+ * Étape « Structure » : durée, parcours, chaîne de niveaux, types d'EC et règles.
+ * Les données sont un tableau (`levels`, `rules` : listes de tableaux ;
+ * `duration` : {levelKey, bound} ; `natures` : liste de {key, label}, cf. EcTypeType).
  */
 final class StructureType extends AbstractType
 {
@@ -47,13 +43,8 @@ final class StructureType extends AbstractType
                 'label' => 'diplome.wizard.structure.levels',
                 'constraints' => [new Assert\Count(min: 1, minMessage: 'diplome.wizard.structure.error.no_level')],
             ])
-            ->add('natures', TextType::class, ['label' => 'diplome.wizard.structure.natures', 'help' => 'diplome.wizard.structure.natures_help', 'required' => false])
+            ->add('natures', CollectionType::class, $collection + ['entry_type' => EcTypeType::class, 'label' => 'diplome.wizard.structure.natures', 'help' => 'diplome.wizard.structure.natures_help'])
             ->add('rules', CollectionType::class, $collection + ['entry_type' => RuleSpecType::class, 'label' => 'diplome.wizard.structure.rules']);
-
-        $builder->get('natures')->addModelTransformer(new CallbackTransformer(
-            static fn (?array $list): string => implode(', ', $list ?? []),
-            static fn (?string $text): array => array_values(array_unique(array_filter(array_map('trim', explode(',', (string) $text)), static fn (string $n) => '' !== $n))),
-        ));
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -67,7 +58,7 @@ final class StructureType extends AbstractType
     /** Cohérence entre les parties : les niveaux cités doivent exister dans la chaîne, les natures citées être déclarées. */
     private function validateConsistency(array $data, ExecutionContextInterface $context): void
     {
-        $natures = $data['natures'] ?? [];
+        $natures = array_values(array_filter(array_map(static fn (array $t) => (string) ($t['key'] ?? ''), $data['natures'] ?? []), static fn (string $k) => '' !== $k));
         $initial = $context->getRoot() instanceof FormInterface ? $context->getRoot()->getConfig()->getData() : null;
         $usage = \is_array($initial) ? ($initial['usage'] ?? []) : [];
         // la chaîne dans l'ordre des rangs soumis (cf. StructureStep::apply())
@@ -79,6 +70,9 @@ final class StructureType extends AbstractType
 
         if (\count($chain) !== \count(array_unique($chain))) {
             $add('diplome.wizard.structure.error.duplicate_level');
+        }
+        if (\count($natures) !== \count(array_unique($natures))) {
+            $add('diplome.wizard.structure.error.duplicate_ec_type');
         }
         $this->validateDuration($data, $levels, $order, $chain, $context);
         $this->validateElementLevel($levels, $order, $chain, $context);
