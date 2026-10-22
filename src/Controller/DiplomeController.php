@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Diplome\Spec\DurationSpec;
+use App\Diplome\DurationLabeler;
 use App\Entity\TypeDiplome;
 use App\Diplome\Wizard\WizardStepRegistry;
 use App\Repository\FormationRepository;
-use App\Repository\NodeTypeRepository;
 use App\Repository\TypeDiplomeRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -32,7 +31,7 @@ final class DiplomeController extends AbstractController
 
     public function __construct(
         private readonly TypeDiplomeRepository $types,
-        private readonly NodeTypeRepository $nodeTypes,
+        private readonly DurationLabeler $durations,
         private readonly FormationRepository $formations,
         private readonly WizardStepRegistry $steps,
         private readonly EntityManagerInterface $em,
@@ -59,7 +58,7 @@ final class DiplomeController extends AbstractController
             $rows[] = [
                 'type' => $type,
                 'basedOn' => null === $basedOnKey ? null : ($labelsByKey[$basedOnKey] ?? $basedOnKey),
-                'duration' => $this->durationLabel($config?->structure->duration),
+                'duration' => $this->durations->describe($config?->structure->duration),
                 'bcc' => null === $config || [] === $config->bccLevels ? null : implode(' › ', $config->bccLevels),
                 'formations' => $this->formations->countByTypeDiplome($type),
                 'version' => $latest?->getAnneeUniversitaire(),
@@ -110,24 +109,5 @@ final class DiplomeController extends AbstractController
         $this->addFlash('success', $this->translator->trans('diplome.flash.deleted', ['%label%' => $label], 'diplome'));
 
         return $this->redirectToRoute('diplome_index');
-    }
-
-    /** « 3 à 4 années », « 6 semestres » : la durée dans l'unité du niveau qui la compte. */
-    private function durationLabel(?DurationSpec $duration): ?string
-    {
-        $bound = $duration?->bound;
-        if (null === $duration || null === $bound || (null === $bound->min && null === $bound->max)) {
-            return null;
-        }
-        $key = match (true) {
-            $bound->isExact() => 'exact',
-            null !== $bound->min && null !== $bound->max => 'range',
-            null !== $bound->min => 'min',
-            default => 'max',
-        };
-        $unit = mb_strtolower($this->nodeTypes->findOneByKey($duration->levelKey)?->getLabel() ?? $duration->levelKey);
-        $plural = ($bound->max ?? $bound->min ?? 0) > 1 ? 's' : '';
-
-        return $this->translator->trans('diplome.index.duration_'.$key, ['%n%' => $bound->min, '%min%' => $bound->min, '%max%' => $bound->max, '%unit%' => $unit.$plural], 'diplome');
     }
 }

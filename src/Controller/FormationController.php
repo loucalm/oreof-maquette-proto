@@ -68,7 +68,7 @@ final class FormationController extends AbstractController
             $structure = $version?->config()->structure;
             $creationTypes[] = [
                 'type' => $type,
-                'duration' => null !== $structure ? $creator->describeDuration($structure->duration?->bound) : null,
+                'duration' => null !== $structure ? $creator->describeDuration($structure->duration) : null,
                 'parcoursAllowed' => $structure?->parcoursAllowed ?? false,
             ];
         }

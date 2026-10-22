@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Diplome;
 
 use App\Diplome\Check\StructureViolationException;
-use App\Diplome\Spec\Bound;
 use App\Diplome\Spec\DurationMath;
+use App\Diplome\Spec\DurationSpec;
 use App\Entity\Formation;
 use App\Entity\TypeDiplome;
 use App\Enum\FormationPhase;
@@ -31,6 +31,7 @@ final class FormationCreator
         private readonly TypeDiplomeVersionRepository $versions,
         private readonly StructureInstantiator $instantiator,
         private readonly TranslatorInterface $translator,
+        private readonly DurationLabeler $durations,
     ) {
     }
 
@@ -61,7 +62,15 @@ final class FormationCreator
             throw new \DomainException($this->t('formation.creation.error.duration', [
                 '%type%' => $type->getLabel(),
                 '%duration%' => $duration,
-                '%bounds%' => $this->describeDuration($structure->duration?->bound),
+                '%bounds%' => $this->describeDuration($structure->duration),
+            ]));
+        }
+        if (DurationMath::factor($structure) > 1 && 0 !== $duration % DurationMath::factor($structure)) {
+            throw new \DomainException($this->t('formation.creation.error.duration_not_divisible', [
+                '%duration%' => $duration,
+                '%factor%' => DurationMath::factor($structure),
+                '%unit%' => $this->durations->unit($structure->duration?->levelKey ?? ''),
+                '%parent%' => $this->durations->unit($structure->levels[0]->typeKey ?? '', 1),
             ]));
         }
         if ($avecParcours && !$structure->parcoursAllowed) {
@@ -93,16 +102,10 @@ final class FormationCreator
         }
     }
 
-    /** Durée acceptée par la version, en clair (« de 3 à 4 », « exactement 2 »…), pour l'aide du formulaire et les refus. */
-    public function describeDuration(?Bound $bound): string
+    /** Durée acceptée par la version, en clair (« 6 semestres », « 3 à 4 années »…), pour l'aide du formulaire et les refus. */
+    public function describeDuration(?DurationSpec $duration): string
     {
-        return match (true) {
-            null === $bound || (null === $bound->min && null === $bound->max) => $this->t('formation.creation.bounds.free'),
-            $bound->isExact() => $this->t('formation.creation.bounds.exact', ['%n%' => $bound->min]),
-            null !== $bound->min && null !== $bound->max => $this->t('formation.creation.bounds.range', ['%min%' => $bound->min, '%max%' => $bound->max]),
-            null !== $bound->min => $this->t('formation.creation.bounds.min', ['%n%' => $bound->min]),
-            default => $this->t('formation.creation.bounds.max', ['%n%' => $bound->max]),
-        };
+        return $this->durations->describe($duration) ?? $this->t('formation.creation.bounds.free');
     }
 
     /** @param array<string, scalar> $params */

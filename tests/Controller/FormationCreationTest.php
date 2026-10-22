@@ -97,7 +97,25 @@ final class FormationCreationTest extends WebTestCase
         self::assertNull($this->created());
         $this->client->followRedirect();
         self::assertSelectorTextContains('body', 'hors des bornes');
-        self::assertSelectorTextContains('body', 'de 1 à 2');
+        self::assertSelectorTextContains('body', '1 à 2 années');
+    }
+
+    public function testDurationNotMultipleOfTheFactorIsRefusedWithATranslatedMessage(): void
+    {
+        $type = $this->em->getRepository(TypeDiplome::class)->findOneByKey('BUT');
+        $version = $type->latestVersion();
+        $data = $version->config()->toArray();
+        $data['structure']['duration'] = ['levelKey' => 'semestre', 'bound' => ['min' => 5, 'max' => 6]];
+        $version->setConfig(\App\Diplome\Spec\VersionConfig::fromArray($data));
+        $this->em->flush();
+
+        $this->create('BUT', ['duree' => '5']);
+
+        self::assertResponseRedirects('/');
+        self::assertNull($this->created());
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('body', 'La durée (5) n’est pas un multiple de 2 semestres par année.');
+        self::assertSelectorTextNotContains('body', 'ne peut pas être générée');
     }
 
     public function testArchivedTypeCannotBeChosen(): void

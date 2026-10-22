@@ -50,7 +50,7 @@ formation:
     type_option_bounds: 'durée %duration%'
     type_option_no_parcours: sans parcours
     duree_field: Durée de la formation
-    duree_help: Nombre d’années du premier niveau de la structure, dans les bornes du diplôme.
+    duree_help: Durée dans l’unité indiquée par le type de diplôme (années, semestres…), dans ses bornes.
     domaine_field: Domaine de formation
     domaine_help: Domaine auquel appartient votre formation
     composante_field: Composante porteuse de la formation
@@ -74,14 +74,11 @@ formation:
       year: 'Année universitaire invalide : attendue au format AAAA-AAAA, avec deux années consécutives (ex. 2026-2027).'
       no_version: 'Le type de diplôme « %type% » n’a aucune version applicable à l’année %year%.'
       duration: 'Durée de %duration% hors des bornes du type de diplôme « %type% » (%bounds%).'
+      duration_not_divisible: 'La durée (%duration%) n’est pas un multiple de %factor% %unit% par %parent%.'
       no_parcours: 'Le type de diplôme « %type% » n’autorise pas les parcours.'
       invalid: 'La structure du type de diplôme « %type% » ne peut pas être générée : %message% Aucune formation n’a été créée.'
     bounds:
       free: 1 ou plus
-      exact: exactement %n%
-      range: de %min% à %max%
-      min: au moins %n%
-      max: au plus %n%
   tree:
     search_placeholder: 'Rechercher un élément…  ( / )'
     search_aria: Rechercher dans la structure (libellé, référence, type)
