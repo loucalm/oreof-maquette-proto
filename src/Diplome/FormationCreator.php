@@ -70,7 +70,7 @@ final class FormationCreator
                 '%duration%' => $duration,
                 '%factor%' => DurationMath::factor($structure),
                 '%unit%' => $this->durations->unit($structure->duration?->levelKey ?? ''),
-                '%parent%' => $this->durations->unit($structure->levels[0]->typeKey ?? '', 1),
+                '%parent%' => $this->durations->unit(($structure->levels[0] ?? null)?->typeKey ?? '', 1),
             ]));
         }
         if ($avecParcours && !$structure->parcoursAllowed) {
