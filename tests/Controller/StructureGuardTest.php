@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Controller;
 
+use App\Diplome\Spec\VersionConfig;
 use App\Diplome\StructureInstantiator;
 use App\Entity\DerogationRequest;
 use App\Entity\Formation;
@@ -190,6 +191,84 @@ final class StructureGuardTest extends WebTestCase
         self::assertTrue($maquette->undo($f));
         self::assertTrue($maquette->redo($f));
         self::assertCount(7, $maquette->open($f)->node($s1)->getChildren());
+    }
+
+    /** Verrouille le niveau semestre de la version du type de la formation (le verrou se lit en direct). */
+    private function lockSemestres(Formation $f): string
+    {
+        $version = $this->em->find(Formation::class, $f->getId())->getTypeDiplome()->latestVersion();
+        $config = $version->config()->toArray();
+        foreach ($config['structure']['levels'] as &$level) {
+            if ('semestre' === $level['typeKey']) {
+                $level['locked'] = true;
+                $level['count'] = null; // isole le verrou des bornes de nombre
+            }
+        }
+        unset($level);
+        $version->setConfig(VersionConfig::fromArray($config));
+        $this->em->flush();
+
+        return $this->em->find(Formation::class, $f->getId())->getArbre()[0]['nid'];
+    }
+
+    private function semestreCount(int $fid, string $anneeNid): int
+    {
+        return $this->ueCount($fid, $anneeNid);
+    }
+
+    public function testLockedLevelBlocksAddUntilDerogation(): void
+    {
+        [$f] = $this->licence(1);
+        $annee = $this->lockSemestres($f);
+        $fid = $f->getId();
+        $before = $this->semestreCount($fid, $annee);
+
+        $this->client->request('POST', '/formations/'.$fid.'/nodes', ['parentId' => $annee, 'typeKey' => 'semestre']);
+        self::assertResponseRedirects();
+        self::assertSame($before, $this->semestreCount($fid, $annee));
+        $this->client->followRedirect();
+        $html = html_entity_decode($this->client->getResponse()->getContent(), \ENT_QUOTES);
+        self::assertStringContainsString('Modification refusée', $html);
+        self::assertStringContainsString('derogation=lock:semestre', $html);
+
+        $this->client->request('POST', '/formations/'.$fid.'/nodes', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['parentId' => $annee, 'typeKey' => 'semestre']));
+        self::assertSame($before, $this->semestreCount($fid, $annee));
+
+        $d = (new DerogationRequest($this->em->find(Formation::class, $fid), 'Semestre supplémentaire'))->withDeviation('lock:semestre', $annee, null);
+        $d->resolve(DerogationStatus::Approved, null);
+        $this->em->persist($d);
+        $this->em->flush();
+
+        $this->client->request('POST', '/formations/'.$fid.'/nodes', ['parentId' => $annee, 'typeKey' => 'semestre']);
+        self::assertSame($before + 1, $this->semestreCount($fid, $annee));
+    }
+
+    public function testLockedLevelAllowsRenameAndRestore(): void
+    {
+        [$f, $s1] = $this->licence(1);
+        $annee = $this->lockSemestres($f);
+        $fid = $f->getId();
+
+        $this->client->request('POST', '/formations/'.$fid.'/nodes/'.$s1, ['label' => 'Semestre renommé']);
+        self::assertResponseRedirects('/formations/'.$fid.'?focus='.$s1);
+
+        $maquette = static::getContainer()->get(Maquette::class);
+        $f = $this->em->find(Formation::class, $fid);
+        $doc = $maquette->open($f);
+        $doc->addNode($annee, 'semestre');
+        $doc->reindex();
+        $revision = new FormationRevision($f, 'Un semestre de plus', [
+            'name' => $f->getName(), 'diplome' => $f->getDiplome(), 'avecParcours' => false, 'structure' => $f->getStructure(),
+            'parametres' => [], 'dataParcours' => [], 'arbre' => $doc->dumpTree(),
+        ]);
+        $this->em->persist($revision);
+        $this->em->flush();
+
+        $maquette->restore($f, $revision);
+        self::assertCount(3, $maquette->open($f)->node($annee)->getChildren());
+        self::assertTrue($maquette->undo($f));
+        self::assertTrue($maquette->redo($f));
+        self::assertCount(3, $maquette->open($f)->node($annee)->getChildren());
     }
 
     public function testFormationWithoutTypeIsNotChecked(): void

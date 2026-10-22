@@ -18,6 +18,7 @@ final class StructureGuard
 {
     public function __construct(
         private readonly StructureChecker $checker,
+        private readonly LevelLockCheck $locks,
         private readonly TypeDiplomeResolver $resolver,
         private readonly DerogationRequestRepository $derogations,
     ) {
@@ -40,8 +41,14 @@ final class StructureGuard
             }
         }
 
+        $violations = $this->checker->check($after, $config);
+        if (null !== $before) {
+            // le verrou ne compare que deux états : annuler, rétablir et restaurer n'y passent pas
+            array_push($violations, ...$this->locks->check($before, $after, $config->structure));
+        }
+
         $refused = [];
-        foreach ($this->checker->check($after, $config) as $v) {
+        foreach ($violations as $v) {
             if (!$v->blocking) {
                 continue;
             }

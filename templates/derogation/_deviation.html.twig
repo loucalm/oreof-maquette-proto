@@ -1,5 +1,5 @@
 {% if d.ruleKey %}
-    {% set bound = d.ruleKey ends with ':max' ? 'derogation.deviation.bound_max' : (d.ruleKey ends with ':min' ? 'derogation.deviation.bound_min' : (d.ruleKey starts with 'imposed:' ? 'derogation.deviation.bound_imposed' : 'derogation.deviation.bound_other')) %}
+    {% set bound = d.ruleKey ends with ':max' ? 'derogation.deviation.bound_max' : (d.ruleKey ends with ':min' ? 'derogation.deviation.bound_min' : (d.ruleKey starts with 'imposed:' ? 'derogation.deviation.bound_imposed' : (d.ruleKey starts with 'lock:' ? 'derogation.deviation.bound_lock' : 'derogation.deviation.bound_other'))) %}
     <div class="mt-1.5 text-xs rounded-md p-2" style="background:#fffbeb;color:#b45309">
         {{ ux_icon('ph:flag', {class: 'icon'}) }} {{ 'derogation.deviation.label'|trans({}, 'derogation') }}
         <code>{{ d.ruleKey }}</code> ({{ bound|trans({}, 'derogation') }})

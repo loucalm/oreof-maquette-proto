@@ -8,6 +8,7 @@ derogation:
     bound_max: maximum
     bound_min: minimum
     bound_imposed: élément imposé
+    bound_lock: niveau verrouillé
     bound_other: règle
     root: racine de la maquette
     allowed: 'valeur accordée : %value%'

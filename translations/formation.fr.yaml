@@ -314,6 +314,7 @@ formation:
     fix_button: Corriger
     structure_title: '%count% écart(s) à la structure du diplôme :'
     unknown_rule: 'Règle inconnue : %template%'
+    level_locked: 'Le niveau « %level% » est verrouillé : son nombre et son ordre sont fixés.'
     structure_actual: 'constaté : %actual%, attendu : %expected%'
   bcc_but:
     count: '%count% compétence(s)'

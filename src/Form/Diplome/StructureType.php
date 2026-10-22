@@ -100,6 +100,12 @@ final class StructureType extends AbstractType
         }
         $this->validateDuration($data, $levels, $order, $chain, $context);
         $this->validateElementLevel($levels, $order, $chain, $context);
+        foreach ($order as $i) {
+            $count = $levels[$i]['count'] ?? null;
+            if (!empty($levels[$i]['locked']) && !($count instanceof Bound && $count->isExact())) {
+                $context->buildViolation('diplome.wizard.structure.error.locked_exact')->setTranslationDomain('diplome')->atPath('levels['.$i.'].count')->addViolation();
+            }
+        }
         foreach ($data['imposed'] ?? [] as $i => $imposed) {
             $row = ['%n%' => $i + 1];
             $at = array_search($imposed['typeKey'] ?? null, $chain, true);

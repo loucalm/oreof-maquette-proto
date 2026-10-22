@@ -182,6 +182,20 @@ final class DiplomeWizardStructureTest extends WebTestCase
         self::assertResponseRedirects('/diplomes/nouveau/formulaires');
     }
 
+    public function testLockedLevelRequiresExactCount(): void
+    {
+        $payload = self::payload($this->startFrom('L'));
+        $payload['levels'][2]['locked'] = '1';
+        $payload['levels'][2]['count'] = ['mode' => 'between', 'value' => '3', 'upper' => '6'];
+        $crawler = $this->submit($payload);
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('Un niveau verrouillé a un nombre exact', $crawler->text());
+
+        $payload['levels'][2]['count'] = ['mode' => 'exact', 'value' => '3'];
+        $this->submit($payload);
+        self::assertResponseRedirects('/diplomes/nouveau/formulaires');
+    }
+
     public function testExactlyTwoSemestersIsStoredAsExactBound(): void
     {
         $payload = self::payload($this->startFrom('L'));
