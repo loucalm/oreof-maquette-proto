@@ -201,7 +201,7 @@ final class StructureGuardTest extends WebTestCase
         foreach ($config['structure']['levels'] as &$level) {
             if ('semestre' === $level['typeKey']) {
                 $level['locked'] = true;
-                $level['count'] = null; // isole le verrou des bornes de nombre
+                $level['count'] = ['min' => 2, 'max' => 2];
             }
         }
         unset($level);
@@ -230,8 +230,12 @@ final class StructureGuardTest extends WebTestCase
         $html = html_entity_decode($this->client->getResponse()->getContent(), \ENT_QUOTES);
         self::assertStringContainsString('Modification refusée', $html);
         self::assertStringContainsString('derogation=lock:semestre', $html);
+        self::assertStringNotContainsString('level:semestre:count', $html);
 
-        $this->client->request('POST', '/formations/'.$fid.'/nodes', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['parentId' => $annee, 'typeKey' => 'semestre']));
+        $this->client->request('POST', '/formations/'.$fid.'/nodes', ['parentId' => $annee, 'typeKey' => 'semestre'], [], ['HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest']);
+        self::assertSame(422, $this->client->getResponse()->getStatusCode());
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        self::assertSame(['lock:semestre'], array_column($data['violations'], 'ruleKey'));
         self::assertSame($before, $this->semestreCount($fid, $annee));
 
         $d = (new DerogationRequest($this->em->find(Formation::class, $fid), 'Semestre supplémentaire'))->withDeviation('lock:semestre', $annee, null);

@@ -13,6 +13,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * Niveau verrouillé : le nombre et l'ordre de ses nœuds sous chaque parent sont figés. Compare la suite
  * ordonnée des identifiants avant et après une modification ; toute différence (ajout, suppression,
  * recréation, déplacement) est une violation bloquante, levée seulement par une dérogation sans valeur.
+ *
+ * Un parent créé ou supprimé avec son sous-arbre n'est pas comparé : il relève du niveau du parent lui-même.
  */
 final class LevelLockCheck
 {

@@ -47,8 +47,19 @@ final class StructureGuard
             array_push($violations, ...$this->locks->check($before, $after, $config->structure));
         }
 
+        // un niveau verrouillé : la violation du verrou couvre celle du nombre sous le même parent (une seule dérogation)
+        $locked = [];
+        foreach ($violations as $v) {
+            if (str_starts_with($v->ruleKey, LevelLockCheck::PREFIX)) {
+                $locked[substr($v->ruleKey, \strlen(LevelLockCheck::PREFIX))."\0".$v->scopeNid] = true;
+            }
+        }
+
         $refused = [];
         foreach ($violations as $v) {
+            if (1 === preg_match('/^level:(.+):count:(?:min|max)$/', $v->ruleKey, $m) && isset($locked[$m[1]."\0".$v->scopeNid])) {
+                continue;
+            }
             if (!$v->blocking) {
                 continue;
             }
