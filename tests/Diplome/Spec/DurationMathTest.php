@@ -71,4 +71,15 @@ final class DurationMathTest extends TestCase
 
         return new StructureSpec($s->levels, false, new DurationSpec($level, $duration));
     }
+
+    public function testFirstLevelBound(): void
+    {
+        self::assertEquals(Bound::exactly(3), DurationMath::firstLevelBound(self::spec('semestre')));
+        $s = new StructureSpec([new LevelSpec('annee'), new LevelSpec('semestre', Bound::exactly(2)), new LevelSpec('ec')], false, new DurationSpec('semestre', new Bound(null, 7)));
+        self::assertEquals(new Bound(null, 3), DurationMath::firstLevelBound($s), 'au plus 7 semestres : au plus 3 années entières');
+        $s = new StructureSpec([new LevelSpec('annee'), new LevelSpec('semestre', Bound::exactly(2)), new LevelSpec('ec')], false, new DurationSpec('semestre', new Bound(3, 8)));
+        self::assertEquals(new Bound(2, 4), DurationMath::firstLevelBound($s));
+        $s = new StructureSpec([new LevelSpec('annee'), new LevelSpec('ec')], false, new DurationSpec('semestre', Bound::exactly(6)));
+        self::assertNull(DurationMath::firstLevelBound($s), 'niveau de durée hors de la chaîne');
+    }
 }

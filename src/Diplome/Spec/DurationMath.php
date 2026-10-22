@@ -39,6 +39,25 @@ final class DurationMath
     }
 
     /**
+     * Nombre de nœuds du premier niveau admis par la durée : minimum arrondi au-dessus, maximum au-dessous
+     * (seuls les multiples entiers du facteur forment des années entières). Null sans durée ou si son niveau
+     * n'est pas dans la chaîne.
+     */
+    public static function firstLevelBound(StructureSpec $structure): ?Bound
+    {
+        if (null === self::durationIndex($structure)) {
+            return null;
+        }
+        $factor = self::factor($structure);
+        $bound = $structure->duration->bound;
+
+        return new Bound(
+            null === $bound->min ? null : intdiv($bound->min + $factor - 1, $factor),
+            null === $bound->max ? null : intdiv($bound->max, $factor),
+        );
+    }
+
+    /**
      * Clé de traduction (domaine `diplome`) du premier défaut de la durée, null si elle est cohérente.
      *
      * @param list<string> $temporalKeys clés des types de nœud temporels

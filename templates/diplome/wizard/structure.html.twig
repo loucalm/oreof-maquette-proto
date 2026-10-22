@@ -57,19 +57,8 @@
 {% set elementLabel = '' %}{% for nt in nodeTypes %}{% if nt.element %}{% set elementLabel = nt.label %}{% endif %}{% endfor %}
 {% set durationKey = form.duration.levelKey.vars.value ?: (keys|first) %}
 
-{# Nombre déduit du premier niveau : durée ÷ produit des nombres des niveaux jusqu'au niveau de durée (cf. DurationMath). #}
-{% set factor = 1 %}{% set durationFound = durationKey == (keys|first) %}
-{% for lv in levels|slice(1) %}
-    {% if not durationFound %}
-        {% set factor = factor * ((lv.count.value.vars.value matches '/^\\d+$/') and lv.count.value.vars.value > 0 ? lv.count.value.vars.value : 1) %}
-        {% set durationFound = lv.typeKey.vars.value == durationKey %}
-    {% endif %}
-{% endfor %}
-{% set d = form.duration.bound %}
-{% set firstCount = '' %}
-{% if durationFound and d.value.vars.value matches '/^\\d+$/' %}
-    {% set firstCount = st.boundText('count', d.mode.vars.value, (d.value.vars.value / factor)|round(0, 'ceil'), (d.upper.vars.value matches '/^\\d+$/' ? (d.upper.vars.value / factor)|round(0, 'floor') : ''))|trim %}
-{% endif %}
+{# Nombre déduit du premier niveau (DurationMath::firstLevelBound(), cf. StructureStep::viewData()). #}
+{% set firstCount = firstCount is null ? '' : st.boundText('count', firstCount.mode, firstCount.value, firstCount.upper)|trim %}
 
 {# Liens « fiche » / « MCCC » des types d'EC : mêmes étapes que la barre latérale. #}
 {% set editing = version is defined and type is defined %}
@@ -106,18 +95,21 @@
                 {% set f = form.duration.levelKey %}
                 <select id="{{ f.vars.id }}" name="{{ f.vars.full_name }}" data-structure-tree-target="durationLevel" aria-label="{{ f.vars.label|trans({}, 'diplome') }}"
                         class="rounded-md border px-1.5 py-1 text-sm" style="border-color:var(--c-border)">
+                    {% set temporalKeys = keys|filter(k => nodeTypes[k].temporal ?? false) %}
+                    {% set durationLost = durationKey not in temporalKeys and form.duration.bound.mode.vars.value != 'none' %}
+                    {% if durationLost %}<option value="" selected>—</option>{% endif %}
                     {% for k in keys %}{% if nodeTypes[k].temporal ?? false %}
-                        <option value="{{ k }}" {{ k == durationKey ? 'selected' }}>{{ st.lowerLabel(nodeTypes[k].label ?? k) }}</option>
+                        <option value="{{ k }}" {{ k == durationKey ? 'selected' }}>{{ nodeTypes[k].inSentence ?? k }}</option>
                     {% endif %}{% endfor %}
                 </select>
                 {% do f.setRendered %}
+                <p class="w-full text-xs" style="color:#b45309" data-structure-tree-target="durationNotice" {{ durationLost ? '' : 'hidden' }}>{{ (t ~ 'duration_cleared')|trans({}, 'diplome') }}</p>
             </div>
             {{ form_errors(form.duration) }}{{ form_errors(form.duration.levelKey) }}
 
             {# L'arbre : une ligne par niveau #}
             <div data-structure-tree-target="tree" data-section="level">
                 {{ form_errors(form.levels) }}
-                {% set elementIndex = null %}
                 {% for lv in levels %}
                     {% set key = lv.typeKey.vars.value %}
                     {% set type = nodeTypes[key] ?? {label: key, temporal: false, element: false} %}
@@ -195,7 +187,7 @@
                 {% set parentKey = loop.first ? '' : keys[loop.index0 - (coefAbove ? 2 : 1)] %}
                 {{ st.panel(lv.vars.name, lv, {
                     label: type.label,
-                    parentLabel: loop.first ? '' : (nodeTypes[parentKey].label ?? parentKey),
+                    parentLabel: loop.first ? '' : (nodeTypes[parentKey].inSentence ?? parentKey),
                     element: type.element,
                     elementLabel: elementLabel,
                     first: loop.first,

@@ -124,6 +124,7 @@ diplome:
         locked: Verrouillé dans la formation
         editable: Modifiable dans la formation
         duration_level: Niveau qui compte la durée
+        duration_cleared: "Le niveau qui comptait la durée n'est plus dans la chaîne : la durée est effacée. Choisissez un niveau et une durée."
         invalid: Ce niveau a une erreur
         count:
           exact: '× %n%'
@@ -191,6 +192,8 @@ diplome:
         duplicate_level: Un même type de nœud ne peut pas figurer deux fois dans la chaîne.
         duplicate_ec_type: Deux types d'EC ont la même clé (libellés trop proches).
         ec_type_label: Un type d'EC doit avoir un libellé.
+        ec_type_key: "Le type d'EC « %label% » n'a pas de clé utilisable : son libellé doit contenir des lettres ou des chiffres."
+        ec_ects_coefficient: "Les %element% apportent un coefficient aux %level% : leurs ECTS se saisissent sur les %level%, ceux des %element% restent libres."
         element_undefined: "Aucun type de nœud n'est désigné comme niveau élément (réglage d'un type de nœud)."
         element_missing: "La chaîne doit se terminer par %element%"
         element_not_last: "%element% doit être le dernier niveau"

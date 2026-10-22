@@ -505,4 +505,56 @@ final class DiplomeWizardStructureTest extends WebTestCase
         self::assertResponseRedirects('/diplomes/nouveau/formulaires');
         self::assertContains(['key' => 'stage', 'label' => 'Stage en entreprise'], $this->storedStructure()['natures']);
     }
+
+    public function testEcEctsStayFreeUnderCoefficient(): void
+    {
+        $payload = self::payload($this->startFrom('BUT'));
+        $payload['levels'][3]['ectsMode'] = 'node';
+        $payload['levels'][3]['ectsBound'] = ['mode' => 'max', 'value' => '6'];
+        $crawler = $this->submit($payload);
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('Les EC apportent un coefficient aux UE', $crawler->text());
+
+        // sans coefficient, des ECTS sur l'EC sont permis
+        $payload['levels'][2]['ecLink'] = 'contains';
+        $this->submit($payload);
+        self::assertResponseRedirects('/diplomes/nouveau/formulaires');
+    }
+
+    public function testEcTypeKeyMustBeUsable(): void
+    {
+        $payload = self::payload($this->startFrom('LP'));
+        $payload['natures'][] = ['key' => '', 'label' => '!!!'];
+        $crawler = $this->submit($payload);
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('« !!! » n\'a pas de clé utilisable', $crawler->text());
+
+        $payload = self::payload($this->startFrom('LP'));
+        $payload['natures'][] = ['key' => 'Bad Key', 'label' => 'Atelier'];
+        $this->submit($payload);
+        self::assertResponseStatusCodeSame(422);
+        self::assertNotContains('Bad Key', array_column($this->storedStructure()['natures'], 'key'));
+    }
+
+    public function testFirstLevelCountComesFromDuration(): void
+    {
+        $this->startFrom('BUT');
+        $crawler = $this->client->request('GET', '/diplomes/nouveau/structure');
+        // 6 semestres, 2 par année : × 3 années
+        self::assertSame('× 3', trim($crawler->filter('[data-tree-level="annee"] [data-summary]')->text()));
+        self::assertCount(1, $crawler->filter('[data-structure-tree-target="durationNotice"][hidden]'));
+    }
+
+    public function testFirstLevelLockKeepsNoCount(): void
+    {
+        $payload = self::payload($this->startFrom('L'));
+        $payload['levels'][0]['locked'] = '1';
+        // nombre parasite (ancien écran) sur le premier niveau : ignoré, il découle de la durée
+        $payload['levels'][0]['count'] = ['mode' => 'exact', 'value' => '1'];
+        $this->submit($payload);
+        self::assertResponseRedirects('/diplomes/nouveau/formulaires');
+        $first = $this->storedStructure()['levels'][0];
+        self::assertTrue($first['locked']);
+        self::assertNull($first['count']);
+    }
 }

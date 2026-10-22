@@ -10,10 +10,12 @@ import { Controller } from '@hotwired/stimulus';
  * Les résumés des lignes (« × 2 · 30 ECTS ») sont recalculés à chaque changement, avec les textes fournis par la page.
  */
 export default class extends Controller {
-    static targets = ['tree', 'panels', 'help', 'addMenu', 'addWrap', 'durationBound', 'durationLevel', 'ecTypeList', 'parcours'];
+    static targets = ['tree', 'panels', 'help', 'addMenu', 'addWrap', 'durationBound', 'durationLevel', 'durationNotice', 'ecTypeList', 'parcours'];
     static values = { labels: Object, rowPrototype: String, panelPrototype: String, ecTypePrototype: String, index: Number, ecTypeIndex: Number };
 
     connect() {
+        // durée déjà orpheline à l'affichage (niveau retiré de la chaîne enregistrée) : le signalement reste
+        this.durationCleared = this.hasDurationNoticeTarget && !this.durationNoticeTarget.hidden;
         this.layout();
         // après un enregistrement refusé, ouvrir le premier niveau en erreur
         const invalid = this.element.querySelector('[data-level-panel][data-invalid]');
@@ -113,6 +115,8 @@ export default class extends Controller {
         const field = event.target;
         if (field.matches?.('[data-field="locked"]') && field.value === '1') {
             const count = field.closest('[data-level-panel]').querySelector('[data-count-field]');
+            // premier niveau : pas de nombre saisi (il découle de la durée), le verrou ne le touche pas
+            if (count.hidden) { this.layout(); return; }
             const mode = count.querySelector('[data-bound-target="mode"]');
             const value = count.querySelector('input[data-bound-target="value"]');
             if (mode.value !== 'exact') {
@@ -151,7 +155,7 @@ export default class extends Controller {
 
             // verrouillé ⇒ seul « exactement » reste proposé
             const locked = this.field(row, 'locked')?.value === '1';
-            panel.querySelectorAll('[data-count-field] [data-bound-target="mode"] option').forEach((option) => { option.disabled = locked && option.value !== 'exact'; });
+            panel.querySelectorAll('[data-count-field] [data-bound-target="mode"] option').forEach((option) => { option.disabled = locked && i > 0 && option.value !== 'exact'; });
             row.querySelector('[data-icon="locked"]').hidden = !locked;
             row.querySelector('[data-icon="editable"]').hidden = locked;
 
@@ -187,17 +191,38 @@ export default class extends Controller {
         this.summarize(rows);
     }
 
-    /** La liste du niveau de durée ne propose que les niveaux temporels de la chaîne, dans l'ordre. */
+    /**
+     * La liste du niveau de durée ne propose que les niveaux temporels de la chaîne, dans l'ordre. Si le niveau choisi
+     * quitte la chaîne, la durée est effacée (pas reportée sur un autre niveau) et la ligne de durée le signale.
+     */
     syncDurationLevels(rows) {
         const select = this.durationLevelTarget;
         const current = select.value;
         const temporal = rows.filter((row) => row.hasAttribute('data-temporal'));
         const wanted = temporal.map((row) => row.dataset.treeLevel);
-        const existing = [...select.options].map((option) => option.value);
-        if (wanted.join('|') !== existing.join('|')) {
-            select.replaceChildren(...temporal.map((row) => new Option(this.lower(this.labelOf(row)), row.dataset.treeLevel)));
-            if (wanted.includes(current)) select.value = current;
+        if (current !== '' && !wanted.includes(current)) {
+            this.clearDuration();
+            this.durationCleared = true;
         }
+        const empty = current === '' || !wanted.includes(current);
+        if (!empty) this.durationCleared = false;
+        const values = (empty ? [''] : []).concat(wanted);
+        if (values.join('|') !== [...select.options].map((option) => option.value).join('|')) {
+            select.replaceChildren(
+                ...(empty ? [new Option('—', '')] : []),
+                ...temporal.map((row) => new Option(this.lower(this.labelOf(row)), row.dataset.treeLevel)),
+            );
+            select.value = empty ? '' : current;
+        }
+        if (this.hasDurationNoticeTarget) this.durationNoticeTarget.hidden = !(empty && this.durationCleared);
+    }
+
+    clearDuration() {
+        const mode = this.durationBoundTarget.querySelector('[data-bound-target="mode"]');
+        this.durationBoundTarget.querySelectorAll('input').forEach((input) => { input.value = ''; });
+        mode.value = 'none';
+        // sans propagation : seule la borne (bound#update) doit réagir, pas une nouvelle mise en page
+        mode.dispatchEvent(new Event('change'));
     }
 
     summarize(rows) {
@@ -220,20 +245,38 @@ export default class extends Controller {
         });
     }
 
-    /** Nombre du premier niveau : durée ÷ produit des nombres des niveaux jusqu'au niveau de durée (cf. DurationMath). */
+    /** Nombre du premier niveau : comme DurationMath::firstLevelBound() (minimum arrondi au-dessus, maximum au-dessous). */
     firstCount(rows, duration, durationKey) {
         const at = rows.findIndex((row) => row.dataset.treeLevel === durationKey);
-        if (at < 0 || duration.mode === 'none' || duration.value === null) return '';
+        if (at < 0) return '';
+        const { min, max } = this.minMax(duration);
+        if (min === null && max === null) return '';
         let factor = 1;
         for (let i = 1; i <= at; i += 1) {
-            const bound = this.boundOf(this.panel(rows[i].dataset.index).querySelector('[data-count-field]'));
-            factor *= bound.value > 0 ? bound.value : 1;
+            const count = this.minMax(this.boundOf(this.panel(rows[i].dataset.index).querySelector('[data-count-field]')));
+            factor *= count.min > 0 ? count.min : 1;
         }
-        return this.boundText('count', {
-            mode: duration.mode,
-            value: Math.ceil(duration.value / factor),
-            upper: duration.upper === null ? null : Math.floor(duration.upper / factor),
-        });
+        return this.boundText('count', this.fromMinMax(min === null ? null : Math.ceil(min / factor), max === null ? null : Math.floor(max / factor)));
+    }
+
+    /** Borne du formulaire (mode + nombres) → minimum / maximum, comme BoundType. */
+    minMax({ mode, value, upper }) {
+        if (value === null) return { min: null, max: null };
+        switch (mode) {
+            case 'exact': return { min: value, max: value };
+            case 'between': return { min: value, max: upper };
+            case 'min': return { min: value, max: null };
+            case 'max': return { min: null, max: value };
+            default: return { min: null, max: null };
+        }
+    }
+
+    /** Minimum / maximum → borne du formulaire, comme BoundType::viewData(). */
+    fromMinMax(min, max) {
+        if (min === null && max === null) return { mode: 'none', value: null, upper: null };
+        if (min === max) return { mode: 'exact', value: min, upper: null };
+        if (min !== null && max !== null) return { mode: 'between', value: min, upper: max };
+        return min !== null ? { mode: 'min', value: min, upper: null } : { mode: 'max', value: max, upper: null };
     }
 
     boundText(kind, { mode, value, upper }) {

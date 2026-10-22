@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Controller;
 
+use App\Diplome\Check\StructureChecker;
 use App\Diplome\StructureInstantiator;
 use App\Entity\Formation;
 use App\Entity\TypeDiplome;
@@ -289,5 +290,30 @@ final class DiplomeEditTest extends WebTestCase
         self::assertResponseRedirects($this->editPath($type, 'structure'));
         $this->em->clear();
         self::assertSame($before, $this->type('BUT')->latestVersion()->config()->structure->toArray());
+    }
+
+    public function testLockedFirstLevelKeepsFormationsValid(): void
+    {
+        $formation = $this->formationOf('L', 3);
+        $type = $this->type('L');
+        $crawler = $this->client->request('GET', $this->editPath($type, 'structure'));
+        $form = $crawler->filter('form#wizard-form')->form();
+        $form['structure[levels][0][locked]']->select('1');
+        // la valeur que l'ancien contrôleur écrivait dans le nombre (caché) du premier niveau
+        $form['structure[levels][0][count][mode]']->select('exact');
+        $form['structure[levels][0][count][value]'] = '1';
+        if ($form->has('confirmImpact')) {
+            $form['confirmImpact']->tick();
+        }
+        $this->client->submit($form);
+        self::assertResponseRedirects($this->editPath($type, 'structure'));
+        $this->em->clear();
+        $level = $this->type('L')->latestVersion()->config()->structure->levels[0];
+        self::assertTrue($level->locked);
+        self::assertNull($level->count);
+
+        $doc = static::getContainer()->get(Maquette::class)->open($this->em->find(Formation::class, $formation->getId()));
+        $violations = static::getContainer()->get(StructureChecker::class)->check($doc, $this->type('L')->latestVersion()->config());
+        self::assertSame([], array_values(array_filter($violations, static fn ($v) => $v->blocking)));
     }
 }

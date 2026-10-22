@@ -15,11 +15,6 @@
     {%- endif -%}
 {%- endmacro %}
 
-{# Libellé dans une phrase : « Semestre » → « semestre », mais « UE » reste « UE ». #}
-{% macro lowerLabel(l) -%}
-    {{- l|length > 1 and l|slice(1, 1) == l|slice(1, 1)|lower ? l|slice(0, 1)|lower ~ l|slice(1) : l -}}
-{%- endmacro %}
-
 {# Ligne d'un niveau dans l'arbre. `o` : depth, locked, duration, element, temporal, summary, coef (mention « coef. vers les … »). #}
 {% macro row(index, key, label, o) %}
     {% set t = 'diplome.wizard.structure.tree.' %}
@@ -62,7 +57,7 @@
 {#
     Bloc de réglages d'un niveau (masqué tant que le niveau n'est pas sélectionné), dans l'ordre du §5.3 de la spec :
     nombre par parent, statut, rattachement des EC, ECTS, puis « Plus de réglages ».
-    `o` : label, parentLabel, element, elementLabel, first, ecLinkField (niveau juste au-dessus du niveau élément), natures (formulaire des types d'EC, niveau élément seulement),
+    `o` : label, parentLabel (libellé dans une phrase), element, elementLabel, first, ecLinkField (niveau juste au-dessus du niveau élément), natures (formulaire des types d'EC, niveau élément seulement),
     parcours (case « Parcours autorisés », premier niveau seulement), links.
 #}
 {% macro panel(index, lv, o) %}
@@ -87,7 +82,7 @@
         {{ form_errors(lv.typeKey) }}
 
         <div data-count-field {{ o.first ? 'hidden' }}>
-            <span class="st-lab" data-count-label>{{ (t ~ 'count_per')|trans({'%parent%': m.lowerLabel(o.parentLabel)|trim}, 'diplome') }}</span>
+            <span class="st-lab" data-count-label>{{ (t ~ 'count_per')|trans({'%parent%': o.parentLabel}, 'diplome') }}</span>
             {{ rows.boundWidget(lv.count) }}
         </div>
         <p class="text-sm st-muted" data-count-derived {{ o.first ? '' : 'hidden' }}>{{ (t ~ 'count_first')|trans({}, 'diplome') }}</p>

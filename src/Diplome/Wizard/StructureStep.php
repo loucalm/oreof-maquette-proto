@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Diplome\Wizard;
 
 use App\Diplome\Rule\RuleTemplateRegistry;
+use App\Diplome\Spec\DurationMath;
 use App\Diplome\Spec\DurationSpec;
 use App\Diplome\Spec\EcType;
 use App\Diplome\Spec\LevelSpec;
@@ -13,6 +14,7 @@ use App\Diplome\Spec\StructureSpec;
 use App\Diplome\StructurePreview;
 use App\Diplome\WizardDraft;
 use App\Enum\NodeFamily;
+use App\Form\Diplome\BoundType;
 use App\Form\Diplome\EctsModeType;
 use App\Form\Diplome\RuleSpecType;
 use App\Form\Diplome\StructureType;
@@ -78,21 +80,22 @@ final class StructureStep extends AbstractWizardStep
         $rows = array_values($formData['levels'] ?? []);
         $order = array_keys($rows);
         usort($order, static fn (int $a, int $b) => [(int) ($rows[$a]['position'] ?? $a), $a] <=> [(int) ($rows[$b]['position'] ?? $b), $b]);
-        $levels = array_map(static function (int $i) use ($rows): LevelSpec {
+        $levels = array_map(static function (int $i, int $at) use ($rows): LevelSpec {
             $row = $rows[$i];
             $mode = $row['ectsMode'] ?? EctsModeType::FREE;
             $ects = $row['ectsBound'] ?? null;
 
             return new LevelSpec(
                 (string) $row['typeKey'],
-                $row['count'],
+                // le nombre du premier niveau n'est pas saisi : il découle de la durée
+                0 === $at ? null : $row['count'],
                 EctsModeType::NODE === $mode ? $ects : null,
                 EctsModeType::SUM === $mode ? $ects : null,
                 max(1, (int) ($row['startAt'] ?? 1)),
                 (bool) ($row['locked'] ?? false),
                 (string) ($row['ecLink'] ?? LevelSpec::EC_CONTAINS),
             );
-        }, $order);
+        }, $order, array_keys($order));
         $chain = array_map(static fn (LevelSpec $l) => $l->typeKey, $levels);
 
         $rules = [];
@@ -133,20 +136,34 @@ final class StructureStep extends AbstractWizardStep
             $previewError = $e->getMessage();
         }
 
-        return ['preview' => $roots, 'previewError' => $previewError, 'nodeTypes' => $this->structuralTypes()];
+        $first = DurationMath::firstLevelBound($draft->config()->structure);
+
+        return [
+            'preview' => $roots,
+            'previewError' => $previewError,
+            'nodeTypes' => $this->structuralTypes(),
+            // résumé du premier niveau au chargement (recalculé en direct par structure_tree_controller.js)
+            'firstCount' => null === $first ? null : BoundType::viewData($first),
+        ];
     }
 
     /**
      * Types de nœud qui peuvent former un niveau, dans l'ordre : ce que l'arbre doit savoir d'eux, sans tester leur clé.
      *
-     * @return array<string, array{key: string, label: string, temporal: bool, element: bool}>
+     * @return array<string, array{key: string, label: string, inSentence: string, temporal: bool, element: bool}>
      */
     private function structuralTypes(): array
     {
         $types = [];
         foreach ($this->nodeTypes->findAllOrdered() as $type) {
             if (NodeFamily::Structural === $type->getFamily() && !$type->isVariant()) {
-                $types[$type->getKey()] = ['key' => $type->getKey(), 'label' => $type->getLabel(), 'temporal' => $type->isTemporel(), 'element' => $type->isElementLevel()];
+                $types[$type->getKey()] = [
+                    'key' => $type->getKey(),
+                    'label' => $type->getLabel(),
+                    'inSentence' => self::inSentence($type->getLabel()),
+                    'temporal' => $type->isTemporel(),
+                    'element' => $type->isElementLevel(),
+                ];
             }
         }
 
@@ -172,5 +189,13 @@ final class StructureStep extends AbstractWizardStep
         }
 
         return $params;
+    }
+
+    /** Libellé dans une phrase : « Semestre » → « semestre », mais « UE » reste « UE » (même règle que structure_tree_controller.js). */
+    private static function inSentence(string $label): string
+    {
+        $second = mb_substr($label, 1, 1);
+
+        return mb_strlen($label) > 1 && $second === mb_strtolower($second) ? mb_strtolower(mb_substr($label, 0, 1)).mb_substr($label, 1) : $label;
     }
 }

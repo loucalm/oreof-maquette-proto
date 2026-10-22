@@ -76,7 +76,8 @@ final class StructureType extends AbstractType
         }
         $this->validateDuration($data, $levels, $order, $chain, $context);
         $this->validateElementLevel($levels, $order, $chain, $context);
-        foreach ($order as $i) {
+        // le premier niveau n'a pas de nombre saisi (il découle de la durée) : son verrou ne demande rien
+        foreach (\array_slice($order, 1) as $i) {
             $count = $levels[$i]['count'] ?? null;
             if (!empty($levels[$i]['locked']) && !($count instanceof Bound && $count->isExact())) {
                 $context->buildViolation('diplome.wizard.structure.error.locked_exact')->setTranslationDomain('diplome')->atPath('levels['.$i.'].count')->addViolation();
@@ -138,6 +139,13 @@ final class StructureType extends AbstractType
             if (LevelSpec::EC_COEFFICIENT === ($levels[$i]['ecLink'] ?? null) && !(1 <= $at && $at === $last - 1)) {
                 $context->buildViolation('diplome.wizard.structure.error.ec_link_level', $params)->setTranslationDomain('diplome')->addViolation();
             }
+        }
+        // EC rattachés par coefficient : les ECTS se saisissent au niveau au-dessus, ceux de l'EC restent libres
+        $order = array_values($order);
+        if ($last >= 2 && $chain[$last] === $element->getKey() && LevelSpec::EC_COEFFICIENT === ($levels[$order[$last - 1]]['ecLink'] ?? null)
+            && EctsModeType::FREE !== ($levels[$order[$last]]['ectsMode'] ?? EctsModeType::FREE)) {
+            $context->buildViolation('diplome.wizard.structure.error.ec_ects_coefficient', $params + ['%level%' => $this->nodeTypes->findOneByKey($chain[$last - 1])?->getLabel() ?? $chain[$last - 1]])
+                ->setTranslationDomain('diplome')->atPath('levels['.$order[$last].'].ectsMode')->addViolation();
         }
     }
 

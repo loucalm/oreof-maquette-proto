@@ -35,13 +35,7 @@ final class BoundType extends AbstractType
             ->add('upper', IntegerType::class, ['required' => false, 'label' => false, 'attr' => ['min' => 0, 'size' => 4]]);
 
         $builder->addModelTransformer(new CallbackTransformer(
-            static fn (?Bound $bound): array => match (true) {
-                null === $bound || (null === $bound->min && null === $bound->max) => ['mode' => self::NONE, 'value' => null, 'upper' => null],
-                $bound->isExact() => ['mode' => 'exact', 'value' => $bound->min, 'upper' => null],
-                null !== $bound->min && null !== $bound->max => ['mode' => 'between', 'value' => $bound->min, 'upper' => $bound->max],
-                null !== $bound->min => ['mode' => 'min', 'value' => $bound->min, 'upper' => null],
-                default => ['mode' => 'max', 'value' => $bound->max, 'upper' => null],
-            },
+            self::viewData(...),
             static function (array $data): ?Bound {
                 $mode = $data['mode'] ?? self::NONE;
                 $value = $data['value'] ?? null;
@@ -61,6 +55,22 @@ final class BoundType extends AbstractType
                 };
             },
         ));
+    }
+
+    /**
+     * Borne vue comme le formulaire la présente : un mode et un ou deux nombres.
+     *
+     * @return array{mode: string, value: ?int, upper: ?int}
+     */
+    public static function viewData(?Bound $bound): array
+    {
+        return match (true) {
+            null === $bound || (null === $bound->min && null === $bound->max) => ['mode' => self::NONE, 'value' => null, 'upper' => null],
+            $bound->isExact() => ['mode' => 'exact', 'value' => $bound->min, 'upper' => null],
+            null !== $bound->min && null !== $bound->max => ['mode' => 'between', 'value' => $bound->min, 'upper' => $bound->max],
+            null !== $bound->min => ['mode' => 'min', 'value' => $bound->min, 'upper' => null],
+            default => ['mode' => 'max', 'value' => $bound->max, 'upper' => null],
+        };
     }
 
     public function configureOptions(OptionsResolver $resolver): void

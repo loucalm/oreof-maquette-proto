@@ -13,6 +13,7 @@ use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\String\Slugger\AsciiSlugger;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
  * Un type d'EC : sa clé (cachée, stable : un renommage ne la change pas) et son libellé. Un type ajouté
@@ -43,7 +44,22 @@ final class EcTypeType extends AbstractType
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults(['translation_domain' => 'diplome']);
+        $resolver->setDefaults([
+            'translation_domain' => 'diplome',
+            'constraints' => [new Assert\Callback(self::validateKey(...))],
+        ]);
+    }
+
+    /** La clé (reçue ou dérivée du libellé) doit être non vide et faite de minuscules, chiffres et « _ ». */
+    private static function validateKey(mixed $data, ExecutionContextInterface $context): void
+    {
+        if (!\is_array($data) || '' === trim((string) ($data['label'] ?? ''))) {
+            return; // libellé vide : déjà signalé sur le champ
+        }
+        if (1 !== preg_match('/^[a-z0-9_]+$/', (string) ($data['key'] ?? ''))) {
+            $context->buildViolation('diplome.wizard.structure.error.ec_type_key', ['%label%' => (string) $data['label']])
+                ->setTranslationDomain('diplome')->atPath('label')->addViolation();
+        }
     }
 
     /** Clé d'un type d'EC dérivée de son libellé (« Projet tutoré » → `projet_tutore`). */
