@@ -20,7 +20,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 /**
  * Étape « Structure » : durée, parcours, chaîne de niveaux, natures d'élément,
  * éléments imposés et règles. Les données sont un tableau (`levels`, `imposed`,
- * `rules` : listes de tableaux ; `duration` : ?Bound ; `natures` : liste de clés).
+ * `rules` : listes de tableaux ; `duration` : {levelKey, bound} ; `natures` : liste de clés).
  */
 final class StructureType extends AbstractType
 {
@@ -33,7 +33,7 @@ final class StructureType extends AbstractType
         $collection = ['allow_add' => true, 'allow_delete' => true, 'by_reference' => false, 'delete_empty' => false, 'prototype' => true, 'required' => false];
 
         $builder
-            ->add('duration', BoundType::class, ['label' => 'diplome.wizard.structure.duration'])
+            ->add('duration', DurationType::class, ['label' => 'diplome.wizard.structure.duration'])
             ->add('parcoursAllowed', CheckboxType::class, ['label' => 'diplome.wizard.structure.parcours_allowed', 'required' => false])
             ->add('levels', CollectionType::class, $collection + [
                 'entry_type' => LevelSpecType::class,

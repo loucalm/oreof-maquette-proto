@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Diplome\Wizard;
 
 use App\Diplome\Rule\RuleTemplateRegistry;
+use App\Diplome\Spec\DurationSpec;
+use App\Diplome\Spec\EcType;
 use App\Diplome\Spec\ImposedElement;
 use App\Diplome\Spec\LevelSpec;
 use App\Diplome\Spec\RuleSpec;
@@ -48,12 +50,13 @@ final class StructureStep extends AbstractWizardStep
         $s = $draft->config()->structure;
 
         return [
-            'duration' => $s->duration,
+            'duration' => ['levelKey' => $s->duration?->levelKey, 'bound' => $s->duration?->bound],
             'parcoursAllowed' => $s->parcoursAllowed,
-            'natures' => $s->natures,
+            'natures' => $s->natureKeys(),
             'levels' => array_map(static fn (LevelSpec $l, int $i) => [
                 'position' => (string) $i,
                 'typeKey' => $l->typeKey, 'count' => $l->count, 'ects' => $l->ects, 'ectsSum' => $l->ectsSum, 'startAt' => $l->startAt,
+                'locked' => $l->locked, 'ecLink' => $l->ecLink,
             ], $s->levels, array_keys($s->levels)),
             'imposed' => array_map(static fn (ImposedElement $i) => [
                 'uid' => $i->uid, 'typeKey' => $i->typeKey, 'label' => $i->label, 'position' => $i->position,
@@ -73,7 +76,7 @@ final class StructureStep extends AbstractWizardStep
         $order = array_keys($rows);
         usort($order, static fn (int $a, int $b) => [(int) ($rows[$a]['position'] ?? $a), $a] <=> [(int) ($rows[$b]['position'] ?? $b), $b]);
         $levels = array_map(
-            static fn (int $i) => new LevelSpec((string) $rows[$i]['typeKey'], $rows[$i]['count'], $rows[$i]['ects'], $rows[$i]['ectsSum'], max(1, (int) ($rows[$i]['startAt'] ?? 1))),
+            static fn (int $i) => new LevelSpec((string) $rows[$i]['typeKey'], $rows[$i]['count'], $rows[$i]['ects'], $rows[$i]['ectsSum'], max(1, (int) ($rows[$i]['startAt'] ?? 1)), (bool) ($rows[$i]['locked'] ?? false), (string) ($rows[$i]['ecLink'] ?? LevelSpec::EC_CONTAINS)),
             $order,
         );
         $chain = array_map(static fn (LevelSpec $l) => $l->typeKey, $levels);
@@ -110,7 +113,12 @@ final class StructureStep extends AbstractWizardStep
             );
         }
 
-        $structure = new StructureSpec($levels, (bool) $formData['parcoursAllowed'], $formData['duration'], $formData['natures'] ?? [], $imposed, $rules);
+        // durée : à défaut de niveau choisi, le premier de la chaîne ; sans borne, pas de durée imposée
+        $bound = $formData['duration']['bound'] ?? null;
+        $duration = null === $bound ? null : new DurationSpec('' !== (string) ($formData['duration']['levelKey'] ?? '') ? (string) $formData['duration']['levelKey'] : ($chain[0] ?? ''), $bound);
+        // interim (écran refait plus tard) : les natures saisies en texte deviennent des types d'EC dont le libellé est la clé
+        $natures = array_map(static fn (string $key) => new EcType($key, $key), array_values($formData['natures'] ?? []));
+        $structure = new StructureSpec($levels, (bool) $formData['parcoursAllowed'], $duration, $natures, $imposed, $rules);
         $config = $draft->configData;
         $config['structure'] = $structure->toArray();
         $draft->configData = $config;

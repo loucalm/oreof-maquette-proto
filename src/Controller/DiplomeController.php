@@ -57,7 +57,7 @@ final class DiplomeController extends AbstractController
             $rows[] = [
                 'type' => $type,
                 'basedOn' => null === $basedOnKey ? null : ($labelsByKey[$basedOnKey] ?? $basedOnKey),
-                'duration' => $this->durationLabel($config?->structure->duration),
+                'duration' => $this->durationLabel($config?->structure->duration?->bound),
                 'bcc' => null === $config || [] === $config->bccLevels ? null : implode(' › ', $config->bccLevels),
                 'formations' => $this->formations->countByTypeDiplome($type),
                 'version' => $latest?->getAnneeUniversitaire(),

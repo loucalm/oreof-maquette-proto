@@ -10,16 +10,23 @@ namespace App\Diplome\Spec;
  * - `count` : nombre de nœuds de ce niveau par parent ;
  * - `ects` : ECTS de chaque nœud ;
  * - `ectsSum` : somme des ECTS des enfants attendue sur chaque nœud de ce niveau ;
- * - `startAt` : premier indice de numérotation (LP : semestre à 5).
+ * - `startAt` : premier indice de numérotation (LP : semestre à 5) ;
+ * - `locked` : le niveau est figé (non modifiable dans les formations) ;
+ * - `ecLink` : comment les éléments se rattachent au niveau (`contains` ou `coefficient`).
  */
 final readonly class LevelSpec
 {
+    public const EC_CONTAINS = 'contains';
+    public const EC_COEFFICIENT = 'coefficient';
+
     public function __construct(
         public string $typeKey,
         public ?Bound $count = null,
         public ?Bound $ects = null,
         public ?Bound $ectsSum = null,
         public int $startAt = 1,
+        public bool $locked = false,
+        public string $ecLink = self::EC_CONTAINS,
     ) {
     }
 
@@ -32,11 +39,13 @@ final readonly class LevelSpec
             Bound::fromArray($a['ects'] ?? null),
             Bound::fromArray($a['ectsSum'] ?? null),
             (int) ($a['startAt'] ?? 1),
+            (bool) ($a['locked'] ?? false),
+            self::EC_COEFFICIENT === ($a['ecLink'] ?? null) ? self::EC_COEFFICIENT : self::EC_CONTAINS,
         );
     }
 
     /**
-     * Forme canonique : typeKey, count, ects, ectsSum (null si absent), startAt.
+     * Forme canonique : typeKey, count, ects, ectsSum (null si absent), startAt, locked, ecLink.
      *
      * @return array<string, mixed>
      */
@@ -48,6 +57,8 @@ final readonly class LevelSpec
             'ects' => $this->ects?->toArray(),
             'ectsSum' => $this->ectsSum?->toArray(),
             'startAt' => $this->startAt,
+            'locked' => $this->locked,
+            'ecLink' => $this->ecLink,
         ];
     }
 }

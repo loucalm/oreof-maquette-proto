@@ -19,7 +19,8 @@
 
     {% set card = 'rounded-lg border p-4' %}
     <fieldset class="{{ card }} grid gap-4 md:grid-cols-[auto_auto_1fr] md:items-end" style="border-color:var(--c-border)">
-        {{ rows.bound(form.duration) }}
+        {{ rows.field(form.duration.levelKey) }}
+        {{ rows.bound(form.duration.bound) }}
         <label class="flex items-center gap-2 text-sm md:pb-1.5">{{ form_widget(form.parcoursAllowed) }} {{ form_label(form.parcoursAllowed) }}</label>
         {{ rows.field(form.natures) }}
     </fieldset>

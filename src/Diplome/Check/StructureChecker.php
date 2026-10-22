@@ -58,7 +58,7 @@ final class StructureChecker
 
         $firstLevel = $levels[0]->typeKey ?? null;
         if (null !== $firstLevel && null !== $structure->duration) {
-            $run('duration', 'child_count', ['childType' => $firstLevel] + self::bounds($structure->duration), $this->contexts->cursusScopes($doc), false, null, true);
+            $run('duration', 'child_count', ['childType' => $firstLevel] + self::bounds($structure->duration->bound), $this->contexts->cursusScopes($doc), false, null, true);
         }
 
         // surcharges de borne : nid de l'hôte → typeKey enfant → borne

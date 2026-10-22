@@ -93,7 +93,7 @@ final class ConfigPresenter
     {
         $s = $config->structure;
         $rows = [
-            [$this->t('recap.duration'), $this->boundLabel($s->duration)],
+            [$this->t('recap.duration'), $this->boundLabel($s->duration?->bound)],
             [$this->t('recap.parcours'), $this->yesNo($s->parcoursAllowed)],
         ];
         foreach ($s->levels as $i => $level) {
@@ -104,7 +104,7 @@ final class ConfigPresenter
             ]);
             $rows[] = [$this->t('recap.level', ['%n%' => $i + 1]), $level->typeKey.([] === $details ? '' : ' ('.implode(', ', $details).')')];
         }
-        $rows[] = [$this->t('recap.natures'), [] === $s->natures ? '—' : implode(', ', $s->natures)];
+        $rows[] = [$this->t('recap.natures'), [] === $s->natures ? '—' : implode(', ', $s->natureKeys())];
         foreach ([] === $s->imposed ? [null] : $s->imposed as $imposed) {
             $rows[] = [$this->t('recap.imposed'), null === $imposed ? '—' : $this->imposedLine($imposed)];
         }

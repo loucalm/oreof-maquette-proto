@@ -56,11 +56,11 @@ final class FormationCreator
             ?? throw new \DomainException($this->t('formation.creation.error.no_version', ['%type%' => $type->getLabel(), '%year%' => $year]));
 
         $structure = $version->config()->structure;
-        if (!StructureInstantiator::acceptsDuration($structure->duration, $duration)) {
+        if (!StructureInstantiator::acceptsDuration($structure->duration?->bound, $duration)) {
             throw new \DomainException($this->t('formation.creation.error.duration', [
                 '%type%' => $type->getLabel(),
                 '%duration%' => $duration,
-                '%bounds%' => $this->describeDuration($structure->duration),
+                '%bounds%' => $this->describeDuration($structure->duration?->bound),
             ]));
         }
         if ($avecParcours && !$structure->parcoursAllowed) {

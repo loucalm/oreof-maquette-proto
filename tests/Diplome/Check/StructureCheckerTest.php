@@ -139,7 +139,7 @@ final class StructureCheckerTest extends DatabaseTestCase
         $context = static::getContainer()->get(\App\Diplome\Check\StructureContextBuilder::class)->contextFor($doc, $ue, $this->config);
         $row = array_values(array_filter($context['children'], static fn (array $r) => $r['nid'] === $ec->getId()))[0];
 
-        self::assertSame($this->config->structure->natures[0], $row['nature']);
+        self::assertSame($this->config->structure->natureKeys()[0], $row['nature']);
         self::assertSame($row['nature'], static::getContainer()->get(\App\Diplome\VersionMccc::class)->natureOf($ec, $this->config));
     }
 

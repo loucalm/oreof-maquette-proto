@@ -24,7 +24,7 @@ final class VersionNaturesSource implements FieldOptionsSourceInterface
         $formation = $node?->getFormation();
         $config = null === $formation ? null : $this->resolver->configFor($formation);
         $options = [];
-        foreach ($config?->structure->natures ?? [] as $nature) {
+        foreach ($config?->structure->natureKeys() ?? [] as $nature) {
             $options[$nature] = mb_strtoupper(mb_substr($nature, 0, 1)).mb_substr($nature, 1);
         }
 

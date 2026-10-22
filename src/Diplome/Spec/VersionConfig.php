@@ -52,7 +52,7 @@ final readonly class VersionConfig
             return $nature;
         }
 
-        return $this->structure->natures[0] ?? array_key_first($this->mccc);
+        return $this->structure->natureKeys()[0] ?? array_key_first($this->mccc);
     }
 
     /** @param array<string, mixed> $a */

@@ -34,7 +34,7 @@ final class McccStep extends AbstractWizardStep
     {
         $config = $draft->config();
         $natures = [];
-        foreach ($config->structure->natures as $nature) {
+        foreach ($config->structure->natureKeys() as $nature) {
             $natures[] = [
                 'nature' => $nature,
                 'types' => $config->mccc[$nature]['types'] ?? [],
@@ -47,7 +47,7 @@ final class McccStep extends AbstractWizardStep
 
     public function apply(WizardDraft $draft, mixed $formData): void
     {
-        $declared = $draft->config()->structure->natures;
+        $declared = $draft->config()->structure->natureKeys();
         $mccc = [];
         foreach ($formData['natures'] ?? [] as $row) {
             $nature = (string) ($row['nature'] ?? '');

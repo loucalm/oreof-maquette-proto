@@ -106,6 +106,12 @@ diplome:
       level_ects_sum: Somme des ECTS des enfants
       level_start_at: Numéro de départ
       level_start_at_short: N° départ
+      level_locked: Niveau figé
+      level_ec_link: Rattachement des éléments
+      ec_link:
+        contains: Contenus dans le niveau
+        coefficient: Pondérés par coefficient
+      duration_level: Niveau qui compte la durée
       level_section_help: Du premier niveau à la feuille. Les bornes s'appliquent dans chaque parent (« 3 à 6 UE » = dans chaque semestre).
       imposed_section_help: Nœuds qui doivent exister, placés d'office et verrouillés.
       imposed_pin: Imposer ce niveau (des nœuds de ce type doivent exister, placés d'office et verrouillés)

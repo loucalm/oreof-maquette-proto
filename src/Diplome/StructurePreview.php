@@ -36,7 +36,7 @@ final class StructurePreview
         $version = (new TypeDiplomeVersion(new TypeDiplome('apercu', 'Aperçu', 'APERCU'), '0000-0001'))
             ->setConfig(new VersionConfig($structure, null, [], [], ['quitus' => false, 'assiduite' => false, 'sansNote' => false], [], 0));
         $doc = new MaquetteDoc(new Formation('Aperçu'), $this->nodeTypes->findAllIndexed());
-        $this->instantiator->instantiate($doc, $version, max(1, $structure->duration?->min ?? 1), false);
+        $this->instantiator->instantiate($doc, $version, max(1, $structure->duration?->bound->min ?? 1), false);
 
         return $doc->pedagogicalRoots();
     }

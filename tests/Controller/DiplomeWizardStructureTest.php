@@ -65,12 +65,13 @@ final class DiplomeWizardStructureTest extends WebTestCase
     {
         $levels = [];
         foreach ($s['levels'] as $l) {
-            $levels[] = [
+            $levels[] = ($l['locked'] ? ['locked' => '1'] : []) + [
                 'typeKey' => $l['typeKey'],
                 'count' => self::bound($l['count']),
                 'ects' => self::bound($l['ects']),
                 'ectsSum' => self::bound($l['ectsSum']),
                 'startAt' => $l['startAt'],
+                'ecLink' => $l['ecLink'],
             ];
         }
         $imposed = [];
@@ -83,8 +84,8 @@ final class DiplomeWizardStructureTest extends WebTestCase
         }
 
         $payload = [
-            'duration' => self::bound($s['duration']),
-            'natures' => implode(', ', $s['natures']),
+            'duration' => ['levelKey' => $s['duration']['levelKey'] ?? '', 'bound' => self::bound($s['duration']['bound'] ?? null)],
+            'natures' => implode(', ', array_column($s['natures'], 'key')),
             'levels' => $levels,
             'imposed' => $imposed,
             'rules' => $rules,
@@ -218,7 +219,7 @@ final class DiplomeWizardStructureTest extends WebTestCase
     public function testBetweenBoundWithInvertedValuesIsRejected(): void
     {
         $payload = self::payload($this->startFrom('L'));
-        $payload['duration'] = ['mode' => 'between', 'value' => '4', 'upper' => '3'];
+        $payload['duration']['bound'] = ['mode' => 'between', 'value' => '4', 'upper' => '3'];
 
         $this->submit($payload);
         self::assertResponseStatusCodeSame(422);
@@ -301,7 +302,7 @@ final class DiplomeWizardStructureTest extends WebTestCase
     public function testButDeclaresItsImposedNature(): void
     {
         $structure = $this->startFrom('BUT');
-        self::assertContains('stage', $structure['natures']);
+        self::assertContains('stage', array_column($structure['natures'], 'key'));
     }
 
     public function testSubmittingLpUnchangedKeepsEverything(): void

@@ -78,6 +78,11 @@
                 <button type="button" data-action="levels#removeLevel" class="{{ btn }}" style="color:#dc2626" title="{{ 'diplome.wizard.structure.remove'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.wizard.structure.remove'|trans({}, 'diplome') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
             </div>
         </div>
+        <div class="flex items-center gap-4 border-t px-3 py-1.5 text-xs" style="border-color:var(--c-border)">
+            <label class="inline-flex items-center gap-1">{{ form_widget(f.locked) }} {{ form_label(f.locked) }}</label>
+            <label class="inline-flex items-center gap-1">{{ form_label(f.ecLink) }} {{ form_widget(f.ecLink, {attr: {class: 'rounded-md border px-1.5 py-0.5 text-xs', style: 'border-color:var(--c-border)'}}) }}</label>
+            {{ form_errors(f.locked) }}{{ form_errors(f.ecLink) }}
+        </div>
         <div data-imposed-panel class="border-t px-3 py-2 space-y-2" style="border-color:var(--c-border);background:#f8f9fb" {{ imposedRows is empty ? 'hidden' }}>
             <div class="flex items-center gap-1 text-xs" style="color:var(--c-muted)">
                 {{ ux_icon('ph:push-pin-fill', {class: 'icon'}) }}

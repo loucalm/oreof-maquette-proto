@@ -31,7 +31,7 @@ final class StructureInstantiator
         if ([] === $chain) {
             throw new \InvalidArgumentException('La version ne définit aucun niveau de structure.');
         }
-        if (!self::acceptsDuration($structure->duration, $duration)) {
+        if (!self::acceptsDuration($structure->duration?->bound, $duration)) {
             throw new \InvalidArgumentException(sprintf('Durée %d hors des bornes du type de diplôme.', $duration));
         }
         if ($avecParcours && !$structure->parcoursAllowed) {

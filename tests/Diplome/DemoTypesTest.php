@@ -22,7 +22,7 @@ final class DemoTypesTest extends DatabaseTestCase
     public function testDemoTypesExistWithTheirDistinctiveSettings(): void
     {
         $l = $this->config('L');
-        self::assertSame(['min' => 3, 'max' => 4], $l->structure->duration->toArray());
+        self::assertSame(['min' => 3, 'max' => 4], $l->structure->duration->bound->toArray());
         self::assertSame(['min' => 3, 'max' => 6], $l->structure->levels[2]->count->toArray());
         self::assertSame(['Bloc', 'Compétence'], $l->bccLevels);
         self::assertSame(['CT', 'CC_CT', 'CC', 'CCI'], $l->mccc['ec']['types']);
@@ -33,14 +33,14 @@ final class DemoTypesTest extends DatabaseTestCase
         self::assertSame('lp-projet-stage', $lp->structure->imposed[0]->uid);
         self::assertSame('master', $lp->mccc['ec']['profile']);
 
-        self::assertTrue($this->config('M')->structure->duration->isExact());
+        self::assertTrue($this->config('M')->structure->duration->bound->isExact());
 
         $m2e = $this->config('M2E');
         self::assertSame([], array_filter($m2e->structure->levels, static fn ($lv) => 'semestre' === $lv->typeKey));
         self::assertSame(['Bloc', 'Objectif', 'Attendu'], $m2e->bccLevels);
 
         $but = $this->config('BUT');
-        self::assertSame(['ressource', 'sae', 'stage'], $but->structure->natures);
+        self::assertSame(['ressource', 'sae', 'stage'], $but->structure->natureKeys());
         self::assertCount(1, $but->structure->rules);
         self::assertSame('ratio', $but->structure->rules[0]->template);
         self::assertSame('stage', $but->structure->imposed[0]->nature);
@@ -60,7 +60,7 @@ final class DemoTypesTest extends DatabaseTestCase
     {
         foreach ($this->em->getRepository(TypeDiplome::class)->findAll() as $type) {
             $config = $type->latestVersion()->config();
-            foreach ($config->structure->natures as $nature) {
+            foreach ($config->structure->natureKeys() as $nature) {
                 self::assertArrayHasKey($nature, $config->mccc, $type->getKey().' : nature « '.$nature.' » sans MCCC');
                 self::assertNotEmpty($config->mccc[$nature]['types'], $type->getKey().' : '.$nature);
             }
