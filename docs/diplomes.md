@@ -128,7 +128,7 @@ Tout est refusé avant écriture si un paramètre est invalide, et la création 
 
 - **Bloc à choix** : il compte pour un seul enfant dans les bornes, avec ses propres ECTS. Pour les sommes sur les feuilles, un seul de ses enfants est compté.
 - **Durée et ramification** : la durée se mesure par cursus. Pour chaque parcours feuille, on additionne ses périodes et celles de ses parcours parents (portail compris). Un parcours qui a des sous-parcours n'est pas mesuré seul.
-- **Position d'une règle** : `all` (chaque nœud du niveau), `first`, `last` ou le numéro affiché (après le numéro de départ : en LP, « S6 » est `6`). Premier, dernier et numéro se lisent cursus par cursus.
+- **Position d'une règle** : `all` (chaque nœud du niveau), `first`, `last` ou le numéro affiché (après le numéro de départ : en LP, « S6 » est `6`). Premier, dernier et numéro se lisent cursus par cursus. En `first` / `last`, l'écart est signalé sous le cursus (le parcours feuille, la racine sans parcours) : agrandir la maquette (passer une LP de 1 à 2 ans) déplace le dernier semestre sans créer d'écart nouveau. Un numéro reste signalé sous son nœud.
 - **Maquettes anciennes** : un nœud marqué `_imposed` (ancien élément imposé) redevient un nœud ordinaire au chargement : le marqueur et ses verrous sont retirés.
 - **Nature par défaut** : un nœud sans `natureElement` prend la première nature déclarée par le type, pour les MCCC comme pour les règles.
 - **Niveaux nationaux** (référentiel porté par la formation, ex. BUT) : le niveau d'une année est retrouvé par son rang, jamais par son libellé.

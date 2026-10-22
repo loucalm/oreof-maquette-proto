@@ -74,9 +74,7 @@ final class RuleSpecType extends AbstractType
         foreach ($this->templates->all() as $key => $template) {
             $group = $builder->create(self::PARAMS_PREFIX.$key, FormType::class, ['label' => false, 'required' => false, 'attr' => ['data-rule-params-target' => 'group', 'data-template' => $key]]);
             foreach ($template->params() as $param) {
-                if (!$param->internal) {
-                    $group->add($param->name, ...$this->field($param));
-                }
+                $group->add($param->name, ...$this->field($param));
             }
             $builder->add($group);
         }
@@ -99,7 +97,7 @@ final class RuleSpecType extends AbstractType
         }
         foreach ($this->templates->get($key)->params() as $param) {
             $value = $data[self::PARAMS_PREFIX.$key][$param->name] ?? null;
-            if ($param->required && !$param->internal && (null === $value || '' === $value)) {
+            if ($param->required && (null === $value || '' === $value)) {
                 $form->addError(new FormError($this->translator->trans('diplome.wizard.structure.rule_param_missing', ['%param%' => $param->label], 'diplome')));
             }
         }

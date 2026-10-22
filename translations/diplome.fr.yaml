@@ -157,7 +157,6 @@ diplome:
         ec_type_used_rule: 'Le type %type% est utilisé par une règle : retirez d''abord la règle.'
         ec_type_used_mccc: 'Le type %type% est utilisé par un jeu MCCC : retirez-le d''abord de l''étape MCCC.'
         unknown_nature: 'Ligne %n% : la nature « %nature% » n''est pas déclarée dans les natures d''élément du type.'
-        unknown_nature_short: Cette nature n'est pas déclarée dans les natures d'élément.
     mccc:
       help: Pour chaque nature d'élément déclarée par la structure, choisissez les types de MCCC autorisés et le profil de règles à appliquer.
       no_natures: Aucune nature d'élément n'est déclarée dans l'étape Structure.

@@ -40,13 +40,14 @@ final class StructureChecker
 
         /** @var array<string, array<string, list<array<string, mixed>>>> $cache */
         $cache = [];
-        $run = function (string $prefix, string $template, array $params, array $scopes, bool $forceWarning = false, bool $cursus = false) use ($doc, $config, &$cache, &$violations): void {
+        // $reportAs : nid du nœud évalué → nid sous lequel l'écart est signalé (par défaut, le nœud lui-même)
+        $run = function (string $prefix, string $template, array $params, array $scopes, bool $forceWarning = false, bool $cursus = false, array $reportAs = []) use ($doc, $config, &$cache, &$violations): void {
             foreach ($scopes as $scope) {
                 foreach ($this->templates->get($template)->compile($params) as $compiled) {
                     $ctx = $cursus
                         ? ($cache['presence:'.($scope?->nid ?? '')] ??= $this->contexts->cursusPresenceContextFor($doc, $scope, $config))
                         : ($cache[$scope?->nid ?? ''] ??= $this->contexts->contextFor($doc, $scope, $config));
-                    $violation = $this->evaluate($prefix, $compiled, $scope, $ctx, $forceWarning);
+                    $violation = $this->evaluate($prefix, $compiled, $reportAs[$scope?->nid ?? ''] ?? $scope?->nid ?? '', $ctx, $forceWarning);
                     if (null !== $violation) {
                         $violations[] = $violation;
                     }
@@ -86,7 +87,8 @@ final class StructureChecker
                 );
                 continue;
             }
-            $run('rule:'.$rule->uid, $rule->template, $rule->params, $this->ruleScopes($doc, $structure, $rule), RuleSpec::WARNING === $rule->severity);
+            [$scopes, $reportAs] = $this->ruleScopes($doc, $structure, $rule);
+            $run('rule:'.$rule->uid, $rule->template, $rule->params, $scopes, RuleSpec::WARNING === $rule->severity, false, $reportAs);
         }
 
         return $violations;
@@ -95,7 +97,7 @@ final class StructureChecker
     /**
      * @param array<string, list<array<string, mixed>>> $context
      */
-    private function evaluate(string $prefix, CompiledRule $compiled, ?TreeNode $scope, array $context, bool $forceWarning): ?StructureViolation
+    private function evaluate(string $prefix, CompiledRule $compiled, string $scopeNid, array $context, bool $forceWarning): ?StructureViolation
     {
         $key = 'single' === $compiled->part ? $prefix : $prefix.':'.$compiled->part;
         $result = $this->evaluator->evaluate(['key' => $key, 'label' => $compiled->message, 'severity' => 'error', 'node' => $compiled->node], $context);
@@ -105,7 +107,7 @@ final class StructureChecker
 
         return new StructureViolation(
             $key,
-            $scope?->nid ?? '',
+            $scopeNid,
             $result->message,
             $compiled->blocking && !$forceWarning,
             self::number($result->actual),
@@ -124,13 +126,16 @@ final class StructureChecker
 
     /**
      * Nœuds de portée d'une règle : tous ceux du niveau, ou, en portée positionnelle, ceux désignés cursus par cursus.
+     * En `first` / `last`, l'écart est signalé sous le cursus (parcours feuille, '' en mono-parcours) et non sous le
+     * nœud : quand la maquette grandit, le premier ou le dernier nœud change, l'écart reste le même. Un numéro garde
+     * le nœud (un semestre numéroté garde son identité).
      *
-     * @return list<TreeNode>
+     * @return array{0: list<TreeNode>, 1: array<string, string>} nœuds évalués, et nid évalué → nid signalé
      */
     private function ruleScopes(MaquetteDoc $doc, StructureSpec $structure, RuleSpec $rule): array
     {
         if (ScopeSelector::ALL === $rule->scopePosition) {
-            return $this->nodesOfType($doc, $rule->scopeLevel);
+            return [$this->nodesOfType($doc, $rule->scopeLevel), []];
         }
         $startAt = 1;
         foreach ($structure->levels as $level) {
@@ -138,15 +143,23 @@ final class StructureChecker
                 $startAt = $level->startAt;
             }
         }
+        $byCursus = \in_array($rule->scopePosition, [ScopeSelector::FIRST, ScopeSelector::LAST], true);
         $scopes = [];
+        $reportAs = [];
         foreach ($this->contexts->cursusScopes($doc) as $cursus) {
             $atLevel = array_values(array_filter($this->contexts->cursusNodes($doc, $cursus), static fn (TreeNode $n): bool => $n->typeKey === $rule->scopeLevel));
             foreach ($this->selector->select($atLevel, $rule->scopePosition, $startAt) as $node) {
-                $scopes[$node->nid] = $node; // un portail partagé par plusieurs cursus n'est contrôlé qu'une fois
+                if (isset($scopes[$node->nid])) {
+                    continue; // un portail partagé par plusieurs cursus n'est contrôlé qu'une fois
+                }
+                $scopes[$node->nid] = $node;
+                if ($byCursus) {
+                    $reportAs[$node->nid] = $cursus?->nid ?? '';
+                }
             }
         }
 
-        return array_values($scopes);
+        return [array_values($scopes), $reportAs];
     }
 
     /** @return list<TreeNode> */

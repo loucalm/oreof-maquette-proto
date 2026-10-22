@@ -6,6 +6,7 @@ namespace App\Tests\Maquette;
 
 use App\Diplome\Check\StructureChecker;
 use App\Entity\Formation;
+use App\Maquette\Doc\TreeNode;
 use App\Maquette\Maquette;
 use App\Tests\Support\DatabaseTestCase;
 use App\Tests\Support\FormationFactory;
@@ -59,6 +60,15 @@ final class MaquetteDocTest extends DatabaseTestCase
 
         self::assertTrue($reopened->removeNode($node));
         self::assertNull($reopened->node($nid));
+    }
+
+    public function testLockedNodeWithoutLegacyMarkerKeepsItsLocksThroughJson(): void
+    {
+        $raw = (new TreeNode(nid: 'n1', typeKey: 'ue', locked: ['delete', 'move']))->toArray();
+        $copy = TreeNode::fromArray(json_decode((string) json_encode($raw), true));
+
+        self::assertSame(['delete', 'move'], $copy->getLocked());
+        self::assertTrue($copy->isLocked('delete'));
     }
 
     public function testRemoveNodeForceRemovesLockedNodeAndItsSubtree(): void

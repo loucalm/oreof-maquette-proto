@@ -123,7 +123,7 @@ final class StructureCheckerTest extends DatabaseTestCase
         $found = $this->withKey($this->checker->check($doc, $this->config), 'rule:lp-stage:min');
         self::assertCount(1, $found);
         self::assertTrue($found[0]->blocking);
-        self::assertSame($last->nid, $found[0]->scopeNid, 'portée : le dernier semestre');
+        self::assertSame('', $found[0]->scopeNid, 'portée « dernier » : signalée sous le cursus (racine en mono-parcours)');
 
         $doc->addNode($last->getChildren()[0]->nid, 'ec', 'Stage')->setAttribute('natureElement', 'stage');
         self::assertSame([], $this->withKey($this->checker->check($doc, $this->config), 'rule:lp-stage:min'));
@@ -251,7 +251,7 @@ final class StructureCheckerTest extends DatabaseTestCase
         $doc->removeNode($ec, true);
         $found = $this->withKey($this->checker->check($doc, $config), 'rule:stage-s6:min');
         self::assertCount(1, $found);
-        self::assertSame($last->nid, $found[0]->scopeNid);
+        self::assertSame('', $found[0]->scopeNid, 'portée « dernier » : le cursus, pas le semestre');
         self::assertTrue($found[0]->blocking);
     }
 

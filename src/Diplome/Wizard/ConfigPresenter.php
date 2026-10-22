@@ -119,7 +119,7 @@ final class ConfigPresenter
             $template = $this->templates->get($rule->template);
             $label = $template->label();
             foreach ($template->params() as $param) {
-                if (!$param->internal && isset($rule->params[$param->name])) {
+                if (isset($rule->params[$param->name])) {
                     $values[] = $param->label.' : '.$rule->params[$param->name];
                 }
             }

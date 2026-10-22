@@ -78,17 +78,12 @@ final class StructureStep extends AbstractWizardStep
         );
         $chain = array_map(static fn (LevelSpec $l) => $l->typeKey, $levels);
 
-        // les paramètres internes ne sont pas saisis : on les reprend de la règle de même uid
-        $previous = [];
-        foreach ($draft->config()->structure->rules as $existing) {
-            $previous[$existing->uid] = $existing->params;
-        }
         $rules = [];
         foreach ($formData['rules'] ?? [] as $r) {
             $rules[] = new RuleSpec(
                 '' !== (string) ($r['uid'] ?? '') ? (string) $r['uid'] : 'rule-'.bin2hex(random_bytes(4)),
                 (string) $r['template'],
-                $this->params((string) $r['template'], $r[RuleSpecType::PARAMS_PREFIX.$r['template']] ?? [], $previous[(string) ($r['uid'] ?? '')] ?? []),
+                $this->params((string) $r['template'], $r[RuleSpecType::PARAMS_PREFIX.$r['template']] ?? []),
                 (string) $r['scopeLevel'],
                 (string) $r['severity'],
                 '' !== (string) ($r['scopePosition'] ?? '') ? (string) $r['scopePosition'] : 'all',
@@ -130,18 +125,17 @@ final class StructureStep extends AbstractWizardStep
     }
 
     /**
-     * Paramètres saisis, restreints à ceux que le gabarit déclare (plus les internes déjà enregistrés, typés.
+     * Paramètres saisis, restreints à ceux que le gabarit déclare, typés.
      *
      * @param array<string, mixed> $input
-     * @param array<string, mixed> $existing params de la règle déjà enregistrée (source des paramètres internes)
      *
      * @return array<string, mixed>
      */
-    private function params(string $template, array $input, array $existing): array
+    private function params(string $template, array $input): array
     {
         $params = [];
         foreach ($this->templates->get($template)->params() as $param) {
-            $value = $param->internal ? ($existing[$param->name] ?? null) : ($input[$param->name] ?? null);
+            $value = $input[$param->name] ?? null;
             if (null === $value || '' === $value) {
                 continue;
             }
