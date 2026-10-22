@@ -284,7 +284,10 @@ diplome:
       level_count: nombre
       rule_scope: 'portée « %level% »'
       level_ects_sum: somme ECTS
-      natures: Natures d'élément
+      level_locked: verrouillé
+      level_coefficient: EC coefficientés
+      rule_position: '(position %position%)'
+      natures: Types d'EC
       rules: Règles
       bcc_levels: Niveaux de BCC
       none: Aucun formulaire choisi

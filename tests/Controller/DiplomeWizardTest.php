@@ -164,6 +164,17 @@ final class DiplomeWizardTest extends WebTestCase
         }
     }
 
+    public function testSummaryDescribesTree(): void
+    {
+        $but = $this->em->getRepository(TypeDiplome::class)->findOneBy(['key' => 'BUT']);
+        $this->client->request('GET', '/diplomes/nouveau', ['depuis' => $but->latestVersion()->getId()]);
+        $this->submitInformations(['informations[label]' => 'Bachelor', 'informations[sigle]' => 'BACH']);
+        $text = $this->client->request('GET', '/diplomes/nouveau/recapitulatif')->filter('section')->text();
+        foreach (['6 semestres', 'verrouillé', 'EC coefficientés', 'Ressource, SAÉ, Stage, Portfolio', '(position 6)'] as $needle) {
+            self::assertStringContainsString($needle, $text);
+        }
+    }
+
     public function testInformationsLabelsAreTranslated(): void
     {
         $this->client->request('GET', '/diplomes/nouveau');

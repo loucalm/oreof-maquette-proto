@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Diplome\Wizard;
 
+use App\Diplome\DurationLabeler;
 use App\Diplome\Rule\RuleTemplateRegistry;
 use App\Diplome\Spec\Bound;
+use App\Diplome\Spec\EcType;
+use App\Diplome\Spec\LevelSpec;
 use App\Diplome\Spec\RuleSpec;
 use App\Diplome\Spec\CanvasSpec;
 use App\Diplome\Spec\VersionConfig;
@@ -20,6 +23,7 @@ final class ConfigPresenter
         private readonly TranslatorInterface $translator,
         private readonly RuleTemplateRegistry $templates,
         private readonly CanvasResolver $canvas,
+        private readonly DurationLabeler $durations,
     ) {
     }
 
@@ -92,7 +96,7 @@ final class ConfigPresenter
     {
         $s = $config->structure;
         $rows = [
-            [$this->t('recap.duration'), $this->boundLabel($s->duration?->bound)],
+            [$this->t('recap.duration'), $this->durations->describe($s->duration) ?? '—'],
             [$this->t('recap.parcours'), $this->yesNo($s->parcoursAllowed)],
         ];
         foreach ($s->levels as $i => $level) {
@@ -100,10 +104,12 @@ final class ConfigPresenter
                 null === $level->count ? null : $this->t('recap.level_count').' '.$this->boundLabel($level->count),
                 null === $level->ects ? null : 'ECTS '.$this->boundLabel($level->ects),
                 null === $level->ectsSum ? null : $this->t('recap.level_ects_sum').' '.$this->boundLabel($level->ectsSum),
+                $level->locked ? $this->t('recap.level_locked') : null,
+                LevelSpec::EC_COEFFICIENT === $level->ecLink ? $this->t('recap.level_coefficient') : null,
             ]);
             $rows[] = [$this->t('recap.level', ['%n%' => $i + 1]), $level->typeKey.([] === $details ? '' : ' ('.implode(', ', $details).')')];
         }
-        $rows[] = [$this->t('recap.natures'), [] === $s->natures ? '—' : implode(', ', $s->natureKeys())];
+        $rows[] = [$this->t('recap.natures'), [] === $s->natures ? '—' : implode(', ', array_map(static fn (EcType $t): string => $t->label, $s->natures))];
         foreach ([] === $s->rules ? [null] : $s->rules as $rule) {
             $rows[] = [$this->t('recap.rules'), null === $rule ? '—' : $this->ruleLine($rule)];
         }
@@ -125,7 +131,7 @@ final class ConfigPresenter
             }
         }
 
-        return $label.([] === $values ? '' : ' ('.implode(', ', $values).')').' — '.$this->t('recap.rule_scope', ['%level%' => $rule->scopeLevel]).', '.$this->t('structure.severity.'.$rule->severity);
+        return $label.([] === $values ? '' : ' ('.implode(', ', $values).')').' — '.$this->t('recap.rule_scope', ['%level%' => $rule->scopeLevel]).('all' === $rule->scopePosition ? '' : ' '.$this->t('recap.rule_position', ['%position%' => $rule->scopePosition])).', '.$this->t('structure.severity.'.$rule->severity);
     }
 
     /** @return list<array{0: string, 1: string}> */

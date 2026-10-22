@@ -201,6 +201,8 @@ Ajouter un type de champ ne doit plus demander de modifier le panneau, et aucun 
 
 ## 10. Arbitrages pris pendant la réalisation
 
+> Depuis le 22/10/2026, les éléments imposés n'existent plus (A6, A9 pour `required_element`, A18 caducs) : voir `2026-10-22-structure-arbre-design.md`.
+
 Décisions prises pendant l'implémentation du chantier 1 (20-21/10/2026), sur les points que ce document laissait ouverts ou formulait mal. Elles font foi en cas d'écart avec les sections précédentes.
 
 **Modèle**
