@@ -160,6 +160,7 @@ diplome:
       error:
         no_level: Définissez au moins un niveau.
         duplicate_level: Un même type de nœud ne peut pas figurer deux fois dans la chaîne.
+        element_undefined: "Aucun type de nœud n'est désigné comme niveau élément (réglage d'un type de nœud)."
         element_missing: "La chaîne doit se terminer par %element%"
         element_not_last: "%element% doit être le dernier niveau"
         ec_link_level: "Seul le niveau juste au-dessus d'%element% peut recevoir des coefficients"

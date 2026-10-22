@@ -136,6 +136,19 @@ final class DiplomeWizardStructureTest extends WebTestCase
         self::assertResponseRedirects('/diplomes/nouveau/formulaires');
     }
 
+    public function testStructureRefusedWhenNoElementLevelIsDesignated(): void
+    {
+        $payload = $this->chainPayload(['annee', 'semestre', 'ue', 'ec']);
+        $ec = $this->em->getRepository(NodeType::class)->findOneBy(['key' => 'ec']);
+        $this->client->request('POST', sprintf('/node-types/%d/edit', $ec->getId()), ['label' => 'EC', 'elementLevelForm' => '1']);
+        $this->em->clear();
+        self::assertFalse($this->em->getRepository(NodeType::class)->findOneBy(['key' => 'ec'])->isElementLevel());
+
+        $crawler = $this->submit($payload);
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString("Aucun type de nœud n'est désigné comme niveau élément", $crawler->text());
+    }
+
     public function testVariantsNotProposed(): void
     {
         $variant = (new NodeType('ue_variante', 'UE variante'))->setParent($this->em->getRepository(NodeType::class)->findOneBy(['key' => 'ue']));

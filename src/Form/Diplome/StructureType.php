@@ -140,7 +140,12 @@ final class StructureType extends AbstractType
     private function validateElementLevel(array $levels, array $order, array $chain, ExecutionContextInterface $context): void
     {
         $element = $this->nodeTypes->findElementLevel();
-        if (null === $element || [] === $chain) {
+        if (null === $element) {
+            $context->buildViolation('diplome.wizard.structure.error.element_undefined')->setTranslationDomain('diplome')->addViolation();
+
+            return;
+        }
+        if ([] === $chain) {
             return;
         }
         $params = ['%element%' => $element->getLabel()];

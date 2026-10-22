@@ -41,7 +41,7 @@ final class NodeTypeElementLevelTest extends WebTestCase
     public function testOnlyOneElementLevel(): void
     {
         $ue = $this->type('ue');
-        $crawler = $this->client->request('POST', sprintf('/node-types/%d/edit', $ue->getId()), ['label' => 'UE', 'elementLevelForm' => '1', 'elementLevel' => '1']);
+        $this->client->request('POST', sprintf('/node-types/%d/edit', $ue->getId()), ['label' => 'UE', 'elementLevelForm' => '1', 'elementLevel' => '1']);
         $crawler = $this->client->followRedirect();
 
         self::assertStringContainsString('Le niveau élément est déjà porté par EC', $crawler->text());

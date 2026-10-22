@@ -609,7 +609,6 @@ final class NodeTypeController extends AbstractController
         return $out;
     }
 
-    /** Clé dérivée du libellé (« Unité d'enseignement » → unite_d_enseignement), suffixée _2, _3… si déjà prise. */
     /** Le réglage « niveau élément » : un seul type structurel, jamais une variante. Sans le marqueur du champ, rien ne change. */
     private function applyElementLevel(NodeType $nodeType, Request $request, NodeTypeRepository $types): void
     {
@@ -636,6 +635,7 @@ final class NodeTypeController extends AbstractController
         $nodeType->setElementLevel(true);
     }
 
+    /** Clé dérivée du libellé (« Unité d'enseignement » → unite_d_enseignement), suffixée _2, _3… si déjà prise. */
     private function uniqueKey(string $label, NodeTypeRepository $types): string
     {
         $base = (new AsciiSlugger())->slug($label, '_')->lower()->toString() ?: 'type';
