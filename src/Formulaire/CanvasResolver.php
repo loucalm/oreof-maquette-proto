@@ -86,15 +86,17 @@ final class CanvasResolver
 
     /**
      * Liens de la barre latérale : fiche parcours si `$parcours` est donné, fiche formation
-     * sinon (suivie, pour une formation sans parcours, des entrées à formulaire de la fiche
-     * parcours, groupe GROUP_PARCOURS) ; entrées masquées, écrans qui ne s'appliquent pas et
-     * formulaires disparus exclus.
+     * sinon. Formation sans parcours : chaque entrée à formulaire du parcours unique rejoint
+     * l'entrée de même clé de la fiche formation (une seule page, `withMono`) ; celles sans
+     * équivalent suivent, groupe GROUP_PARCOURS. Entrées masquées, écrans qui ne s'appliquent
+     * pas et formulaires disparus exclus.
      *
      * @return list<NavItem>
      */
     public function navigation(Formation $formation, ?TreeNode $parcours = null): array
     {
         $fiche = null !== $parcours ? CanvasSpec::PARCOURS : CanvasSpec::FORMATION;
+        $mono = null === $parcours ? $this->monoEntries($formation) : [];
         $items = [];
         foreach ($this->forFormation($formation)->entries($fiche) as $entry) {
             if ($entry->hidden) {
@@ -116,21 +118,54 @@ final class CanvasResolver
                     : $this->urls->generate('formation_param', ['id' => $formation->getId(), 'key' => $entry->key]);
                 $status = null;
             }
-            $items[] = new NavItem($fiche, $entry->key, $this->label($fiche, $entry), \count($items) + 1, $url, $status, null, $entry->isBuiltin());
+            $withMono = !$entry->isBuiltin() && isset($mono[$entry->key]);
+            if ($withMono) {
+                unset($mono[$entry->key]);
+            }
+            $items[] = new NavItem($fiche, $entry->key, $this->label($fiche, $entry), \count($items) + 1, $url, $status, null, $entry->isBuiltin(), withMono: $withMono);
         }
 
-        // formation sans parcours : son parcours unique remplit les entrées à formulaire de la fiche parcours
-        if (null === $parcours && $formation->isSansParcours()) {
-            foreach ($this->forFormation($formation)->entries(CanvasSpec::PARCOURS) as $entry) {
-                if ($entry->hidden || $entry->isBuiltin() || null === $this->form($entry)) {
-                    continue;
-                }
-                $url = $this->urls->generate('parcours_unique_param', ['id' => $formation->getId(), 'key' => $entry->key]);
-                $items[] = new NavItem(CanvasSpec::PARCOURS, $entry->key, $this->label(CanvasSpec::PARCOURS, $entry), \count($items) + 1, $url, null, self::GROUP_PARCOURS, false);
-            }
+        // entrées du parcours unique sans équivalent dans la fiche formation
+        foreach ($mono as $entry) {
+            $url = $this->urls->generate('parcours_unique_param', ['id' => $formation->getId(), 'key' => $entry->key]);
+            $items[] = new NavItem(CanvasSpec::PARCOURS, $entry->key, $this->label(CanvasSpec::PARCOURS, $entry), \count($items) + 1, $url, null, self::GROUP_PARCOURS, false);
         }
 
         return $items;
+    }
+
+    /**
+     * Vrai si, pour cette formation sans parcours, l'entrée `$key` du parcours unique est remplie
+     * sur la page de l'entrée de même clé de la fiche formation.
+     */
+    public function monoMerged(Formation $formation, string $key): bool
+    {
+        if (!isset($this->monoEntries($formation)[$key])) {
+            return false;
+        }
+        $entry = $this->forFormation($formation)->entry(CanvasSpec::FORMATION, $key);
+
+        return null !== $entry && !$entry->hidden && !$entry->isBuiltin() && null !== $this->form($entry);
+    }
+
+    /**
+     * Entrées à formulaire visibles du parcours unique (formation sans parcours), par clé.
+     *
+     * @return array<string, CanvasEntry>
+     */
+    private function monoEntries(Formation $formation): array
+    {
+        if (!$formation->isSansParcours()) {
+            return [];
+        }
+        $out = [];
+        foreach ($this->forFormation($formation)->entries(CanvasSpec::PARCOURS) as $entry) {
+            if (!$entry->hidden && !$entry->isBuiltin() && null !== $this->form($entry)) {
+                $out[$entry->key] = $entry;
+            }
+        }
+
+        return $out;
     }
 
     /** @param array<string, string> $legacyForms emplacement `<fiche>.<entrée>` → clé de formulaire */

@@ -37,39 +37,60 @@ final class MonoParcoursFicheTest extends WebTestCase
         self::assertCount(0, $crawler->filter('input[type=number][name="ectsTotal"]'));
     }
 
-    public function testMonoFormationSidebarShowsParcoursGroup(): void
+    public function testMonoFormationSidebarMergesParcoursEntriesByTheme(): void
     {
         $formation = $this->formation();
 
-        $items = array_map(static fn (NavItem $i) => $i->number.' '.$i->key.' '.($i->group ?? '-'), static::getContainer()->get(CanvasResolver::class)->navigation($formation));
-        self::assertSame(['1 organisation -', '2 presentation -', '3 bcc -', '4 structure -', '5 organisation parcours', '6 presentation parcours'], $items);
+        $items = static::getContainer()->get(CanvasResolver::class)->navigation($formation);
+        self::assertSame(['1 organisation -', '2 presentation -', '3 bcc -', '4 structure -'], array_map(static fn (NavItem $i) => $i->number.' '.$i->key.' '.($i->group ?? '-'), $items));
+        self::assertSame([true, true, false, false], array_map(static fn (NavItem $i) => $i->withMono, $items));
 
         $crawler = $this->client->request('GET', sprintf('/formations/%d', $formation->getId()));
-        self::assertCount(1, $crawler->filter(sprintf('a[href="/formations/%d/parcours-unique/parametre/organisation"]', $formation->getId())));
-        self::assertStringContainsString('Parcours', $crawler->filter('.nav-section')->eq(4)->ancestors()->first()->text());
+        self::assertCount(0, $crawler->filter(sprintf('a[href^="/formations/%d/parcours-unique/"]', $formation->getId())));
+        self::assertStringNotContainsString('Parcours', $crawler->filter('.nav-section')->first()->ancestors()->first()->text());
     }
 
-    public function testEditorOpensTheMonoParcoursEntryAfterSaving(): void
+    public function testEntryPageShowsFormationThenParcoursFields(): void
+    {
+        $formation = $this->formation();
+
+        $panel = $this->client->request('GET', sprintf('/formations/%d/parametre/organisation', $formation->getId()));
+        self::assertSame('param:organisation', $panel->filter('[data-panel-active]')->attr('data-panel-active'));
+        self::assertSame(['formation', 'parcours'], $panel->filter('form[data-fiche]')->each(static fn ($f) => $f->attr('data-fiche')));
+        self::assertSame(sprintf('/formations/%d/parcours-unique/parametre/organisation', $formation->getId()), $panel->filter('form[data-fiche=parcours]')->attr('action'));
+        // les deux formulaires mettent à jour la même pastille
+        self::assertSame(['organisation', 'organisation'], $panel->filter('form[data-fiche]')->each(static fn ($f) => $f->attr('data-autosave-key-value')));
+
+        $editor = $this->client->request('GET', sprintf('/formations/%d', $formation->getId()));
+        self::assertCount(1, $editor->filter('a.nav-section[data-nav-key="organisation"]'));
+        self::assertCount(0, $editor->filter('a.nav-section[data-nav-key="parcours.organisation"]'));
+    }
+
+    public function testSavingTheParcoursPartReturnsToTheSharedEntry(): void
     {
         $formation = $this->formation();
 
         $this->client->request('POST', sprintf('/formations/%d/parcours-unique/parametre/presentation', $formation->getId()), ['p' => ['langue' => 'Français']]);
-        self::assertResponseRedirects(sprintf('/formations/%d?param=parcours.presentation', $formation->getId()));
+        self::assertResponseRedirects(sprintf('/formations/%d?param=presentation', $formation->getId()));
         $crawler = $this->client->followRedirect();
 
-        self::assertSame(sprintf('/formations/%d/parcours-unique/parametre/presentation', $formation->getId()), $crawler->filter('turbo-frame#node-panel')->attr('src'));
+        self::assertSame(sprintf('/formations/%d/parametre/presentation', $formation->getId()), $crawler->filter('turbo-frame#node-panel')->attr('src'));
     }
 
-    public function testMonoEntryPanelMarksItsOwnNavLink(): void
+    public function testSharedEntryStatusCombinesBothForms(): void
     {
         $formation = $this->formation();
+        $navigation = static::getContainer()->get(\App\Formulaire\FicheNavigation::class);
+        $fiches = static::getContainer()->get(\App\Formulaire\Fiche\FicheFactory::class);
+        $entries = static::getContainer()->get(\App\Formulaire\EntryCompletion::class);
 
-        $panel = $this->client->request('GET', sprintf('/formations/%d/parcours-unique/parametre/organisation', $formation->getId()));
-        self::assertSame('param:parcours.organisation', $panel->filter('[data-panel-active]')->attr('data-panel-active'));
+        $own = $entries->status($fiches->formation($formation), 'organisation');
+        $mono = $entries->status($fiches->mono($formation), 'organisation');
+        self::assertSame($own === $mono ? $own : 'incomplete', $navigation->entryStatus($formation, 'organisation'));
 
-        $editor = $this->client->request('GET', sprintf('/formations/%d', $formation->getId()));
-        self::assertCount(1, $editor->filter('a.nav-section[data-nav-key="parcours.organisation"]'));
-        self::assertCount(1, $editor->filter('a.nav-section[data-nav-key="organisation"]'));
+        $this->client->request('POST', sprintf('/formations/%d/parcours-unique/parametre/organisation', $formation->getId()), ['p' => ['regimes' => ['FI']]], [], ['HTTP_ACCEPT' => 'application/json']);
+        $json = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertSame($navigation->entryStatus($this->reload($formation), 'organisation'), $json['status']);
     }
 
     public function testMonoParcoursEntrySavesOnFormation(): void

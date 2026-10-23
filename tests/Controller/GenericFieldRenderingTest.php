@@ -78,7 +78,7 @@ final class GenericFieldRenderingTest extends WebTestCase
         $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
         $crawler = $this->client->request('GET', '/formations/'.$formation->getId().'/parametre/presentation');
 
-        self::assertCount(1, $crawler->filter('textarea[name="p[objectif]"]'));
+        self::assertCount(1, $crawler->filter('form[data-fiche=formation] textarea[name="p[objectif]"]'));
     }
 
     public function testFormationParamPageRendersRadioAndChoiceWithPrefixedNames(): void

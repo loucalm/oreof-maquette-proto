@@ -150,8 +150,9 @@ final class FicheEntryTest extends WebTestCase
     {
         $formation = $this->formation();
 
+        // même clé qu'une entrée de la formation : remplie sur la page de celle-ci
         $this->client->request('GET', sprintf('/formations/%d/parcours-unique/parametre/presentation', $formation->getId()));
-        self::assertResponseIsSuccessful();
+        self::assertResponseRedirects(sprintf('/formations/%d/parametre/presentation', $formation->getId()));
 
         $this->client->request('POST', sprintf('/formations/%d/parcours-unique/parametre/presentation', $formation->getId()), ['p' => ['langue' => 'Français']]);
         self::assertSame('Français', $this->reload($formation)->getParametre('parcours.presentation')['langue'] ?? null);

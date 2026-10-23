@@ -84,7 +84,8 @@ final class CanvasResolverTest extends DatabaseTestCase
         )));
 
         $items = array_map(static fn (NavItem $i) => $i->number.' '.$i->key.' '.($i->group ?? '-'), $this->resolver->navigation($formation));
-        self::assertSame(['1 organisation -', '2 bcc -', '3 structure -', '4 organisation parcours', '5 presentation parcours'], $items);
+        // l'entrée « organisation » du parcours unique rejoint celle de la formation ; « presentation », masquée côté formation, reste seule
+        self::assertSame(['1 organisation -', '2 bcc -', '3 structure -', '4 presentation parcours'], $items);
         self::assertNull($this->resolver->formEntry($formation, CanvasSpec::FORMATION, 'presentation'));
     }
 

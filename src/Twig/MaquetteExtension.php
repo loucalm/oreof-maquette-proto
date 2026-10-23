@@ -75,6 +75,7 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('fiche_formation', fn (Formation $f) => $this->fiches->formation($f)),
             new TwigFunction('fiche_parcours', fn (TreeNode $p) => $this->fiches->forNode($p)),
             new TwigFunction('fiche_mono', fn (Formation $f) => $this->fiches->mono($f)),
+            new TwigFunction('fiche_mono_merged', fn (Formation $f, string $key) => $this->navigation->monoMerged($f, $key)),
             new TwigFunction('bcc_shown', fn (Formation $f) => $this->navigation->bccShown($f)),
             new TwigFunction('preview_active', fn (Formation $f) => $this->preview->isActive($f)),
             new TwigFunction('bcc_status', $this->bccStatus(...)),

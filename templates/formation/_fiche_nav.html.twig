@@ -1,10 +1,6 @@
 {# Liens d'une fiche, générés depuis le canevas de la version (cf. App\Formulaire\FicheNavigation). #}
-{% set group = null %}
+{# Les entrées du parcours unique (formation sans parcours) suivent celles de la formation, sans intertitre. #}
 {% for item in items %}
-    {% if item.group and item.group != group %}
-        <div class="mt-3 text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">{{ ('formation.editor.nav_group.' ~ item.group)|trans({}, 'formation') }}</div>
-    {% endif %}
-    {% set group = item.group %}
     {% set navKey = (item.group ? item.group ~ '.') ~ item.key %}
     <a href="{{ item.url }}" data-turbo-frame="node-panel" data-nav-key="{{ navKey }}"
        class="nav-section flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50 {{ item.current ? 'is-active' }}">

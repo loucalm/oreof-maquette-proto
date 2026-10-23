@@ -67,7 +67,8 @@ final class ValidationRulesTest extends WebTestCase
 
     public function testConditionalRequiredFollowsTheCondition(): void
     {
-        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, withLeaves: true);
+        // avec parcours : le statut renvoyé est celui du seul formulaire de la formation (sans parcours unique fusionné)
+        $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, avecParcours: true, withLeaves: true);
 
         $out = $this->saveParam($formation, 'organisation', $this->organisation(['rncp' => 'oui']), self::ENTITY);
         self::assertSame('incomplete', $out['status']);

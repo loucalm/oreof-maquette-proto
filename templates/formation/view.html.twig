@@ -207,25 +207,36 @@
     {% for item in fiche_nav(formation) %}{% set statuses = statuses|merge({((item.group ? item.group ~ '.') ~ item.key): item.status}) %}{% endfor %}
     {% set fiches = [{fiche: fiche_formation(formation), prefix: ''}] %}
     {% if formation.isSansParcours %}{% set fiches = fiches|merge([{fiche: fiche_mono(formation), prefix: 'parcours.'}]) %}{% endif %}
+    {% set monoEntries = formation.isSansParcours ? fiche_entries(fiche_mono(formation)) : [] %}
     {% for f in fiches %}
     {% set fiche = f.fiche %}
     {% for entry in fiche_entries(fiche) %}
+    {# sans parcours : l'entrée du parcours unique de même clé est montrée avec celle de la formation #}
+    {% set merged = formation.isSansParcours and fiche_mono_merged(formation, entry.key) %}
+    {% if not (f.prefix and merged) %}
         {% set navKey = f.prefix ~ entry.key %}
+        {% set parts = [{fiche: fiche, entry: entry}] %}
+        {% if merged %}{% set parts = parts|merge(monoEntries|filter(e => e.key == entry.key)|map(e => {fiche: fiche_mono(formation), entry: e})) %}{% endif %}
         <div data-rotree-target="detail" data-node="param:{{ navKey }}" hidden class="space-y-4">
             <div class="text-sm text-gray-400">{{ formation.name }} › {{ 'formation.view.formation_params_breadcrumb'|trans({}, 'formation') }}</div>
             <div class="flex flex-wrap items-center gap-2">
                 <span class="status-dot" data-status="{{ statuses[navKey] ?? 'empty' }}"></span>
                 <h3 class="text-lg font-bold">{{ entry.label }}</h3>
             </div>
-            {% set present = entry.fields|filter(f => fiche.value(f.key, entry.data) is not empty) %}
-            {% if present is empty %}
+            {% set rows = [] %}
+            {% for part in parts %}
+                {% for fd in part.entry.fields|filter(fd => part.fiche.value(fd.key, part.entry.data) is not empty) %}
+                    {% set rows = rows|merge([{field: fd, value: part.fiche.value(fd.key, part.entry.data)}]) %}
+                {% endfor %}
+            {% endfor %}
+            {% if rows is empty %}
                 <p class="text-sm text-gray-400 italic">{{ 'formation.view.section_empty'|trans({}, 'formation') }}</p>
             {% else %}
                 <dl class="divide-y" style="border-color:var(--c-border)">
-                    {% for f in present %}
+                    {% for row in rows %}
                         <div class="grid gap-1 py-2 sm:grid-cols-[240px_1fr]">
-                            <dt class="text-sm text-gray-400">{{ f.label }}</dt>
-                            <dd class="text-sm text-gray-800">{{ field_view(f, fiche.value(f.key, entry.data)) }}</dd>
+                            <dt class="text-sm text-gray-400">{{ row.field.label }}</dt>
+                            <dd class="text-sm text-gray-800">{{ field_view(row.field, row.value) }}</dd>
                         </div>
                     {% endfor %}
                 </dl>
@@ -233,6 +244,7 @@
             <a href="{{ path('formation_editor', {id: formation.id, param: navKey}) }}"
                class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'formation.view.edit_section_button'|trans({}, 'formation') }}</a>
         </div>
+    {% endif %}
     {% endfor %}
     {% endfor %}
 

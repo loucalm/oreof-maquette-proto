@@ -48,11 +48,41 @@ final class FicheNavigation
                 $items[] = new NavItem($item->fiche, $item->key, $item->label, $item->number, $item->url, $item->status, $item->group, true, $current);
                 continue;
             }
-            $target = CanvasResolver::GROUP_PARCOURS === $item->group ? $this->fiches->mono($formation) : $fiche;
-            $items[] = new NavItem($item->fiche, $item->key, $item->label, $item->number, $item->url, $this->entries->status($target, $item->key), $item->group, false, $param === $navKey);
+            if ($item->withMono) {
+                $status = $this->entryStatus($formation, $item->key);
+            } else {
+                $target = CanvasResolver::GROUP_PARCOURS === $item->group ? $this->fiches->mono($formation) : $fiche;
+                $status = $this->entries->status($target, $item->key);
+            }
+            $items[] = new NavItem($item->fiche, $item->key, $item->label, $item->number, $item->url, $status, $item->group, false, $param === $navKey, $item->withMono);
         }
 
         return $items;
+    }
+
+    /**
+     * Statut d'une entrée de la fiche formation ; sans parcours, combiné avec celui de l'entrée
+     * de même clé du parcours unique quand les deux sont remplies sur la même page.
+     */
+    public function entryStatus(Formation $formation, string $key): string
+    {
+        $status = $this->entries->status($this->fiches->formation($formation), $key);
+        if (!$this->canvas->monoMerged($formation, $key)) {
+            return $status;
+        }
+        $mono = $this->entries->status($this->fiches->mono($formation), $key);
+
+        return match (true) {
+            \in_array('error', [$status, $mono], true) => 'error',
+            $status === $mono => $status,
+            default => 'incomplete',
+        };
+    }
+
+    /** Vrai si l'entrée `$key` du parcours unique se remplit sur la page de l'entrée de même clé de la formation. */
+    public function monoMerged(Formation $formation, string $key): bool
+    {
+        return $this->canvas->monoMerged($formation, $key);
     }
 
     /** Vrai si un écran intégré de cette classe est affiché pour la formation (entrée visible et applicable). */
