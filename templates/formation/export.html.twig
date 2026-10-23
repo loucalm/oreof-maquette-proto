@@ -44,6 +44,33 @@
         </div>
     </div>
 
+    <form method="get" action="{{ path('formation_export_mccc', {id: formation.id}) }}" data-turbo="false" data-mccc-export
+          class="rounded-2xl border bg-white px-7 py-5 mb-4 flex flex-wrap items-end gap-4" style="border-color:var(--c-border)">
+        <div class="mr-auto">
+            <h2 class="font-semibold">{{ ux_icon('ph:table', {class: 'icon'}) }} {{ 'formation.export.mccc.heading'|trans({}, 'formation') }}</h2>
+            <p class="text-sm text-gray-500">{{ 'formation.export.mccc.help'|trans({}, 'formation') }}</p>
+        </div>
+        {% if mcccSheetLevels|length > 1 %}
+            <label class="text-sm">
+                <span class="block text-xs font-medium text-gray-500">{{ 'formation.export.mccc.sheet_level'|trans({}, 'formation') }}</span>
+                <select name="feuille" class="fld mt-1">
+                    {% for key, label in mcccSheetLevels %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+                </select>
+            </label>
+        {% endif %}
+        {% if mcccParcours is not empty %}
+            <label class="text-sm">
+                <span class="block text-xs font-medium text-gray-500">{{ 'formation.export.mccc.parcours'|trans({}, 'formation') }}</span>
+                <select name="parcours" class="fld mt-1">
+                    {% for nid, label in mcccParcours %}<option value="{{ nid }}">{{ label }}</option>{% endfor %}
+                </select>
+            </label>
+        {% endif %}
+        <button type="submit" class="rounded-lg px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">
+            {{ ux_icon('ph:download-simple', {class: 'icon'}) }} {{ 'formation.export.mccc.download'|trans({}, 'formation') }}
+        </button>
+    </form>
+
     <div class="rounded-2xl border bg-white overflow-hidden" style="border-color:var(--c-border)">
         <pre class="json-view"><code data-json-target="src">{{ json }}</code></pre>
     </div>

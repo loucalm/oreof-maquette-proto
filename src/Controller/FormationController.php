@@ -138,7 +138,7 @@ final class FormationController extends AbstractController
     }
 
     #[Route('/formations/{id}/export', name: 'formation_export', methods: ['GET'])]
-    public function export(Formation $formation, Request $request, \App\Maquette\MaquetteExporter $exporter): Response
+    public function export(Formation $formation, Request $request, \App\Maquette\MaquetteExporter $exporter, \App\Export\Mccc\McccTableBuilder $mccc): Response
     {
         $view = $request->query->get('view') === 'enriched' ? 'enriched' : 'raw';
         $data = $view === 'enriched' ? $exporter->enriched($formation) : $exporter->raw($formation);
@@ -146,6 +146,8 @@ final class FormationController extends AbstractController
         return $this->render('formation/export.html.twig', [
             'formation' => $formation,
             'view' => $view,
+            'mcccSheetLevels' => $mccc->sheetLevels($formation),
+            'mcccParcours' => $formation->isAvecParcours() ? $mccc->parcoursChoices($formation) : [],
             'json' => json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
         ]);
     }

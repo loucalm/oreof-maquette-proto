@@ -290,6 +290,12 @@ formation:
     enriched_note: 'libellés de type résolus, référence hiérarchique, agrégats heures / ECTS, statut'
     copy_button: Copier
     download_button: Télécharger .json
+    mccc:
+      heading: Tableau des MCCC (Excel)
+      help: Maquette et modalités de contrôle, une feuille par niveau choisi, une colonne par type de MCCC autorisé par le diplôme.
+      sheet_level: Une feuille par
+      parcours: Parcours
+      download: Télécharger .xlsx
   quick_grid:
     title: Saisie rapide ECTS et heures
     subtitle: Tout se saisit sur une page ; chaque ligne s’enregistre seule, une seconde après la frappe.
