@@ -41,14 +41,13 @@
     {% endif %}
 {% endmacro %}
 
-{# Étiquette d'un type d'EC : libellé modifiable, clé cachée, liens « fiche » et « MCCC », retrait. #}
+{# Étiquette d'un type d'EC : libellé modifiable, clé cachée, lien « fiche », retrait. #}
 {% macro ecType(f, links) %}
     {% import _self as m %}
     <span data-ec-type class="st-tag">
         {{ form_widget(f.key) }}
         {{ form_widget(f.label, {attr: {class: 'st-tag-input', size: max(6, f.label.vars.value|length), 'aria-label': 'diplome.wizard.structure.ec_type_label'|trans({}, 'diplome')}}) }}
         {{ m.stepLink(links.fiche, 'fiche') }}
-        {{ m.stepLink(links.mccc, 'mccc') }}
         <button type="button" data-action="structure-tree#removeEcType" class="st-tag-remove" title="{{ 'diplome.wizard.structure.tree.remove_ec_type'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.wizard.structure.tree.remove_ec_type'|trans({}, 'diplome') }}">{{ ux_icon('ph:x', {class: 'icon'}) }}</button>
         {{ form_errors(f.label) }}
     </span>

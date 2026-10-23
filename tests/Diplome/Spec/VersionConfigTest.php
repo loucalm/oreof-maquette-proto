@@ -33,13 +33,24 @@ final class VersionConfigTest extends TestCase
                 'formation' => [['key' => 'organisation', 'form' => 'org_licence', 'builtin' => null, 'label' => null, 'hidden' => false]],
                 'parcours' => [['key' => 'bcc', 'form' => null, 'builtin' => 'bcc', 'label' => 'BCC', 'hidden' => true]],
             ],
-            'mccc' => ['ec' => ['types' => ['CT', 'CC_CT', 'CC', 'CCI'], 'profile' => 'licence']],
+            'mccc' => ['CT' => ['profile' => 'licence'], 'CC' => ['profile' => null]],
             'options' => ['quitus' => true, 'assiduite' => true, 'sansNote' => false],
             'bccLevels' => ['Bloc', 'Compétence'],
             'bccLinkLevel' => 1,
         ];
 
         self::assertSame($raw, VersionConfig::fromArray($raw)->toArray());
+    }
+
+    public function testLegacyMcccByNatureBecomesAllowedTypes(): void
+    {
+        // configurations enregistrées quand les MCCC se définissaient par type d'EC
+        $c = VersionConfig::fromArray(['mccc' => [
+            'ec' => ['types' => ['CT', 'CC'], 'profile' => 'licence'],
+            'stage' => ['types' => ['CC', 'CCI'], 'profile' => null],
+        ]]);
+
+        self::assertSame(['CT' => ['profile' => 'licence'], 'CC' => ['profile' => 'licence'], 'CCI' => ['profile' => null]], $c->mccc);
     }
 
     public function testLegacyImposedKeyIsIgnored(): void

@@ -6,10 +6,15 @@ namespace App\Diplome\Wizard;
 
 use App\Diplome\WizardDraft;
 use App\Form\Diplome\MccConfigType;
+use App\Repository\MccTypeRepository;
 
-/** Étape « MCCC » : types de MCCC autorisés et profil de règles par nature d'élément, options. */
+/** Étape « MCCC » : types de MCCC autorisés dans la formation, chacun avec son profil de règles, et options. */
 final class McccStep extends AbstractWizardStep
 {
+    public function __construct(private readonly MccTypeRepository $mccTypes)
+    {
+    }
+
     public function key(): string
     {
         return 'mccc';
@@ -33,30 +38,30 @@ final class McccStep extends AbstractWizardStep
     public function initialData(WizardDraft $draft): array
     {
         $config = $draft->config();
-        $natures = [];
-        foreach ($config->structure->natureKeys() as $nature) {
-            $natures[] = [
-                'nature' => $nature,
-                'types' => $config->mccc[$nature]['types'] ?? [],
-                'profile' => $config->mccc[$nature]['profile'] ?? null,
+        $types = [];
+        foreach ($this->mccTypes->allOrdered() as $type) {
+            $key = $type->getKey();
+            $types[] = [
+                'type' => $key,
+                // libellés pour l'affichage, non soumis
+                'label' => $type->getShortLabel().' — '.$type->getLabel(),
+                'enabled' => isset($config->mccc[$key]),
+                'profile' => $config->mccc[$key]['profile'] ?? null,
             ];
         }
 
-        return ['natures' => $natures] + $config->options;
+        return ['types' => $types] + $config->options;
     }
 
     public function apply(WizardDraft $draft, mixed $formData): void
     {
-        $declared = $draft->config()->structure->natureKeys();
         $mccc = [];
-        foreach ($formData['natures'] ?? [] as $row) {
-            $nature = (string) ($row['nature'] ?? '');
-            $types = array_values(array_map('strval', $row['types'] ?? []));
-            // seules les natures déclarées par la structure comptent ; une nature sans type n'est pas enregistrée
-            if (!\in_array($nature, $declared, true) || [] === $types) {
+        foreach ($formData['types'] ?? [] as $row) {
+            $key = (string) ($row['type'] ?? '');
+            if ('' === $key || !($row['enabled'] ?? false)) {
                 continue;
             }
-            $mccc[$nature] = ['types' => $types, 'profile' => '' === (string) ($row['profile'] ?? '') ? null : (string) $row['profile']];
+            $mccc[$key] = ['profile' => '' === (string) ($row['profile'] ?? '') ? null : (string) $row['profile']];
         }
 
         $config = $draft->configData;

@@ -156,12 +156,11 @@ diplome:
         ects_label: ECTS
         more: Plus de réglages
         link_fiche: fiche
-        link_mccc: MCCC
       duration_level: Niveau qui compte la durée
       level_section_help: Du premier niveau à la feuille. Les bornes s'appliquent dans chaque parent (« 3 à 6 UE » = dans chaque semestre).
       rule_section_help: Contraintes supplémentaires, contrôlées en direct dans les formations.
       natures: Types d'EC
-      natures_help: "Chaque EC reçoit un type ; il choisit sa fiche (onglet Formulaires) et ses MCCC (onglet MCCC), et sert aux règles (ex. SAÉ ≥ 40 %)."
+      natures_help: "Chaque EC reçoit un type ; il choisit sa fiche (onglet Formulaires) et sert aux règles (ex. SAÉ ≥ 40 %)."
       rules: Règles
       rule_template: Gabarit de règle
       rule_scope: Portée (niveau)
@@ -205,14 +204,14 @@ diplome:
         rule_scope: 'Règle %n% : la portée doit être un niveau de la chaîne.'
         rule_position: 'La position doit être « all », « first », « last » ou un numéro.'
         ec_type_used_rule: 'Le type %type% est utilisé par une règle : retirez d''abord la règle.'
-        ec_type_used_mccc: 'Le type %type% est utilisé par un jeu MCCC : retirez-le d''abord de l''étape MCCC.'
         unknown_nature: 'Ligne %n% : la nature « %nature% » n''est pas déclarée dans les natures d''élément du type.'
     mccc:
-      help: Pour chaque nature d'élément déclarée par la structure, choisissez les types de MCCC autorisés et le profil de règles à appliquer.
-      no_natures: Aucune nature d'élément n'est déclarée dans l'étape Structure.
+      help: Cochez les types de MCCC autorisés dans l'ensemble de la formation et choisissez pour chacun le profil de règles à appliquer.
+      no_types: Aucun type de MCCC n'est défini dans le référentiel.
       types: Types de MCCC autorisés
       profile: Profil de règles
       no_profile: Aucun profil
+      no_profile_available: Aucun profil défini pour ce type
       options:
         title: Options
         quitus: Quitus

@@ -13,7 +13,7 @@ use App\Maquette\Doc\TreeNode;
  * - `canvas` : canevas des fiches formation et parcours (null : canevas par défaut, cf.
  *   CanvasResolver) ; l'ancienne clé `forms` (emplacement → formulaire) n'est plus que
  *   lue, dans `legacyForms`, quand `canvas` est absent ;
- * - `mccc` : nature → clés MccType autorisées + profil ;
+ * - `mccc` : clé MccType autorisée dans la formation → profil de règles (null : aucun) ;
  * - `options` : quitus / assiduité / sans note ;
  * - `bccLevels` : noms des niveaux de BCC (1 à 3) ;
  * - `bccLinkLevel` : indice 0-based du niveau relié aux éléments (défaut : le dernier).
@@ -25,7 +25,7 @@ final readonly class VersionConfig
 {
     /**
      * @param array<string, string>                                 $legacyForms
-     * @param array<string, array{types: list<string>, profile: ?string}> $mccc
+     * @param array<string, array{profile: ?string}>                 $mccc
      * @param array{quitus: bool, assiduite: bool, sansNote: bool}  $options
      * @param list<string>                                          $bccLevels
      */
@@ -42,8 +42,7 @@ final readonly class VersionConfig
 
     /**
      * Nature d'élément d'un nœud : son attribut `natureElement`, à défaut la première nature déclarée
-     * par la structure (à défaut, la première nature du MCCC). Règle unique, partagée par le contexte
-     * de vérification et le MCCC.
+     * par la structure. Règle unique, partagée par le contexte de vérification.
      */
     public function natureOf(TreeNode $node): ?string
     {
@@ -52,18 +51,22 @@ final readonly class VersionConfig
             return $nature;
         }
 
-        return $this->structure->natureKeys()[0] ?? array_key_first($this->mccc);
+        return $this->structure->natureKeys()[0] ?? null;
     }
 
     /** @param array<string, mixed> $a */
     public static function fromArray(array $a): self
     {
         $mccc = [];
-        foreach ($a['mccc'] ?? [] as $nature => $m) {
-            $mccc[(string) $nature] = [
-                'types' => array_values(array_map('strval', $m['types'] ?? [])),
-                'profile' => isset($m['profile']) ? (string) $m['profile'] : null,
-            ];
+        foreach ($a['mccc'] ?? [] as $key => $m) {
+            if (\is_array($m['types'] ?? null)) {
+                // ancienne forme, par nature d'élément : union des types, le premier profil rencontré l'emporte
+                foreach ($m['types'] as $type) {
+                    $mccc[(string) $type] ??= ['profile' => isset($m['profile']) ? (string) $m['profile'] : null];
+                }
+                continue;
+            }
+            $mccc[(string) $key] = ['profile' => isset($m['profile']) ? (string) $m['profile'] : null];
         }
         $o = $a['options'] ?? [];
         $bccLevels = array_values(array_map('strval', $a['bccLevels'] ?? []));

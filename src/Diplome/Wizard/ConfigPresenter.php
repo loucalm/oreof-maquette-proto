@@ -155,8 +155,8 @@ final class ConfigPresenter
     private function mcccRows(VersionConfig $config): array
     {
         $rows = [];
-        foreach ($config->mccc as $nature => $m) {
-            $rows[] = [$nature, implode(', ', $m['types']).(null === $m['profile'] ? '' : ' — '.$m['profile'])];
+        foreach ($config->mccc as $type => $m) {
+            $rows[] = [$type, $m['profile'] ?? $this->t('mccc.no_profile')];
         }
         foreach ($config->options as $option => $on) {
             $rows[] = [$this->pathLabel('options.'.$option), $this->yesNo($on)];

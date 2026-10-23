@@ -14,8 +14,7 @@ use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * MCCC d'un nœud d'après la version du type de diplôme de sa formation :
- * types autorisés et profil de règles selon la nature de l'élément
- * (attribut `natureElement`, à défaut la première nature déclarée par le type).
+ * types autorisés dans toute la formation, et profil de règles du type choisi.
  *
  * Sans version (formation sans type de diplôme), `config()` renvoie null et
  * aucune règle n'est appliquée.
@@ -49,11 +48,6 @@ final class VersionMccc implements ResetInterface
         $this->versions = new \WeakMap();
     }
 
-    public function natureOf(TreeNode $node, VersionConfig $config): ?string
-    {
-        return $config->natureOf($node);
-    }
-
     /** @return list<MccType> types proposés pour ce nœud, ou null sans version */
     public function typesFor(TreeNode $node): ?array
     {
@@ -61,25 +55,15 @@ final class VersionMccc implements ResetInterface
         if (null === $config) {
             return null;
         }
-        $nature = $this->natureOf($node, $config);
-        $allowed = array_flip($config->mccc[(string) $nature]['types'] ?? []);
-
         return array_values(array_filter(
             $this->types->allOrdered(),
-            static fn (MccType $t): bool => isset($allowed[$t->getKey()]),
+            static fn (MccType $t): bool => isset($config->mccc[$t->getKey()]),
         ));
     }
 
-    /**
-     * @return array{0: bool, 1: ?string} [le nœud a une version, clé du profil à appliquer]
-     */
-    public function profileFor(TreeNode $node): array
+    /** Clé du profil de règles à appliquer au type de MCCC `$typeKey` de ce nœud (null : aucun, ou sans version). */
+    public function profileFor(TreeNode $node, string $typeKey): ?string
     {
-        $config = $this->config($node);
-        if (null === $config) {
-            return [false, null];
-        }
-
-        return [true, $config->mccc[(string) $this->natureOf($node, $config)]['profile'] ?? null];
+        return $this->config($node)?->mccc[$typeKey]['profile'] ?? null;
     }
 }

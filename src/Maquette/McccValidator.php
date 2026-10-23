@@ -17,7 +17,7 @@ use Symfony\Contracts\Service\ResetInterface;
  * un petit service qui parcourt un `TreeNode` et calcule quelque chose.
  *
  * Le profil de règles appliqué vient de la version du type de diplôme de la
- * formation (`VersionConfig::mccc[nature].profile`, cf. VersionMccc) ; sans
+ * formation (`VersionConfig::mccc[type].profile`, cf. VersionMccc) ; sans
  * version, aucun profil.
  * Sans profil, aucune règle n'est appliquée (comportement permissif, cohérent
  * avec le reste de l'appli).
@@ -53,8 +53,8 @@ final class McccValidator implements ResetInterface
             return [];
         }
 
-        // profil : celui de la version du type de diplôme selon la nature de l'élément ; sans version, aucun
-        [, $profileKey] = $this->versionMccc->profileFor($node);
+        // profil : celui que la version du type de diplôme associe à ce type de MCCC ; sans version, aucun
+        $profileKey = $this->versionMccc->profileFor($node, $typeKey);
         $rules = $type->getProfileRules($profileKey);
         if ([] === $rules) {
             return [];

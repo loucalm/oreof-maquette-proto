@@ -60,11 +60,10 @@
 {# Nombre déduit du premier niveau (DurationMath::firstLevelBound(), cf. StructureStep::viewData()). #}
 {% set firstCount = firstCount is null ? '' : st.boundText('count', firstCount.mode, firstCount.value, firstCount.upper)|trim %}
 
-{# Liens « fiche » / « MCCC » des types d'EC : mêmes étapes que la barre latérale. #}
+{# Lien « fiche » des types d'EC : mêmes étapes que la barre latérale. #}
 {% set editing = version is defined and type is defined %}
 {% set links = {
     fiche: {step: 'formulaires', url: editing and 'formulaires' in steps ? path('diplome_edit', {id: type.id, versionId: version.id, step: 'formulaires'}) : null},
-    mccc: {step: 'mccc', url: editing and 'mccc' in steps ? path('diplome_edit', {id: type.id, versionId: version.id, step: 'mccc'}) : null},
 } %}
 
 {% set labels = {

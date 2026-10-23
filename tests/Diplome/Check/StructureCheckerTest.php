@@ -130,7 +130,7 @@ final class StructureCheckerTest extends DatabaseTestCase
         self::assertCount(1, $this->withKey($this->checker->check($doc, $this->config), 'rule:lp-projet-tutore:min'));
     }
 
-    public function testDefaultNatureIsTheSameForChecksAndMccc(): void
+    public function testDefaultNatureIsTheFirstDeclared(): void
     {
         $doc = $this->build('BUT', 6);
         $ue = $this->ofType($doc, 'ue')[0];
@@ -140,7 +140,7 @@ final class StructureCheckerTest extends DatabaseTestCase
         $row = array_values(array_filter($context['children'], static fn (array $r) => $r['nid'] === $ec->getId()))[0];
 
         self::assertSame($this->config->structure->natureKeys()[0], $row['nature']);
-        self::assertSame($row['nature'], static::getContainer()->get(\App\Diplome\VersionMccc::class)->natureOf($ec, $this->config));
+        self::assertSame($row['nature'], $this->config->natureOf($ec));
     }
 
     public function testBlocChoiceWithUnevenChildrenFailsRule(): void

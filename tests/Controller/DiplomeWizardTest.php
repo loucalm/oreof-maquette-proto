@@ -108,7 +108,8 @@ final class DiplomeWizardTest extends WebTestCase
         $this->client->request('GET', '/diplomes/nouveau', ['depuis' => $this->licenceVersionId()]);
         $this->submitInformations(['informations[label]' => 'Deust', 'informations[sigle]' => 'DEUST']);
         $crawler = $this->client->request('GET', '/diplomes/nouveau/mccc');
-        self::assertCount(1, $crawler->filter('form#wizard-form fieldset[data-nature=ec]'));
+        self::assertCount(1, $crawler->filter('form#wizard-form [data-mcc-type=CCI] input[type=checkbox]:checked'));
+        self::assertSame('licence', $crawler->filter('[data-mcc-type=CCI] select option[selected]')->attr('value'));
         $crawler = $this->client->request('GET', '/diplomes/nouveau/bcc');
         self::assertCount(1, $crawler->filter('form#wizard-form input[name="bcc_config[level1]"]'));
     }

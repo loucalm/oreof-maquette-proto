@@ -484,7 +484,7 @@ final class DiplomeWizardStructureTest extends WebTestCase
         self::assertStringContainsString('≤ 10 ECTS', $crawler->filter('[data-tree-level="ue"]')->text());
     }
 
-    public function testEcTypesAreTagsWithLinksToFormsAndMccc(): void
+    public function testEcTypesAreTagsWithLinksToForms(): void
     {
         $this->startFrom('LP');
         $crawler = $this->client->request('GET', '/diplomes/nouveau/structure');
@@ -494,7 +494,7 @@ final class DiplomeWizardStructureTest extends WebTestCase
         self::assertStringContainsString('3 types', $crawler->filter('[data-tree-level="ec"]')->text());
         // même navigation que la barre latérale : l'étape courante est soumise vers l'étape visée
         self::assertCount(3, $tags->filter('button[name="goto"][value="formulaires"]'));
-        self::assertCount(3, $tags->filter('button[name="goto"][value="mccc"]'));
+        self::assertCount(0, $tags->filter('button[name="goto"][value="mccc"]'), 'les MCCC se règlent pour toute la formation');
     }
 
     public function testRenamingEcTypeKeepsItsKey(): void

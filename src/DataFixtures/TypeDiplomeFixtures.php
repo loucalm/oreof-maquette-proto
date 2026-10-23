@@ -67,8 +67,10 @@ final class TypeDiplomeFixtures extends Fixture implements DependentFixtureInter
                 'natures' => ['ec', 'stage'],
             ],
             'mccc' => [
-                'ec' => ['types' => ['CT', 'CC_CT', 'CC', 'CCI'], 'profile' => 'licence'],
-                'stage' => ['types' => ['CT'], 'profile' => 'licence'],
+                'CT' => ['profile' => 'licence'],
+                'CC_CT' => ['profile' => 'licence'],
+                'CC' => ['profile' => 'licence'],
+                'CCI' => ['profile' => 'licence'],
             ],
             'options' => ['quitus' => false, 'assiduite' => false, 'sansNote' => false],
             'bccLevels' => ['Bloc', 'Compétence'],
@@ -96,9 +98,7 @@ final class TypeDiplomeFixtures extends Fixture implements DependentFixtureInter
             self::minElementType('lp-projet-tutore', 'projet_tutore', 'last'),
             self::minElementType('lp-stage', 'stage', 'last'),
         ];
-        $c['mccc']['projet_tutore'] = ['types' => ['CC'], 'profile' => 'master'];
-        $c['mccc']['ec']['profile'] = 'master';
-        $c['mccc']['stage']['profile'] = 'master';
+        $c['mccc'] = array_map(static fn (array $m) => ['profile' => 'master'], $c['mccc']);
 
         return $c;
     }
@@ -112,8 +112,7 @@ final class TypeDiplomeFixtures extends Fixture implements DependentFixtureInter
     {
         $c = $licence;
         $c['structure']['duration'] = ['min' => 2, 'max' => 2];
-        $c['mccc']['ec']['profile'] = 'master';
-        $c['mccc']['stage']['profile'] = 'master';
+        $c['mccc'] = array_map(static fn (array $m) => ['profile' => 'master'], $c['mccc']);
 
         return $c;
     }
@@ -132,7 +131,12 @@ final class TypeDiplomeFixtures extends Fixture implements DependentFixtureInter
                 'duration' => ['min' => 2, 'max' => 2],
                 'natures' => ['ec'],
             ],
-            'mccc' => ['ec' => ['types' => ['CT', 'CC_CT', 'CC', 'CCI'], 'profile' => 'master']],
+            'mccc' => [
+                'CT' => ['profile' => 'master'],
+                'CC_CT' => ['profile' => 'master'],
+                'CC' => ['profile' => 'master'],
+                'CCI' => ['profile' => 'master'],
+            ],
             'options' => ['quitus' => false, 'assiduite' => false, 'sansNote' => false],
             'bccLevels' => ['Bloc', 'Objectif', 'Attendu'],
             'bccLinkLevel' => 2,
@@ -174,10 +178,8 @@ final class TypeDiplomeFixtures extends Fixture implements DependentFixtureInter
                 ],
             ],
             'mccc' => [
-                'ressource' => ['types' => ['CC'], 'profile' => null],
-                'sae' => ['types' => ['CC'], 'profile' => null],
-                'stage' => ['types' => ['CT'], 'profile' => null],
-                'portfolio' => ['types' => ['CC'], 'profile' => null],
+                'CC' => ['profile' => null],
+                'CT' => ['profile' => null],
             ],
             'options' => ['quitus' => false, 'assiduite' => false, 'sansNote' => false],
             'bccLevels' => ['Compétence', 'Niveau', 'Apprentissage critique'],

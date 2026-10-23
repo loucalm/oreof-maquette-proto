@@ -11,17 +11,17 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * Étape « MCCC » : une ligne par nature d'élément déclarée (`natures`, liste fixe
+ * Étape « MCCC » : une ligne par type de MCCC du référentiel (`types`, liste fixe
  * non modifiable) et les options quitus / assiduité / sans note.
- * Données : `natures` = liste de {nature, types, profile}, `quitus`, `assiduite`, `sansNote`.
+ * Données : `types` = liste de {type, enabled, profile}, `quitus`, `assiduite`, `sansNote`.
  */
 final class MccConfigType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('natures', CollectionType::class, [
-                'entry_type' => NatureMcccType::class,
+            ->add('types', CollectionType::class, [
+                'entry_type' => McccTypeRowType::class,
                 'allow_add' => false,
                 'allow_delete' => false,
                 'label' => false,

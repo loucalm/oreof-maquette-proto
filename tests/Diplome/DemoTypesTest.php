@@ -26,11 +26,11 @@ final class DemoTypesTest extends DatabaseTestCase
         self::assertSame(['min' => 3, 'max' => 4], $l->structure->duration->bound->toArray());
         self::assertSame(['min' => 3, 'max' => 6], $l->structure->levels[2]->count->toArray());
         self::assertSame(['Bloc', 'Compétence'], $l->bccLevels);
-        self::assertSame(['CT', 'CC_CT', 'CC', 'CCI'], $l->mccc['ec']['types']);
+        self::assertSame(['CT', 'CC_CT', 'CC', 'CCI'], array_keys($l->mccc));
 
         $lp = $this->config('LP');
         self::assertSame(5, $lp->structure->levels[1]->startAt);
-        self::assertSame('master', $lp->mccc['ec']['profile']);
+        self::assertSame('master', $lp->mccc['CCI']['profile']);
 
         self::assertTrue($this->config('M')->structure->duration->bound->isExact());
 
@@ -93,14 +93,10 @@ final class DemoTypesTest extends DatabaseTestCase
         self::assertSame(['BUT', 'Licence', 'Licence professionnelle', 'Master', 'Master M2E'], $labels);
     }
 
-    public function testEveryDeclaredNatureHasItsMccc(): void
+    public function testEveryTypeAllowsAtLeastOneMccc(): void
     {
         foreach ($this->em->getRepository(TypeDiplome::class)->findAll() as $type) {
-            $config = $type->latestVersion()->config();
-            foreach ($config->structure->natureKeys() as $nature) {
-                self::assertArrayHasKey($nature, $config->mccc, $type->getKey().' : nature « '.$nature.' » sans MCCC');
-                self::assertNotEmpty($config->mccc[$nature]['types'], $type->getKey().' : '.$nature);
-            }
+            self::assertNotEmpty($type->latestVersion()->config()->mccc, $type->getKey().' : aucun type de MCCC autorisé');
         }
     }
 }

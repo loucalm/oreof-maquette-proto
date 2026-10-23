@@ -59,7 +59,7 @@ final class StructureStep extends AbstractWizardStep
             'parcoursAllowed' => $s->parcoursAllowed,
             'natures' => array_map(static fn (EcType $t) => $t->toArray(), $s->natures),
             // lecture seule pour la validation (types d'EC retirés mais encore utilisés), non soumis
-            'usage' => ['labels' => array_column(array_map(static fn (EcType $t) => $t->toArray(), $s->natures), 'label', 'key'), 'mccc' => array_keys($draft->config()->mccc)],
+            'usage' => ['labels' => array_column(array_map(static fn (EcType $t) => $t->toArray(), $s->natures), 'label', 'key')],
             'levels' => array_map(static fn (LevelSpec $l, int $i) => [
                 'position' => (string) $i,
                 'typeKey' => $l->typeKey, 'count' => $l->count, 'startAt' => $l->startAt, 'locked' => $l->locked, 'ecLink' => $l->ecLink,

@@ -3,23 +3,27 @@
 <p class="text-sm mb-4" style="color:var(--c-muted)">{{ 'diplome.wizard.mccc.help'|trans({}, 'diplome') }}</p>
 {{ form_start(form, {attr: {id: 'wizard-form', class: 'space-y-5'}}) }}
     {{ form_errors(form) }}
-    {% if form.natures|length == 0 %}
-        <p class="text-sm" style="color:var(--c-muted)" data-no-natures>{{ 'diplome.wizard.mccc.no_natures'|trans({}, 'diplome') }}</p>
-    {% endif %}
-    {% for entry in form.natures %}
-        <fieldset class="rounded-lg border p-4 space-y-3" style="border-color:var(--c-border)" data-nature="{{ entry.vars.value.nature }}">
-            <legend class="px-2 text-sm font-semibold">{{ entry.vars.value.nature }}</legend>
-            {{ form_widget(entry.nature) }}
-            <div class="text-xs font-medium">{{ form_label(entry.types) }}</div>
-            <div class="grid gap-2 sm:grid-cols-2 text-sm">
-                {% for choice in entry.types %}
-                    <label class="flex items-center gap-2">{{ form_widget(choice) }} {{ choice.vars.label }}</label>
-                {% endfor %}
-            </div>
-            {{ form_errors(entry.types) }}
-            {% include 'diplome/wizard/_field.html.twig' with {field: entry.profile} %}
-        </fieldset>
-    {% endfor %}
+    <fieldset class="rounded-lg border p-4" style="border-color:var(--c-border)">
+        <legend class="px-2 text-sm font-semibold">{{ 'diplome.wizard.mccc.types'|trans({}, 'diplome') }}</legend>
+        {% if form.types|length == 0 %}
+            <p class="text-sm" style="color:var(--c-muted)" data-no-types>{{ 'diplome.wizard.mccc.no_types'|trans({}, 'diplome') }}</p>
+        {% endif %}
+        <div class="divide-y" style="border-color:var(--c-border)">
+            {% for entry in form.types %}
+                <div class="flex flex-wrap items-center gap-3 py-2 text-sm" data-mcc-type="{{ entry.vars.value.type }}">
+                    {{ form_widget(entry.type) }}
+                    <label class="flex flex-1 items-center gap-2 min-w-[14rem]">{{ form_widget(entry.enabled) }} {{ entry.vars.value.label }}</label>
+                    {% if entry.profile.vars.choices|length > 0 %}
+                        {{ form_widget(entry.profile, {attr: {class: 'w-56 rounded-md border px-3 py-1.5 text-sm', style: 'border-color:var(--c-border)', 'aria-label': 'diplome.wizard.mccc.profile'|trans({}, 'diplome') ~ ' — ' ~ entry.vars.value.type}}) }}
+                    {% else %}
+                        {% do entry.profile.setRendered %}
+                        <span class="w-56 text-xs" style="color:var(--c-muted)">{{ 'diplome.wizard.mccc.no_profile_available'|trans({}, 'diplome') }}</span>
+                    {% endif %}
+                    {{ form_errors(entry.profile) }}
+                </div>
+            {% endfor %}
+        </div>
+    </fieldset>
     <fieldset class="rounded-lg border p-4 space-y-2" style="border-color:var(--c-border)">
         <legend class="px-2 text-sm font-semibold">{{ 'diplome.wizard.mccc.options.title'|trans({}, 'diplome') }}</legend>
         {% for option in [form.quitus, form.assiduite, form.sansNote] %}

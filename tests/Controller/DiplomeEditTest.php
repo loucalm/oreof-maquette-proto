@@ -55,7 +55,7 @@ final class DiplomeEditTest extends WebTestCase
         return $formation;
     }
 
-    public function testButSaeAllowsOnlyContinuousAssessment(): void
+    public function testMcccStepRestrictsTypesForTheWholeFormation(): void
     {
         $type = $this->type('BUT');
         // un EC de nature « sae » dans une formation BUT
@@ -69,18 +69,19 @@ final class DiplomeEditTest extends WebTestCase
 
         $crawler = $this->client->request('GET', $this->editPath($type, 'mccc'));
         self::assertResponseIsSuccessful();
-        // une ligne par nature déclarée, avec ses types et son profil
-        self::assertSame(['ressource', 'sae', 'stage', 'portfolio'], $crawler->filter('fieldset[data-nature]')->each(static fn ($n) => $n->attr('data-nature')));
+        // une ligne par type de MCCC du référentiel, cochée s'il est autorisé dans la formation
+        $rows = $crawler->filter('[data-mcc-type]')->each(static fn ($n) => $n->attr('data-mcc-type'));
+        self::assertEqualsCanonicalizing(['CT', 'CC_CT', 'CC', 'CCI'], $rows);
+        self::assertEqualsCanonicalizing(['CC', 'CT'], $crawler->filter('[data-mcc-type]:has(input[type=checkbox]:checked)')->each(static fn ($n) => $n->attr('data-mcc-type')));
 
         $values = $crawler->filter('form#wizard-form')->form()->getPhpValues();
-        $values['mcc_config']['natures'][1]['types'] = ['CC'];
+        unset($values['mcc_config']['types'][array_search('CT', $rows, true)]['enabled']);
         $values['confirmImpact'] = '1'; // la formation créée plus haut utilise cette version
         $this->client->request('POST', $this->editPath($type, 'mccc'), $values);
         self::assertResponseRedirects($this->editPath($type, 'mccc'));
 
         $this->em->clear();
-        $mccc = $this->type('BUT')->latestVersion()->config()->mccc;
-        self::assertSame(['CC'], $mccc['sae']['types']);
+        self::assertSame(['CC'], array_keys($this->type('BUT')->latestVersion()->config()->mccc));
 
         // le panneau de cet EC ne propose que CC
         $crawler = $this->client->request('GET', sprintf('/formations/%d/nodes/%s', $formation->getId(), $ec->nid));
@@ -280,7 +281,6 @@ final class DiplomeEditTest extends WebTestCase
         $links = $crawler->filter('[data-ec-type] a[data-link="fiche"]');
         self::assertGreaterThan(0, $links->count());
         self::assertSame($this->editPath($type, 'formulaires'), $links->first()->attr('href'));
-        self::assertSame($this->editPath($type, 'mccc'), $crawler->filter('[data-ec-type] a[data-link="mccc"]')->first()->attr('href'));
 
         // enregistrer l'onglet tel quel ne change rien (le BUT de démo a une formation : confirmation demandée)
         $before = $type->latestVersion()->config()->structure->toArray();

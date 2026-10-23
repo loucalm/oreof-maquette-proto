@@ -32,7 +32,7 @@ final class VersionMcccTest extends DatabaseTestCase
         return $ec;
     }
 
-    public function testNodeWithoutNatureUsesFirstDeclaredNature(): void
+    public function testTypesAreThoseAllowedInTheWholeFormation(): void
     {
         $ec = $this->ecOfLicence();
         $types = static::getContainer()->get(VersionMccc::class)->typesFor($ec);
@@ -49,7 +49,7 @@ final class VersionMcccTest extends DatabaseTestCase
 
         $version = $ec->getFormation()->getTypeDiplome()->latestVersion();
         $config = $version->config()->toArray();
-        $config['mccc']['ec']['profile'] = null;
+        $config['mccc']['CCI']['profile'] = null;
         $version->setConfig(VersionConfig::fromArray($config));
         self::assertFalse($validator->hasError($ec));
     }

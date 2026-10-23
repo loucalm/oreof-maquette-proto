@@ -102,12 +102,6 @@ final class StructureType extends AbstractType
                 }
             }
         }
-        // un type d'EC retiré ne doit plus avoir de jeu MCCC (indexé par clé de type)
-        foreach ($usage['mccc'] ?? [] as $key) {
-            if (isset($usage['labels'][$key]) && !\in_array($key, $natures, true)) {
-                $add('diplome.wizard.structure.error.ec_type_used_mccc', ['%type%' => $usage['labels'][$key]]);
-            }
-        }
     }
 
     /**
