@@ -75,6 +75,7 @@ final class TypeDiplomeFixtures extends Fixture implements DependentFixtureInter
             'options' => ['quitus' => false, 'assiduite' => false, 'sansNote' => false],
             'bccLevels' => ['Bloc', 'Compétence'],
             'bccLinkLevel' => 1,
+            'admission' => ['Parcoursup' => [1]],
         ];
     }
 
@@ -99,6 +100,7 @@ final class TypeDiplomeFixtures extends Fixture implements DependentFixtureInter
             self::minElementType('lp-stage', 'stage', 'last'),
         ];
         $c['mccc'] = array_map(static fn (array $m) => ['profile' => 'master'], $c['mccc']);
+        $c['admission'] = ['eCandidat' => [1]];
 
         return $c;
     }
@@ -113,6 +115,7 @@ final class TypeDiplomeFixtures extends Fixture implements DependentFixtureInter
         $c = $licence;
         $c['structure']['duration'] = ['min' => 2, 'max' => 2];
         $c['mccc'] = array_map(static fn (array $m) => ['profile' => 'master'], $c['mccc']);
+        $c['admission'] = ['Mon Master' => [1]];
 
         return $c;
     }
@@ -140,6 +143,7 @@ final class TypeDiplomeFixtures extends Fixture implements DependentFixtureInter
             'options' => ['quitus' => false, 'assiduite' => false, 'sansNote' => false],
             'bccLevels' => ['Bloc', 'Objectif', 'Attendu'],
             'bccLinkLevel' => 2,
+            'admission' => ['Mon Master' => [1]],
         ];
     }
 
@@ -184,6 +188,7 @@ final class TypeDiplomeFixtures extends Fixture implements DependentFixtureInter
             'options' => ['quitus' => false, 'assiduite' => false, 'sansNote' => false],
             'bccLevels' => ['Compétence', 'Niveau', 'Apprentissage critique'],
             'bccLinkLevel' => 2,
+            'admission' => ['Parcoursup' => [1]],
         ];
     }
 

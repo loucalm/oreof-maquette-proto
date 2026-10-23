@@ -37,6 +37,7 @@ final class VersionConfigTest extends TestCase
             'options' => ['quitus' => true, 'assiduite' => true, 'sansNote' => false],
             'bccLevels' => ['Bloc', 'Compétence'],
             'bccLinkLevel' => 1,
+            'admission' => ['Parcoursup' => [1]],
         ];
 
         self::assertSame($raw, VersionConfig::fromArray($raw)->toArray());

@@ -1,0 +1,14 @@
+{# Onglets de la liste des formations : `active` = 'all' ou 'offre'. #}
+<div class="flex gap-1 border-b mb-4" style="border-color:var(--c-border)">
+    {% for tab in [
+        {key: 'all', url: path('formation_index'), label: 'formation.index.tab_all'|trans({}, 'formation'), icon: null},
+        {key: 'offre', url: path('offre_index'), label: 'formation.index.tab_consolidation'|trans({}, 'formation'), icon: 'ph:hourglass-medium'},
+    ] %}
+        {% set on = tab.key == active %}
+        <a href="{{ tab.url }}" data-tab-link="{{ tab.key }}" {{ on ? 'aria-current="page"' }}
+           class="-mb-px rounded-t-lg border-b-2 px-3.5 py-2 text-sm font-medium {{ on ? '' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}"
+           style="border-color:{{ on ? 'var(--c-primary)' : 'transparent' }};{{ on ? 'color:var(--c-primary)' }}">
+            {% if tab.icon %}{{ ux_icon(tab.icon, {class: 'icon'}) }} {% endif %}{{ tab.label }}
+        </a>
+    {% endfor %}
+</div>

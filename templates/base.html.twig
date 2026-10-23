@@ -27,7 +27,7 @@
                 <nav class="hidden lg:flex items-center gap-6 text-sm text-gray-600">
                     <span class="fake-link cursor-default" aria-disabled="true" title="{{ 'common.coming_soon'|trans({}, 'common') }}">{{ 'layout.nav.dashboard'|trans({}, 'layout') }}</span>
                     <a href="{{ path('formation_index') }}"
-                       class="hover:text-gray-900 {{ _route matches '/^(formation_|node_|bcc_|parcours_)/' ? 'font-semibold text-gray-900' }}">{{ 'layout.nav.offer'|trans({}, 'layout') }}</a>
+                       class="hover:text-gray-900 {{ _route matches '/^(formation_|node_|bcc_|parcours_|offre_)/' ? 'font-semibold text-gray-900' }}">{{ 'layout.nav.offer'|trans({}, 'layout') }}</a>
                     <span class="fake-link cursor-default" aria-disabled="true" title="{{ 'common.coming_soon'|trans({}, 'common') }}">{{ 'layout.nav.steering'|trans({}, 'layout') }} {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>
                     <span class="fake-link cursor-default" aria-disabled="true" title="{{ 'common.coming_soon'|trans({}, 'common') }}">{{ 'layout.nav.councils'|trans({}, 'layout') }} {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>
                     <span class="fake-link cursor-default" aria-disabled="true" title="{{ 'common.coming_soon'|trans({}, 'common') }}">{{ 'layout.nav.users_rights'|trans({}, 'layout') }} {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>

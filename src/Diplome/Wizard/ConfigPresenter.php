@@ -53,6 +53,7 @@ final class ConfigPresenter
             ['title' => $this->t('section.bcc'), 'rows' => [
                 [$this->t('recap.bcc_levels'), [] === $config->bccLevels ? '—' : implode(' › ', $config->bccLevels)],
             ]],
+            ['title' => $this->t('section.admission'), 'rows' => $this->admissionRows($config)],
         ];
 
         return $sections;
@@ -163,6 +164,17 @@ final class ConfigPresenter
         }
 
         return $rows;
+    }
+
+    /** @return list<array{0: string, 1: string}> */
+    private function admissionRows(VersionConfig $config): array
+    {
+        $rows = [];
+        foreach ($config->admission as $plateforme => $years) {
+            $rows[] = [$plateforme, implode(', ', $years)];
+        }
+
+        return [] === $rows ? [[$this->t('recap.none'), '—']] : $rows;
     }
 
     private function t(string $key, array $params = []): string

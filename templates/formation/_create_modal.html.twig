@@ -1,0 +1,107 @@
+{# Modale « Ajouter une formation » (admin). Variables : creationTypes, defaultYear ; `defaultPhase`
+   ('construction' par défaut) ; `retour` = 'offre' pour revenir à la gestion de l'offre en cas d'erreur. #}
+{% set defaultPhase = defaultPhase|default('construction') %}
+    {% if is_admin() %}
+    <dialog data-modal-target="dialog" class="w-[min(920px,92vw)] rounded-2xl border p-0 backdrop:bg-black/40" style="border-color:var(--c-border)">
+        <form method="post" action="{{ path('formation_create') }}">
+            {% if retour is defined %}<input type="hidden" name="retour" value="{{ retour }}">{% endif %}
+            <div class="flex items-start justify-between border-b px-7 py-5" style="border-color:var(--c-border)">
+                <div>
+                    <h3 class="text-xl font-bold">{{ 'formation.index.modal_title'|trans({}, 'formation') }}</h3>
+                    <p class="text-sm text-gray-500">{{ 'formation.index.modal_subtitle'|trans({}, 'formation') }}</p>
+                </div>
+                <button type="button" data-action="modal#close" class="rounded-lg border px-2.5 py-1.5 text-gray-500 hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:x', {class: 'icon'}) }}</button>
+            </div>
+
+            <div class="px-7 py-6 space-y-6">
+                <div>
+                    <div class="flex items-center justify-between">
+                        <span class="fld-label">{{ 'formation.index.name_field'|trans({}, 'formation') }}</span>
+                        <span class="text-[11px] font-semibold text-red-500 uppercase">{{ 'common.required_badge'|trans({}, 'common') }}</span>
+                    </div>
+                    <input name="name" required placeholder="{{ 'formation.index.name_placeholder'|trans({}, 'formation') }}" class="fld mt-1">
+                    <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'formation.index.name_help'|trans({}, 'formation') }}</div>
+                </div>
+
+                <div class="grid gap-6 md:grid-cols-2">
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <span class="fld-label">{{ 'formation.index.diplome_field'|trans({}, 'formation') }}</span>
+                            <span class="text-[11px] font-semibold text-red-500 uppercase">{{ 'common.required_badge'|trans({}, 'common') }}</span>
+                        </div>
+                        <select name="typeDiplome" required class="fld mt-1">
+                            {% for c in creationTypes %}
+                                <option value="{{ c.type.key }}">{{ c.type.label }}{% if c.duration %} — {{ 'formation.index.type_option_bounds'|trans({'%duration%': c.duration}, 'formation') }}{% endif %}{% if not c.parcoursAllowed %} · {{ 'formation.index.type_option_no_parcours'|trans({}, 'formation') }}{% endif %}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'formation.index.diplome_help'|trans({}, 'formation') }}</div>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <span class="fld-label">{{ 'formation.index.domaine_field'|trans({}, 'formation') }}</span>
+                            <span class="text-[11px] font-semibold text-red-500 uppercase">{{ 'common.required_badge'|trans({}, 'common') }}</span>
+                        </div>
+                        <select name="domaine" class="fld mt-1">
+                            <option value="">{{ 'node.panel.choice_default'|trans({}, 'node') }}</option>
+                            {% for d in referentiel('domaines') %}
+                                <option value="{{ d }}">{{ d }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'formation.index.domaine_help'|trans({}, 'formation') }}</div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between">
+                        <span class="fld-label">{{ 'formation.index.composante_field'|trans({}, 'formation') }}</span>
+                        <span class="text-[11px] font-semibold text-red-500 uppercase">{{ 'common.required_badge'|trans({}, 'common') }}</span>
+                    </div>
+                    <input name="composante" placeholder="{{ 'formation.index.composante_placeholder'|trans({}, 'formation') }}" class="fld mt-1">
+                    <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'formation.index.composante_help'|trans({}, 'formation') }}</div>
+                </div>
+
+                <div class="grid gap-6 md:grid-cols-2">
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <span class="fld-label">{{ 'formation.index.duree_field'|trans({}, 'formation') }}</span>
+                            <span class="text-[11px] font-semibold text-red-500 uppercase">{{ 'common.required_badge'|trans({}, 'common') }}</span>
+                        </div>
+                        <input type="number" name="duree" min="1" required value="3" class="fld mt-1">
+                        <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'formation.index.duree_help'|trans({}, 'formation') }}</div>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <span class="fld-label">{{ 'formation.index.annee_field'|trans({}, 'formation') }}</span>
+                            <span class="text-[11px] font-semibold text-red-500 uppercase">{{ 'common.required_badge'|trans({}, 'common') }}</span>
+                        </div>
+                        <input name="anneeUniversitaire" required pattern="\d{4}-\d{4}" value="{{ defaultYear }}" placeholder="{{ 'formation.index.annee_placeholder'|trans({}, 'formation') }}" class="fld mt-1">
+                        <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'formation.index.annee_help'|trans({}, 'formation') }}</div>
+                    </div>
+                </div>
+
+                <label class="flex items-center gap-2 text-sm">
+                    <input type="checkbox" name="avecParcours" value="1"> {{ 'formation.index.multi_parcours_label'|trans({}, 'formation') }}
+                </label>
+
+                <div class="rounded-lg border p-3 space-y-3" style="border-color:var(--c-border);background:#f8f9fb">
+                    <div class="fld-label">{{ 'formation.index.creation_type_label'|trans({}, 'formation') }}</div>
+                    <div class="flex flex-col gap-2 text-sm">
+                        <label class="flex items-start gap-2">
+                            <input type="radio" name="phase" value="construction" {{ defaultPhase == 'construction' ? 'checked' }} class="mt-0.5">
+                            <span>{{ 'formation.index.phase_classic_label'|trans({}, 'formation') }} <span class="block text-xs text-gray-400">{{ 'formation.index.phase_classic_help'|trans({}, 'formation') }}</span></span>
+                        </label>
+                        <label class="flex items-start gap-2">
+                            <input type="radio" name="phase" value="consolidation" {{ defaultPhase == 'consolidation' ? 'checked' }} class="mt-0.5">
+                            <span>{{ 'formation.index.phase_consolidation_label'|trans({}, 'formation') }} <span class="block text-xs text-gray-400">{{ 'formation.index.phase_consolidation_help'|trans({}, 'formation') }}</span></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 border-t px-7 py-4" style="border-color:var(--c-border)">
+                <button type="button" data-action="modal#close" class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</button>
+                <button class="rounded-lg px-5 py-2 text-sm font-semibold text-white" style="background:var(--st-ok)">{{ 'formation.index.create_button'|trans({}, 'formation') }}</button>
+            </div>
+        </form>
+    </dialog>
+    {% endif %}

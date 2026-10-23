@@ -16,10 +16,12 @@ use App\Maquette\Doc\TreeNode;
  * - `mccc` : clé MccType autorisée dans la formation → profil de règles (null : aucun) ;
  * - `options` : quitus / assiduité / sans note ;
  * - `bccLevels` : noms des niveaux de BCC (1 à 3) ;
- * - `bccLinkLevel` : indice 0-based du niveau relié aux éléments (défaut : le dernier).
+ * - `bccLinkLevel` : indice 0-based du niveau relié aux éléments (défaut : le dernier) ;
+ * - `admission` : plateforme d'admission (clé du référentiel `plateformes_admission`) → numéros
+ *   des années où l'on y candidate (ex. Licence : Parcoursup en année 1).
  *
  * Forme canonique de `toArray()` : structure, canvas, mccc, options (quitus,
- * assiduite, sansNote), bccLevels, bccLinkLevel.
+ * assiduite, sansNote), bccLevels, bccLinkLevel, admission.
  */
 final readonly class VersionConfig
 {
@@ -28,6 +30,7 @@ final readonly class VersionConfig
      * @param array<string, array{profile: ?string}>                 $mccc
      * @param array{quitus: bool, assiduite: bool, sansNote: bool}  $options
      * @param list<string>                                          $bccLevels
+     * @param array<string, list<int>>                              $admission
      */
     public function __construct(
         public StructureSpec $structure,
@@ -37,6 +40,7 @@ final readonly class VersionConfig
         public array $options,
         public array $bccLevels,
         public int $bccLinkLevel,
+        public array $admission = [],
     ) {
     }
 
@@ -85,6 +89,10 @@ final readonly class VersionConfig
             ],
             $bccLevels,
             (int) ($a['bccLinkLevel'] ?? max(0, \count($bccLevels) - 1)),
+            array_map(
+                static fn ($years) => array_values(array_unique(array_map('intval', (array) $years))),
+                array_filter((array) ($a['admission'] ?? []), static fn ($years) => [] !== (array) $years),
+            ),
         );
     }
 
@@ -102,6 +110,7 @@ final readonly class VersionConfig
             'options' => $this->options,
             'bccLevels' => $this->bccLevels,
             'bccLinkLevel' => $this->bccLinkLevel,
+            'admission' => $this->admission,
         ];
     }
 }

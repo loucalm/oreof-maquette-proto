@@ -14,7 +14,6 @@ use App\Maquette\MaquetteBuilder;
 use App\Repository\FormationRepository;
 use App\Repository\NodeTypeRepository;
 use App\Repository\TypeDiplomeRepository;
-use App\Repository\TypeDiplomeVersionRepository;
 use App\Twig\RoleExtension;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
@@ -38,15 +37,15 @@ final class FormationController extends AbstractController
         Request $request,
         FormationRepository $formations,
         \App\Maquette\Completion $completion,
-        TypeDiplomeRepository $typeDiplomes,
-        TypeDiplomeVersionRepository $versions,
         FormationCreator $creator,
     ): Response {
-        $phaseFilter = FormationPhase::tryFrom((string) $request->query->get('phase', ''));
-        $list = null !== $phaseFilter ? $formations->findByPhase($phaseFilter) : $formations->findAllRecent();
+        // l'ancien onglet « Consolidation de l'offre » est devenu la gestion de l'offre
+        if (FormationPhase::Consolidation->value === $request->query->get('phase')) {
+            return $this->redirectToRoute('offre_index');
+        }
 
         $rows = [];
-        foreach ($list as $formation) {
+        foreach ($formations->findAllRecent() as $formation) {
             // cache de progression (Maquette::save) — pas de reconstruction d'arbre ici.
             // Amorçage : une formation jamais enregistrée (fixtures) est calculée à la volée.
             $stats = $formation->getStats();
@@ -61,41 +60,30 @@ final class FormationController extends AbstractController
             ];
         }
 
-        // types proposables à la création (les archivés n'y figurent pas), avec les bornes de leur version courante
-        $creationTypes = [];
-        foreach ($typeDiplomes->findAllOrdered(false) as $type) {
-            $version = $versions->findForYear($type, TypeDiplomeResolver::DEFAULT_YEAR) ?? $type->latestVersion();
-            $structure = $version?->config()->structure;
-            $creationTypes[] = [
-                'type' => $type,
-                'duration' => null !== $structure ? $creator->describeDuration($structure->duration) : null,
-                'parcoursAllowed' => $structure?->parcoursAllowed ?? false,
-            ];
-        }
-
         return $this->render('formation/index.html.twig', [
-            'creationTypes' => $creationTypes,
+            'creationTypes' => $creator->creationTypes(),
             'defaultYear' => TypeDiplomeResolver::DEFAULT_YEAR,
             'rows' => $rows,
-            'consolidationTab' => $phaseFilter === FormationPhase::Consolidation,
         ]);
     }
 
     #[Route('/formations', name: 'formation_create', methods: ['POST'])]
     public function create(Request $request, TypeDiplomeRepository $typeDiplomes, FormationCreator $creator): Response
     {
+        // créée depuis la gestion de l'offre : on y revient en cas d'erreur
+        $back = 'offre' === $request->request->get('retour') ? 'offre_index' : 'formation_index';
         $name = trim((string) $request->request->get('name'));
         if ($name === '') {
             $this->addFlash('danger', 'Un nom de formation est requis.');
 
-            return $this->redirectToRoute('formation_index');
+            return $this->redirectToRoute($back);
         }
 
         $type = $typeDiplomes->findOneByKey((string) $request->request->get('typeDiplome'));
         if (null === $type) {
             $this->addFlash('danger', 'Choisissez un type de diplôme.');
 
-            return $this->redirectToRoute('formation_index');
+            return $this->redirectToRoute($back);
         }
 
         try {
@@ -112,13 +100,18 @@ final class FormationController extends AbstractController
         } catch (\DomainException $e) {
             $this->addFlash('danger', $e->getMessage());
 
-            return $this->redirectToRoute('formation_index');
+            return $this->redirectToRoute($back);
         }
 
         $this->addFlash('success', sprintf(
             'Formation « %s » créée d\'après le type de diplôme %s : sa structure de départ respecte les bornes du diplôme.',
             $name, $type->getLabel(),
         ));
+
+        // formation créée en consolidation : ses informations principales se règlent dans la gestion de l'offre
+        if (FormationPhase::Consolidation === $formation->getPhase()) {
+            return $this->redirectToRoute('offre_configure', ['id' => $formation->getId()]);
+        }
 
         return $this->redirectToRoute('formation_editor', ['id' => $formation->getId()]);
     }
@@ -428,7 +421,7 @@ final class FormationController extends AbstractController
         return $this->redirectToRoute('formation_editor', ['id' => $formation->getId()]);
     }
 
-    /** Passe en construction toutes les formations cochées (onglet « Consolidation de l'offre »). */
+    /** Passe en construction les formations données (gestion de l'offre). */
     #[Route('/formations/phase/construction', name: 'formation_phase_batch', methods: ['POST'], priority: 10)]
     public function phaseBatch(Request $request, FormationRepository $formations, EntityManagerInterface $em): Response
     {
@@ -445,7 +438,7 @@ final class FormationController extends AbstractController
             ? sprintf('%d formation(s) passée(s) en construction.', $count)
             : 'Aucune formation cochée.');
 
-        return $this->redirectToRoute('formation_index', ['phase' => 'consolidation']);
+        return $this->redirectToRoute('offre_index');
     }
 
     /**

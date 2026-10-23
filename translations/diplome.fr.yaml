@@ -44,6 +44,7 @@ diplome:
       structure: Structure
       mccc: MCCC
       bcc: BCC
+      admission: Admission
       recapitulatif: Récapitulatif
     error:
       sigle_taken: Ce sigle est déjà utilisé par un autre type de diplôme.
@@ -230,12 +231,20 @@ diplome:
         first_required: Le premier niveau est obligatoire.
         gap: Les niveaux se remplissent dans l'ordre, sans niveau vide.
         link_level: Le niveau relié doit faire partie des niveaux saisis.
+    admission:
+      help: Cochez les plateformes de candidature du diplôme et indiquez les années concernées (ex. « 1 » pour la première année). Elles s'affichent dans la gestion de l'offre.
+      plateformes: Plateformes d'admission
+      none: Aucune plateforme dans le référentiel « Plateformes d'admission ».
+      annees: Années
+      error:
+        annees: 'Années : des numéros séparés par des virgules (ex. « 1, 2 »).'
     section:
       informations: Informations
       structure: Structure
       forms: Formulaires
       mccc: MCCC
       bcc: BCC
+      admission: Admission
     bound:
       exact: 'exactement %n%'
       range: 'de %min% à %max%'
@@ -264,6 +273,7 @@ diplome:
       sansNote: Sans note
       bccLevels: Niveaux de BCC
       bccLinkLevel: Niveau de BCC relié aux éléments
+      admission: Admission
       canvas: Formulaires
       formation: Fiche formation
       parcours: Fiche parcours

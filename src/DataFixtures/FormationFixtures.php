@@ -255,6 +255,7 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
                 'debouches' => 'Développeur, administrateur systèmes et bases de données, assistant chef de projet.',
                 'codesRome' => 'M1805 — Études et développement informatique',
             ]);
+        $this->offre($doc, ['statut' => 'soumis_cfvu', 'note' => true], [180, 150, 120]);
         $this->maquette->save($formation, $doc, 'Démo');
     }
 
@@ -307,6 +308,16 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
             'codesRome' => 'M1805 — Études et développement informatique',
         ]);
 
+        // une année sans capacité (anomalie de démonstration), le parcours Mathématiques non ouvert
+        $this->offre($doc, ['statut' => 'brouillon'], [240, 120, 60, 40, 35, null]);
+        $offre = $doc->formationParam('offre');
+        foreach ($doc->parcoursNodes() as $p) {
+            if ('Parcours Mathématiques' === $p->getLabel()) {
+                $offre['parcours'][$p->nid] = ['ouverture' => 'non_ouvert'];
+            }
+        }
+        $doc->setFormationParam('offre', $offre);
+
         $formation->setEctsTotal(180);
         $this->maquette->save($formation, $doc, 'Démo');
     }
@@ -335,7 +346,25 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
 
         $formation->setEctsTotal(180);
         $doc->setFormationParam('bccReferentiel', ['competences' => $this->butReferentiel()]);
+        $this->offre($doc, ['statut' => 'publie', 'pv' => true, 'note' => true], [96, 84, 84]);
         $this->maquette->save($formation, $doc, 'Démo');
+    }
+
+    /**
+     * Gestion de l'offre de démonstration (cf. App\Offre\OffreFormation) : statut et documents,
+     * puis capacité d'accueil des années dans l'ordre de l'arbre (null : à renseigner).
+     *
+     * @param array<string, mixed> $etat
+     * @param list<?int>           $capacites
+     */
+    private function offre(MaquetteDoc $doc, array $etat, array $capacites): void
+    {
+        $annees = [];
+        $years = array_values(array_filter($doc->allNodes(), static fn (TreeNode $n) => 'annee' === $n->typeKey));
+        foreach ($years as $i => $annee) {
+            $annees[$annee->nid] = array_filter(['ouvert' => true, 'capacite' => $capacites[$i] ?? null], static fn ($v) => null !== $v);
+        }
+        $doc->setFormationParam('offre', $etat + ['annees' => $annees]);
     }
 
     /**

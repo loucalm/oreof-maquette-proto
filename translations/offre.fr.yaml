@@ -1,0 +1,85 @@
+offre:
+  title: Gestion de l’offre
+  subtitle: Formations, parcours et années de l’offre, avec leur ouverture, leur capacité d’accueil et leurs plateformes d’admission.
+  configure_title: 'Configurer l’offre · %name%'
+  configure: Configurer
+  open_editor: Ouvrir l’éditeur
+  back: Retour à l’offre
+  empty: Aucune formation ne correspond. Cliquez sur « Ajouter une formation ».
+  'yes': Oui
+  'no': Non
+  places: places
+  no_composante: composante non renseignée
+  composantes: Composantes
+  expand_all: Déplier tout
+  collapse_all: Replier tout
+  group_count: '(%formations% formation(s) · %parcours% parcours)'
+  ouverts_ratio: '%n%/%total% ouverts'
+  parcours_count: '%count% parcours'
+  annees_count: '(%count% année(s))'
+  sans_parcours: Sans parcours
+  annees_formation: Années de la formation
+  annee_commune: 'commune à %count% parcours'
+  annee_saisie_ailleurs: 'Année commune : à saisir sur « %parcours% ».'
+  chemin: 'Suite de : %chemin%'
+  anomalies_title: '%count% point(s) à vérifier'
+  check_title: Contrôle avant transmission
+  check_ok: L’ouverture et les capacités de la formation sont complètes. Aucune anomalie.
+  statut_note: Statut et documents affichés à titre indicatif (circuit de validation hors prototype).
+  consolidation_help: Formation en consolidation de l’offre — réglez ses informations principales ; le contenu se saisira une fois passée en construction.
+  to_construction: Passer en construction
+  ouverture_label: Ouverture
+  no_annees: Aucune année dans la structure de ce parcours.
+  ouverture:
+    ouvert: Ouvert
+    non_ouvert: Non ouvert
+    fermeture: Fermeture définitive
+  statut:
+    brouillon: Brouillon
+    soumis_ses: Soumis Scolarité
+    soumis_cfvu: Soumis CFVU
+    attente_pv: Validé CFVU (attente PV)
+    publie: Publié
+  doc:
+    pv: PV
+    no_pv: Sans PV
+    note: Note
+    no_note: Sans note
+    notes: Notes
+  col:
+    formation: Formation
+    parcours: Parcours
+    annee: Année
+    ouvert: Ouvert
+    ouverte: Ouverte
+    plateformes: Plateformes
+    capacite: Capacité
+    capacite_accueil: Capacité d’accueil
+    statut: Statut
+  filter:
+    search: Rechercher une formation ou un parcours…
+    composante: Toutes les composantes
+    type: Tous les diplômes
+    plateforme: Toutes les plateformes
+    statut: Tous les statuts
+    consolidation: En consolidation
+    anomalie: Avec anomalie
+    apply: Filtrer
+    clear: Effacer
+  kpi:
+    formations: Formations
+    formations_help: Nombre de formations (mentions) affichées selon les filtres.
+    parcours: Parcours
+    parcours_help: Nombre de parcours de ces formations (le parcours unique d’une formation sans parcours compte pour un).
+    ouverts: Ouverts
+    ouverts_help: Parcours ouverts au recrutement pour l’année.
+    non_ouverts: Non ouverts
+    non_ouverts_help: 'Non ouverts : %non_ouverture% ; fermeture définitive : %fermeture%.'
+    capacite: Capacité
+    capacite_help: Somme des capacités d’accueil des années ouvertes (une année commune comptée une fois).
+    a_confirmer: À confirmer
+    a_confirmer_help: Parcours ouverts dont l’offre n’est pas encore validée par la CFVU.
+    anomalies: Anomalies
+    anomalies_help: Points à vérifier (capacités manquantes, parcours ouvert sans année ouverte, composante absente…).
+    plateformes: Plateformes
+    plateformes_help: Plateformes d’admission du type de diplôme.

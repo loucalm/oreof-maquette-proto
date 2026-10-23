@@ -10,6 +10,7 @@ use App\Entity\Formation;
 use App\Entity\TypeDiplome;
 use App\Enum\FormationPhase;
 use App\Maquette\Maquette;
+use App\Repository\TypeDiplomeRepository;
 use App\Repository\TypeDiplomeVersionRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -31,7 +32,29 @@ final class FormationCreator
         private readonly StructureInstantiator $instantiator,
         private readonly TranslatorInterface $translator,
         private readonly DurationLabeler $durations,
+        private readonly TypeDiplomeRepository $typeDiplomes,
     ) {
+    }
+
+    /**
+     * Types proposables à la création (les archivés n'y figurent pas), avec les bornes de leur version courante.
+     *
+     * @return list<array{type: TypeDiplome, duration: ?string, parcoursAllowed: bool}>
+     */
+    public function creationTypes(): array
+    {
+        $out = [];
+        foreach ($this->typeDiplomes->findAllOrdered(false) as $type) {
+            $version = $this->versions->findForYear($type, TypeDiplomeResolver::DEFAULT_YEAR) ?? $type->latestVersion();
+            $structure = $version?->config()->structure;
+            $out[] = [
+                'type' => $type,
+                'duration' => null !== $structure ? $this->describeDuration($structure->duration) : null,
+                'parcoursAllowed' => $structure?->parcoursAllowed ?? false,
+            ];
+        }
+
+        return $out;
     }
 
     /**

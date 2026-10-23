@@ -1,0 +1,31 @@
+{# Badges de la gestion de l'offre. #}
+{% macro badge(label, tone, icon = null) %}
+    {% set tones = {
+        success: 'background:#dcfce7;color:#15803d', danger: 'background:#fee2e2;color:#b91c1c',
+        warning: 'background:#fef3c7;color:#b45309', info: 'background:#e0f2fe;color:#0369a1',
+        primary: 'background:var(--c-primary-soft);color:var(--c-primary)', muted: 'background:#eef1f4;color:#4b5563',
+    } %}
+    <span class="pill inline-flex items-center gap-1 whitespace-nowrap" style="{{ tones[tone] ?? tones.muted }}">{% if icon %}{{ ux_icon(icon, {class: 'icon'}) }}{% endif %}{{ label }}</span>
+{% endmacro %}
+
+{% macro ouvert(isOuvert) %}
+    {{ _self.badge(isOuvert ? 'offre.yes'|trans({}, 'offre') : 'offre.no'|trans({}, 'offre'), isOuvert ? 'success' : 'danger') }}
+{% endmacro %}
+
+{% macro statut(statut) %}
+    {% set tones = {brouillon: 'muted', soumis_ses: 'info', soumis_cfvu: 'primary', attente_pv: 'warning', publie: 'success'} %}
+    {{ _self.badge(('offre.statut.' ~ statut)|trans({}, 'offre'), tones[statut] ?? 'muted') }}
+{% endmacro %}
+
+{% macro documents(row) %}
+    {{ _self.badge(row.pv ? 'offre.doc.pv'|trans({}, 'offre') : 'offre.doc.no_pv'|trans({}, 'offre'), row.pv ? 'success' : 'muted', 'ph:file') }}
+    {{ _self.badge(row.note ? 'offre.doc.note'|trans({}, 'offre') : 'offre.doc.no_note'|trans({}, 'offre'), row.note ? 'primary' : 'muted', 'ph:file-pdf') }}
+{% endmacro %}
+
+{% macro kpi(label, value, tone, icon, help, unit = null) %}
+    {% set colors = {success: '#15803d', danger: '#b91c1c', warning: '#b45309', info: '#0369a1', muted: '#4b5563', primary: 'var(--c-primary)'} %}
+    <div class="rounded-xl border px-4 py-3" style="border-color:var(--c-border)" title="{{ help }}" data-kpi="{{ icon }}">
+        <div class="flex items-center gap-1.5 text-xs font-medium text-gray-500">{{ ux_icon(icon, {class: 'icon'}) }} {{ label }}</div>
+        <div class="mt-1 text-2xl font-extrabold" style="color:{{ colors[tone] ?? colors.muted }}">{{ value }}{% if unit %} <span class="text-xs font-medium text-gray-400">{{ unit }}</span>{% endif %}</div>
+    </div>
+{% endmacro %}

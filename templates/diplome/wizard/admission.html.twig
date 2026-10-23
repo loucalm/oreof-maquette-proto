@@ -1,0 +1,29 @@
+{% extends wizard_layout|default('diplome/wizard/_layout.html.twig') %}
+{% block step_content %}
+<p class="text-sm mb-4" style="color:var(--c-muted)">{{ 'diplome.wizard.admission.help'|trans({}, 'diplome') }}</p>
+{{ form_start(form, {attr: {id: 'wizard-form', class: 'space-y-5'}}) }}
+    {{ form_errors(form) }}
+    <fieldset class="rounded-lg border p-4" style="border-color:var(--c-border)">
+        <legend class="px-2 text-sm font-semibold">{{ 'diplome.wizard.admission.plateformes'|trans({}, 'diplome') }}</legend>
+        {% if form.plateformes|length == 0 %}
+            <p class="text-sm" style="color:var(--c-muted)" data-no-plateformes>{{ 'diplome.wizard.admission.none'|trans({}, 'diplome') }}</p>
+        {% endif %}
+        <div class="divide-y">
+            {% for entry in form.plateformes %}
+                <div class="flex flex-wrap items-center gap-3 py-2 text-sm" data-plateforme="{{ entry.vars.value.key }}">
+                    {{ form_widget(entry.key) }}
+                    <label class="flex flex-1 items-center gap-2 min-w-[12rem]">{{ form_widget(entry.enabled) }} {{ entry.vars.value.label }}</label>
+                    <label class="flex items-center gap-2 text-xs" style="color:var(--c-muted)">
+                        {{ 'diplome.wizard.admission.annees'|trans({}, 'diplome') }}
+                        {{ form_widget(entry.annees, {attr: {class: 'w-28 rounded-md border px-3 py-1.5 text-sm', style: 'border-color:var(--c-border)', placeholder: '1'}}) }}
+                    </label>
+                    {{ form_errors(entry.annees) }}
+                </div>
+            {% endfor %}
+        </div>
+    </fieldset>
+{{ form_end(form) }}
+{% endblock %}
+{% block step_next %}
+    <button form="wizard-form" class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'diplome.wizard.next'|trans({}, 'diplome') }}</button>
+{% endblock %}

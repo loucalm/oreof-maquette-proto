@@ -1,0 +1,131 @@
+{% extends 'base.html.twig' %}
+{% import 'offre/_macros.html.twig' as o %}
+{% set f = offre.formation %}
+{% block title %}{{ 'offre.configure_title'|trans({'%name%': f.name}, 'offre') }}{% endblock %}
+
+{% block body %}
+<div class="rounded-2xl border bg-white px-7 py-6 mb-4" style="border-color:var(--c-border)">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+        <div>
+            <div class="text-xs text-gray-400">
+                {{ ux_icon('ph:house', {class: 'icon'}) }} <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.index.breadcrumb_home'|trans({}, 'formation') }}</a> ›
+                <a href="{{ path('offre_index') }}" class="hover:underline">{{ 'offre.title'|trans({}, 'offre') }}</a> › {{ f.name }}
+            </div>
+            <h1 class="text-2xl font-extrabold tracking-tight mt-1">{{ f.name }}</h1>
+            <p class="text-sm text-gray-500">{{ offre.typeLabel ?: '—' }} · {{ offre.composante ?: 'offre.no_composante'|trans({}, 'offre') }}{{ f.anneeUniversitaire ? ' · ' ~ f.anneeUniversitaire }}</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <a href="{{ path('formation_editor', {id: f.id}) }}" class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'offre.open_editor'|trans({}, 'offre') }}</a>
+            <a href="{{ path('offre_index') }}" class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'offre.back'|trans({}, 'offre') }}</a>
+        </div>
+    </div>
+
+    {% if f.phase.value == 'consolidation' %}
+        <div class="mt-4 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-2.5 text-sm" style="border-color:#fcd34d;background:#fffbeb" data-consolidation>
+            <span class="text-amber-800">{{ ux_icon('ph:hourglass-medium', {class: 'icon'}) }} {{ 'offre.consolidation_help'|trans({}, 'offre') }}</span>
+            <form method="post" action="{{ path('formation_phase_batch') }}" class="ml-auto"
+                  data-controller="confirm" data-confirm-message-value="{{ 'formation.index.batch_construction_confirm'|trans({}, 'formation') }}">
+                <input type="hidden" name="ids[]" value="{{ f.id }}">
+                <button class="rounded-lg border bg-white px-3 py-1.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-right', {class: 'icon'}) }} {{ 'offre.to_construction'|trans({}, 'offre') }}</button>
+            </form>
+        </div>
+    {% endif %}
+</div>
+
+<form method="post" action="{{ path('offre_configure_save', {id: f.id}) }}" data-controller="dirty-form">
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-4">
+        {{ o.kpi('offre.kpi.ouverts'|trans({}, 'offre'), (offre.parcours|filter(p => p.ouvert)|length) ~ ' / ' ~ offre.parcours|length, 'success', 'ph:check-circle', 'offre.kpi.ouverts_help'|trans({}, 'offre')) }}
+        {{ o.kpi('offre.kpi.plateformes'|trans({}, 'offre'), offre.plateformes|length, 'primary', 'ph:globe', 'offre.kpi.plateformes_help'|trans({}, 'offre')) }}
+        {{ o.kpi('offre.kpi.capacite'|trans({}, 'offre'), offre.capacite, 'info', 'ph:users', 'offre.kpi.capacite_help'|trans({}, 'offre'), 'offre.places'|trans({}, 'offre')) }}
+        {{ o.kpi('offre.kpi.anomalies'|trans({}, 'offre'), offre.anomalies|length, offre.anomalies is empty ? 'muted' : 'warning', offre.anomalies is empty ? 'ph:check-circle' : 'ph:warning', 'offre.kpi.anomalies_help'|trans({}, 'offre')) }}
+    </div>
+
+    <div class="rounded-2xl border bg-white px-6 py-5 mb-4" style="border-color:var(--c-border)">
+        <h2 class="font-semibold mb-3">{{ 'offre.check_title'|trans({}, 'offre') }}</h2>
+        {% if offre.anomalies is empty %}
+            <p class="text-sm text-green-700">{{ ux_icon('ph:check-circle', {class: 'icon'}) }} {{ 'offre.check_ok'|trans({}, 'offre') }}</p>
+        {% else %}
+            <ul class="list-disc pl-5 text-sm text-amber-800 space-y-0.5" data-offre-anomalies>
+                {% for a in offre.anomalies %}<li>{{ a }}</li>{% endfor %}
+            </ul>
+        {% endif %}
+        <div class="mt-4 flex flex-wrap items-center gap-2 border-t pt-3 text-sm" style="border-color:var(--c-border)">
+            <span class="text-gray-500">{{ 'offre.col.statut'|trans({}, 'offre') }} :</span> {{ o.statut(offre.statut) }} {{ o.documents(offre) }}
+            <span class="text-xs text-gray-400">{{ 'offre.statut_note'|trans({}, 'offre') }}</span>
+            <button class="ml-auto rounded-lg px-5 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
+        </div>
+    </div>
+
+    {% for p in offre.parcours %}
+        <section class="rounded-2xl border bg-white px-6 py-5 mb-4" style="border-color:var(--c-border)" data-offre-parcours="{{ p.nid }}">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-lg font-bold">{{ ux_icon('ph:stack', {class: 'icon'}) }} {{ p.nid == '_formation' ? 'offre.annees_formation'|trans({}, 'offre') : p.label }}</h2>
+                    {% if p.chemin %}<div class="text-xs text-gray-400">{{ 'offre.chemin'|trans({'%chemin%': p.chemin}, 'offre') }}</div>{% endif %}
+                </div>
+                <label class="flex items-center gap-2 text-sm">
+                    <span class="text-gray-500">{{ 'offre.ouverture_label'|trans({}, 'offre') }}</span>
+                    <select name="parcours[{{ p.nid }}][ouverture]" class="fld" style="width:auto">
+                        {% for v in ['ouvert', 'non_ouvert', 'fermeture'] %}
+                            <option value="{{ v }}" {{ p.ouverture == v ? 'selected' }}>{{ ('offre.ouverture.' ~ v)|trans({}, 'offre') }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </div>
+
+            {% if p.annees is empty %}
+                <p class="mt-3 text-sm text-gray-400">{{ 'offre.no_annees'|trans({}, 'offre') }}</p>
+            {% else %}
+                <table class="mt-3 w-full text-sm">
+                    <thead class="text-[11px] uppercase tracking-wide text-gray-400">
+                        <tr class="border-b" style="border-color:var(--c-border)">
+                            <th class="text-left py-2">{{ 'offre.col.annee'|trans({}, 'offre') }}</th>
+                            <th class="text-center py-2 px-3">{{ 'offre.col.ouverte'|trans({}, 'offre') }}</th>
+                            <th class="text-left py-2 px-3">{{ 'offre.col.capacite_accueil'|trans({}, 'offre') }}</th>
+                            <th class="text-left py-2 px-3">{{ 'offre.col.plateformes'|trans({}, 'offre') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for a in p.annees %}
+                        {# une année commune se saisit une fois : la ligne des autres parcours y renvoie #}
+                        {% set first = offre.parcours|filter(q => a.nid in q.annees|map(x => x.nid))|first %}
+                        <tr class="border-b last:border-0" style="border-color:var(--c-border)" data-offre-annee="{{ a.nid }}">
+                            <td class="py-2">
+                                {{ a.label }}
+                                {% if a.partage %}<span class="ml-1">{{ o.badge('offre.annee_commune'|trans({'%count%': a.partage}, 'offre'), 'info', 'ph:users-three') }}</span>{% endif %}
+                            </td>
+                            {% if first.nid == p.nid %}
+                                <td class="py-2 px-3 text-center">
+                                    <input type="hidden" name="annees[{{ a.nid }}][ouvert]" value="0">
+                                    <input type="checkbox" name="annees[{{ a.nid }}][ouvert]" value="1" {{ a.ouvert ? 'checked' }} aria-label="{{ 'offre.col.ouverte'|trans({}, 'offre') }} — {{ a.label }}">
+                                </td>
+                                <td class="py-2 px-3">
+                                    <div class="relative w-32">
+                                        <input type="number" min="0" step="1" name="annees[{{ a.nid }}][capacite]" value="{{ a.capacite }}" class="fld pr-12" aria-label="{{ 'offre.col.capacite_accueil'|trans({}, 'offre') }} — {{ a.label }}">
+                                        <span class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-xs text-gray-400">{{ 'offre.places'|trans({}, 'offre') }}</span>
+                                    </div>
+                                </td>
+                                <td class="py-2 px-3">
+                                    <input type="hidden" name="annees[{{ a.nid }}][plateformes][]" value="">
+                                    {% for pl in a.plateformes %}
+                                        <label class="mr-3 inline-flex items-center gap-1.5"><input type="checkbox" name="annees[{{ a.nid }}][plateformes][]" value="{{ pl.key }}" {{ pl.active ? 'checked' }}> {{ pl.label }}</label>
+                                    {% else %}
+                                        <span class="text-xs text-gray-400">—</span>
+                                    {% endfor %}
+                                </td>
+                            {% else %}
+                                <td colspan="3" class="py-2 px-3 text-xs text-gray-400">{{ 'offre.annee_saisie_ailleurs'|trans({'%parcours%': first.label}, 'offre') }}</td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </section>
+    {% endfor %}
+
+    <div class="flex justify-end">
+        <button class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
+    </div>
+</form>
+{% endblock %}

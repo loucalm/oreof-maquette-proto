@@ -32,25 +32,7 @@
         <h2 class="text-2xl font-extrabold tracking-tight">{{ 'formation.index.heading'|trans({}, 'formation')|upper }}</h2>
         <p class="text-sm text-gray-500 mb-5">{{ 'formation.index.table_description'|trans({}, 'formation') }}</p>
 
-        <div class="flex gap-1 border-b mb-4" style="border-color:var(--c-border)">
-            <a href="{{ path('formation_index') }}"
-               class="-mb-px rounded-t-lg border-b-2 px-3.5 py-2 text-sm font-medium {{ consolidationTab ? 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' : '' }}"
-               style="border-color:{{ consolidationTab ? 'transparent' : 'var(--c-primary)' }};{{ consolidationTab ? '' : 'color:var(--c-primary)' }}">{{ 'formation.index.tab_all'|trans({}, 'formation') }}</a>
-            <a href="{{ path('formation_index', {phase: 'consolidation'}) }}"
-               class="-mb-px rounded-t-lg border-b-2 px-3.5 py-2 text-sm font-medium {{ consolidationTab ? '' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}"
-               style="border-color:{{ consolidationTab ? 'var(--c-primary)' : 'transparent' }};{{ consolidationTab ? 'color:var(--c-primary)' : '' }}">
-                {{ ux_icon('ph:hourglass-medium', {class: 'icon'}) }} {{ 'formation.index.tab_consolidation'|trans({}, 'formation') }}
-            </a>
-        </div>
-
-        {% if consolidationTab and rows is not empty %}
-            <form id="phase-batch" method="post" action="{{ path('formation_phase_batch') }}" data-turbo-frame="_top"
-                  data-controller="confirm" data-confirm-message-value="{{ 'formation.index.batch_construction_confirm'|trans({}, 'formation') }}"
-                  class="mb-3 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-2.5 text-sm" style="border-color:#fcd34d;background:#fffbeb">
-                <span class="text-amber-800">{{ 'formation.index.batch_construction_help'|trans({}, 'formation') }}</span>
-                <button class="ml-auto rounded-lg border bg-white px-3 py-1.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-right', {class: 'icon'}) }} {{ 'formation.index.batch_construction_button'|trans({}, 'formation') }}</button>
-            </form>
-        {% endif %}
+        {% include 'formation/_tabs.html.twig' with {active: 'all'} %}
         <div class="rounded-xl border" style="border-color:var(--c-border)">
             <table class="w-full text-sm">
                 <thead>
@@ -68,7 +50,6 @@
                     <tr class="border-t" style="border-color:var(--c-border)">
                         <td class="px-4 py-4 align-top">
                             <div class="font-medium">
-                                {% if consolidationTab %}<input type="checkbox" form="phase-batch" name="ids[]" value="{{ f.id }}" class="mr-2 align-middle" aria-label="{{ 'formation.index.batch_select_aria'|trans({'%name%': f.name}, 'formation') }}">{% endif %}
                                 {{ f.name }}
                             </div>
                             <div class="text-xs text-gray-400">
@@ -182,108 +163,6 @@
     </div>
 
     {# ─── modale : ajouter une formation (admin) ─── #}
-    {% if is_admin() %}
-    <dialog data-modal-target="dialog" class="w-[min(920px,92vw)] rounded-2xl border p-0 backdrop:bg-black/40" style="border-color:var(--c-border)">
-        <form method="post" action="{{ path('formation_create') }}">
-            <div class="flex items-start justify-between border-b px-7 py-5" style="border-color:var(--c-border)">
-                <div>
-                    <h3 class="text-xl font-bold">{{ 'formation.index.modal_title'|trans({}, 'formation') }}</h3>
-                    <p class="text-sm text-gray-500">{{ 'formation.index.modal_subtitle'|trans({}, 'formation') }}</p>
-                </div>
-                <button type="button" data-action="modal#close" class="rounded-lg border px-2.5 py-1.5 text-gray-500 hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:x', {class: 'icon'}) }}</button>
-            </div>
-
-            <div class="px-7 py-6 space-y-6">
-                <div>
-                    <div class="flex items-center justify-between">
-                        <span class="fld-label">{{ 'formation.index.name_field'|trans({}, 'formation') }}</span>
-                        <span class="text-[11px] font-semibold text-red-500 uppercase">{{ 'common.required_badge'|trans({}, 'common') }}</span>
-                    </div>
-                    <input name="name" required placeholder="{{ 'formation.index.name_placeholder'|trans({}, 'formation') }}" class="fld mt-1">
-                    <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'formation.index.name_help'|trans({}, 'formation') }}</div>
-                </div>
-
-                <div class="grid gap-6 md:grid-cols-2">
-                    <div>
-                        <div class="flex items-center justify-between">
-                            <span class="fld-label">{{ 'formation.index.diplome_field'|trans({}, 'formation') }}</span>
-                            <span class="text-[11px] font-semibold text-red-500 uppercase">{{ 'common.required_badge'|trans({}, 'common') }}</span>
-                        </div>
-                        <select name="typeDiplome" required class="fld mt-1">
-                            {% for c in creationTypes %}
-                                <option value="{{ c.type.key }}">{{ c.type.label }}{% if c.duration %} — {{ 'formation.index.type_option_bounds'|trans({'%duration%': c.duration}, 'formation') }}{% endif %}{% if not c.parcoursAllowed %} · {{ 'formation.index.type_option_no_parcours'|trans({}, 'formation') }}{% endif %}</option>
-                            {% endfor %}
-                        </select>
-                        <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'formation.index.diplome_help'|trans({}, 'formation') }}</div>
-                    </div>
-                    <div>
-                        <div class="flex items-center justify-between">
-                            <span class="fld-label">{{ 'formation.index.domaine_field'|trans({}, 'formation') }}</span>
-                            <span class="text-[11px] font-semibold text-red-500 uppercase">{{ 'common.required_badge'|trans({}, 'common') }}</span>
-                        </div>
-                        <select name="domaine" class="fld mt-1">
-                            <option value="">{{ 'node.panel.choice_default'|trans({}, 'node') }}</option>
-                            {% for d in referentiel('domaines') %}
-                                <option value="{{ d }}">{{ d }}</option>
-                            {% endfor %}
-                        </select>
-                        <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'formation.index.domaine_help'|trans({}, 'formation') }}</div>
-                    </div>
-                </div>
-
-                <div>
-                    <div class="flex items-center justify-between">
-                        <span class="fld-label">{{ 'formation.index.composante_field'|trans({}, 'formation') }}</span>
-                        <span class="text-[11px] font-semibold text-red-500 uppercase">{{ 'common.required_badge'|trans({}, 'common') }}</span>
-                    </div>
-                    <input name="composante" placeholder="{{ 'formation.index.composante_placeholder'|trans({}, 'formation') }}" class="fld mt-1">
-                    <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'formation.index.composante_help'|trans({}, 'formation') }}</div>
-                </div>
-
-                <div class="grid gap-6 md:grid-cols-2">
-                    <div>
-                        <div class="flex items-center justify-between">
-                            <span class="fld-label">{{ 'formation.index.duree_field'|trans({}, 'formation') }}</span>
-                            <span class="text-[11px] font-semibold text-red-500 uppercase">{{ 'common.required_badge'|trans({}, 'common') }}</span>
-                        </div>
-                        <input type="number" name="duree" min="1" required value="3" class="fld mt-1">
-                        <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'formation.index.duree_help'|trans({}, 'formation') }}</div>
-                    </div>
-                    <div>
-                        <div class="flex items-center justify-between">
-                            <span class="fld-label">{{ 'formation.index.annee_field'|trans({}, 'formation') }}</span>
-                            <span class="text-[11px] font-semibold text-red-500 uppercase">{{ 'common.required_badge'|trans({}, 'common') }}</span>
-                        </div>
-                        <input name="anneeUniversitaire" required pattern="\d{4}-\d{4}" value="{{ defaultYear }}" placeholder="{{ 'formation.index.annee_placeholder'|trans({}, 'formation') }}" class="fld mt-1">
-                        <div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'formation.index.annee_help'|trans({}, 'formation') }}</div>
-                    </div>
-                </div>
-
-                <label class="flex items-center gap-2 text-sm">
-                    <input type="checkbox" name="avecParcours" value="1"> {{ 'formation.index.multi_parcours_label'|trans({}, 'formation') }}
-                </label>
-
-                <div class="rounded-lg border p-3 space-y-3" style="border-color:var(--c-border);background:#f8f9fb">
-                    <div class="fld-label">{{ 'formation.index.creation_type_label'|trans({}, 'formation') }}</div>
-                    <div class="flex flex-col gap-2 text-sm">
-                        <label class="flex items-start gap-2">
-                            <input type="radio" name="phase" value="construction" checked class="mt-0.5">
-                            <span>{{ 'formation.index.phase_classic_label'|trans({}, 'formation') }} <span class="block text-xs text-gray-400">{{ 'formation.index.phase_classic_help'|trans({}, 'formation') }}</span></span>
-                        </label>
-                        <label class="flex items-start gap-2">
-                            <input type="radio" name="phase" value="consolidation" class="mt-0.5">
-                            <span>{{ 'formation.index.phase_consolidation_label'|trans({}, 'formation') }} <span class="block text-xs text-gray-400">{{ 'formation.index.phase_consolidation_help'|trans({}, 'formation') }}</span></span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex items-center justify-end gap-2 border-t px-7 py-4" style="border-color:var(--c-border)">
-                <button type="button" data-action="modal#close" class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</button>
-                <button class="rounded-lg px-5 py-2 text-sm font-semibold text-white" style="background:var(--st-ok)">{{ 'formation.index.create_button'|trans({}, 'formation') }}</button>
-            </div>
-        </form>
-    </dialog>
-    {% endif %}
+    {% include 'formation/_create_modal.html.twig' %}
 </div>
 {% endblock %}

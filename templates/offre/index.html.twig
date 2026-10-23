@@ -1,0 +1,211 @@
+{% extends 'base.html.twig' %}
+{% import 'offre/_macros.html.twig' as o %}
+{% block title %}{{ 'offre.title'|trans({}, 'offre') }}{% endblock %}
+
+{% block body %}
+<div data-controller="modal">
+
+    {# ─── bandeau titre ─── #}
+    <div class="rounded-2xl border bg-white px-7 py-6 mb-4" style="border-color:var(--c-border)">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight">{{ 'formation.index.heading'|trans({}, 'formation') }}</h1>
+                <p class="text-sm text-gray-500">{{ 'offre.subtitle'|trans({}, 'offre') }}</p>
+            </div>
+            {% if is_admin() %}
+                <button type="button" data-action="modal#open"
+                        class="rounded-lg border px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50" style="border-color:#bbf7d0">
+                    {{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.index.add_button'|trans({}, 'formation') }}
+                </button>
+            {% endif %}
+        </div>
+        <div class="mt-3 text-sm text-gray-400">
+            {{ ux_icon('ph:house', {class: 'icon'}) }} <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.index.breadcrumb_home'|trans({}, 'formation') }}</a> › <span class="fake-link">{{ 'formation.index.breadcrumb_offer'|trans({}, 'formation') }}</span> ›
+            <span class="rounded bg-gray-100 px-2 py-0.5 text-gray-600">{{ 'offre.title'|trans({}, 'offre') }}</span>
+        </div>
+    </div>
+
+    <div class="rounded-2xl border bg-white px-7 py-6" style="border-color:var(--c-border)" data-controller="offre-table">
+        <h2 class="text-2xl font-extrabold tracking-tight">{{ 'formation.index.heading'|trans({}, 'formation')|upper }}</h2>
+        <p class="text-sm text-gray-500 mb-5">{{ 'formation.index.table_description'|trans({}, 'formation') }}</p>
+
+        {% include 'formation/_tabs.html.twig' with {active: 'offre'} %}
+
+        {# ─── indicateurs ─── #}
+        <div class="grid gap-3 sm:grid-cols-3 lg:grid-cols-7 mb-4" data-offre-kpi>
+            {{ o.kpi('offre.kpi.formations'|trans({}, 'offre'), kpi.formations, 'muted', 'ph:graduation-cap', 'offre.kpi.formations_help'|trans({}, 'offre')) }}
+            {{ o.kpi('offre.kpi.parcours'|trans({}, 'offre'), kpi.parcours, 'muted', 'ph:stack', 'offre.kpi.parcours_help'|trans({}, 'offre')) }}
+            {{ o.kpi('offre.kpi.ouverts'|trans({}, 'offre'), kpi.ouverts, 'success', 'ph:check-circle', 'offre.kpi.ouverts_help'|trans({}, 'offre')) }}
+            {{ o.kpi('offre.kpi.non_ouverts'|trans({}, 'offre'), kpi.nonOuverts, kpi.nonOuverts > 0 ? 'danger' : 'muted', 'ph:prohibit',
+                'offre.kpi.non_ouverts_help'|trans({'%non_ouverture%': kpi.nonOuverture, '%fermeture%': kpi.fermeture}, 'offre')) }}
+            {{ o.kpi('offre.kpi.capacite'|trans({}, 'offre'), kpi.capacite, 'info', 'ph:users', 'offre.kpi.capacite_help'|trans({}, 'offre'), 'offre.places'|trans({}, 'offre')) }}
+            {{ o.kpi('offre.kpi.a_confirmer'|trans({}, 'offre'), kpi.aConfirmer, kpi.aConfirmer > 0 ? 'warning' : 'muted', 'ph:clock', 'offre.kpi.a_confirmer_help'|trans({}, 'offre')) }}
+            {{ o.kpi('offre.kpi.anomalies'|trans({}, 'offre'), kpi.anomalies|length, kpi.anomalies is empty ? 'muted' : 'danger', kpi.anomalies is empty ? 'ph:check-circle' : 'ph:warning', 'offre.kpi.anomalies_help'|trans({}, 'offre')) }}
+        </div>
+
+        {# ─── filtres ─── #}
+        <form method="get" action="{{ path('offre_index') }}" data-offre-table-target="form" class="mb-4 flex flex-wrap items-center gap-2">
+            <input type="search" name="q" value="{{ filters.q }}" placeholder="{{ 'offre.filter.search'|trans({}, 'offre') }}" aria-label="{{ 'offre.filter.search'|trans({}, 'offre') }}"
+                   autocomplete="off" data-action="input->offre-table#debouncedSubmit" class="fld" style="width:16rem">
+            <select name="composante" data-action="change->offre-table#submit" class="fld" style="width:auto" aria-label="{{ 'offre.filter.composante'|trans({}, 'offre') }}">
+                <option value="">{{ 'offre.filter.composante'|trans({}, 'offre') }}</option>
+                {% for c in composantes %}<option value="{{ c }}" {{ filters.composante == c ? 'selected' }}>{{ c }}</option>{% endfor %}
+            </select>
+            <select name="type" data-action="change->offre-table#submit" class="fld" style="width:auto" aria-label="{{ 'offre.filter.type'|trans({}, 'offre') }}">
+                <option value="">{{ 'offre.filter.type'|trans({}, 'offre') }}</option>
+                {% for key, label in types %}<option value="{{ key }}" {{ filters.type == key ? 'selected' }}>{{ label }}</option>{% endfor %}
+            </select>
+            <select name="plateforme" data-action="change->offre-table#submit" class="fld" style="width:auto" aria-label="{{ 'offre.filter.plateforme'|trans({}, 'offre') }}">
+                <option value="">{{ 'offre.filter.plateforme'|trans({}, 'offre') }}</option>
+                {% for key, label in plateformes %}<option value="{{ key }}" {{ filters.plateforme == key ? 'selected' }}>{{ label }}</option>{% endfor %}
+            </select>
+            <select name="statut" data-action="change->offre-table#submit" class="fld" style="width:auto" aria-label="{{ 'offre.filter.statut'|trans({}, 'offre') }}">
+                <option value="">{{ 'offre.filter.statut'|trans({}, 'offre') }}</option>
+                {% for s in ['brouillon', 'soumis_ses', 'soumis_cfvu', 'attente_pv', 'publie'] %}
+                    <option value="{{ s }}" {{ filters.statut == s ? 'selected' }}>{{ ('offre.statut.' ~ s)|trans({}, 'offre') }}</option>
+                {% endfor %}
+                <option value="consolidation" {{ filters.statut == 'consolidation' ? 'selected' }}>{{ 'offre.filter.consolidation'|trans({}, 'offre') }}</option>
+                <option value="anomalie" {{ filters.statut == 'anomalie' ? 'selected' }}>{{ 'offre.filter.anomalie'|trans({}, 'offre') }}</option>
+            </select>
+            <noscript><button class="rounded-lg border px-3 py-2 text-sm" style="border-color:var(--c-border)">{{ 'offre.filter.apply'|trans({}, 'offre') }}</button></noscript>
+            <a href="{{ path('offre_index') }}" class="text-sm text-gray-500 hover:underline">{{ 'offre.filter.clear'|trans({}, 'offre') }}</a>
+        </form>
+
+        {# ─── anomalies ─── #}
+        {% if kpi.anomalies is not empty %}
+            <details class="mb-4 rounded-xl border px-4 py-3 text-sm" style="border-color:#fcd34d;background:#fffbeb" data-offre-anomalies>
+                <summary class="cursor-pointer font-semibold text-amber-800">{{ ux_icon('ph:warning', {class: 'icon'}) }} {{ 'offre.anomalies_title'|trans({'%count%': kpi.anomalies|length}, 'offre') }}</summary>
+                <ul class="mt-2 list-disc pl-5 text-amber-900 space-y-0.5">
+                    {% for a in kpi.anomalies %}<li>{{ a }}</li>{% endfor %}
+                </ul>
+            </details>
+        {% endif %}
+
+        {# ─── tableau ─── #}
+        <div class="mb-2 flex flex-wrap items-center justify-end gap-3 text-xs text-gray-500">
+            <span>{{ 'offre.composantes'|trans({}, 'offre') }} :
+                <button type="button" data-action="offre-table#expandGroups" class="hover:underline" style="color:var(--c-primary)">{{ 'offre.expand_all'|trans({}, 'offre') }}</button> ·
+                <button type="button" data-action="offre-table#collapseGroups" class="hover:underline" style="color:var(--c-primary)">{{ 'offre.collapse_all'|trans({}, 'offre') }}</button></span>
+            <span>{{ 'offre.col.parcours'|trans({}, 'offre') }} :
+                <button type="button" data-action="offre-table#expandParcours" class="hover:underline" style="color:var(--c-primary)">{{ 'offre.expand_all'|trans({}, 'offre') }}</button> ·
+                <button type="button" data-action="offre-table#collapseParcours" class="hover:underline" style="color:var(--c-primary)">{{ 'offre.collapse_all'|trans({}, 'offre') }}</button></span>
+        </div>
+        <div class="rounded-xl border overflow-x-auto" style="border-color:var(--c-border)">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        <th class="text-left px-4 py-3">{{ 'offre.col.formation'|trans({}, 'offre') }}</th>
+                        <th class="text-left px-4 py-3">{{ 'offre.col.parcours'|trans({}, 'offre') }}</th>
+                        <th class="text-center px-3 py-3">{{ 'offre.col.ouvert'|trans({}, 'offre') }}</th>
+                        <th class="text-left px-3 py-3">{{ 'offre.col.plateformes'|trans({}, 'offre') }}</th>
+                        <th class="text-right px-3 py-3">{{ 'offre.col.capacite'|trans({}, 'offre') }}</th>
+                        <th class="text-left px-3 py-3">{{ 'offre.col.statut'|trans({}, 'offre') }}</th>
+                        <th class="text-right px-4 py-3"></th>
+                    </tr>
+                </thead>
+                {% for group in groups %}
+                <tbody data-offre-table-target="group" data-composante="{{ group.libelle }}">
+                    <tr data-group-head class="border-t" style="border-color:var(--c-border);background:#f8f9fb">
+                        <td colspan="2" class="px-4 py-2.5">
+                            <button type="button" data-action="offre-table#toggleGroup" aria-expanded="true" class="inline-flex items-center gap-2 font-semibold">
+                                {{ ux_icon('ph:caret-down', {class: 'icon'}) }} {{ group.libelle }}
+                                <span class="text-xs font-normal text-gray-400">{{ 'offre.group_count'|trans({'%formations%': group.formations|length, '%parcours%': group.nbParcours}, 'offre') }}</span>
+                            </button>
+                        </td>
+                        <td class="px-3 py-2.5 text-center">{{ o.badge('offre.ouverts_ratio'|trans({'%n%': group.nbOuverts, '%total%': group.nbParcours}, 'offre'), 'muted') }}</td>
+                        <td></td>
+                        <td class="px-3 py-2.5 text-right font-semibold">{{ group.capacite }}</td>
+                        <td class="px-3 py-2.5" colspan="2">
+                            {{ o.badge(group.nbPv ~ '/' ~ group.formations|length ~ ' PV', group.nbPv == group.formations|length ? 'success' : (group.nbPv > 0 ? 'warning' : 'muted'), 'ph:file') }}
+                            {{ o.badge(group.nbNote ~ '/' ~ group.formations|length ~ ' ' ~ 'offre.doc.notes'|trans({}, 'offre'), group.nbNote == group.formations|length ? 'primary' : (group.nbNote > 0 ? 'warning' : 'muted'), 'ph:file-pdf') }}
+                        </td>
+                    </tr>
+                    {% for row in group.formations %}
+                        {% set f = row.formation %}
+                        <tr class="border-t" style="border-color:var(--c-border)" data-offre-formation="{{ f.id }}" data-capacite="{{ row.capacite }}">
+                            <td class="px-4 py-3 align-top">
+                                <div class="font-semibold">{{ f.name }}
+                                    {% if row.anomalies is not empty %}<span title="{{ row.anomalies|join("\n") }}" class="text-amber-600">{{ ux_icon('ph:warning', {class: 'icon'}) }}</span>{% endif %}
+                                </div>
+                                <div class="text-xs text-gray-400">{{ row.typeLabel ?: '—' }}{{ f.anneeUniversitaire ? ' · ' ~ f.anneeUniversitaire }}</div>
+                                {% if f.phase.value == 'consolidation' %}
+                                    <div class="mt-1">{{ o.badge('formation.index.phase_consolidation'|trans({}, 'formation'), 'warning', 'ph:hourglass-medium') }}</div>
+                                {% endif %}
+                            </td>
+                            {% set mono = row.parcours|length == 1 and row.parcours[0].nid == '_formation' %}
+                            <td class="px-4 py-3 align-top text-gray-500">
+                                {% if mono %}
+                                    {# formation sans parcours : ses années se déplient directement #}
+                                    {% set p = row.parcours[0] %}
+                                    <button type="button" data-action="offre-table#toggleParcours" data-parcours-toggle="{{ f.id }}-{{ p.nid }}" aria-expanded="false"
+                                            class="inline-flex items-center gap-1.5 text-left" {{ p.annees is empty ? 'disabled' }}>
+                                        {{ ux_icon('ph:caret-right', {class: 'icon text-gray-400'}) }} {{ 'offre.sans_parcours'|trans({}, 'offre') }}
+                                        <span class="text-xs text-gray-400">{{ 'offre.annees_count'|trans({'%count%': p.annees|length}, 'offre') }}</span>
+                                    </button>
+                                {% else %}
+                                    {{ 'offre.parcours_count'|trans({'%count%': row.parcours|length}, 'offre') }}
+                                {% endif %}
+                            </td>
+                            <td class="px-3 py-3 align-top text-center">{{ o.ouvert(row.ouverte) }}</td>
+                            <td class="px-3 py-3 align-top">
+                                {% for p in row.plateformes %}{{ o.badge(p.label, 'primary') }} {% endfor %}
+                            </td>
+                            <td class="px-3 py-3 align-top text-right font-semibold">{{ row.capacite }}</td>
+                            <td class="px-3 py-3 align-top">
+                                <div class="flex flex-wrap gap-1">{{ o.statut(row.statut) }} {{ o.documents(row) }}</div>
+                            </td>
+                            <td class="px-4 py-3 align-top text-right whitespace-nowrap">
+                                <a href="{{ path('offre_configure', {id: f.id}) }}" class="rounded-lg px-3 py-1.5 text-xs font-semibold text-white" style="background:var(--c-primary)">{{ ux_icon('ph:sliders-horizontal', {class: 'icon'}) }} {{ 'offre.configure'|trans({}, 'offre') }}</a>
+                            </td>
+                        </tr>
+                        {% for p in row.parcours %}
+                            {% set uid = f.id ~ '-' ~ p.nid %}
+                            {% if not mono %}
+                            <tr class="border-t" style="border-color:var(--c-border)" data-offre-parcours="{{ uid }}">
+                                <td></td>
+                                <td class="px-4 py-2">
+                                    <button type="button" data-action="offre-table#toggleParcours" data-parcours-toggle="{{ uid }}" aria-expanded="false"
+                                            class="inline-flex items-center gap-1.5 text-left" {{ p.annees is empty ? 'disabled' }}>
+                                        {{ ux_icon('ph:caret-right', {class: 'icon text-gray-400'}) }}
+                                        <span>{{ p.label }}</span>
+                                        <span class="text-xs text-gray-400">{{ 'offre.annees_count'|trans({'%count%': p.annees|length}, 'offre') }}</span>
+                                        {% if p.anomalies is not empty %}<span title="{{ p.anomalies|join("\n") }}" class="text-amber-600">{{ ux_icon('ph:warning', {class: 'icon'}) }}</span>{% endif %}
+                                    </button>
+                                    {% if p.chemin %}<div class="pl-5 text-[11px] text-gray-400">{{ p.chemin }}</div>{% endif %}
+                                </td>
+                                <td class="px-3 py-2 text-center">
+                                    {% if p.ouverture == 'fermeture' %}{{ o.badge('offre.ouverture.fermeture'|trans({}, 'offre'), 'danger') }}{% else %}{{ o.ouvert(p.ouvert) }}{% endif %}
+                                </td>
+                                <td></td>
+                                <td class="px-3 py-2 text-right">{{ p.capacite }}</td>
+                                <td colspan="2"></td>
+                            </tr>
+                            {% endif %}
+                            {% for a in p.annees %}
+                                <tr hidden data-annee-of="{{ uid }}" style="background:#fcfcfd">
+                                    <td></td>
+                                    <td class="py-1.5 pl-11 pr-4 text-gray-600">
+                                        {{ a.label }}
+                                        {% if a.partage %}<span class="ml-1">{{ o.badge('offre.annee_commune'|trans({'%count%': a.partage}, 'offre'), 'info', 'ph:users-three') }}</span>{% endif %}
+                                    </td>
+                                    <td class="px-3 py-1.5 text-center">{{ o.ouvert(a.ouvert) }}</td>
+                                    <td class="px-3 py-1.5">
+                                        {% for pl in a.plateformes|filter(pl => pl.active) %}{{ o.badge(pl.label, 'primary') }} {% endfor %}
+                                    </td>
+                                    <td class="px-3 py-1.5 text-right">{{ a.capacite ?? '—' }}</td>
+                                    <td colspan="2"></td>
+                                </tr>
+                            {% endfor %}
+                        {% endfor %}
+                    {% endfor %}
+                </tbody>
+                {% else %}
+                <tbody><tr><td colspan="7" class="px-4 py-10 text-center text-gray-400">{{ 'offre.empty'|trans({}, 'offre') }}</td></tr></tbody>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+    {% include 'formation/_create_modal.html.twig' with {defaultPhase: 'consolidation', retour: 'offre'} %}
+</div>
+{% endblock %}

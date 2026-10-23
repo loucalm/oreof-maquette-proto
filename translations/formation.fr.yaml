@@ -1,9 +1,6 @@
 formation:
   index:
-    batch_construction_help: Cochez les formations dont la structure est prête, puis passez-les en construction (le contenu devient saisissable).
-    batch_construction_button: Passer la sélection en construction
-    batch_construction_confirm: Passer les formations cochées en construction ?
-    batch_select_aria: Sélectionner « %name% »
+    batch_construction_confirm: Passer cette formation en construction ? Son contenu devient saisissable.
     page_title: Détails des mentions/spécialités · Prototype maquette
     heading: Détails des mentions/spécialités
     subheading: Ici vous pouvez voir l'ensemble de vos formations créées
