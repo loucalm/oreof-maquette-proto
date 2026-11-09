@@ -111,7 +111,7 @@ final class DiplomeWizardTest extends WebTestCase
         self::assertCount(1, $crawler->filter('form#wizard-form [data-mcc-type=CCI] input[type=checkbox]:checked'));
         self::assertSame('licence', $crawler->filter('[data-mcc-type=CCI] select option[selected]')->attr('value'));
         $crawler = $this->client->request('GET', '/diplomes/nouveau/bcc');
-        self::assertCount(1, $crawler->filter('form#wizard-form input[name="bcc_config[level1]"]'));
+        self::assertCount(1, $crawler->filter('form#wizard-form input[name="bcc_config[levels][0]"]'));
     }
 
     public function testListOffersDuplicateLink(): void

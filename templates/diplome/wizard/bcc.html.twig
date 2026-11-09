@@ -1,8 +1,43 @@
 {% extends wizard_layout|default('diplome/wizard/_layout.html.twig') %}
+
+{# Ligne d'un niveau (aussi rendue comme prototype d'ajout, cf. bcc_levels_controller.js). #}
+{% macro levelRow(f, n) %}
+    {% set btn = 'inline-flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100 disabled:opacity-30 disabled:pointer-events-none' %}
+    {% set d = 'diplome' %}
+    <div class="flex items-center gap-2" data-bcc-levels-target="row">
+        <span class="w-20 shrink-0 text-xs font-medium" data-bcc-levels-target="number">{{ 'diplome.wizard.bcc.level'|trans({'%n%': n}, d) }}</span>
+        {{ form_widget(f, {attr: {class: 'flex-1 rounded-md border px-3 py-2 text-sm', style: 'border-color:var(--c-border)', 'data-bcc-levels-target': 'input', 'data-action': 'input->bcc-levels#sync'}}) }}
+        <button type="button" data-action="bcc-levels#up" data-bcc-levels-target="up" class="{{ btn }}" title="{{ 'diplome.wizard.bcc.up'|trans({}, d) }}" aria-label="{{ 'diplome.wizard.bcc.up'|trans({}, d) }}">{{ ux_icon('ph:arrow-up', {class: 'icon'}) }}</button>
+        <button type="button" data-action="bcc-levels#down" data-bcc-levels-target="down" class="{{ btn }}" title="{{ 'diplome.wizard.bcc.down'|trans({}, d) }}" aria-label="{{ 'diplome.wizard.bcc.down'|trans({}, d) }}">{{ ux_icon('ph:arrow-down', {class: 'icon'}) }}</button>
+        <button type="button" data-action="bcc-levels#remove" data-bcc-levels-target="remove" class="{{ btn }}" style="color:#dc2626" title="{{ 'diplome.wizard.bcc.remove_level'|trans({}, d) }}" aria-label="{{ 'diplome.wizard.bcc.remove_level'|trans({}, d) }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
+    </div>
+{% endmacro %}
+
 {% block step_content %}
+{% import _self as m %}
 <p class="text-sm mb-4" style="color:var(--c-muted)">{{ 'diplome.wizard.bcc.help'|trans({}, 'diplome') }}</p>
 {{ form_start(form, {attr: {id: 'wizard-form', class: 'space-y-4'}}) }}
     {{ form_errors(form) }}
+    <div data-controller="bcc-levels"
+         data-bcc-levels-prototype-value="{{ m.levelRow(form.levels.vars.prototype, '__n__')|e('html_attr') }}"
+         data-bcc-levels-index-value="{{ form.levels.children|keys|reduce((c, k) => max(c, k + 1), 0) }}"
+         data-bcc-levels-label-value="{{ 'diplome.wizard.bcc.level'|trans({}, 'diplome') }}"
+         data-bcc-levels-choice-value="{{ 'diplome.wizard.bcc.level_choice'|trans({}, 'diplome') }}">
+        <div class="text-xs font-medium mb-1">{{ form_label(form.levels) }}</div>
+        {{ form_errors(form.levels) }}
+        <div class="space-y-2" data-bcc-levels-target="list">
+            {% for f in form.levels %}{{ m.levelRow(f, loop.index) }}{% endfor %}
+        </div>
+        {% do form.levels.setRendered %}
+        <button type="button" data-action="bcc-levels#add" class="mt-2 inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-sm hover:bg-gray-100" style="color:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'diplome.wizard.bcc.add_level'|trans({}, 'diplome') }}</button>
+
+        <div class="mt-4">
+            {{ form_label(form.linkLevel, null, {label_attr: {class: 'text-xs font-medium'}}) }}
+            {{ form_widget(form.linkLevel, {attr: {class: 'mt-1 w-full rounded-md border px-3 py-2 text-sm', style: 'border-color:var(--c-border)', 'data-bcc-levels-target': 'link'}}) }}
+            {{ form_help(form.linkLevel, {help_attr: {class: 'mt-1 text-xs', style: 'color:var(--c-muted)'}}) }}
+            {{ form_errors(form.linkLevel) }}
+        </div>
+    </div>
     {% for field in form %}
         {% if not field.rendered and field.vars.name != '_token' %}
             {% include 'diplome/wizard/_field.html.twig' with {field: field} %}

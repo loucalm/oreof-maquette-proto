@@ -219,18 +219,20 @@ diplome:
         assiduite: Assiduité
         sansNote: Sans note
     bcc:
-      help: Nommez les niveaux du référentiel de compétences (de 1 à 3) et indiquez celui auquel les éléments se rattachent.
+      help: Nommez les niveaux du référentiel de compétences, du plus large au plus fin (au moins un), et indiquez celui auquel les éléments se rattachent.
+      levels: Niveaux
       level: 'Niveau %n%'
-      level_n_1: Niveau 1
-      level_n_2: Niveau 2
-      level_n_3: Niveau 3
+      level_choice: 'Niveau %n% — %name%'
+      add_level: Ajouter un niveau
+      remove_level: Retirer ce niveau
+      up: Monter
+      down: Descendre
       link_level: Niveau relié aux éléments
       link_level_help: Par défaut, le dernier niveau.
       link_default: Dernier niveau (défaut)
       error:
         first_required: Le premier niveau est obligatoire.
-        gap: Les niveaux se remplissent dans l'ordre, sans niveau vide.
-        link_level: Le niveau relié doit faire partie des niveaux saisis.
+        blank: Nommez chaque niveau ou retirez-le.
     admission:
       help: Cochez les plateformes de candidature du diplôme et indiquez les années concernées (ex. « 1 » pour la première année). Elles s'affichent dans la gestion de l'offre.
       plateformes: Plateformes d'admission

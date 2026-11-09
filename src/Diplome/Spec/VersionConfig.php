@@ -15,7 +15,7 @@ use App\Maquette\Doc\TreeNode;
  *   lue, dans `legacyForms`, quand `canvas` est absent ;
  * - `mccc` : clé MccType autorisée dans la formation → profil de règles (null : aucun) ;
  * - `options` : quitus / assiduité / sans note ;
- * - `bccLevels` : noms des niveaux de BCC (1 à 3) ;
+ * - `bccLevels` : noms des niveaux de BCC (au moins un, nombre libre) ;
  * - `bccLinkLevel` : indice 0-based du niveau relié aux éléments (défaut : le dernier) ;
  * - `admission` : plateforme d'admission (clé du référentiel `plateformes_admission`) → numéros
  *   des années où l'on y candidate (ex. Licence : Parcoursup en année 1).

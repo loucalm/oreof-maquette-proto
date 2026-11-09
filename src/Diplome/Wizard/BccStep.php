@@ -7,7 +7,7 @@ namespace App\Diplome\Wizard;
 use App\Diplome\WizardDraft;
 use App\Form\Diplome\BccConfigType;
 
-/** Étape « BCC » : noms des niveaux (1 à 3) et niveau relié aux éléments. */
+/** Étape « BCC » : noms des niveaux (liste libre, au moins un) et niveau relié aux éléments. */
 final class BccStep extends AbstractWizardStep
 {
     public function key(): string
@@ -35,23 +35,21 @@ final class BccStep extends AbstractWizardStep
         $config = $draft->config();
         // le niveau relié par défaut (le dernier) est présenté comme « dernier niveau »
         $isDefault = [] === $config->bccLevels || $config->bccLinkLevel === \count($config->bccLevels) - 1;
-        $data = ['linkLevel' => $isDefault ? null : $config->bccLinkLevel];
-        for ($i = 1; $i <= BccConfigType::MAX_LEVELS; ++$i) {
-            $data['level'.$i] = $config->bccLevels[$i - 1] ?? null;
-        }
+        // un premier niveau à nommer pour un type neuf
+        $data = [
+            'levels' => [] === $config->bccLevels ? [''] : $config->bccLevels,
+            'linkLevel' => $isDefault ? null : $config->bccLinkLevel,
+        ];
 
         return $data;
     }
 
     public function apply(WizardDraft $draft, mixed $formData): void
     {
-        $levels = [];
-        for ($i = 1; $i <= BccConfigType::MAX_LEVELS; ++$i) {
-            $name = trim((string) ($formData['level'.$i] ?? ''));
-            if ('' !== $name) {
-                $levels[] = $name;
-            }
-        }
+        $levels = array_values(array_filter(
+            array_map(static fn ($n) => trim((string) $n), (array) ($formData['levels'] ?? [])),
+            static fn (string $n) => '' !== $n,
+        ));
 
         $config = $draft->configData;
         $config['bccLevels'] = $levels;

@@ -94,27 +94,52 @@ final class DiplomeEditTest extends WebTestCase
     {
         $type = $this->type('M2E');
         $crawler = $this->client->request('GET', $this->editPath($type, 'bcc'));
-        $form = $crawler->filter('form#wizard-form')->form([
-            'bcc_config[level1]' => 'Bloc',
-            'bcc_config[level2]' => 'Objectif',
-            'bcc_config[level3]' => 'Attendu',
-            'bcc_config[linkLevel]' => '2',
-        ]);
-        $this->client->submit($form);
+        // une ligne par niveau, plus une option par niveau dans « niveau relié »
+        self::assertCount(3, $crawler->filter('input[name^="bcc_config[levels]"]'));
+        self::assertSame(['', '0', '1', '2'], $crawler->filter('select[name="bcc_config[linkLevel]"] option')->each(static fn ($n) => $n->attr('value')));
+
+        $this->submitBcc($type, ['Bloc', 'Objectif', 'Attendu', 'Indicateur'], '2');
         self::assertResponseRedirects($this->editPath($type, 'bcc'));
 
         $this->em->clear();
         $config = $this->type('M2E')->latestVersion()->config();
-        self::assertSame(['Bloc', 'Objectif', 'Attendu'], $config->bccLevels);
+        self::assertSame(['Bloc', 'Objectif', 'Attendu', 'Indicateur'], $config->bccLevels);
         self::assertSame(2, $config->bccLinkLevel);
+    }
+
+    public function testBccLevelsCanBeRemovedDownToOne(): void
+    {
+        $type = $this->type('M2E');
+        // indices non contigus : lignes retirées puis ajoutées côté écran
+        $this->submitBcc($type, [0 => 'Bloc', 5 => 'Compétence'], '');
+        self::assertResponseRedirects($this->editPath($type, 'bcc'));
+        $this->em->clear();
+        $config = $this->type('M2E')->latestVersion()->config();
+        self::assertSame(['Bloc', 'Compétence'], $config->bccLevels);
+        self::assertSame(1, $config->bccLinkLevel);
+
+        $this->submitBcc($type, ['Bloc'], '');
+        self::assertResponseRedirects($this->editPath($type, 'bcc'));
+        $this->em->clear();
+        self::assertSame(['Bloc'], $this->type('M2E')->latestVersion()->config()->bccLevels);
+    }
+
+    public function testBccRequiresAtLeastOneNamedLevel(): void
+    {
+        $type = $this->type('M2E');
+        $this->submitBcc($type, [], '');
+        self::assertResponseStatusCodeSame(422);
+        $this->submitBcc($type, ['Bloc', ''], '');
+        self::assertResponseStatusCodeSame(422);
+
+        $this->em->clear();
+        self::assertSame(['Bloc', 'Objectif', 'Attendu'], $this->type('M2E')->latestVersion()->config()->bccLevels);
     }
 
     public function testBccRejectsLinkLevelBeyondDeclaredLevels(): void
     {
         $type = $this->type('M2E');
-        $crawler = $this->client->request('GET', $this->editPath($type, 'bcc'));
-        $form = $crawler->filter('form#wizard-form')->form(['bcc_config[level1]' => 'Bloc', 'bcc_config[level2]' => '', 'bcc_config[level3]' => '', 'bcc_config[linkLevel]' => '2']);
-        $this->client->submit($form);
+        $this->submitBcc($type, ['Bloc'], '2');
         self::assertResponseStatusCodeSame(422);
 
         $this->em->clear();
@@ -129,19 +154,33 @@ final class DiplomeEditTest extends WebTestCase
         // les formations concernées sont listées avant l'enregistrement
         self::assertStringContainsString('Formation L', $crawler->filter('[data-impact]')->text());
 
-        $values = ['bcc_config[level1]' => 'Savoirs', 'bcc_config[level2]' => '', 'bcc_config[level3]' => '', 'bcc_config[linkLevel]' => '0'];
-        $this->client->submit($crawler->filter('form#wizard-form')->form($values));
+        $this->submitBcc($type, ['Savoirs'], '0');
         self::assertResponseStatusCodeSame(422);
         $this->em->clear();
         self::assertSame(['Bloc', 'Compétence'], $this->type('L')->latestVersion()->config()->bccLevels);
 
-        $crawler = $this->client->request('GET', $this->editPath($type, 'bcc'));
-        $form = $crawler->filter('form#wizard-form')->form($values);
-        $form['confirmImpact']->tick();
-        $this->client->submit($form);
+        $this->submitBcc($type, ['Savoirs'], '0', confirm: true);
         self::assertResponseRedirects($this->editPath($type, 'bcc'));
         $this->em->clear();
         self::assertSame(['Savoirs'], $this->type('L')->latestVersion()->config()->bccLevels);
+    }
+
+    /**
+     * Soumet l'étape BCC comme l'écran : liste des niveaux (indices quelconques) et niveau relié.
+     *
+     * @param array<int, string> $levels
+     */
+    private function submitBcc(TypeDiplome $type, array $levels, string $link, bool $confirm = false): void
+    {
+        $crawler = $this->client->request('GET', $this->editPath($type, 'bcc'));
+        $form = $crawler->filter('form#wizard-form')->form();
+        $values = $form->getPhpValues();
+        $values['bcc_config']['levels'] = $levels;
+        $values['bcc_config']['linkLevel'] = $link;
+        if ($confirm) {
+            $values['confirmImpact'] = '1';
+        }
+        $this->client->request($form->getMethod(), $form->getUri(), $values);
     }
 
     public function testNewYearVersionCopiesPrevious(): void
@@ -194,12 +233,12 @@ final class DiplomeEditTest extends WebTestCase
         $type = $this->type('M2E'); // 3 niveaux, lien sur le dernier
         $crawler = $this->client->request('GET', $this->editPath($type, 'bcc'));
         $values = $crawler->filter('form#wizard-form')->form()->getPhpValues();
-        $values['bcc_config'] = ['level1' => 'A', 'level2' => 'B', 'level3' => '', 'linkLevel' => '0', '_token' => $this->formToken()];
+        $values['bcc_config'] = ['levels' => ['A', 'B'], 'linkLevel' => '0', '_token' => $this->formToken()];
         $this->client->request('POST', $this->editPath($type, 'bcc'), $values);
         self::assertResponseRedirects();
 
         // deux niveaux, lien explicite sur le premier ; puis trois niveaux avec l'option par défaut : le dernier
-        $values['bcc_config'] = ['level1' => 'A', 'level2' => 'B', 'level3' => 'C', 'linkLevel' => '', '_token' => $this->formToken()];
+        $values['bcc_config'] = ['levels' => ['A', 'B', 'C'], 'linkLevel' => '', '_token' => $this->formToken()];
         $this->client->request('POST', $this->editPath($type, 'bcc'), $values);
         self::assertResponseRedirects();
         $this->em->clear();
@@ -213,7 +252,7 @@ final class DiplomeEditTest extends WebTestCase
         $type = $this->type('M2E');
         $crawler = $this->client->request('GET', $this->editPath($type, 'bcc'));
         $values = $crawler->filter('form#wizard-form')->form()->getPhpValues();
-        $values['bcc_config'] = ['level1' => 'Bloc', 'level2' => 'Objectif', 'level3' => 'Attendu', 'linkLevel' => '', '_token' => $this->formToken()];
+        $values['bcc_config'] = ['levels' => ['Bloc', 'Objectif', 'Attendu'], 'linkLevel' => '', '_token' => $this->formToken()];
         $this->client->request('POST', $this->editPath($type, 'bcc'), $values);
         $this->em->clear();
         self::assertSame(2, $this->type('M2E')->latestVersion()->config()->bccLinkLevel);
