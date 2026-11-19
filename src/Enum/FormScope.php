@@ -18,12 +18,16 @@ enum FormScope: string
     /** Formulaire portant sur un élément de structure. */
     case Element = 'element';
 
+    /** Formulaire de la fiche matière (entité partagée). */
+    case FicheMatiere = 'fiche_matiere';
+
     public function label(): string
     {
         return match ($this) {
             self::Formation => 'Formation',
             self::Parcours => 'Parcours',
             self::Element => 'Élément',
+            self::FicheMatiere => 'Fiche matière',
         };
     }
 }
