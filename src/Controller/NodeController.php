@@ -8,6 +8,7 @@ use App\Entity\FicheMatiere;
 use App\Entity\Formation;
 use App\FicheMatiere\EcValueResolver;
 use App\FicheMatiere\FicheMatiereAccess;
+use App\FicheMatiere\FicheMatiereLifecycle;
 use App\FicheMatiere\SourcePinner;
 use App\Maquette\AttributeCatalog;
 use App\Maquette\Doc\MaquetteDoc;
@@ -40,6 +41,7 @@ final class NodeController extends AbstractController
         private readonly \App\Maquette\AttributeReader $attributeReader,
         private readonly FicheMatiereRepository $fiches,
         private readonly FicheMatiereAccess $ficheAccess,
+        private readonly FicheMatiereLifecycle $ficheLifecycle,
         private readonly SourcePinner $pinner,
         private readonly EcValueResolver $values,
         private readonly \App\Diplome\TypeDiplomeResolver $diplomes,
@@ -90,14 +92,17 @@ final class NodeController extends AbstractController
         }
         $node->setCode(trim((string) $request->request->get('code')) ?: null);
 
+        $oldParent = $node->getParent();
+        $oldParcours = $this->ficheAccess->parcoursOf($node);
         if ($request->request->has('parentId')) {
             $targetNid = trim((string) $request->request->get('parentId'));
             $target = $targetNid !== '' ? $doc->node($targetNid) : null;
-            if ($target !== $node->getParent()
+            if ($target !== $oldParent
                 && !$node->isLocked('move')
                 && !$this->isDescendant($target, $node)
                 && $this->reparentAllowed($node, $target)) {
                 $doc->moveNode($node, $target, PHP_INT_MAX);
+                $this->afterContextChange($node, $oldParent, $oldParcours);
             }
         }
 
@@ -125,6 +130,7 @@ final class NodeController extends AbstractController
         }
 
         $forcedNature = ([] !== $catalog) ? $this->values->forcedValue($node, 'natureElement') : null;
+        $blocChanged = false;
         $postedSources = \is_array($request->request->all('sources')) ? $request->request->all('sources') : [];
         $sources = \is_array($attrs['sources'] ?? null) ? $attrs['sources'] : [];
         $pinned = \is_array($attrs['sourcesFigees'] ?? null) ? $attrs['sourcesFigees'] : [];
@@ -173,6 +179,20 @@ final class NodeController extends AbstractController
             $attrs[$key] = $this->readAttribute($request, $key, $def);
         }
 
+        // bloc de choix : les valeurs identiques pour les EC enfants sont une capacité du type de nœud,
+        // pas une clé de diplôme ou de formulaire (spec §6.4, §7.1).
+        if (($caps['enfantsIdentiques'] ?? false) && $request->request->has('enfantsIdentiques')) {
+            $posted = $request->request->all('enfantsIdentiques');
+            $identiques = [];
+            foreach (['hours', 'mccc'] as $key) {
+                if (!empty($posted[$key])) {
+                    $identiques[$key] = true;
+                }
+            }
+            $attrs['enfantsIdentiques'] = $identiques;
+            $blocChanged = true;
+        }
+
         if ([] !== $catalog) {
             if ([] === $sources) {
                 unset($attrs['sources']);
@@ -204,6 +224,9 @@ final class NodeController extends AbstractController
         }
 
         $node->setAttributes(array_filter($attrs, static fn ($v) => $v !== null && $v !== '' && $v !== []));
+        if ($blocChanged) {
+            $this->ficheLifecycle->afterBlocChange($node);
+        }
 
         if ($node->isParcours() && $request->request->has('parcoursParentId')) {
             $this->applyParcoursParent($doc, $node, trim((string) $request->request->get('parcoursParentId')));
@@ -396,6 +419,8 @@ final class NodeController extends AbstractController
 
         $payload = json_decode($request->getContent() ?: '{}', true) ?: [];
         $newParent = !empty($payload['parentId']) ? $doc->node((string) $payload['parentId']) : null;
+        $oldParent = $node->getParent();
+        $oldParcours = $this->ficheAccess->parcoursOf($node);
 
         if ($this->isDescendant($newParent, $node)) {
             return new JsonResponse(['ok' => false, 'error' => 'cycle'], 422);
@@ -410,6 +435,7 @@ final class NodeController extends AbstractController
 
         $doc->moveNode($node, $newParent, (int) ($payload['index'] ?? 0));
         $this->applyChoiceNature($node, $newParent);
+        $this->afterContextChange($node, $oldParent, $oldParcours);
         $this->maquette->save($formation, $doc);
 
         return new JsonResponse(['ok' => true]);
@@ -464,6 +490,7 @@ final class NodeController extends AbstractController
         }
 
         $copy = $doc->duplicateNode($node);
+        $this->ficheLifecycle->afterCopy($copy);
         $this->maquette->save($formation, $doc);
         $this->addFlash('success', sprintf('« %s » dupliqué.', $node->getDisplayLabel()));
         $this->offerUndo($formation);
@@ -573,6 +600,7 @@ final class NodeController extends AbstractController
             $this->stripContent($copy); // consolidation : squelette seulement
         }
         $this->applyChoiceNature($copy, $target);
+        $this->ficheLifecycle->afterAttach($copy, $formation);
         $this->maquette->save($formation, $doc);
         $this->addFlash('success', sprintf('« %s » raccroché depuis « %s ».', $source->getDisplayLabel(), $sourceFormation->getName()));
 
@@ -616,6 +644,7 @@ final class NodeController extends AbstractController
 
         $from = $clipboard->get()['label'] ?? '';
         $count = $clipboard->paste($node);
+        $this->ficheLifecycle->afterCopy($node);
         $this->maquette->save($formation, $doc, sprintf('Données de « %s » collées sur « %s »', $from, $node->getDisplayLabel()));
 
         return $this->backToEditor($node, sprintf('%d champ(s) collé(s) depuis « %s ».', $count, $from));
@@ -688,6 +717,20 @@ final class NodeController extends AbstractController
     }
 
     // ─── helpers ──────────────────────────────────────────────
+
+    /** Fige les valeurs de l'EC quand il entre/sort d'un bloc de choix ou change de parcours. */
+    private function afterContextChange(TreeNode $node, ?TreeNode $oldParent, ?TreeNode $oldParcours): void
+    {
+        $parent = $node->getParent();
+        // Le bloc de choix est un contexte à part entière : y entrer (même sans changer de parent),
+        // en sortir, ou modifier ses valeurs identiques fige les valeurs des EC qu'il contient.
+        foreach (array_unique([$oldParent, $parent], \SORT_REGULAR) as $bloc) {
+            if (null !== $bloc && $bloc->isChoiceBloc()) {
+                $this->ficheLifecycle->afterBlocChange($bloc);
+            }
+        }
+        $this->ficheLifecycle->afterMove($node, $oldParcours);
+    }
 
     private function node(Formation $formation, string $nid): TreeNode
     {

@@ -14,8 +14,11 @@ use App\Maquette\Doc\TreeNode;
 final class SourcePinner
 {
     /**
-     * @param (callable(TreeNode, string): string)|null $defaultSource source par défaut de la valeur ;
-     *                                                                une valeur déjà `ec` n'a pas besoin d'être écrite
+     * Le callback est accepté pour que les appelants puissent calculer la source par défaut dans leur
+     * contexte, mais l'écriture reste inconditionnelle : la spec exige une source explicite dès qu'une
+     * valeur propre est remplie, même si cette source était déjà `ec` par défaut.
+     *
+     * @param (callable(TreeNode, string): string)|null $defaultSource source par défaut de la valeur
      */
     public function pinFilled(TreeNode $ec, ?callable $defaultSource = null): bool
     {
@@ -26,9 +29,6 @@ final class SourcePinner
         $changed = false;
         foreach (EcValueResolver::KEYS as $key) {
             if (\array_key_exists($key, $sources) || !$this->filled($ec->getAttribute($key))) {
-                continue;
-            }
-            if (null !== $defaultSource && EcValueResolver::SOURCE_EC === $defaultSource($ec, $key)) {
                 continue;
             }
             $sources[$key] = EcValueResolver::SOURCE_EC;

@@ -181,6 +181,27 @@
                 {% endif %}
             {% endfor %}
 
+            {# Bloc de choix : les EC enfants peuvent partager heures / MCCC. Capacité du type de nœud,
+               pas une clé de diplôme ou de formulaire — les libellés restent dans les traductions. #}
+            {% if not consolidation and tk == 'props' and (caps.enfantsIdentiques ?? false) %}
+                {% set identiques = node.attribute('enfantsIdentiques') ?? {} %}
+                <div class="rounded-lg border p-3 space-y-3" style="border-color:var(--c-border);background:#f8f9fb">
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ 'node.panel.identiques_title'|trans({}, 'node') }}</div>
+                    {% if hasHours %}
+                        <label class="flex items-center gap-2 text-sm">
+                            <input type="checkbox" name="enfantsIdentiques[hours]" value="1" {{ identiques.hours ?? false ? 'checked' }}>
+                            {{ 'node.panel.identiques_hours'|trans({}, 'node') }}
+                        </label>
+                    {% endif %}
+                    {% if hasMccc %}
+                        <label class="flex items-center gap-2 text-sm">
+                            <input type="checkbox" name="enfantsIdentiques[mccc]" value="1" {{ identiques.mccc ?? false ? 'checked' }}>
+                            {{ 'node.panel.identiques_mccc'|trans({}, 'node') }}
+                        </label>
+                    {% endif %}
+                </div>
+            {% endif %}
+
             {% if tk == 'props' %}
                 {% set parents = valid_parents(node) %}
                 {% set lockedMove = node.isLocked('move') %}

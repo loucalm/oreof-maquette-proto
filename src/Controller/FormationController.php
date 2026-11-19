@@ -8,6 +8,7 @@ use App\Diplome\FormationCreator;
 use App\Diplome\TypeDiplomeResolver;
 use App\Entity\Formation;
 use App\Enum\FormationPhase;
+use App\FicheMatiere\FicheMatiereLifecycle;
 use App\FicheMatiere\IncompleteFiches;
 use App\Maquette\Doc\TreeNode;
 use App\Maquette\Maquette;
@@ -30,6 +31,7 @@ final class FormationController extends AbstractController
         private readonly RoleExtension $roles,
         private readonly TypeDiplomeResolver $typeResolver,
         private readonly \App\Formulaire\Fiche\ParcoursFicheTransfer $parcoursTransfer,
+        private readonly FicheMatiereLifecycle $ficheLifecycle,
     ) {
     }
 
@@ -324,7 +326,22 @@ final class FormationController extends AbstractController
     #[Route('/formations/{id}/supprimer', name: 'formation_delete', methods: ['POST'])]
     public function delete(Formation $formation, EntityManagerInterface $em): Response
     {
+        $blockers = $this->ficheLifecycle->formationDeletionBlockers($formation);
+        if ([] !== $blockers) {
+            $details = [];
+            foreach ($blockers as $blocker) {
+                $details[] = sprintf('« %s » — %s : %s', $blocker['fiche']->getLibelle(), $blocker['formation']->getName(), $blocker['path']);
+            }
+            $this->addFlash('danger', sprintf(
+                'Suppression refusée : des fiches de cette formation sont utilisées par des EC d’autres formations. %s',
+                implode(' ; ', $details),
+            ));
+
+            return $this->redirectToRoute('formation_index');
+        }
+
         $name = $formation->getName();
+        $this->ficheLifecycle->deleteFichesOf($formation);
         $this->maquette->deleteHistory($formation);
         $em->remove($formation);
         $em->flush();

@@ -54,7 +54,7 @@ final class NodeTypeFixtures extends Fixture
             // NodeTypeController::INTERNAL_KEYS / MaquetteExtension::typesAllowedFor) : n'existe que
             // par conversion d'un ELP déjà en place (NodeController::convertToChoice), donc protégé
             // comme les autres types dont le code dépend structurellement.
-            ['bloc_choix',  'Bloc de choix', 'ph:shuffle',        NodeFamily::Structural, 60,       ['ects' => true, 'choiceCount' => true, 'nature' => true, 'mutualisable' => true], null,       ['nature'],      false,    'decimal', NodeKind::Structurel, false, false, true],
+            ['bloc_choix',  'Bloc de choix', 'ph:shuffle',        NodeFamily::Structural, 60,       ['ects' => true, 'choiceCount' => true, 'nature' => true, 'mutualisable' => true, 'hours' => true, 'mccc' => true, 'enfantsIdentiques' => true], null,       ['nature'],      false,    'decimal', NodeKind::Structurel, false, false, true],
             // ─── référentiel de compétences (BCC) : arbre parallèle à la structure pédagogique — le
             // BCC en dépend structurellement (BccController cherche ces clés), donc protégés eux aussi.
             ['bloc_competences', 'Bloc de compétences', 'ph:graduation-cap', NodeFamily::Competence, 70, ['mutualisable' => true],                                          null,       [],              true,     'decimal', NodeKind::Structurel, false, false, true],
