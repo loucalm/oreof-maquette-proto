@@ -306,6 +306,7 @@ formation:
     keyboard_help: 'Clavier : Entrée ou ↓ ligne suivante, ↑ ligne précédente, ← → cellule voisine. Les totaux et écarts aux cibles se mettent à jour à chaque enregistrement.'
   check:
     sections_title: Paramètres à compléter
+    fiches_title: Fiches matière incomplètes
     title_prefix: Vérifier la saisie
     subtitle: '%name% — %progress%% complété'
     edit_structure_button: Modifier la structure

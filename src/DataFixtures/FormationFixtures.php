@@ -193,6 +193,7 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
         $this->ec($doc, $maths, 'Analyse', ['ects' => 5, 'hours' => ['pres' => ['cm' => 20]]], 'MAT-ANA');
         $this->ec($doc, $maths, 'Algèbre'); // volontairement vide
         $this->fill($langues, 'Anglais et expression', ['ects' => 10, 'nature' => 'obligatoire']);
+        $this->ec($doc, $langues, 'Anglais', ['ects' => 10], 'INF-ANG');
         $this->defaultEcts($doc);
 
         // ─── référentiel de compétences (BCC), arbre parallèle ───
@@ -279,12 +280,20 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
         $this->fill($portail, 'Portail commun (L1)', ['periodeDebut' => 1, 'periodeFin' => 1, 'ects' => 60]);
 
         $info = $this->parcours($doc, 'Parcours Informatique', 2, 2, $portail, 120);
-        $this->parcours($doc, 'Parcours Mathématiques', 2, 3, $portail, 120);
+        $maths = $this->parcours($doc, 'Parcours Mathématiques', 2, 3, $portail, 120);
         $this->parcours($doc, 'Informatique — Données & IA', 3, 3, $info, 60);
         $this->parcours($doc, 'Informatique — Génie logiciel', 3, 3, $info, 60);
 
         $semestres = $this->semestres($doc, $info);
         $this->fill($semestres[0]->getChildren()[0], 'UE Programmation avancée', ['ects' => 10]);
+        // fiche portée par le parcours Informatique et mutualisée vers Mathématiques (spec §11) :
+        // l'EC utilisateur reprend ses MCCC du porteur.
+        $this->ec($doc, $semestres[0]->getChildren()[0], 'Mathématiques pour l’informatique', ['ects' => 5], 'ST-MATH');
+        $semestresMaths = $this->semestres($doc, $maths);
+        $this->ec($doc, $semestresMaths[0]->getChildren()[0], 'Algèbre linéaire', [
+            'ects' => 5,
+            'sources' => ['mccc' => 'porteur'],
+        ], 'ST-ALG');
         $this->defaultEcts($doc);
         $this->bloc($doc, $info, 'Concevoir un système logiciel', [
             ['C1', 'Analyser un besoin et spécifier une solution.'],

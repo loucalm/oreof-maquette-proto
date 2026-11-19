@@ -194,6 +194,7 @@ Le rattachement d'une ressource ou d'une SAÉ à plusieurs UE avec un coefficien
 | Canevas, écrans intégrés, navigation | `src/Diplome/Spec/CanvasSpec.php`, `CanvasEntry.php` ; `src/Formulaire/CanvasResolver.php`, `CanvasDefaults.php`, `FicheNavigation.php`, `Builtin/` |
 | Formulaires, variantes, usage | `src/Formulaire/FormResolver.php`, `ResolvedField.php`, `VariantFactory.php`, `FormUsage.php` ; `src/Controller/NodeTypeController.php` |
 | Fiches (données, enregistrement) | `src/Formulaire/Fiche/` ; `src/Formulaire/EntryCompletion.php` ; `src/Controller/FicheEntryController.php` ; `templates/formation/param/entry.html.twig` |
+| Fiche matière (entité, héritage, écrans) | `src/Entity/FicheMatiere.php`, `FicheMatiereMutualisation.php` ; `src/FicheMatiere/` (`EcValueResolver`, `FicheMatiereAccess`, `FicheMatiereUsage`, `IncompleteFiches`, `FicheMatiereEditor`) ; `src/Controller/FicheMatiereController.php` ; `templates/fiche_matiere/` ; `src/DataFixtures/FicheMatiereFixtures.php`. La page « Vérifier » liste les fiches incomplètes portées par la formation. Spécification : [`docs/superpowers/specs/2026-11-19-fiche-matiere-design.md`](superpowers/specs/2026-11-19-fiche-matiere-design.md) |
 | Étape « Formulaires », Adapter, Aperçu | `src/Diplome/Wizard/CanvasStep.php`, `src/Form/Diplome/CanvasType.php` ; `src/Controller/CanvasController.php` ; `src/Formulaire/Preview/` ; `src/EventSubscriber/PreviewGuardSubscriber.php` |
 | Rendu des champs | `src/FieldType/` (une classe par type de champ, avec ses gabarits `templates/field_type/`) |
 

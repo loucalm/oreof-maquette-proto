@@ -103,12 +103,6 @@ final class ReferentielFixtures extends Fixture
             'C1 — Analyser un besoin' => 'C1 — Analyser un besoin',
             'C2 — Concevoir une solution' => 'C2 — Concevoir une solution',
         ], RefCategory::Entite, 'Répertoire RNCP (France compétences, API externe)'],
-        ['fiches_matiere', 'Fiches matière', 'Fiches réutilisables proposées sur un EC.', [
-            'Fiche — Algorithmique' => 'Fiche — Algorithmique',
-            'Fiche — Programmation' => 'Fiche — Programmation',
-            'Fiche — Bases de données' => 'Fiche — Bases de données',
-            'Fiche — Mathématiques' => 'Fiche — Mathématiques',
-        ], RefCategory::Entite, 'Fiche matière (référentiel ORéOF)'],
         ['nature_elp', "Nature de l'élément", 'Nature d’un ELP — les valeurs « à choix » gouvernent la transformation en bloc de choix.', [
             'obligatoire' => 'Obligatoire', 'choix_libre' => 'À choix libre',
             'choix_restreint' => 'À choix restreint', 'specifique_sante' => 'Spécifique santé facultative',

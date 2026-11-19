@@ -8,6 +8,7 @@ use App\Diplome\StructureInstantiator;
 use App\Entity\Formation;
 use App\Entity\TypeDiplome;
 use App\Maquette\Maquette;
+use App\Repository\FicheMatiereRepository;
 use App\Tests\Support\ResetsDatabase;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -49,6 +50,23 @@ final class CheckPageTest extends WebTestCase
         $html = $client->getResponse()->getContent();
         self::assertStringContainsString("Nombre d'éléments : au plus 6", html_entity_decode($html, \ENT_QUOTES));
         self::assertStringContainsString($semestre->getDisplayLabel(), html_entity_decode($html, \ENT_QUOTES));
+    }
+
+    public function testListsIncompleteFiches(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase(withDemoFiches: true);
+
+        $formation = $this->em->getRepository(Formation::class)->findOneBy(['name' => 'Licence Informatique (démo)']);
+        self::assertNotNull($formation);
+        $fiche = static::getContainer()->get(FicheMatiereRepository::class)->findOneBy(['libelle' => 'Fiche — Algèbre']);
+        self::assertNotNull($fiche);
+
+        $client->request('GET', '/formations/'.$formation->getId().'/verifier');
+        self::assertResponseIsSuccessful();
+        $html = html_entity_decode($client->getResponse()->getContent(), \ENT_QUOTES);
+        self::assertStringContainsString('Fiches matière incomplètes', $html);
+        self::assertStringContainsString('/fiches-matieres/'.$fiche->getId(), $html);
     }
 
     public function testNoStructureSectionWithoutVersion(): void

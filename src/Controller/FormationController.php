@@ -8,6 +8,7 @@ use App\Diplome\FormationCreator;
 use App\Diplome\TypeDiplomeResolver;
 use App\Entity\Formation;
 use App\Enum\FormationPhase;
+use App\FicheMatiere\IncompleteFiches;
 use App\Maquette\Doc\TreeNode;
 use App\Maquette\Maquette;
 use App\Maquette\MaquetteBuilder;
@@ -273,6 +274,7 @@ final class FormationController extends AbstractController
         \App\Maquette\Completion $completion,
         \App\Formulaire\FicheNavigation $navigation,
         \Symfony\Contracts\Translation\TranslatorInterface $translator,
+        IncompleteFiches $incompleteFiches,
     ): Response
     {
         $roots = $builder->build($formation);
@@ -314,6 +316,7 @@ final class FormationController extends AbstractController
             'groups' => $groups,
             'issueCount' => array_sum(array_map('count', $groups)),
             'sections' => $sections,
+            'incompleteFiches' => $incompleteFiches->ofFormation($formation),
             'progress' => $builder->progress($roots),
         ]);
     }

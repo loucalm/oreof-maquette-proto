@@ -16,7 +16,7 @@
 </div>
 
 <div class="rounded-2xl border bg-white px-7 py-6 space-y-6" style="border-color:var(--c-border)">
-    {% if groups is empty and sections is empty and violations is empty %}
+    {% if groups is empty and sections is empty and violations is empty and incompleteFiches is empty %}
         <div class="rounded-xl border p-6 text-sm" style="border-color:#bbf7d0;background:#f0fdf4">
             <span class="font-semibold text-green-800">{{ ux_icon('ph:check-bold', {class: 'icon'}) }} {{ 'formation.check.no_issue_title'|trans({}, 'formation') }}</span>
             <p class="text-green-700 mt-1">{{ 'formation.check.no_issue_text'|trans({}, 'formation') }}</p>
@@ -35,6 +35,23 @@
                             {% if sec.context %}<span class="text-gray-400">· {{ sec.context }}</span>{% endif %}
                         </div>
                         <a href="{{ sec.url }}" class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">{{ 'formation.check.fix_button'|trans({}, 'formation') }} {{ ux_icon('ph:arrow-right', {class: 'icon'}) }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% endif %}
+
+    {% if incompleteFiches is not empty %}
+        <section>
+            <h2 class="text-sm font-bold uppercase tracking-wide text-gray-500 mb-2">{{ 'formation.check.fiches_title'|trans({}, 'formation') }}</h2>
+            <ul class="space-y-2">
+                {% for row in incompleteFiches %}
+                    <li class="flex items-center justify-between gap-4 rounded-lg border p-3" style="border-color:var(--c-border)">
+                        <div class="flex items-center gap-2 text-sm">
+                            <span class="status-dot" data-status="{{ row.status }}"></span>
+                            <span class="font-medium">{{ row.fiche.libelle }}</span>
+                        </div>
+                        <a href="{{ row.url }}" class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">{{ 'formation.check.fix_button'|trans({}, 'formation') }} {{ ux_icon('ph:arrow-right', {class: 'icon'}) }}</a>
                     </li>
                 {% endfor %}
             </ul>

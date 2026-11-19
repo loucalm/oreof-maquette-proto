@@ -35,6 +35,7 @@ reprennent l'audit précédent sans nouvelle lecture.
 | BCC à 2 niveaux | Niveaux libres par diplôme ; référentiel national en lecture seule (compétence › niveau › AC) |
 | Règles MCCC non branchées sur la complétude | `McccValidator` alimente `Completion`, donc les pastilles et la page « Vérifier » |
 | Champs des fiches d'aide v2 absents | Sigle, localisations, descriptif (stage, projet tutoré, TER, mise en situation pro), prérequis, secrétariat, codes ROME multiples, limites de 3000 caractères |
+| Fiche matière comme simple valeur du référentiel | Entité `FicheMatiere` (données, valeurs par défaut, impositions, porteur, mutualisation, hors diplôme), héritage fiche → EC par `sources`, écrans dédiés et données de démonstration (`FicheMatiereFixtures`) ; cf. `docs/superpowers/specs/2026-11-19-fiche-matiere-design.md` |
 
 ---
 
@@ -60,15 +61,13 @@ reprennent l'audit précédent sans nouvelle lecture.
 
 Ces points touchent le modèle lui-même. Tant qu'ils ne sont pas tranchés, la spécification pour v2 est incomplète.
 
-- **Fiche matière comme entité.** Décision du 22/10 : une seule fiche EC, dont le type de diplôme active les options.
-  Aujourd'hui, la fiche matière n'est qu'une valeur du référentiel `fiches_matiere`. Il manque :
-  - référent, sigle, libellés français et anglais, description, objectifs, langues des cours et des supports ;
-  - volumes, ECTS et MCCC imposés aux parcours utilisateurs (`volumesHorairesImpose`, `ectsImpose`, `mcccImpose` en v2) ;
-  - mutualisation au niveau de la fiche (v2 : `FicheMatiereMutualisable`) ;
-  - fiche hors diplôme, accessible à toutes les formations.
-- **Héritage d'attributs fiche → EC.** Non implémenté. v2 combine 4 sources (fiche imposée, EC parent, EC spécifique,
-  fiche) avec une priorité différente selon l'attribut (`src/Classes/GetElementConstitutif.php:53-150`). À reproduire
-  comme une politique configurable, sinon des MCCC déjà votées en CFVU changent à la migration.
+- **Fiche matière comme entité — FAIT.** Décision du 22/10 : une seule fiche EC, dont le type de diplôme active les options.
+  La fiche n'est plus une valeur du référentiel `fiches_matiere` (supprimé des fixtures) : référent, sigle, libellés,
+  description, objectifs, langues, valeurs par défaut, impositions, porteur, mutualisation et fiche hors diplôme sont
+  modélisés et éditables. Voir la spécification `docs/superpowers/specs/2026-11-19-fiche-matiere-design.md` (§6, §8).
+- **Héritage d'attributs fiche → EC — FAIT.** Les quatre sources (fiche imposée, EC parent, EC spécifique, fiche)
+  sont combinées par une politique configurable (`sources` par attribut, `imposed` de la fiche), reproduisant les
+  priorités de v2 (`src/Classes/GetElementConstitutif.php:53-150`). Voir la spécification §7.
 - **MCCC complètes.** Saisie actuelle : un type (CCI, CC, CT, CC + CT) et des épreuves (type, durée, pourcentage). Il
   manque :
   - la 2ᵉ session et la seconde chance : le drapeau `secondChance` d'un profil est enregistré mais rien ne le saisit

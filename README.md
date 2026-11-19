@@ -35,6 +35,7 @@ Autres : `make sh`, `make console ARGS="…"`, `make cc`, `make tw-watch`, `make
 | **Types de champ** : une classe par type de saisie (taguée, découverte par le registre) qui décide des réglages de l'éditeur de champ, du sens des bornes min / max et de la validation des valeurs | `src/FieldType/` |
 | **Règles de validation par onglet** : « obligatoire sous condition », « au moins un parmi », bornes des champs ; pilotent les pastilles (dont l'état « erreur ») et les messages sous les champs | `src/Validation/` + éditeur d'un type d'ELP + `/administration/regles-de-validation` |
 | **Format des BCC par diplôme** : blocs saisis (Licence, Master, M2E) ou référentiel national porté par la formation, en lecture seule (compétence › niveau › AC) | `Formation::getBccReferentiel`, `templates/formation/bcc_but.html.twig` |
+| **Fiche matière** : entité par EC (valeurs par défaut, impositions, mutualisation, hors diplôme), héritage fiche → EC par source, pages dédiées et fiches incomplètes sur la page « Vérifier » | `src/Entity/FicheMatiere.php`, `src/FicheMatiere/`, `src/Controller/FicheMatiereController.php`, `templates/fiche_matiere/` ; spécification dans `docs/superpowers/specs/2026-11-19-fiche-matiere-design.md` |
 
 ## Pas (encore) dans le prototype
 
