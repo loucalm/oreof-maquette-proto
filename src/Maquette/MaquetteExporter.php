@@ -23,6 +23,7 @@ final class MaquetteExporter
         private readonly MaquetteBuilder $builder,
         private readonly BccReferences $bccRefs,
         private readonly FicheNavigation $fiches,
+        private readonly \App\FicheMatiere\EcValueResolver $values,
     ) {
     }
 
@@ -82,7 +83,7 @@ final class MaquetteExporter
         if ($v->ref !== '') {
             $out['ref'] = $v->ref;
         }
-        $out['label'] = $v->node->getLabel();
+        $out['label'] = $v->node->getType()->isElementLevel() ? $this->values->label($v->node) : $v->node->getLabel();
         if ($v->node->getCode() !== null) {
             $out['code'] = $v->node->getCode();
         }
@@ -94,6 +95,18 @@ final class MaquetteExporter
         $out['totalEcts'] = round($v->totalEcts, 2);
         // attributs métier seulement (« _sourceHash », « _tpl » sont internes)
         $attributes = array_filter($v->node->getAttributes(), static fn ($k) => !str_starts_with((string) $k, '_'), \ARRAY_FILTER_USE_KEY);
+        if ($v->node->getType()->isElementLevel()) {
+            // valeurs effectives (fiche, parent ou porteur comprises), et d'où elles viennent
+            $sources = [];
+            foreach (\App\FicheMatiere\EcValueResolver::KEYS as $key) {
+                $resolved = $this->values->resolve($v->node, $key);
+                if (null !== $resolved->value || \array_key_exists($key, $attributes)) {
+                    $attributes[$key] = $resolved->value;
+                }
+                $sources[$key] = $resolved->source;
+            }
+            $out['sources'] = $sources;
+        }
         if ($attributes !== []) {
             $out['attributes'] = $attributes;
         }

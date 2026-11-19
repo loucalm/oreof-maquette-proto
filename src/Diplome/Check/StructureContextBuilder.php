@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Diplome\Check;
 
 use App\Diplome\Spec\VersionConfig;
+use App\FicheMatiere\EcValueResolver;
 use App\Maquette\Doc\MaquetteDoc;
 use App\Maquette\Doc\TreeNode;
 
@@ -21,6 +22,10 @@ use App\Maquette\Doc\TreeNode;
  */
 final class StructureContextBuilder
 {
+    public function __construct(private readonly EcValueResolver $values)
+    {
+    }
+
     /** @return list<?TreeNode> parcours en multi-parcours, [null] (racine) en mono-parcours */
     public function rootScopes(MaquetteDoc $doc): array
     {
@@ -164,12 +169,14 @@ final class StructureContextBuilder
     /** @return array<string, mixed> */
     private function row(TreeNode $node, ?VersionConfig $config): array
     {
-        return array_merge($node->getAttributes(), [
+        $hours = $this->values->value($node, 'hours');
+
+        return array_merge($node->getAttributes(), null === $hours ? [] : ['hours' => $hours], [
             'nid' => $node->getId(),
             'typeKey' => $node->typeKey,
             'hostTypeKey' => $this->hostTypeKey($node),
             'nature' => null !== $config ? $config->natureOf($node) : $node->getAttribute('natureElement'),
-            'ects' => $node->getAttribute('ects'),
+            'ects' => $this->values->value($node, 'ects'),
         ]);
     }
 }

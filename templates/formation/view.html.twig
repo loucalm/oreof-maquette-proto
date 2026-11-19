@@ -22,9 +22,9 @@
     {% set hasContent = false %}
     <div class="space-y-4">
         {% for tab in tabs %}
-            {% if tab == 'volume_horaire' and n.getAttribute('hours') %}
+            {% if tab == 'volume_horaire' and ec_value(n, 'hours').value %}
                 {% set hasContent = true %}
-                {% set hours = n.getAttribute('hours') %}
+                {% set hours = ec_value(n, 'hours').value %}
                 <div>
                     <div class="fld-cat">{{ domains[tab] ?? tab }}</div>
                     <div class="flex flex-wrap gap-x-5 gap-y-1 text-sm text-gray-600 mt-2">
@@ -40,9 +40,9 @@
                         {% endif %}
                     </div>
                 </div>
-            {% elseif tab == 'mccc' and n.getAttribute('mccc') %}
+            {% elseif tab == 'mccc' and ec_value(n, 'mccc').value %}
                 {% set hasContent = true %}
-                {% set mccc = n.getAttribute('mccc') %}
+                {% set mccc = ec_value(n, 'mccc').value %}
                 <div>
                     <div class="fld-cat">{{ domains[tab] ?? tab }}</div>
                     <div class="text-sm text-gray-600 mt-2">{{ mccc.type is defined ? (mccc_type_label(mccc.type) ?? mccc.type) : '—' }}</div>

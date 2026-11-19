@@ -6,6 +6,7 @@ namespace App\Maquette;
 
 use App\Diplome\TypeDiplomeResolver;
 use App\Entity\Formation;
+use App\FicheMatiere\EcValueResolver;
 use App\Maquette\Doc\TreeNode;
 
 /**
@@ -20,6 +21,7 @@ final class MaquetteBuilder
         private readonly Numbering $numbering,
         private readonly Completion $completion,
         private readonly TypeDiplomeResolver $typeDiplomes,
+        private readonly EcValueResolver $values,
     ) {
     }
 
@@ -99,8 +101,8 @@ final class MaquetteBuilder
         $view = new NodeView($node, $children);
 
         // --- agrégats ---
-        $ownHours = AttributeCatalog::sumHours($node->getAttribute('hours'));
-        $ownEcts = (float) ($node->getAttribute('ects') ?? 0);
+        $ownHours = AttributeCatalog::sumHours($this->values->value($node, 'hours'));
+        $ownEcts = (float) ($this->values->value($node, 'ects') ?? 0);
 
         if ($node->isChoiceBloc()) {
             // Les alternatives d'un bloc de choix sont mutuellement exclusives :

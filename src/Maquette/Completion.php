@@ -7,7 +7,9 @@ namespace App\Maquette;
 use App\Diplome\Check\StructureChecker;
 use App\Diplome\Check\StructureViolation;
 use App\Diplome\TypeDiplomeResolver;
+use App\Diplome\VersionMccc;
 use App\Entity\Formation;
+use App\FicheMatiere\EcValueResolver;
 use App\Maquette\Doc\MaquetteDoc;
 use App\Maquette\Doc\TreeNode;
 use App\Validation\TabValidator;
@@ -27,6 +29,8 @@ final class Completion
         private readonly TabValidator $validator,
         private readonly StructureChecker $structureChecker,
         private readonly TypeDiplomeResolver $resolver,
+        private readonly EcValueResolver $values,
+        private readonly VersionMccc $versionMccc,
     ) {
     }
 
@@ -67,12 +71,18 @@ final class Completion
             if (!($caps[$key] ?? false) || !($def['required'] ?? false)) {
                 continue;
             }
-            $v = $node->getAttribute($key);
+            if ('ficheMatiere' === $key && $node->getType()->isElementLevel()) {
+                $this->checkFiche($node, $def, $out);
+                continue;
+            }
+            $v = $this->values->value($node, $key);
             $provided = $key === 'hours'
                 ? AttributeCatalog::hoursProvided($v)
                 : !($v === null || $v === '' || $v === []);
             if (!$provided) {
                 $out[] = ['key' => $key, 'label' => mb_strtolower($def['label']), 'tab' => $def['domain']];
+            } elseif ($key === 'mccc' && !$this->mcccTypeAllowed($node, $v)) {
+                $out[] = ['key' => $key, 'label' => 'type de MCCC non autorisé par le diplôme', 'tab' => $def['domain']];
             } elseif ($key === 'mccc' && $this->mcccValidator->hasError($node)) {
                 $out[] = [
                     'key' => $key,
@@ -91,12 +101,40 @@ final class Completion
         return $out;
     }
 
+    /**
+     * Fiche matière d'un EC : un ancien libellé ou une absence compte comme non renseignée (R2), un id qui
+     * ne mène à aucune fiche comme « introuvable ».
+     *
+     * @param array<string, mixed>                                                        $def
+     * @param list<array{key: string, label: string, tab: string, detail?: string, invalid?: bool}> $out
+     */
+    private function checkFiche(TreeNode $node, array $def, array &$out): void
+    {
+        if (null === $this->values->ficheId($node)) {
+            $out[] = ['key' => 'ficheMatiere', 'label' => mb_strtolower($def['label']), 'tab' => $def['domain']];
+        } elseif (null === $this->values->fiche($node)) {
+            $out[] = ['key' => 'ficheMatiere', 'label' => 'fiche matière introuvable', 'tab' => $def['domain']];
+        }
+    }
+
+    /** D5 : le type de MCCC résolu doit figurer parmi ceux de la version du diplôme (null : pas de restriction). */
+    private function mcccTypeAllowed(TreeNode $node, mixed $mccc): bool
+    {
+        $type = \is_array($mccc) ? (string) ($mccc['type'] ?? '') : '';
+        $allowed = $this->versionMccc->typesFor($node);
+        if ('' === $type || null === $allowed) {
+            return true;
+        }
+
+        return \in_array($type, array_map(static fn ($t): string => $t->getKey(), $allowed), true);
+    }
+
     /** @return array{units: int, issues: list<array{key: string, label: string, tab: string, kind: string}>} */
     private function ruleCheck(TreeNode $node): array
     {
         return $this->validator->check(
             $node->getType(),
-            static fn (string $key) => $node->getAttribute($key),
+            fn (string $key) => $this->values->value($node, $key),
             array_keys(array_filter($node->effectiveCapabilities())),
         );
     }

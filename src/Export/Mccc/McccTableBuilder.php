@@ -40,6 +40,7 @@ final class McccTableBuilder
         private readonly MccTypeRepository $mccTypes,
         private readonly NodeTypeRepository $nodeTypes,
         private readonly ReferentielRepository $referentiels,
+        private readonly \App\FicheMatiere\EcValueResolver $values,
     ) {
     }
 
@@ -238,7 +239,7 @@ final class McccTableBuilder
                 $this->walk($child, $groupKeys, $elementKey, $inner, $lines, $refs, $ects);
                 if (\count($lines) === $before) {
                     // regroupement sans élément (UE vide) : une ligne pour qu'il apparaisse
-                    $lines[] = ['type' => 'element', 'groups' => $inner, 'empty' => true, 'ects' => $child->node->getAttribute('ects'), 'hours' => [], 'mccc' => []];
+                    $lines[] = ['type' => 'element', 'groups' => $inner, 'empty' => true, 'ects' => $this->values->value($child->node, 'ects'), 'hours' => [], 'mccc' => []];
                 }
             } else {
                 $this->walk($child, $groupKeys, $elementKey, $groups, $lines, $refs, $ects);
@@ -255,9 +256,9 @@ final class McccTableBuilder
     private function elementLine(NodeView $view, array $groups, array $refs): array
     {
         $node = $view->node;
-        $hours = $node->getAttribute('hours');
+        $hours = $this->values->value($node, 'hours');
         $hours = \is_array($hours) && empty($hours['none']) ? $hours : [];
-        $mccc = $node->getAttribute('mccc');
+        $mccc = $this->values->value($node, 'mccc');
         $parent = $node->getParent();
         $kind = $node->getAttribute('natureElement');
         $ecType = $node->getAttribute('ecType');
@@ -268,11 +269,11 @@ final class McccTableBuilder
             'groups' => $groups,
             'ref' => $this->display($view),
             'code' => (string) $node->getCode(),
-            'label' => $node->getLabel(),
+            'label' => $this->values->label($node),
             'kind' => \is_string($kind) && '' !== $kind ? ($refs['natureElement'][$kind] ?? $kind) : (\is_string($ecType) ? ($refs['ecType'][$ecType] ?? $ecType) : ''),
             'nature' => trim(($refs['nature'][$nature] ?? $nature).(null !== $parent && $parent->isChoiceBloc() ? ' (bloc à choix « '.$parent->getDisplayLabel().' »)' : '')),
-            'competencies' => implode(', ', array_map('strval', (array) ($node->getAttribute('competencies') ?? []))),
-            'ects' => $node->getAttribute('ects'),
+            'competencies' => implode(', ', array_map('strval', (array) ($this->values->value($node, 'competencies') ?? []))),
+            'ects' => $this->values->value($node, 'ects'),
             'hours' => [
                 'presCm' => (float) ($hours['pres']['cm'] ?? 0), 'presTd' => (float) ($hours['pres']['td'] ?? 0), 'presTp' => (float) ($hours['pres']['tp'] ?? 0),
                 'distCm' => (float) ($hours['dist']['cm'] ?? 0), 'distTd' => (float) ($hours['dist']['td'] ?? 0), 'distTp' => (float) ($hours['dist']['tp'] ?? 0),

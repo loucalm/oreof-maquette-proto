@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Maquette;
 
 use App\Diplome\VersionMccc;
+use App\FicheMatiere\EcValueResolver;
 use App\Maquette\Doc\TreeNode;
 use App\Repository\MccTypeRepository;
 use App\Rules\RuleEvaluator;
@@ -35,13 +36,14 @@ final class McccValidator implements ResetInterface
         private readonly MccTypeRepository $types,
         private readonly RuleEvaluator $evaluator,
         private readonly VersionMccc $versionMccc,
+        private readonly EcValueResolver $values,
     ) {
     }
 
     /** @return list<RuleResult> */
     public function forNode(TreeNode $node): array
     {
-        $mccc = $node->getAttribute('mccc');
+        $mccc = $this->values->value($node, 'mccc');
         if (!\is_array($mccc)) {
             return [];
         }

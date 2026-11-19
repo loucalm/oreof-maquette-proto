@@ -298,7 +298,7 @@ final class EcValueResolver implements ResetInterface
      * Id de fiche de l'attribut `ficheMatiere` ; null pour un ancien libellé (R2) ou une absence.
      * Une chaîne de chiffres vaut aussi un id : les formulaires postent des chaînes.
      */
-    private function ficheId(TreeNode $node): ?int
+    public function ficheId(TreeNode $node): ?int
     {
         $raw = $node->getAttribute('ficheMatiere');
         if (\is_int($raw)) {

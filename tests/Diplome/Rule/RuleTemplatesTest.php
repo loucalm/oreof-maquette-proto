@@ -24,7 +24,7 @@ final class RuleTemplatesTest extends DatabaseTestCase
     {
         parent::setUp();
         $this->registry = static::getContainer()->get(RuleTemplateRegistry::class);
-        $this->builder = new StructureContextBuilder();
+        $this->builder = static::getContainer()->get(StructureContextBuilder::class);
         $this->evaluator = new RuleEvaluator();
     }
 
@@ -206,6 +206,10 @@ final class RuleTemplatesTest extends DatabaseTestCase
     private function node(string $nid, string $type, array $attributes = [], array $children = []): TreeNode
     {
         $node = new TreeNode($nid, $type, attributes: $attributes);
+        // le résolveur de valeurs lit le type du nœud (niveau élément) : on le résout comme le fait un document ouvert
+        // (un type inconnu des fixtures, comme « stage », prend celui de l'EC : seule sa clé compte pour les règles)
+        $types = static::getContainer()->get(\App\Repository\NodeTypeRepository::class)->findAllIndexed();
+        $node->bindType($types[$type] ?? $types['ec']);
         $node->children = $children;
 
         return $node;

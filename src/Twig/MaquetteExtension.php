@@ -39,6 +39,7 @@ final class MaquetteExtension extends AbstractExtension
         private readonly FicheFactory $fiches,
         private readonly \App\Formulaire\Preview\PreviewContext $preview,
         private readonly \App\Diplome\TypeDiplomeResolver $diplomes,
+        private readonly \App\FicheMatiere\EcValueResolver $values,
     ) {
     }
 
@@ -52,6 +53,8 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('structure_rows', $this->structureRows(...)),
             new TwigFunction('structure_addable', $this->structureAddable(...)),
             new TwigFunction('node_display_label', $this->nodeDisplayLabel(...)),
+            new TwigFunction('ec_value', fn (TreeNode $n, string $key) => $this->values->resolve($n, $key)),
+            new TwigFunction('ec_fiche', fn (TreeNode $n) => $this->values->fiche($n)),
             new TwigFunction('root_type', $this->rootType(...)),
             new TwigFunction('type_meta', $this->typeMeta(...)),
             new TwigFunction('types_by_key', fn () => $this->types->findAllIndexed()),
@@ -174,6 +177,9 @@ final class MaquetteExtension extends AbstractExtension
      */
     public function nodeDisplayLabel(TreeNode $node, ?string $ref = null): string
     {
+        if ($node->getType()->isElementLevel() && '' !== ($label = $this->values->label($node))) {
+            return $label;
+        }
         if (!$node->getType()->isTemporel()) {
             return $node->getDisplayLabel();
         }
