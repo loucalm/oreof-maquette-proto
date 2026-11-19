@@ -20,8 +20,9 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * Étape « Formulaires » : le canevas des fiches formation et parcours. Données : un tableau
- * par fiche de lignes {key, builtin, position, label, form, hidden} (cf. CanvasEntryType).
+ * Étape « Formulaires » : le canevas des fiches formation et parcours, et le formulaire de la
+ * fiche matière. Données : un tableau par fiche de lignes {key, builtin, position, label, form,
+ * hidden} (cf. CanvasEntryType ; la fiche matière n'a qu'une ligne {key, position, form}).
  *
  * Contrôles : une entrée à formulaire en a un ; une entrée ajoutée a un libellé ; un écran
  * intégré non masquable n'est pas masqué ; chaque champ verrouillé d'une fiche (actif dans un
@@ -40,12 +41,14 @@ final class CanvasType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         foreach (CanvasSpec::FICHES as $fiche) {
+            // fiche matière : une entrée unique, ni ajout ni retrait (cf. CanvasSpec)
+            $free = CanvasSpec::hasFreeEntries($fiche);
             $builder->add($fiche, CollectionType::class, [
                 'entry_type' => CanvasEntryType::class,
                 'entry_options' => ['fiche' => $fiche, 'label' => false],
-                'allow_add' => true,
-                'allow_delete' => true,
-                'prototype' => true,
+                'allow_add' => $free,
+                'allow_delete' => $free,
+                'prototype' => $free,
                 'by_reference' => false,
                 'required' => false,
                 'label' => 'diplome.wizard.formulaires.fiche.'.$fiche,

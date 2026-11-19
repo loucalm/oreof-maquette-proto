@@ -94,6 +94,12 @@ final class NodeTypeController extends AbstractController
         return NodeFamily::Parameter === $nodeType->getFamily();
     }
 
+    /** Formulaire d'une fiche affichée sur une formation (formation, parcours) : l'aperçu s'ouvre sur une vraie formation. */
+    private static function isPreviewable(NodeType $nodeType): bool
+    {
+        return self::isFicheForm($nodeType) && \in_array($nodeType->getScope()?->value, CanvasSpec::FORMATION_FICHES, true);
+    }
+
     /** Champ verrouillé (cf. FieldDef::isLocked()) : visible/déplaçable dans le constructeur, jamais éditable ni retirable depuis là. */
     private function assertFieldEditable(FieldDef $field, NodeType $nodeType): ?Response
     {
@@ -181,6 +187,7 @@ final class NodeTypeController extends AbstractController
             'usage' => $isNew || !self::isFicheForm($nodeType) ? [] : $this->usage->versionsUsing($nodeType),
             'concerned' => $isNew || !self::isFicheForm($nodeType) ? [] : $this->usage->formationsConcerned($nodeType),
             'newParentFields' => !$isNew && $nodeType->isVariant() ? $this->forms->newParentFields($nodeType) : [],
+            'previewable' => !$isNew && self::isPreviewable($nodeType),
             'retour' => self::returnUrl($request),
         ]);
     }
@@ -521,8 +528,8 @@ final class NodeTypeController extends AbstractController
     #[Route('/administration/node-types/{id}/apercu', name: 'node_type_preview', methods: ['POST'])]
     public function preview(NodeType $nodeType, CanvasResolver $canvasResolver, PreviewStarter $previews): Response
     {
-        $fiche = $nodeType->getScope()?->value;
-        if (!self::isFicheForm($nodeType) || !\in_array($fiche, CanvasSpec::FICHES, true)) {
+        $fiche = (string) $nodeType->getScope()?->value;
+        if (!self::isPreviewable($nodeType)) {
             throw $this->createNotFoundException();
         }
         $version = $this->usage->versionsUsing($nodeType)[0] ?? null;

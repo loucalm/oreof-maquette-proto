@@ -68,9 +68,11 @@ diplome:
       fiche:
         formation: Fiche formation
         parcours: Fiche parcours
+        fiche_matiere: Fiche matière
       fiche_help:
         formation: Entrées de la barre latérale de la formation, dans cet ordre.
         parcours: S'applique à chaque parcours, et au parcours unique d'une formation sans parcours.
+        fiche_matiere: Formulaire des fiches matière des formations de ce diplôme (et des fiches hors diplôme de ce type).
       label: Libellé de l'entrée
       form: Formulaire
       hidden: Masquer

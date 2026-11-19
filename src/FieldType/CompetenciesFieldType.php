@@ -6,9 +6,11 @@ namespace App\FieldType;
 
 final class CompetenciesFieldType extends AbstractFieldType
 {
+    public const KEY = 'competencies';
+
     public function key(): string
     {
-        return 'competencies';
+        return self::KEY;
     }
 
     public function label(): string

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Twig;
 
+use App\Entity\FicheMatiere;
 use App\Entity\Formation;
 use App\Entity\NodeType;
 use App\Formulaire\Fiche\FicheFactory;
@@ -40,6 +41,7 @@ final class MaquetteExtension extends AbstractExtension
         private readonly \App\Formulaire\Preview\PreviewContext $preview,
         private readonly \App\Diplome\TypeDiplomeResolver $diplomes,
         private readonly \App\FicheMatiere\EcValueResolver $values,
+        private readonly \App\FicheMatiere\FicheMatiereForms $ficheForms,
     ) {
     }
 
@@ -84,12 +86,12 @@ final class MaquetteExtension extends AbstractExtension
             new TwigFunction('preview_active', fn (Formation $f) => $this->preview->isActive($f)),
             new TwigFunction('bcc_status', $this->bccStatus(...)),
             new TwigFunction('referentiel', fn (string $key) => $this->referentiels->values($key)),
-            // types de MCCC proposés pour un nœud : ceux de la version du type de diplôme (selon la nature
-            // de l'élément) ; sans version (formation non typée), tous ceux du catalogue
-            new TwigFunction('mccc_types_for', fn (TreeNode $n) => $this->versionMccc->typesFor($n) ?? $this->mcctypes->allOrdered()),
+            // types de MCCC proposés pour un nœud ou une fiche matière : ceux de la version du type de
+            // diplôme ; sans version (formation non typée, fiche hors diplôme sans type), tous ceux du catalogue
+            new TwigFunction('mccc_types_for', fn (TreeNode|FicheMatiere $s) => ($s instanceof FicheMatiere ? $this->versionMccc->typesForFiche($s) : $this->versionMccc->typesFor($s)) ?? $this->mcctypes->allOrdered()),
             // options MCCC (quitus, assiduité, sans note) de la version du type de diplôme ; toutes fausses sans version
             new TwigFunction('mccc_options', $this->mcccOptions(...)),
-            new TwigFunction('mccc_results', fn (TreeNode $n) => $this->mcccValidator->forNode($n)),
+            new TwigFunction('mccc_results', fn (TreeNode|FicheMatiere $s) => $s instanceof FicheMatiere ? $this->mcccValidator->forFiche($s) : $this->mcccValidator->forNode($s)),
             new TwigFunction('mccc_type_label', function (string $key): ?string {
                 $t = $this->mcctypes->findOneByKey($key);
 
@@ -101,9 +103,12 @@ final class MaquetteExtension extends AbstractExtension
     /**
      * @return array{quitus: bool, assiduite: bool, sansNote: bool}
      */
-    public function mcccOptions(TreeNode $node): array
+    public function mcccOptions(TreeNode|FicheMatiere $subject): array
     {
-        $formation = $node->getFormation();
+        if ($subject instanceof FicheMatiere) {
+            return $this->ficheForms->options($subject);
+        }
+        $formation = $subject->getFormation();
 
         return (null !== $formation ? $this->diplomes->configFor($formation)?->options : null)
             ?? ['quitus' => false, 'assiduite' => false, 'sansNote' => false];
@@ -365,14 +370,20 @@ final class MaquetteExtension extends AbstractExtension
     }
 
     /**
-     * Compétences du référentiel (BCC) proposables sur ce nœud, groupées par bloc.
+     * Compétences du référentiel (BCC) proposables sur ce nœud, ou sur cette fiche matière (celles de
+     * son porteur : le parcours porteur, la formation pour le parcours unique, ou le référentiel
+     * national de la formation porteuse ; aucune pour une fiche hors diplôme), groupées par bloc.
      *
      * @return list<array{bloc: string, transversal: bool, items: list<array{id: string, ref: string, label: string, description: string, title: string}>}>
      */
-    public function bccCompetences(TreeNode $node): array
+    public function bccCompetences(TreeNode|FicheMatiere $subject): array
     {
+        if ($subject instanceof FicheMatiere) {
+            return $this->ficheCompetences($subject);
+        }
+        $node = $subject;
         if (true === $node->getFormation()?->hasBccReferentiel()) {
-            return $this->apprentissagesNationaux($node->getFormation()->getBccReferentiel(), $node);
+            return $this->apprentissagesNationaux($node->getFormation()->getBccReferentiel(), $this->periodRank($node));
         }
 
         $parcours = null;
@@ -386,6 +397,36 @@ final class MaquetteExtension extends AbstractExtension
             ? $parcours->getBccBlocs()
             : ($node->getFormation() !== null ? $this->maquette->open($node->getFormation())->competenceBlocs() : []);
 
+        return $this->competenceGroups($blocs);
+    }
+
+    /** @return list<array{bloc: string, transversal: bool, items: list<array{id: string, ref: string, label: string, description: string, title: string}>}> */
+    private function ficheCompetences(FicheMatiere $fiche): array
+    {
+        $formation = $fiche->getFormation();
+        if (null === $formation) {
+            return [];
+        }
+        // référentiel national : tous les niveaux (une fiche n'est pas rangée dans une période)
+        if ($formation->hasBccReferentiel()) {
+            return $this->apprentissagesNationaux($formation->getBccReferentiel(), null);
+        }
+        $doc = $this->maquette->open($formation);
+        if (null === $fiche->getParcoursNid()) {
+            return $this->competenceGroups($doc->competenceBlocs());
+        }
+        $parcours = $doc->node($fiche->getParcoursNid());
+
+        return null !== $parcours ? $this->competenceGroups($parcours->getBccBlocs()) : [];
+    }
+
+    /**
+     * @param list<TreeNode> $blocs
+     *
+     * @return list<array{bloc: string, transversal: bool, items: list<array{id: string, ref: string, label: string, description: string, title: string}>}>
+     */
+    private function competenceGroups(array $blocs): array
+    {
         $out = [];
         foreach ($this->bccRefs->tree($blocs) as $bloc) {
             $items = [];
@@ -416,10 +457,10 @@ final class MaquetteExtension extends AbstractExtension
      *
      * @return list<string>
      */
-    public function bccCompetenceTitles(TreeNode $node, array $values): array
+    public function bccCompetenceTitles(TreeNode|FicheMatiere $subject, array $values): array
     {
         $byKey = [];
-        foreach ($this->bccCompetences($node) as $group) {
+        foreach ($this->bccCompetences($subject) as $group) {
             foreach ($group['items'] as $item) {
                 $byKey[$item['id']] = $item['title'];
                 $byKey[$item['label']] ??= $item['title'];
@@ -450,16 +491,14 @@ final class MaquetteExtension extends AbstractExtension
     /**
      * Référentiel national : les apprentissages critiques (AC) du référentiel national, groupés
      * par compétence, limités au niveau dont l'ordre est le rang de la période du nœud
-     * (1re période → niveau d'ordre 1…), jamais par libellé, quand le nœud est sous une période ; tous les niveaux sinon.
+     * (1re période → niveau d'ordre 1…), jamais par libellé, quand le nœud est sous une période (`$rank`) ; tous les niveaux sinon.
      *
      * @param list<array<string, mixed>> $referentiel
      *
      * @return list<array{bloc: string, transversal: bool, items: list<array{id: string, ref: string, label: string, description: string, title: string}>}>
      */
-    private function apprentissagesNationaux(array $referentiel, TreeNode $node): array
+    private function apprentissagesNationaux(array $referentiel, ?int $rank): array
     {
-        $rank = $this->periodRank($node);
-
         $out = [];
         foreach ($referentiel as $competence) {
             foreach ($competence['niveaux'] ?? [] as $niveau) {

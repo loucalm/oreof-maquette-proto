@@ -89,7 +89,7 @@ final class FicheNavigation
     public function shows(Formation $formation, string $screenClass): bool
     {
         $canvas = $this->canvas->forFormation($formation);
-        foreach ([CanvasSpec::FORMATION, CanvasSpec::PARCOURS] as $fiche) {
+        foreach (CanvasSpec::FORMATION_FICHES as $fiche) {
             foreach ($canvas->entries($fiche) as $entry) {
                 $screen = $entry->isBuiltin() && !$entry->hidden ? $this->builtins->get($fiche, (string) $entry->builtin) : null;
                 if ($screen instanceof $screenClass && $screen->appliesTo($formation)) {

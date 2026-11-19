@@ -1,4 +1,5 @@
-{% set groups = bcc_competences(node) %}
+{# `subject` : le nœud (panneau d'un EC) ou la fiche matière (compétences du parcours porteur) #}
+{% set groups = bcc_competences(subject) %}
 {% set cur = value ?? [] %}
 {% if groups is empty %}
     <p class="fld-help">{{ 'node.panel.no_competencies'|trans({}, 'node') }}</p>

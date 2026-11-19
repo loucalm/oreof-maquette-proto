@@ -32,6 +32,7 @@ final class VersionConfigTest extends TestCase
             'canvas' => [
                 'formation' => [['key' => 'organisation', 'form' => 'org_licence', 'builtin' => null, 'label' => null, 'hidden' => false]],
                 'parcours' => [['key' => 'bcc', 'form' => null, 'builtin' => 'bcc', 'label' => 'BCC', 'hidden' => true]],
+                'fiche_matiere' => [['key' => 'fiche_matiere', 'form' => 'fiche_licence', 'builtin' => null, 'label' => null, 'hidden' => false]],
             ],
             'mccc' => ['CT' => ['profile' => 'licence'], 'CC' => ['profile' => null]],
             'options' => ['quitus' => true, 'assiduite' => true, 'sansNote' => false],

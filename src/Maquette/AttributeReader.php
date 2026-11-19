@@ -33,9 +33,10 @@ final class AttributeReader
                 $val = (float) ($raw[$p][$m] ?? 0);
                 if ($val > 0) {
                     $out[$p][$m] = $val;
-                }
-                if (!empty($raw['mutualise'][$p][$m])) {
-                    $mutualise[$p][$m] = true;
+                    // « mutualisé » n'a de sens que pour une modalité qui a des heures
+                    if (!empty($raw['mutualise'][$p][$m])) {
+                        $mutualise[$p][$m] = true;
+                    }
                 }
             }
         }

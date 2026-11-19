@@ -78,6 +78,32 @@
                     <button type="button" data-action="canvas#add" class="mt-3 rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'diplome.wizard.formulaires.add'|trans({}, 'diplome') }}</button>
                 </section>
             {% endfor %}
+
+            {# Fiche matière : une seule entrée, dont seul le formulaire se choisit (ni ajout, ni masquage, ni ordre) #}
+            <section class="rounded-lg border p-4" style="border-color:var(--c-border)" data-fiche="fiche_matiere">
+                <h3 class="text-sm font-semibold">{{ 'diplome.wizard.formulaires.fiche.fiche_matiere'|trans({}, 'diplome') }}</h3>
+                <p class="text-xs mt-1 mb-3" style="color:var(--c-muted)">{{ 'diplome.wizard.formulaires.fiche_help.fiche_matiere'|trans({}, 'diplome') }}</p>
+                {{ form_errors(form.fiche_matiere) }}
+                {% for r in form.fiche_matiere %}
+                    {% set formKey = r.form.vars.value %}
+                    <div data-entry="{{ r.key.vars.value }}" class="rounded-md border p-3 flex gap-3 items-center" style="border-color:var(--c-border)">
+                        {{ form_widget(r.key) }}
+                        {{ form_widget(r.builtin) }}
+                        {{ form_widget(r.position) }}
+                        <div class="flex-1 min-w-0">
+                            {{ form_label(r.form, null, {label_attr: {class: 'sr-only'}}) }}
+                            {{ form_widget(r.form, {attr: {class: 'w-full rounded-md border px-2 py-1.5 text-sm', style: 'border-color:var(--c-border)'}}) }}
+                            {{ form_errors(r.form) }}
+                        </div>
+                        {% if r.key.vars.value and formKey and formIds[formKey] is defined %}
+                            <div class="flex gap-1 shrink-0 text-xs">
+                                <button type="submit" form="adapt-fiche_matiere-{{ r.key.vars.value }}" formnovalidate class="rounded border px-2 py-1 hover:bg-gray-50" style="border-color:var(--c-border)" title="{{ 'diplome.wizard.formulaires.adapt_help'|trans({}, 'diplome') }}">{{ 'diplome.wizard.formulaires.adapt'|trans({}, 'diplome') }}</button>
+                                <a href="{{ path('node_type_edit', {id: formIds[formKey], retour: app.request.pathInfo}) }}" data-turbo-frame="_top" class="rounded border px-2 py-1 hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'diplome.wizard.formulaires.modify'|trans({}, 'diplome') }}</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </section>
         </div>
 
         <aside class="rounded-lg border p-4" style="border-color:var(--c-border)">
@@ -101,7 +127,7 @@
 
 {# « Adapter » : un petit formulaire par entrée, hors du formulaire de l'étape (pas de formulaires imbriqués) #}
 {% set adaptUrl = version is defined ? path('diplome_canvas_adapt', {id: type.id, versionId: version.id}) : path('diplome_wizard_canvas_adapt') %}
-{% for fiche in ['formation', 'parcours'] %}
+{% for fiche in ['formation', 'parcours', 'fiche_matiere'] %}
     {% for r in form[fiche] %}
         {% if r.key.vars.value and not r.builtin.vars.value %}
             <form id="adapt-{{ fiche }}-{{ r.key.vars.value }}" method="post" action="{{ adaptUrl }}" hidden>

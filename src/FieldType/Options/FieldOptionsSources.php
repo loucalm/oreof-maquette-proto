@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\FieldType\Options;
 
+use App\Entity\FicheMatiere;
 use App\Maquette\Doc\TreeNode;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 
@@ -22,8 +23,8 @@ final class FieldOptionsSources
     }
 
     /** @return array<string, string> */
-    public function options(string $key, ?TreeNode $node): array
+    public function options(string $key, TreeNode|FicheMatiere|null $subject): array
     {
-        return ($this->sources[$key] ?? null)?->options($node) ?? [];
+        return ($this->sources[$key] ?? null)?->options($subject) ?? [];
     }
 }

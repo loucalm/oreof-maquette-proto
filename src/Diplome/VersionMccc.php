@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Diplome;
 
 use App\Diplome\Spec\VersionConfig;
+use App\Entity\FicheMatiere;
 use App\Entity\Formation;
 use App\Entity\MccType;
 use App\Entity\TypeDiplomeVersion;
@@ -55,19 +56,42 @@ final class VersionMccc implements ResetInterface
     /** @return list<MccType> types proposés pour ce nœud, ou null sans version */
     public function typesFor(TreeNode $node): ?array
     {
-        $config = $this->config($node);
-        if (null === $config) {
-            return null;
-        }
-        return array_values(array_filter(
-            $this->allTypes ??= $this->types->allOrdered(),
-            static fn (MccType $t): bool => isset($config->mccc[$t->getKey()]),
-        ));
+        return $this->typesOf($this->config($node));
     }
 
     /** Clé du profil de règles à appliquer au type de MCCC `$typeKey` de ce nœud (null : aucun, ou sans version). */
     public function profileFor(TreeNode $node, string $typeKey): ?string
     {
         return $this->config($node)?->mccc[$typeKey]['profile'] ?? null;
+    }
+
+    /**
+     * Types proposés pour une fiche matière : ceux de sa version (cf. TypeDiplomeResolver::versionForFiche()),
+     * ou null sans version. Les types autorisés valent pour toute la formation, quel que soit le type d'EC.
+     *
+     * @return list<MccType>|null
+     */
+    public function typesForFiche(FicheMatiere $fiche): ?array
+    {
+        return $this->typesOf($this->resolver->configForFiche($fiche));
+    }
+
+    /** Profil de règles du type de MCCC `$typeKey` pour une fiche matière (null : aucun, ou sans version). */
+    public function profileForFiche(FicheMatiere $fiche, string $typeKey): ?string
+    {
+        return $this->resolver->configForFiche($fiche)?->mccc[$typeKey]['profile'] ?? null;
+    }
+
+    /** @return list<MccType>|null */
+    private function typesOf(?VersionConfig $config): ?array
+    {
+        if (null === $config) {
+            return null;
+        }
+
+        return array_values(array_filter(
+            $this->allTypes ??= $this->types->allOrdered(),
+            static fn (MccType $t): bool => isset($config->mccc[$t->getKey()]),
+        ));
     }
 }

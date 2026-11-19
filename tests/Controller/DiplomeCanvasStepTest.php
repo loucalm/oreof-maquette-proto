@@ -11,6 +11,7 @@ use App\Diplome\WizardDraft;
 use App\Entity\NodeType;
 use App\Entity\TypeDiplome;
 use App\Enum\FormScope;
+use App\Formulaire\VariantFactory;
 use App\Tests\Support\FormationFactory;
 use App\Tests\Support\ResetsDatabase;
 use App\Tests\Support\SameOriginCsrf;
@@ -50,6 +51,55 @@ final class DiplomeCanvasStepTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSame(['organisation', 'presentation', 'bcc', 'ramification', 'structure'], $crawler->filter('[data-fiche="formation"] [data-entry]')->each(static fn ($n) => $n->attr('data-entry')));
         self::assertSame(['organisation', 'presentation', 'bcc', 'positionnement'], $crawler->filter('[data-fiche="parcours"] [data-entry]')->each(static fn ($n) => $n->attr('data-entry')));
+        self::assertSame([CanvasSpec::FICHE_MATIERE], $crawler->filter('[data-fiche="fiche_matiere"] [data-entry]')->each(static fn ($n) => $n->attr('data-entry')));
+    }
+
+    public function testFicheMatiereFormIsChosenNotEdited(): void
+    {
+        $socle = $this->ficheMatiereSocle();
+        $variant = static::getContainer()->get(VariantFactory::class)->create($socle, 'Fiche matière · DEUST');
+        $this->em->flush();
+        $this->startFromLicence();
+        $crawler = $this->client->request('GET', self::STEP);
+
+        // seul le formulaire se choisit : ni libellé, ni masquage, ni ajout ; les choix sont ceux de la portée
+        self::assertCount(0, $crawler->filter('[name="canvas[fiche_matiere][0][label]"], [name="canvas[fiche_matiere][0][hidden]"]'));
+        $choices = array_values(array_filter($crawler->filter('select[name="canvas[fiche_matiere][0][form]"] option')->each(static fn ($o) => (string) $o->attr('value'))));
+        self::assertSame([$socle->getKey(), $variant->getKey()], $choices);
+        self::assertSame($socle->getKey(), $crawler->filter('select[name="canvas[fiche_matiere][0][form]"] option[selected]')->attr('value'));
+
+        $values = $crawler->filter('form#wizard-form')->form()->getPhpValues();
+        $values['canvas']['fiche_matiere'][0]['form'] = $variant->getKey();
+        $this->client->request('POST', self::STEP, $values);
+
+        self::assertResponseRedirects();
+        $canvas = $this->draft()->config()->canvas;
+        self::assertEquals([new CanvasEntry(CanvasSpec::FICHE_MATIERE, $variant->getKey(), null, null, false)], $canvas->entries(CanvasSpec::FICHE_MATIERE));
+        // la fiche formation et la fiche parcours n'en sont pas touchées
+        self::assertNull($canvas->entry(CanvasSpec::FORMATION, CanvasSpec::FICHE_MATIERE));
+        self::assertNull($canvas->entry(CanvasSpec::PARCOURS, CanvasSpec::FICHE_MATIERE));
+    }
+
+    public function testFicheMatiereEntryCannotBeAdded(): void
+    {
+        $this->startFromLicence();
+        $values = $this->values();
+        $values['canvas']['fiche_matiere'][] = ['key' => '', 'builtin' => '', 'form' => $this->ficheMatiereSocle()->getKey(), 'position' => '1'];
+
+        $this->client->request('POST', self::STEP, $values);
+
+        self::assertResponseStatusCodeSame(422);
+    }
+
+    public function testFicheMatiereNeedsAForm(): void
+    {
+        $this->startFromLicence();
+        $values = $this->values();
+        $values['canvas']['fiche_matiere'][0]['form'] = '';
+
+        $this->client->request('POST', self::STEP, $values);
+
+        self::assertResponseStatusCodeSame(422);
     }
 
     public function testHideRenameReorderAndAddEntry(): void
@@ -164,6 +214,14 @@ final class DiplomeCanvasStepTest extends WebTestCase
         $crawler = $this->client->request('GET', '/diplomes/nouveau/recapitulatif');
 
         self::assertCount(1, $crawler->filter('[data-diff] [data-path="canvas.formation.1.hidden"]'));
+    }
+
+    private function ficheMatiereSocle(): NodeType
+    {
+        $socle = $this->em->getRepository(NodeType::class)->findOneBy(['scope' => FormScope::FicheMatiere, 'parent' => null]);
+        self::assertNotNull($socle);
+
+        return $socle;
     }
 
     private function startFromLicence(): void

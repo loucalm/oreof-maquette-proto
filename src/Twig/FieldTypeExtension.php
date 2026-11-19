@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Twig;
 
+use App\Entity\FicheMatiere;
 use App\Entity\FieldDef;
 use App\FieldType\FieldTypeInterface;
 use App\Formulaire\ResolvedField;
@@ -21,6 +22,10 @@ use Twig\TwigFunction;
  *
  * La définition peut être un FieldDef (pages paramètre) ou le tableau de l'AttributeCatalog
  * (panneau d'un nœud) : les gabarits la reçoivent toujours sous la même forme (cf. normalize()).
+ *
+ * Le sujet saisi (`subject`) est un nœud (panneau d'un EC) ou une fiche matière : les gabarits
+ * des champs qui en dépendent (compétences, heures, MCCC) lisent `subject` ; `node` reste le
+ * nœud seul (null pour une fiche), pour les gabarits propres aux nœuds.
  */
 final class FieldTypeExtension extends AbstractExtension
 {
@@ -47,7 +52,7 @@ final class FieldTypeExtension extends AbstractExtension
      *
      * @param list<string> $errors
      */
-    public function widget(Environment $twig, FieldDef|ResolvedField|array $def, string $key, mixed $value, string $inputName, ?TreeNode $node = null, array $errors = [], ?string $variant = null): string
+    public function widget(Environment $twig, FieldDef|ResolvedField|array $def, string $key, mixed $value, string $inputName, TreeNode|FicheMatiere|null $subject = null, array $errors = [], ?string $variant = null): string
     {
         if (!\in_array($variant, ['node', 'param'], true)) {
             throw new \InvalidArgumentException('field_widget() : variante « node » ou « param » requise.');
@@ -59,31 +64,33 @@ final class FieldTypeExtension extends AbstractExtension
             'key' => $key,
             'value' => $value,
             'name' => $inputName,
-            'options' => $this->options($def, $node),
-            'node' => $node,
+            'options' => $this->options($def, $subject),
+            'node' => $subject instanceof TreeNode ? $subject : null,
+            'subject' => $subject,
             'errors' => $errors,
             'variant' => $variant,
         ]);
     }
 
-    /** Faux si les options du champ viennent d'une source calculée qui n'en donne aucune pour ce nœud : rien à choisir, on ne l'affiche pas. */
-    public function available(FieldDef|ResolvedField|array $def, ?TreeNode $node = null): bool
+    /** Faux si les options du champ viennent d'une source calculée qui n'en donne aucune pour ce sujet : rien à choisir, on ne l'affiche pas. */
+    public function available(FieldDef|ResolvedField|array $def, TreeNode|FicheMatiere|null $subject = null): bool
     {
         $def = $this->normalize($def);
 
-        return empty($def['optionsSource']) || [] !== $this->options($def, $node);
+        return empty($def['optionsSource']) || [] !== $this->options($def, $subject);
     }
 
     /** Affichage en lecture seule d'une valeur. */
-    public function view(Environment $twig, FieldDef|ResolvedField|array $def, mixed $value, ?TreeNode $node = null): string
+    public function view(Environment $twig, FieldDef|ResolvedField|array $def, mixed $value, TreeNode|FicheMatiere|null $subject = null): string
     {
         $def = $this->normalize($def);
 
         return $twig->render($this->type($def)->viewTemplate(), [
             'def' => $def,
             'value' => $value,
-            'options' => $this->options($def, $node),
-            'node' => $node,
+            'options' => $this->options($def, $subject),
+            'node' => $subject instanceof TreeNode ? $subject : null,
+            'subject' => $subject,
         ]);
     }
 
@@ -94,10 +101,10 @@ final class FieldTypeExtension extends AbstractExtension
     }
 
     /** @param array<string, mixed> $def */
-    private function options(array $def, ?TreeNode $node): array
+    private function options(array $def, TreeNode|FicheMatiere|null $subject): array
     {
         if (!empty($def['optionsSource'])) {
-            return $this->optionsSources->options((string) $def['optionsSource'], $node);
+            return $this->optionsSources->options((string) $def['optionsSource'], $subject);
         }
 
         return $def['referentielKey'] ? $this->referentiels->values($def['referentielKey']) : $def['options'];

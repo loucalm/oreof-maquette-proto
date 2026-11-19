@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Maquette;
 
 use App\Diplome\VersionMccc;
+use App\Entity\FicheMatiere;
 use App\FicheMatiere\EcValueResolver;
 use App\Maquette\Doc\TreeNode;
 use App\Repository\MccTypeRepository;
@@ -43,7 +44,22 @@ final class McccValidator implements ResetInterface
     /** @return list<RuleResult> */
     public function forNode(TreeNode $node): array
     {
-        $mccc = $this->values->value($node, 'mccc');
+        return $this->evaluate($this->values->value($node, 'mccc'), fn (string $typeKey) => $this->versionMccc->profileFor($node, $typeKey));
+    }
+
+    /** @return list<RuleResult> MCCC par défaut de la fiche, au regard du profil de sa version */
+    public function forFiche(FicheMatiere $fiche): array
+    {
+        return $this->evaluate($fiche->getDefault('mccc'), fn (string $typeKey) => $this->versionMccc->profileForFiche($fiche, $typeKey));
+    }
+
+    /**
+     * @param callable(string): ?string $profileOf profil de règles d'un type de MCCC
+     *
+     * @return list<RuleResult>
+     */
+    private function evaluate(mixed $mccc, callable $profileOf): array
+    {
         if (!\is_array($mccc)) {
             return [];
         }
@@ -56,8 +72,7 @@ final class McccValidator implements ResetInterface
         }
 
         // profil : celui que la version du type de diplôme associe à ce type de MCCC ; sans version, aucun
-        $profileKey = $this->versionMccc->profileFor($node, $typeKey);
-        $rules = $type->getProfileRules($profileKey);
+        $rules = $type->getProfileRules($profileOf($typeKey));
         if ([] === $rules) {
             return [];
         }

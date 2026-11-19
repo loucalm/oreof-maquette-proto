@@ -16,6 +16,13 @@ final class AttributeReaderTest extends TestCase
         self::assertSame(['pres' => ['cm' => 12.0], 'mutualise' => ['pres' => ['cm' => true]]], $out);
     }
 
+    public function testHoursDropsMutualiseFlagWithoutHours(): void
+    {
+        $out = (new AttributeReader())->hours(['pres' => ['cm' => '12', 'td' => '0'], 'mutualise' => ['pres' => ['cm' => '1', 'td' => '1'], 'dist' => ['tp' => '1']]]);
+
+        self::assertSame(['pres' => ['cm' => 12.0], 'mutualise' => ['pres' => ['cm' => true]]], $out);
+    }
+
     public function testHoursNone(): void
     {
         self::assertSame(['none' => true], (new AttributeReader())->hours(['none' => '1', 'pres' => ['cm' => '3']]));

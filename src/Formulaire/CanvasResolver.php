@@ -20,7 +20,11 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  * Canevas effectif d'une version ou d'une formation, et navigation des éditeurs qui en
  * découle. Une version sans canevas prend le canevas par défaut (CanvasDefaults), sur
  * lequel l'ancienne configuration `forms` est reportée. Les écrans intégrés sont toujours
- * présents : ceux qu'un canevas enregistré n'a pas sont ajoutés en fin de fiche.
+ * présents : ceux qu'un canevas enregistré n'a pas sont ajoutés en fin de fiche. La fiche
+ * matière a toujours son entrée unique (formulaire par défaut si le canevas n'en dit rien).
+ *
+ * La navigation (barres latérales, parcours unique) ne parcourt que les fiches d'une
+ * formation (CanvasSpec::FORMATION_FICHES), jamais la fiche matière.
  */
 final class CanvasResolver
 {
@@ -49,6 +53,11 @@ final class CanvasResolver
                 }
             }
             $canvas = $canvas->withEntries($fiche, $entries);
+        }
+
+        // fiche matière : une entrée unique, toujours présente ; sans formulaire choisi, celui du canevas par défaut
+        if ([] === $canvas->entries(CanvasSpec::FICHE_MATIERE)) {
+            $canvas = $canvas->withEntries(CanvasSpec::FICHE_MATIERE, $this->defaults->canvas()->entries(CanvasSpec::FICHE_MATIERE));
         }
 
         return $canvas;

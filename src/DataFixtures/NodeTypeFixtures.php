@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\DataFixtures;
 
+use App\Diplome\Spec\CanvasSpec;
 use App\Entity\NodeType;
 use App\Enum\FormScope;
 use App\Enum\NodeFamily;
@@ -126,6 +127,36 @@ final class NodeTypeFixtures extends Fixture
             }
             $manager->persist($type);
         }
+
+        // ─── formulaire socle de la fiche matière (entité partagée, cf. App\FicheMatiere\FicheMatiereForms) :
+        // l'entrée unique de la fiche matière du canevas par défaut. Les champs déjà existants (sigle,
+        // compétences, heures, ECTS, MCCC) sont rangés dans les onglets de la fiche par ses réglages.
+        $fiche = (new NodeType('param_fiche_matiere', 'Fiche matière'))
+            ->setIcon('ph:book-open-text')
+            ->setFamily(NodeFamily::Parameter)
+            ->setScope(FormScope::FicheMatiere)
+            ->setDefaultEntryKey(CanvasSpec::FICHE_MATIERE)
+            ->setDefaultEntryPosition(10)
+            ->setPosition(130)
+            ->setCapabilities(array_fill_keys([
+                'libelle', 'libelleEn', 'sigle', 'referent', 'codeApogeeFiche', 'typeEc',
+                'description', 'objectifsEnseignement', 'languesCours', 'languesSupport', 'modaliteEnseignement',
+                'competencies',
+                'hours', 'volumesImposes',
+                'ects', 'ectsImposes', 'mccc', 'mcccImposes',
+            ], true))
+            ->setSystem(true);
+        $base = FieldDefFixtures::FICHE_MATIERE_BASE;
+        foreach ([
+            'sigle' => ['label' => 'Sigle', 'help' => 'Facultatif, 250 caractères maximum.', 'tab' => 'identite', 'position' => $base + 15],
+            'competencies' => ['label' => 'Compétences', 'help' => 'Compétences choisies dans le référentiel (BCC) du parcours porteur.', 'tab' => 'competences', 'position' => $base + 95],
+            'hours' => ['tab' => 'volume_horaire', 'position' => $base + 97],
+            'ects' => ['label' => 'ECTS', 'help' => 'ECTS repris par défaut par les EC qui utilisent la fiche.', 'tab' => 'mccc', 'position' => $base + 105],
+            'mccc' => ['tab' => 'mccc', 'position' => $base + 115],
+        ] as $key => $settings) {
+            $fiche->setFieldSetting($key, $settings);
+        }
+        $manager->persist($fiche);
 
         $manager->flush();
     }

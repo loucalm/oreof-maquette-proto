@@ -1,9 +1,10 @@
 {% import _self as ui %}
-{% set mtypes = mccc_types_for(node) %}
+{# `subject` : le nœud (panneau d'un EC) ou la fiche matière dont on saisit les MCCC ; `mcccOptions` (quitus, assiduité, sans note) peut être passé par l'appelant #}
+{% set mtypes = mccc_types_for(subject) %}
 {% set selectedType = value.type ?? '' %}
 {% set selectedMt = mtypes|filter(t => t.key == selectedType)|first %}
 {% set evals = value.evaluations ?? [] %}
-{% set opts = options|default(mccc_options(node)) %}
+{% set opts = mcccOptions ?? mccc_options(subject) %}
 <div data-controller="mccc">
     <div class="flex items-center gap-2">
         <span class="fld-label">{{ 'node.panel.mccc_type_label'|trans({}, 'node') }}</span>
@@ -68,7 +69,7 @@
     {% endif %}
 </div>
 
-{% set results = mccc_results(node) %}
+{% set results = mccc_results(subject) %}
 {% if results is not empty %}
     <div class="mt-3 space-y-1.5">
         {% for r in results %}

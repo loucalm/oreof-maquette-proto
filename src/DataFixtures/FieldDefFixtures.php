@@ -86,6 +86,36 @@ final class FieldDefFixtures extends Fixture
         ['codesRome', 'Code(s) ROME', 'presentation', 'checkbox', [], true, 'Choix multiples : codes ROME des métiers accessibles aux diplômés.', 'codes_rome', false],
     ];
 
+    /**
+     * Champs propres au formulaire socle de la fiche matière (cf. NodeTypeFixtures,
+     * `param_fiche_matiere`), dans l'ordre des onglets. `sigle`, `competencies`, `hours`, `ects`
+     * et `mccc` existent déjà et sont repris tels quels (onglet et libellé réglés par le formulaire).
+     *
+     * [key, label, tab, type, options, required, help, referentielKey, optionsSource, max, allowExtra]
+     */
+    private const FICHE_MATIERE_SEED = [
+        // ─── identité ───
+        ['libelle', 'Libellé', 'identite', 'text', [], true, 'Libellé de la fiche matière, 250 caractères maximum.', null, null, 250, false],
+        ['libelleEn', 'Libellé en anglais', 'identite', 'text', [], false, '250 caractères maximum.', null, null, 250, false],
+        ['referent', 'Responsable de la fiche matière', 'identite', 'choice', [], false, null, 'responsables', null, null, true],
+        ['codeApogeeFiche', 'Code Apogée', 'identite', 'text', [], false, 'Code de l’élément dans Apogée.', null, null, null, false],
+        ['typeEc', "Type d'EC", 'identite', 'choice', [], false, "Facultatif : l'EC qui utilise la fiche prend ce type et ne peut pas le changer.", null, 'version_natures', null, false],
+        // ─── présentation ───
+        ['description', 'Description', 'presentation', 'textarea', [], false, 'Indiquez en 3000 caractères maximum le contenu de l’enseignement.', null, null, 3000, false],
+        ['objectifsEnseignement', 'Objectifs', 'presentation', 'textarea', [], false, 'Indiquez en 3000 caractères maximum les objectifs de l’enseignement.', null, null, 3000, false],
+        ['languesCours', 'Langue(s) des cours', 'presentation', 'checkbox', [], true, 'Au moins une langue.', 'langues', null, null, false],
+        ['languesSupport', 'Langue(s) des supports', 'presentation', 'checkbox', [], true, 'Au moins une langue.', 'langues', null, null, false],
+        ['modaliteEnseignement', 'Modalité d’enseignement', 'presentation', 'choice', [], false, null, 'modalites_enseignement', null, null, false],
+        // ─── volumes horaires ───
+        ['volumesImposes', 'Volumes horaires imposés', 'volume_horaire', 'radio', ['oui' => 'Oui', 'non' => 'Non'], false, 'Oui : les EC qui utilisent la fiche prennent ces volumes sans pouvoir les changer.', null, null, null, false],
+        // ─── MCCC ───
+        ['ectsImposes', 'ECTS imposés', 'mccc', 'radio', ['oui' => 'Oui', 'non' => 'Non'], false, 'Oui : les EC qui utilisent la fiche prennent ces ECTS sans pouvoir les changer.', null, null, null, false],
+        ['mcccImposes', 'MCCC imposées', 'mccc', 'radio', ['oui' => 'Oui', 'non' => 'Non'], false, 'Oui : les EC qui utilisent la fiche prennent ces MCCC sans pouvoir les changer.', null, null, null, false],
+    ];
+
+    /** Rang des champs de la fiche matière : après tous les autres champs socles, de 10 en 10 (cf. NodeTypeFixtures). */
+    public const FICHE_MATIERE_BASE = 400;
+
     public function load(ObjectManager $manager): void
     {
         foreach (AttributeCatalog::SEED as $i => [$key, $label, $tab, $type, $options, $required, $help, $referentielKey, $placeholder, $allowExtra]) {
@@ -133,6 +163,21 @@ final class FieldDefFixtures extends Fixture
                 ->setMax(preg_match('/(\d+) caractères maximum/u', (string) $help, $m) ? (float) $m[1] : null)
                 ->setSystem(true);
             $manager->persist($field);
+        }
+
+        foreach (self::FICHE_MATIERE_SEED as $i => [$key, $label, $tab, $type, $options, $required, $help, $referentielKey, $optionsSource, $max, $allowExtra]) {
+            $manager->persist((new FieldDef($key, $label))
+                ->setTab($tab)
+                ->setType($type)
+                ->setOptions($options)
+                ->setReferentielKey($referentielKey)
+                ->setOptionsSource($optionsSource)
+                ->setAllowExtra($allowExtra)
+                ->setRequired($required)
+                ->setHelp($help)
+                ->setMax(null !== $max ? (float) $max : null)
+                ->setPosition(self::FICHE_MATIERE_BASE + 10 * $i)
+                ->setSystem(true));
         }
 
         $manager->flush();
