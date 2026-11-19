@@ -6,3 +6,7 @@ services:
     # Lu directement depuis le conteneur par les tests (sinon inliné, car injecté une seule fois).
     App\Diplome\Check\StructureChecker:
         public: true
+
+    # Pas encore injecté ailleurs : sinon retiré du conteneur de test.
+    App\FicheMatiere\FicheMatiereAccess:
+        public: true
