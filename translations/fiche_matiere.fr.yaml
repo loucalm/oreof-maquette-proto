@@ -1,6 +1,22 @@
 fiche_matiere:
   title: Fiche matière
   subtitle: Saisie de la fiche
+  index:
+    title: Fiches matières
+    search: Rechercher une fiche
+    search_placeholder: Libellé de la fiche
+    search_button: Filtrer
+    libelle_field: Libellé de la nouvelle fiche
+    create: Créer la fiche
+    duplicate: Dupliquer
+    delete: Supprimer
+    delete_confirm: Supprimer cette fiche ?
+    empty: Aucune fiche
+    ec_count: '%count% EC'
+    group:
+      portees: Fiches portées
+      orphelines: Fiches sans porteur
+      mutualisees: Fiches mutualisées
   usage:
     porteur: 'Porteur :'
     summary: 'Utilisée par %ec% EC dans %parcours% parcours'

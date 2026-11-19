@@ -42,8 +42,8 @@ final class MonoParcoursFicheTest extends WebTestCase
         $formation = $this->formation();
 
         $items = static::getContainer()->get(CanvasResolver::class)->navigation($formation);
-        self::assertSame(['1 organisation -', '2 presentation -', '3 bcc -', '4 structure -'], array_map(static fn (NavItem $i) => $i->number.' '.$i->key.' '.($i->group ?? '-'), $items));
-        self::assertSame([true, true, false, false], array_map(static fn (NavItem $i) => $i->withMono, $items));
+        self::assertSame(['1 organisation -', '2 presentation -', '3 bcc -', '4 structure -', '5 fiches_matieres_formation -'], array_map(static fn (NavItem $i) => $i->number.' '.$i->key.' '.($i->group ?? '-'), $items));
+        self::assertSame([true, true, false, false, false], array_map(static fn (NavItem $i) => $i->withMono, $items));
 
         $crawler = $this->client->request('GET', sprintf('/formations/%d', $formation->getId()));
         self::assertCount(0, $crawler->filter(sprintf('a[href^="/formations/%d/parcours-unique/"]', $formation->getId())));

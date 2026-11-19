@@ -5,18 +5,25 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\FicheMatiere;
+use App\Entity\Formation;
 use App\FicheMatiere\EcValueResolver;
 use App\FicheMatiere\FicheMatiereEditor;
 use App\FicheMatiere\FicheMatiereForms;
 use App\FicheMatiere\FicheMatiereUsage;
+use App\Maquette\Doc\TreeNode;
+use App\Maquette\Maquette;
+use App\Repository\FicheMatiereRepository;
 use App\Twig\RoleExtension;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 
-/** Page de saisie d'une fiche matière : ses onglets, l'enregistrement par onglet et le bandeau d'usage. */
+/** Liste des fiches d'un parcours et page de saisie d'une fiche matière. */
 final class FicheMatiereController extends AbstractController
 {
     /** Jeton CSRF sans état (cf. config/packages/csrf.yaml) des POST de la fiche. */
@@ -29,6 +36,129 @@ final class FicheMatiereController extends AbstractController
         private readonly FicheMatiereUsage $usage,
         private readonly RoleExtension $roles,
     ) {
+    }
+
+    /**
+     * Fiches du parcours : portées par lui, restées sans porteur, puis mutualisées vers lui.
+     * Le paramètre `parcours` porte le nid ; son absence désigne le parcours unique.
+     */
+    #[Route('/formations/{fid}/fiches-matieres', name: 'fiche_matiere_index', methods: ['GET'])]
+    public function index(
+        #[MapEntity(mapping: ['fid' => 'id'])] Formation $formation,
+        Request $request,
+        Maquette $maquette,
+        FicheMatiereRepository $fiches,
+    ): Response {
+        $nid = $request->query->get('parcours');
+        $nid = \is_string($nid) && '' !== $nid ? $nid : null;
+        $q = trim((string) $request->query->get('q', ''));
+
+        $doc = $maquette->open($formation);
+        $existing = array_map(static fn (TreeNode $parcours): string => $parcours->nid, $doc->parcoursNodes());
+        // sans parcours en query : vue de la formation (fiches sans porteur comprises), toujours permise
+        if (null !== $nid) {
+            $this->assertParcoursOf($formation, $nid, $existing);
+        }
+        $existing[] = null;
+
+        $matches = static fn (FicheMatiere $fiche): bool => '' === $q
+            || str_contains(mb_strtolower($fiche->getLibelle()), mb_strtolower($q));
+        $groups = [
+            'portees' => array_filter($fiches->portedBy($formation, $nid), $matches),
+            'orphelines' => array_filter($fiches->withoutPorteur($formation, $existing), $matches),
+            'mutualisees' => array_filter($fiches->mutualisedTo($formation, $nid), $matches),
+        ];
+
+        $counts = [];
+        foreach ($groups as $list) {
+            foreach ($list as $fiche) {
+                $counts[$fiche->getId()] = \count($this->usage->usages($fiche));
+            }
+        }
+
+        return $this->render('fiche_matiere/index.html.twig', [
+            'formation' => $formation,
+            'parcours' => null === $nid ? null : $doc->node($nid),
+            'parcoursNid' => $nid,
+            'groups' => $groups,
+            'counts' => $counts,
+            'q' => $q,
+            'standalone' => 'node-panel' !== $request->headers->get('Turbo-Frame'),
+        ]);
+    }
+
+    #[Route('/formations/{fid}/fiches-matieres', name: 'fiche_matiere_create', methods: ['POST'])]
+    #[IsCsrfTokenValid(self::CSRF_ID, tokenKey: self::CSRF_FIELD)]
+    public function create(
+        #[MapEntity(mapping: ['fid' => 'id'])] Formation $formation,
+        Request $request,
+        EntityManagerInterface $em,
+        Maquette $maquette,
+    ): Response {
+        $nid = $request->request->get('parcours');
+        $nid = \is_string($nid) && '' !== $nid ? $nid : null;
+        $this->assertParcoursOf($formation, $nid, array_map(static fn (TreeNode $p): string => $p->nid, $maquette->open($formation)->parcoursNodes()));
+        $libelle = trim((string) $request->request->get('libelle', ''));
+        if ('' === $libelle || mb_strlen($libelle) > 250) {
+            $this->addFlash('warning', 'Le libellé de la fiche est obligatoire et ne peut pas dépasser 250 caractères.');
+        } else {
+            $fiche = (new FicheMatiere())
+                ->setFormation($formation)
+                ->setParcoursNid($nid)
+                ->setData(['libelle' => $libelle]);
+            $em->persist($fiche);
+            $em->flush();
+            $this->addFlash('success', sprintf('Fiche « %s » créée.', $libelle));
+        }
+
+        return $this->backToList($formation, $request);
+    }
+
+    #[Route('/fiches-matieres/{id}/dupliquer', name: 'fiche_matiere_duplicate', methods: ['POST'])]
+    #[IsCsrfTokenValid(self::CSRF_ID, tokenKey: self::CSRF_FIELD)]
+    public function duplicate(FicheMatiere $fiche, Request $request, EntityManagerInterface $em): Response
+    {
+        $formation = $this->portedFormation($fiche);
+        $data = $fiche->getData();
+        $data['libelle'] = $fiche->getLibelle().' (copie)';
+        $copy = (new FicheMatiere())
+            ->setFormation($formation)
+            ->setParcoursNid($fiche->getParcoursNid())
+            ->setHorsDiplome($fiche->isHorsDiplome())
+            ->setTypeDiplome($fiche->getTypeDiplome())
+            ->setData($data)
+            ->setDefaults($fiche->getDefaults());
+        foreach (FicheMatiere::IMPOSABLE as $key) {
+            $copy->setImposed($key, $fiche->isImposed($key));
+        }
+        $em->persist($copy);
+        $em->flush();
+        $this->addFlash('success', sprintf('Fiche « %s » dupliquée.', $copy->getLibelle()));
+
+        return $this->backToList($formation, $request, $fiche->getParcoursNid());
+    }
+
+    #[Route('/fiches-matieres/{id}/supprimer', name: 'fiche_matiere_delete', methods: ['POST'])]
+    #[IsCsrfTokenValid(self::CSRF_ID, tokenKey: self::CSRF_FIELD)]
+    public function delete(FicheMatiere $fiche, Request $request, EntityManagerInterface $em): Response
+    {
+        $formation = $this->portedFormation($fiche);
+        $usages = $this->usage->usages($fiche);
+        if ([] !== $usages) {
+            $labels = array_map(static fn (array $usage): string => $usage['ec']->getDisplayLabel(), $usages);
+            $this->addFlash('warning', sprintf(
+                'Suppression refusée : la fiche est utilisée par les EC suivants : %s.',
+                implode(', ', $labels),
+            ));
+
+            return $this->backToList($formation, $request, $fiche->getParcoursNid());
+        }
+
+        $em->remove($fiche);
+        $em->flush();
+        $this->addFlash('success', sprintf('Fiche « %s » supprimée.', $fiche->getLibelle()));
+
+        return $this->backToList($formation, $request, $fiche->getParcoursNid());
     }
 
     #[Route('/fiches-matieres/{id}/{tab}', name: 'fiche_matiere_edit', methods: ['GET'], defaults: ['tab' => 'identite'])]
@@ -126,6 +256,36 @@ final class FicheMatiereController extends AbstractController
     {
         if ($fiche->isHorsDiplome() && !$this->roles->isAdmin()) {
             throw new \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException("Fiche hors diplôme : modification réservée à l’administration.");
+        }
+    }
+
+    private function portedFormation(FicheMatiere $fiche): Formation
+    {
+        return $fiche->getFormation() ?? throw new NotFoundHttpException('Fiche sans formation porteuse.');
+    }
+
+    private function backToList(Formation $formation, Request $request, ?string $nid = null): Response
+    {
+        $nid ??= $request->query->get('parcours');
+        $params = ['fid' => $formation->getId()];
+        if (\is_string($nid) && '' !== $nid) {
+            $params['parcours'] = $nid;
+        }
+
+        return $this->redirectToRoute('fiche_matiere_index', $params);
+    }
+
+    /**
+     * Le parcours visé appartient à la formation : un nid de parcours existant, ou aucun (parcours unique)
+     * pour une formation sans parcours. Sinon 404.
+     *
+     * @param list<string> $parcoursNids
+     */
+    private function assertParcoursOf(Formation $formation, ?string $nid, array $parcoursNids): void
+    {
+        $ok = null === $nid ? $formation->isSansParcours() : \in_array($nid, $parcoursNids, true);
+        if (!$ok) {
+            throw $this->createNotFoundException('Parcours inconnu dans cette formation.');
         }
     }
 }

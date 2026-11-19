@@ -46,6 +46,28 @@ class FicheMatiereRepository extends ServiceEntityRepository
         return $this->whereParcours($qb, 'm.parcoursNid', $parcoursNid)->getQuery()->getResult();
     }
 
+    /**
+     * Fiches de la formation dont le parcours porteur n'existe plus dans sa maquette (spec §9).
+     * Le parcours unique n'a pas de nid : il ne peut donc pas devenir orphelin.
+     *
+     * @param list<?string> $existingParcoursNids
+     *
+     * @return list<FicheMatiere>
+     */
+    public function withoutPorteur(Formation $f, array $existingParcoursNids): array
+    {
+        $qb = $this->sorted()
+            ->andWhere('x.formation = :f')
+            ->andWhere('x.parcoursNid IS NOT NULL')
+            ->setParameter('f', $f);
+        $nids = array_values(array_filter($existingParcoursNids, static fn (?string $nid): bool => null !== $nid));
+        if ([] !== $nids) {
+            $qb->andWhere('x.parcoursNid NOT IN (:nids)')->setParameter('nids', $nids);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
     /** Toutes les fiches portées par une formation, tous parcours confondus. @return list<FicheMatiere> */
     public function ofFormation(Formation $f): array
     {

@@ -30,8 +30,8 @@ final class CanvasResolverTest extends DatabaseTestCase
     {
         $c = $this->resolver->forConfig(null);
 
-        self::assertSame(['organisation', 'presentation', 'bcc', 'ramification', 'structure'], $this->keys($c->formation));
-        self::assertSame(['organisation', 'presentation', 'bcc', 'positionnement'], $this->keys($c->parcours));
+        self::assertSame(['organisation', 'presentation', 'bcc', 'ramification', 'structure', 'fiches_matieres_formation'], $this->keys($c->formation));
+        self::assertSame(['organisation', 'presentation', 'bcc', 'positionnement', 'fiches_matieres'], $this->keys($c->parcours));
         self::assertSame('param_organisation_formation', $c->entry(CanvasSpec::FORMATION, 'organisation')->form);
         self::assertSame('param_presentation_parcours', $c->entry(CanvasSpec::PARCOURS, 'presentation')->form);
         self::assertTrue($c->entry(CanvasSpec::FORMATION, 'structure')->isBuiltin());
@@ -57,9 +57,9 @@ final class CanvasResolverTest extends DatabaseTestCase
         $stored = new CanvasSpec([new CanvasEntry('organisation', 'param_organisation_formation', null, null, false)], []);
         $c = $this->resolver->forConfig($this->config($stored));
 
-        self::assertSame(['organisation', 'bcc', 'ramification', 'structure'], $this->keys($c->formation));
+        self::assertSame(['organisation', 'bcc', 'ramification', 'structure', 'fiches_matieres_formation'], $this->keys($c->formation));
         self::assertFalse($c->entry(CanvasSpec::FORMATION, 'structure')->hidden);
-        self::assertSame(['bcc', 'positionnement'], $this->keys($c->parcours));
+        self::assertSame(['bcc', 'positionnement', 'fiches_matieres'], $this->keys($c->parcours));
     }
 
     public function testEntryWithMissingFormIsSkipped(): void
@@ -85,7 +85,7 @@ final class CanvasResolverTest extends DatabaseTestCase
 
         $items = array_map(static fn (NavItem $i) => $i->number.' '.$i->key.' '.($i->group ?? '-'), $this->resolver->navigation($formation));
         // l'entrée « organisation » du parcours unique rejoint celle de la formation ; « presentation », masquée côté formation, reste seule
-        self::assertSame(['1 organisation -', '2 bcc -', '3 structure -', '4 presentation parcours'], $items);
+        self::assertSame(['1 organisation -', '2 bcc -', '3 structure -', '4 fiches_matieres_formation -', '5 presentation parcours'], $items);
         self::assertNull($this->resolver->formEntry($formation, CanvasSpec::FORMATION, 'presentation'));
     }
 
@@ -116,7 +116,7 @@ final class CanvasResolverTest extends DatabaseTestCase
         $parcours = static::getContainer()->get(Maquette::class)->open($formation)->parcoursNodes()[0];
 
         $items = $this->resolver->navigation($formation, $parcours);
-        self::assertSame(['organisation', 'presentation', 'bcc', 'positionnement'], $this->navKeys($items));
+        self::assertSame(['organisation', 'presentation', 'bcc', 'positionnement', 'fiches_matieres'], $this->navKeys($items));
         self::assertSame(CanvasSpec::PARCOURS, $items[0]->fiche);
     }
 

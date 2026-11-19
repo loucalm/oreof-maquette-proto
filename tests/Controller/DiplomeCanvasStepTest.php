@@ -49,8 +49,8 @@ final class DiplomeCanvasStepTest extends WebTestCase
         $crawler = $this->client->request('GET', self::STEP);
 
         self::assertResponseIsSuccessful();
-        self::assertSame(['organisation', 'presentation', 'bcc', 'ramification', 'structure'], $crawler->filter('[data-fiche="formation"] [data-entry]')->each(static fn ($n) => $n->attr('data-entry')));
-        self::assertSame(['organisation', 'presentation', 'bcc', 'positionnement'], $crawler->filter('[data-fiche="parcours"] [data-entry]')->each(static fn ($n) => $n->attr('data-entry')));
+        self::assertSame(['organisation', 'presentation', 'bcc', 'ramification', 'structure', 'fiches_matieres_formation'], $crawler->filter('[data-fiche="formation"] [data-entry]')->each(static fn ($n) => $n->attr('data-entry')));
+        self::assertSame(['organisation', 'presentation', 'bcc', 'positionnement', 'fiches_matieres'], $crawler->filter('[data-fiche="parcours"] [data-entry]')->each(static fn ($n) => $n->attr('data-entry')));
         self::assertSame([CanvasSpec::FICHE_MATIERE], $crawler->filter('[data-fiche="fiche_matiere"] [data-entry]')->each(static fn ($n) => $n->attr('data-entry')));
     }
 
@@ -119,7 +119,7 @@ final class DiplomeCanvasStepTest extends WebTestCase
 
         self::assertResponseRedirects();
         $canvas = $this->draft()->config()->canvas;
-        self::assertSame(['organisation', 'alternance', 'presentation', 'bcc', 'ramification', 'structure'], array_map(static fn (CanvasEntry $e) => $e->key, $canvas->formation));
+        self::assertSame(['organisation', 'alternance', 'presentation', 'bcc', 'ramification', 'structure', 'fiches_matieres_formation'], array_map(static fn (CanvasEntry $e) => $e->key, $canvas->formation));
         self::assertTrue($canvas->entry(CanvasSpec::FORMATION, 'presentation')->hidden);
         self::assertSame('Organisation', $canvas->entry(CanvasSpec::FORMATION, 'organisation')->label);
         self::assertSame('param_presentation_formation', $canvas->entry(CanvasSpec::FORMATION, 'alternance')->form);
