@@ -77,7 +77,8 @@ final class FieldTypeExtension extends AbstractExtension
     {
         $def = $this->normalize($def);
 
-        return empty($def['optionsSource']) || [] !== $this->options($def, $subject);
+        // une liste qui accepte une valeur libre (ex. « Créer une nouvelle fiche ») reste utile même vide
+        return empty($def['optionsSource']) || !empty($def['allowExtra']) || [] !== $this->options($def, $subject);
     }
 
     /** Affichage en lecture seule d'une valeur. */

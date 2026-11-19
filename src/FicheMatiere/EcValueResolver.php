@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\FicheMatiere;
 
+use App\Diplome\TypeDiplomeResolver;
 use App\Entity\FicheMatiere;
 use App\Maquette\Doc\MaquetteDoc;
 use App\Maquette\Doc\TreeNode;
@@ -48,13 +49,36 @@ final class EcValueResolver implements ResetInterface
      * @param \Closure(): Maquette $maquette fermeture : Maquette dépend (via Completion) des lecteurs
      *                                       de valeurs résolues, qui dépendent de ce service
      */
+    /** Attribut de type d'EC que la fiche peut fixer (§6.5). */
+    private const NATURE_KEY = 'natureElement';
+
     public function __construct(
         private readonly FicheMatiereRepository $repository,
         private readonly FicheMatiereAccess $access,
         #[AutowireServiceClosure(Maquette::class)]
         private readonly \Closure $maquette,
+        private readonly TypeDiplomeResolver $diplomes,
     ) {
         $this->porteurCache = new \WeakMap();
+    }
+
+    /**
+     * Attribut de l'EC fixé par sa fiche (§6.5) : le type d'EC (`natureElement`) quand la fiche en porte un
+     * qui existe dans la version de l'EC (D5). Null sinon : l'EC garde le sien.
+     */
+    public function forcedValue(TreeNode $ec, string $key): mixed
+    {
+        if (self::NATURE_KEY !== $key || !$this->isElement($ec)) {
+            return null;
+        }
+        $typeEc = $this->fiche($ec)?->getDataValue('typeEc');
+        if (!\is_string($typeEc) || '' === $typeEc) {
+            return null;
+        }
+        $formation = $ec->getFormation();
+        $natures = null !== $formation ? ($this->diplomes->configFor($formation)?->structure->natureKeys() ?? []) : [];
+
+        return \in_array($typeEc, $natures, true) ? $typeEc : null;
     }
 
     public function resolve(TreeNode $ec, string $key): ResolvedValue

@@ -73,7 +73,11 @@
                 </tr>
             {% else %}
                 {% set caps = n.effectiveCapabilities() %}
-                {% set h = ec_value(n, 'hours').value ?? {} %}
+                {% set rEcts = ec_value(n, 'ects') %}
+                {% set rHours = ec_value(n, 'hours') %}
+                {% set h = rHours.value ?? {} %}
+                {% set ectsEditable = (caps.ects ?? false) and rEcts.source == 'ec' and not rEcts.locked and not readonly %}
+                {% set hoursEditable = (caps.hours ?? false) and rHours.source == 'ec' and not rHours.locked and not readonly %}
                 <tr data-quick-grid-target="row" data-url="{{ path('formation_quick_grid_save', {fid: formation.id, nid: n.id}) }}">
                     <th scope="row" class="qg-name" style="padding-left: {{ 12 + r.depth * 16 }}px">
                         <span class="status-dot" data-total="status:{{ n.id }}" data-status="{{ v.status }}"></span>
@@ -83,8 +87,9 @@
                     </th>
                     <td>
                         {% if caps.ects ?? false %}
-                            <input type="number" min="0" step="0.5" name="ects" value="{{ ec_value(n, 'ects').value }}" data-col="ects"
-                                   data-quick-grid-target="input" class="qg-input" {{ readonly ? 'disabled' }} aria-label="ECTS — {{ label }}">
+                            <input type="number" min="0" step="0.5" name="ects" value="{{ rEcts.value }}" data-col="ects"
+                                   data-source="{{ rEcts.source }}" data-quick-grid-target="input" class="qg-input"
+                                   {{ not ectsEditable ? 'readonly="readonly"' }} aria-label="ECTS — {{ label }}">
                         {% else %}<span class="qg-na">—</span>{% endif %}
                     </td>
                     {% for pk, pl in places %}
@@ -92,7 +97,8 @@
                             <td>
                                 {% if caps.hours ?? false %}
                                     <input type="number" min="0" step="0.5" name="hours[{{ pk }}][{{ mk }}]" value="{{ h[pk][mk] ?? '' }}"
-                                           data-col="{{ pk }}_{{ mk }}" data-quick-grid-target="input" class="qg-input" {{ readonly ? 'disabled' }}
+                                           data-col="{{ pk }}_{{ mk }}" data-source="{{ rHours.source }}" data-quick-grid-target="input" class="qg-input"
+                                           {{ not hoursEditable ? 'readonly="readonly"' }}
                                            aria-label="{{ ml }} {{ pl|lower }} — {{ label }}">
                                 {% else %}<span class="qg-na">—</span>{% endif %}
                             </td>
@@ -101,7 +107,8 @@
                     <td>
                         {% if caps.hours ?? false %}
                             <input type="number" min="0" step="0.5" name="hours[te]" value="{{ h.te ?? '' }}" data-col="te"
-                                   data-quick-grid-target="input" class="qg-input" {{ readonly ? 'disabled' }} aria-label="TE — {{ label }}">
+                                   data-source="{{ rHours.source }}" data-quick-grid-target="input" class="qg-input"
+                                   {{ not hoursEditable ? 'readonly="readonly"' }} aria-label="TE — {{ label }}">
                         {% else %}<span class="qg-na">—</span>{% endif %}
                     </td>
                     <td class="qg-total" data-total="hours">{{ v.totalHours|round(1) }} h</td>

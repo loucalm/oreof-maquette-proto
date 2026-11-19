@@ -4,14 +4,20 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\FicheMatiere;
 use App\Entity\Formation;
+use App\FicheMatiere\EcValueResolver;
+use App\FicheMatiere\FicheMatiereAccess;
+use App\FicheMatiere\SourcePinner;
 use App\Maquette\AttributeCatalog;
 use App\Maquette\Doc\MaquetteDoc;
 use App\Maquette\Doc\TreeNode;
 use App\Maquette\Maquette;
 use App\Maquette\MaquetteBuilder;
 use App\Maquette\NodeClipboard;
+use App\Repository\FicheMatiereRepository;
 use App\Repository\NodeTypeRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -32,6 +38,12 @@ final class NodeController extends AbstractController
         private readonly MaquetteBuilder $builder,
         private readonly AttributeCatalog $catalog,
         private readonly \App\Maquette\AttributeReader $attributeReader,
+        private readonly FicheMatiereRepository $fiches,
+        private readonly FicheMatiereAccess $ficheAccess,
+        private readonly SourcePinner $pinner,
+        private readonly EcValueResolver $values,
+        private readonly \App\Diplome\TypeDiplomeResolver $diplomes,
+        private readonly EntityManagerInterface $em,
     ) {
     }
 
@@ -93,26 +105,85 @@ final class NodeController extends AbstractController
         $caps = $node->effectiveCapabilities();
         // consolidation : squelette seulement (noms, codes, emplacement) — le contenu attend la construction
         $catalog = $formation->getPhase() === \App\Enum\FormationPhase::Consolidation ? [] : $this->catalog->all();
+        $valueKeys = EcValueResolver::KEYS;
+
+        // ── fiche matière : choix/création, changement de contexte ──
+        if ([] !== $catalog && ($caps['ficheMatiere'] ?? false)
+            && ($request->request->has('attr_ficheMatiere') || $request->request->has('attr_ficheMatiere_autre'))) {
+            $newFicheId = $this->resolveFicheId($node, $request);
+            $oldFicheId = $node->getAttribute('ficheMatiere');
+            $oldFicheId = \is_int($oldFicheId) || (\is_string($oldFicheId) && ctype_digit((string) $oldFicheId)) ? (int) $oldFicheId : null;
+            // la nouvelle fiche d'abord : le figeage se calcule dans le nouveau contexte (sources par défaut de cette fiche)
+            $node->setAttribute('ficheMatiere', $newFicheId);
+            if ($oldFicheId !== $newFicheId) {
+                $this->pinner->pinFilled($node, fn (TreeNode $ec, string $k) => $this->values->defaultSource($ec, $k));
+            }
+            $attrs = $node->getAttributes();
+            if (null === $newFicheId) {
+                unset($attrs['ficheMatiere']);
+            }
+        }
+
+        $forcedNature = ([] !== $catalog) ? $this->values->forcedValue($node, 'natureElement') : null;
+        $postedSources = \is_array($request->request->all('sources')) ? $request->request->all('sources') : [];
+        $sources = \is_array($attrs['sources'] ?? null) ? $attrs['sources'] : [];
+        $pinned = \is_array($attrs['sourcesFigees'] ?? null) ? $attrs['sourcesFigees'] : [];
+
         foreach ($catalog as $key => $def) {
             if (!($caps[$key] ?? false)) {
                 unset($attrs[$key]);
                 continue;
             }
-            $attrs[$key] = match ($def['field']) {
-                'number' => $this->attributeReader->number($request->request->get("attr_$key")),
-                'hours' => $this->attributeReader->hours($request->request->all('attr_hours')),
-                'mccc' => $this->attributeReader->mccc($request->request->all('attr_mccc')),
-                'competencies' => array_values(array_filter(
-                    array_map(static fn ($v) => trim((string) $v), $request->request->all('attr_competencies')),
-                )),
-                'checkbox' => array_values(array_filter(
-                    array_map(static fn ($v) => trim((string) $v), $request->request->all("attr_$key")),
-                )),
-                // « valeur libre » : prioritaire sur la sélection si renseignée (choice/radio adossés à un référentiel avec allowExtra)
-                default => ($def['allowExtra'] ?? false) && '' !== trim((string) $request->request->get("attr_{$key}_autre"))
-                    ? trim((string) $request->request->get("attr_{$key}_autre"))
-                    : (trim((string) $request->request->get("attr_$key")) ?: null),
-            };
+            if ('ficheMatiere' === $key) {
+                continue;
+            }
+            if (\in_array($key, $valueKeys, true)) {
+                $imposed = $this->isImposed($node, $key);
+                $default = $this->values->defaultSource($node, $key);
+                $posted = $postedSources[$key] ?? null;
+                // source non postée (champ absent du formulaire) : on garde celle déjà écrite, figée comprise
+                $wanted = \in_array($posted, EcValueResolver::SOURCES, true) ? $posted : ($sources[$key] ?? $default);
+                if (\array_key_exists($key, $postedSources)) {
+                    $pinned = array_values(array_filter($pinned, static fn ($k) => $k !== $key));
+                }
+                if ($imposed) {
+                    $wanted = $default;
+                }
+                if ($wanted !== $default) {
+                    $sources[$key] = $wanted;
+                } else {
+                    unset($sources[$key]);
+                }
+                if (!$imposed && $wanted === EcValueResolver::SOURCE_EC) {
+                    $attrs[$key] = $this->readAttribute($request, $key, $def);
+                } else {
+                    $existing = $node->getAttribute($key);
+                    if (null === $existing) {
+                        unset($attrs[$key]);
+                    } else {
+                        $attrs[$key] = $existing;
+                    }
+                }
+                continue;
+            }
+            if ('natureElement' === $key && null !== $forcedNature) {
+                $attrs['natureElement'] = $forcedNature;
+                continue;
+            }
+            $attrs[$key] = $this->readAttribute($request, $key, $def);
+        }
+
+        if ([] !== $catalog) {
+            if ([] === $sources) {
+                unset($attrs['sources']);
+            } else {
+                $attrs['sources'] = $sources;
+            }
+            if ([] === $pinned) {
+                unset($attrs['sourcesFigees']);
+            } else {
+                $attrs['sourcesFigees'] = array_values($pinned);
+            }
         }
 
         if ($node->isParcours()) {
@@ -141,6 +212,77 @@ final class NodeController extends AbstractController
         $this->maquette->save($formation, $doc);
 
         return $this->backToEditor($node, 'ELP enregistré.');
+    }
+
+    /** @param array<string, mixed> $def */
+    private function readAttribute(Request $request, string $key, array $def): mixed
+    {
+        return match ($def['field']) {
+            'number' => $this->attributeReader->number($request->request->get("attr_$key")),
+            'hours' => $this->attributeReader->hours($request->request->all('attr_hours')),
+            'mccc' => $this->attributeReader->mccc($request->request->all('attr_mccc')),
+            'competencies' => array_values(array_filter(
+                array_map(static fn ($v) => trim((string) $v), $request->request->all('attr_competencies')),
+            )),
+            'checkbox' => array_values(array_filter(
+                array_map(static fn ($v) => trim((string) $v), $request->request->all("attr_$key")),
+            )),
+            // « valeur libre » : prioritaire sur la sélection si renseignée (choice/radio adossés à un référentiel avec allowExtra)
+            default => ($def['allowExtra'] ?? false) && '' !== trim((string) $request->request->get("attr_{$key}_autre"))
+                ? trim((string) $request->request->get("attr_{$key}_autre"))
+                : (trim((string) $request->request->get("attr_$key")) ?: null),
+        };
+    }
+
+    private function isImposed(TreeNode $node, string $key): bool
+    {
+        $fiche = $this->values->fiche($node);
+        if (null === $fiche || !\in_array($key, FicheMatiere::IMPOSABLE, true)) {
+            return false;
+        }
+
+        return $fiche->isImposed($key);
+    }
+
+    private function resolveFicheId(TreeNode $node, Request $request): ?int
+    {
+        $autre = trim((string) $request->request->get('attr_ficheMatiere_autre'));
+        if ('' !== $autre) {
+            $formation = $node->getFormation();
+            if (null === $formation) {
+                return null;
+            }
+            $parcours = $this->ficheAccess->parcoursOf($node);
+            $fiche = (new FicheMatiere())
+                ->setFormation($formation)
+                ->setParcoursNid($parcours?->nid)
+                ->setData(['libelle' => mb_substr($autre, 0, 250)]);
+            $this->em->persist($fiche);
+            $this->em->flush();
+
+            return $fiche->getId();
+        }
+
+        $raw = $request->request->get('attr_ficheMatiere');
+        if (!\is_scalar($raw) || '' === trim((string) $raw)) {
+            return null;
+        }
+        $id = (int) $raw;
+        if ($id <= 0) {
+            return null;
+        }
+        $current = $node->getAttribute('ficheMatiere');
+        $currentId = \is_int($current) || (\is_string($current) && ctype_digit((string) $current)) ? (int) $current : null;
+        if ($currentId === $id) {
+            return $id;
+        }
+        foreach ($this->ficheAccess->available($node) as $fiche) {
+            if ($fiche->getId() === $id) {
+                return $id;
+            }
+        }
+
+        return $currentId;
     }
 
     /**
@@ -438,46 +580,6 @@ final class NodeController extends AbstractController
     }
 
     /**
-     * Transforme un ELP existant en bloc de choix : il devient la première
-     * alternative d'un nouveau bloc de choix créé à sa place exacte (même
-     * parent, même position). Répond à l'attente naturelle qu'a un
-     * responsable de formation en cochant « À choix restreint » sur un ELP
-     * déjà en place — la case seule ne crée aucune structure, ce geste le fait.
-     */
-    /**
-     * Remplace une copie mutualisée par l'état actuel de sa source (même
-     * emplacement). Les modifications locales de la copie sont perdues.
-     */
-    #[Route('/formations/{fid}/nodes/{nid}/resynchroniser', name: 'node_attach_refresh', methods: ['POST'])]
-    public function refreshFromSource(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid): Response
-    {
-        $doc = $this->maquette->open($formation);
-        $node = $this->pick($doc, $nid);
-        $info = $this->maquette->mutualizationSource($node);
-        if (null === $info || null === $info['node']) {
-            $this->addFlash('warning', 'La source de cet élément est introuvable (supprimée ?).');
-
-            return $this->editorRedirect($node);
-        }
-
-        $parent = $node->getParent();
-        $siblings = $parent?->getChildren() ?? $doc->roots;
-        $index = (int) array_search($node, $siblings, true);
-        $from = $node->getMutualizedFrom();
-
-        $copy = $doc->importSubtree($info['node'], $parent);
-        $copy->setMutualizedFrom($from);
-        $copy->setAttribute('_sourceHash', $info['node']->contentHash());
-        $copy->locked = $node->locked; // un emplacement verrouillé le reste après mise à jour
-        $doc->moveNode($copy, $parent, $index);
-        $doc->removeNode($node, true);
-        $this->applyChoiceNature($copy, $parent);
-        $this->maquette->save($formation, $doc, sprintf('« %s » mis à jour depuis sa source', $copy->getDisplayLabel()));
-
-        return $this->backToEditor($copy, 'Copie mise à jour depuis la source.');
-    }
-
-    /**
      * « Copier » : retient les données remplies de l'élément (hors libellé et code) pour les
      * coller sur un autre élément du même type. Ne modifie rien : pas d'historique ni d'annulation.
      */
@@ -519,6 +621,39 @@ final class NodeController extends AbstractController
         return $this->backToEditor($node, sprintf('%d champ(s) collé(s) depuis « %s ».', $count, $from));
     }
 
+    /**
+     * Remplace une copie mutualisée par l'état actuel de sa source (même
+     * emplacement). Les modifications locales de la copie sont perdues.
+     */
+    #[Route('/formations/{fid}/nodes/{nid}/resynchroniser', name: 'node_attach_refresh', methods: ['POST'])]
+    public function refreshFromSource(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid): Response
+    {
+        $doc = $this->maquette->open($formation);
+        $node = $this->pick($doc, $nid);
+        $info = $this->maquette->mutualizationSource($node);
+        if (null === $info || null === $info['node']) {
+            $this->addFlash('warning', 'La source de cet élément est introuvable (supprimée ?).');
+
+            return $this->editorRedirect($node);
+        }
+
+        $parent = $node->getParent();
+        $siblings = $parent?->getChildren() ?? $doc->roots;
+        $index = (int) array_search($node, $siblings, true);
+        $from = $node->getMutualizedFrom();
+
+        $copy = $doc->importSubtree($info['node'], $parent);
+        $copy->setMutualizedFrom($from);
+        $copy->setAttribute('_sourceHash', $info['node']->contentHash());
+        $copy->locked = $node->locked; // un emplacement verrouillé le reste après mise à jour
+        $doc->moveNode($copy, $parent, $index);
+        $doc->removeNode($node, true);
+        $this->applyChoiceNature($copy, $parent);
+        $this->maquette->save($formation, $doc, sprintf('« %s » mis à jour depuis sa source', $copy->getDisplayLabel()));
+
+        return $this->backToEditor($copy, 'Copie mise à jour depuis la source.');
+    }
+
     #[Route('/formations/{fid}/nodes/{nid}/convertir-choix', name: 'node_convert_choice', methods: ['POST'])]
     public function convertToChoice(#[MapEntity(mapping: ['fid' => 'id'])] Formation $formation, string $nid): Response
     {
@@ -532,11 +667,6 @@ final class NodeController extends AbstractController
             return $this->editorRedirect($node);
         }
 
-        // ECTS EFFECTIF de l'ELP avant tout déplacement — pas sa valeur brute,
-        // déjà ignorée s'il a des enfants (elle vaudrait alors la somme de ceux-ci,
-        // pas le champ « ects » stocké dessus). C'est cette valeur affichée
-        // jusqu'ici qu'il faut reporter sur le bloc, pour que la restructuration
-        // ne fasse pas à elle seule bouger les totaux déjà remontés plus haut.
         $effectiveEcts = $this->builder->buildSubtree($node)->totalEcts;
 
         $index = $node->getPosition();

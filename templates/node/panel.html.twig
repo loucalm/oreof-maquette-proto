@@ -307,12 +307,28 @@
 {% macro field(key, def, node) %}
     {% import _self as ui %}
     {% if field_available(def, node) %}
-    {# un champ « système » (heures, MCCC) porte son propre libellé dans son gabarit ; un séparateur n'a rien à saisir #}
     {% set ftype = field_type(def) %}
-    {% if ftype.input and not ftype.system %}
-        {% set tl = node.type.label %}
-        {{ ui.label(def.label|replace({'%type%': tl}), def.required ?? false, def.help ? def.help|replace({'%type%': tl}) : null) }}
+    {% if node.type.elementLevel and key in ec_value_keys() %}
+        {# valeur résolue d'un EC : sélecteur de source au-dessus du champ (fiche, EC, bloc, porteur) #}
+        {% include 'node/_value_source.html.twig' with {key: key, def: def, node: node, requestedSource: ec_requested_source(node, key)} only %}
+    {% else %}
+        {# un champ « système » (heures, MCCC) porte son propre libellé dans son gabarit ; un séparateur n'a rien à saisir #}
+        {% if ftype.input and not ftype.system %}
+            {% set tl = node.type.label %}
+            {{ ui.label(def.label|replace({'%type%': tl}), def.required ?? false, def.help ? def.help|replace({'%type%': tl}) : null) }}
+        {% endif %}
+        {% set forced = ec_forced_value(node, key) %}
+        {% if forced is not null %}
+            {# valeur imposée par la fiche matière de l'EC (ex. type d'EC) : affichée, non modifiable #}
+            <fieldset data-ec-type-locked class="space-y-1 border-0 p-0 m-0 min-w-0" disabled>
+                {{ field_widget(def, key, forced, 'attr_' ~ key, node, [], 'node') }}
+            </fieldset>
+        {% else %}
+            {{ field_widget(def, key, node.getAttribute(key), 'attr_' ~ key, node, [], 'node') }}
+        {% endif %}
+        {% if def.optionsSource == 'fiches_matiere' and ec_fiche(node) %}
+            <div class="mt-1"><a data-fiche-link href="{{ path('fiche_matiere_edit', {id: ec_fiche(node).id}) }}" class="text-sm underline" style="color:var(--c-primary)" data-turbo-frame="_top">Ouvrir la fiche</a></div>
+        {% endif %}
     {% endif %}
-    {{ field_widget(def, key, node.getAttribute(key), 'attr_' ~ key, node, [], 'node') }}
     {% endif %}
 {% endmacro %}

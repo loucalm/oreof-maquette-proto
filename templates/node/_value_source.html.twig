@@ -1,0 +1,40 @@
+{# Sélecteur de source d'une valeur d'EC (hours, ects, mccc, competencies). #}
+{% set resolved = ec_value(node, key) %}
+{% set fiche = ec_fiche(node) %}
+{% set imposed = key != 'competencies' and fiche and fiche.imposed(key) %}
+{% set current = imposed ? 'fiche' : requestedSource|default(resolved.source) %}
+{% set ecParcoursNid = null %}
+{% for p in node_path(node) %}{% if p.isParcours %}{% set ecParcoursNid = p.nid %}{% endif %}{% endfor %}
+{% set inParent = node.parent and ((node.parent.getAttribute('enfantsIdentiques')[key])|default(false)) %}
+{% set canPorteur = fiche and not fiche.horsDiplome and fiche.formation and fiche.parcoursNid != ecParcoursNid %}
+{% set own = node.getAttribute(key) %}
+{% set showField = (not imposed and current == 'ec') ? own : resolved.value %}
+{% set figes = node.getAttribute('sourcesFigees')|default([]) %}
+{% set pinned = (key in figes) and (current == 'ec') and not imposed %}
+{% set valueLocked = imposed or current != 'ec' %}
+{% set ftype = field_type(def) %}
+<div class="space-y-1">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+        {% if ftype.input and not ftype.system %}
+            {% set tl = node.type.label %}
+            <span class="fld-label">{{ def.label|replace({'%type%': tl}) }}{% if def.required ?? false %} <span class="text-red-500" aria-hidden="true">*</span><span class="sr-only">{{ 'common.required_badge'|trans({}, 'common') }}</span>{% endif %}</span>
+        {% endif %}
+        <select name="sources[{{ key }}]" class="fld" style="max-width:18rem" aria-label="Source {{ key }}" {{ imposed ? 'disabled' }}>
+            <option value="fiche" {{ current == 'fiche' ? 'selected' }}>{{ imposed ? 'Imposé par la fiche' : 'Reprendre la fiche' }}</option>
+            <option value="ec" {{ current == 'ec' ? 'selected' }}>Spécifique à cet EC</option>
+            {% if canPorteur %}<option value="porteur" {{ current == 'porteur' ? 'selected' }}>Reprendre l'EC du parcours porteur</option>{% endif %}
+            {% if inParent %}<option value="parent" {{ current == 'parent' ? 'selected' }}>Identique au bloc de choix</option>{% endif %}
+        </select>
+    </div>
+    <fieldset data-value-source="{{ key }}" class="space-y-1 border-0 p-0 m-0 min-w-0" {{ valueLocked ? 'disabled' }}>
+        {% if imposed %}<p class="fld-help">Imposé par la fiche</p>{% endif %}
+        {{ field_widget(def, key, showField, 'attr_' ~ key, node, [], 'node') }}
+    </fieldset>
+    {% if resolved.warning %}<p class="fld-help text-amber-700">{{ resolved.warning }}</p>{% endif %}
+    {% if pinned %}
+        <p class="fld-help text-amber-700" data-pinned-value="{{ key }}">
+            Valeur conservée : spécifique à cet EC
+            <button type="submit" name="sources[{{ key }}]" value="fiche" class="underline font-medium ml-1">Reprendre la fiche</button>
+        </p>
+    {% endif %}
+</div>

@@ -123,13 +123,17 @@ final class FieldDefFixtures extends Fixture
                 ->setTab($tab)
                 ->setType($type)
                 ->setOptions($options)
-                ->setReferentielKey($referentielKey)
                 ->setPlaceholder($placeholder)
                 ->setAllowExtra($allowExtra)
                 ->setRequired($required)
                 ->setHelp($help)
                 ->setPosition($i * 10)
                 ->setSystem(true);
+            if ('ficheMatiere' === $key) {
+                $field->setOptionsSource($referentielKey);
+            } else {
+                $field->setReferentielKey($referentielKey);
+            }
             $manager->persist($field);
         }
 

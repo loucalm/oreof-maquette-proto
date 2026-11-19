@@ -117,4 +117,52 @@ final class QuickGridTest extends WebTestCase
         self::assertSame('4', $row->filter('input[name="ects"]')->attr('value'));
         self::assertSame('10', $row->filter('input[name="hours[pres][cm]"]')->attr('value'));
     }
+
+    /** Une cellule dont la valeur vient de la fiche est affichée mais non modifiable (spec §8.2). */
+    public function testCellReadOnlyWhenNotFromEc(): void
+    {
+        [$formation, $nid] = $this->licenceWithEc();
+        $fiche = (new \App\Entity\FicheMatiere())->setFormation($formation)->setParcoursNid(null)
+            ->setData(['libelle' => 'Algo'])->setDefaults(['ects' => 4, 'hours' => ['pres' => ['cm' => 10]]]);
+        $this->em->persist($fiche);
+        $this->em->flush();
+        $maquette = static::getContainer()->get(Maquette::class);
+        $doc = $maquette->open($formation);
+        $doc->node($nid)->setAttribute('ects', null)->setAttribute('hours', null)->setAttribute('ficheMatiere', $fiche->getId());
+        $maquette->save($formation, $doc, 'test', null, true);
+
+        $crawler = $this->client->request('GET', sprintf('/formations/%d/saisie-rapide', $formation->getId()));
+        $row = $crawler->filter(sprintf('tr[data-url$="/%s/saisie-rapide"]', $nid));
+        $ects = $row->filter('input[name="ects"]');
+        $hours = $row->filter('input[name="hours[pres][cm]"]');
+
+        self::assertNotNull($ects->attr('readonly'));
+        self::assertSame('fiche', $ects->attr('data-source'));
+        self::assertSame('4', $ects->attr('value'));
+        self::assertNotNull($hours->attr('readonly'));
+        self::assertSame('fiche', $hours->attr('data-source'));
+    }
+
+    /** La saisie rapide n'écrit jamais dans une fiche : une source non `ec` est refusée. */
+    public function testApplyRefusesNonEcSource(): void
+    {
+        [$formation, $nid] = $this->licenceWithEc();
+        $fiche = (new \App\Entity\FicheMatiere())->setFormation($formation)->setParcoursNid(null)
+            ->setData(['libelle' => 'Algo'])->setDefaults(['ects' => 4]);
+        $this->em->persist($fiche);
+        $this->em->flush();
+        $maquette = static::getContainer()->get(Maquette::class);
+        $doc = $maquette->open($formation);
+        $doc->node($nid)->setAttribute('ects', null)->setAttribute('ficheMatiere', $fiche->getId());
+        $maquette->save($formation, $doc, 'test', null, true);
+
+        $this->client->request('POST', sprintf('/formations/%d/nodes/%s/saisie-rapide', $formation->getId(), $nid), [
+            'ects' => '9',
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        $json = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertFalse($json['ok']);
+        self::assertNull($this->reload($formation)->node($nid)->getAttribute('ects'));
+    }
 }

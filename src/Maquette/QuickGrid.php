@@ -20,6 +20,7 @@ final class QuickGrid
         private readonly Maquette $maquette,
         private readonly MaquetteBuilder $builder,
         private readonly ReferentielRepository $referentiels,
+        private readonly \App\FicheMatiere\EcValueResolver $values,
     ) {
     }
 
@@ -40,7 +41,7 @@ final class QuickGrid
      * Lignes à plat, dans l'ordre de l'arbre : un « groupe » par élément qui a
      * des enfants (année, semestre, UE…), une « ligne » saisissable par feuille.
      *
-     * @return list<array{kind: string, depth: int, view: NodeView}>
+     * @return list<array{kind: string, depth: int, view: NodeView, editable?: array<string, bool>}>
      */
     public function rows(Formation $formation, ?string $parcoursNid = null): array
     {
@@ -57,7 +58,15 @@ final class QuickGrid
                     $out[] = ['kind' => 'group', 'depth' => $depth, 'view' => $view];
                     $walk($view->children, $depth + 1);
                 } else {
-                    $out[] = ['kind' => 'row', 'depth' => $depth, 'view' => $view];
+                    $out[] = [
+                        'kind' => 'row',
+                        'depth' => $depth,
+                        'view' => $view,
+                        'editable' => [
+                            'ects' => $this->isEditable($view->node, 'ects'),
+                            'hours' => $this->isEditable($view->node, 'hours'),
+                        ],
+                    ];
                 }
             }
         };
@@ -87,12 +96,17 @@ final class QuickGrid
         $caps = $node->effectiveCapabilities();
 
         if (($caps['ects'] ?? false) && \array_key_exists('ects', $input)) {
+            if (!$this->isEditable($node, 'ects')) {
+                return ['ok' => false, 'error' => 'Valeur non modifiable : sa source n’est pas l’EC.'];
+            }
             $node->setAttribute('ects', $this->number($input['ects']));
         }
 
         if (($caps['hours'] ?? false) && \is_array($input['hours'] ?? null)) {
-            // volontairement la valeur PROPRE de l'EC (base de fusion de la saisie, pas la valeur résolue) :
-            // les règles d'écriture selon la source viennent à la tâche 11
+            if (!$this->isEditable($node, 'hours')) {
+                return ['ok' => false, 'error' => 'Valeur non modifiable : sa source n’est pas l’EC.'];
+            }
+            // volontairement la valeur PROPRE de l'EC (base de fusion de la saisie, pas la valeur résolue)
             $hours = \is_array($node->getAttribute('hours')) ? $node->getAttribute('hours') : [];
             $cols = $this->columns();
             foreach (array_keys($cols['places']) as $place) {
@@ -114,6 +128,13 @@ final class QuickGrid
         $this->maquette->save($formation, $doc, self::REVISION_LABEL, null, true);
 
         return ['ok' => true] + $this->totals($formation, $nid);
+    }
+
+    private function isEditable(\App\Maquette\Doc\TreeNode $node, string $key): bool
+    {
+        $r = $this->values->resolve($node, $key);
+
+        return $r->source === \App\FicheMatiere\EcValueResolver::SOURCE_EC && !$r->locked;
     }
 
     /** @return array{totals: array<string, array{text: string, state: string}>, row: array<string, string>} */

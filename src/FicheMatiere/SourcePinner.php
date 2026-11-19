@@ -21,6 +21,8 @@ final class SourcePinner
     {
         $sources = $ec->getAttribute('sources');
         $sources = \is_array($sources) ? $sources : [];
+        $pinned = $ec->getAttribute('sourcesFigees');
+        $pinned = \is_array($pinned) ? $pinned : [];
         $changed = false;
         foreach (EcValueResolver::KEYS as $key) {
             if (\array_key_exists($key, $sources) || !$this->filled($ec->getAttribute($key))) {
@@ -30,10 +32,14 @@ final class SourcePinner
                 continue;
             }
             $sources[$key] = EcValueResolver::SOURCE_EC;
+            if (!\in_array($key, $pinned, true)) {
+                $pinned[] = $key;
+            }
             $changed = true;
         }
         if ($changed) {
             $ec->setAttribute('sources', $sources);
+            $ec->setAttribute('sourcesFigees', array_values($pinned));
         }
 
         return $changed;
