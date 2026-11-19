@@ -96,6 +96,21 @@ final class EcValueResolver implements ResetInterface
         return $this->fiches[$id];
     }
 
+    /**
+     * Source demandée pour une valeur : celle écrite dans `sources` si elle est valide, sinon la source par
+     * défaut. Avant imposition et avant repli : la source effective est celle de resolve().
+     */
+    public function requestedSource(TreeNode $ec, string $key): string
+    {
+        if (!\in_array($key, self::KEYS, true) || !$this->isElement($ec)) {
+            return self::SOURCE_EC;
+        }
+        $sources = $ec->getAttribute('sources');
+        $written = \is_array($sources) ? ($sources[$key] ?? null) : null;
+
+        return \in_array($written, self::SOURCES, true) ? $written : $this->defaultSource($ec, $key);
+    }
+
     /** Source d'une valeur quand `sources` ne l'écrit pas (§7.2, D6). */
     public function defaultSource(TreeNode $ec, string $key): string
     {
@@ -153,7 +168,7 @@ final class EcValueResolver implements ResetInterface
             return new ResolvedValue($fiche->getDefault($key), self::SOURCE_FICHE, true);
         }
 
-        return match ($this->writtenSource($ec, $key) ?? $this->defaultSource($ec, $key)) {
+        return match ($this->requestedSource($ec, $key)) {
             self::SOURCE_FICHE => null !== $fiche
                 ? new ResolvedValue($fiche->getDefault($key), self::SOURCE_FICHE)
                 : $this->ownValue($own, $this->noFicheWarning($ec)),
@@ -170,7 +185,7 @@ final class EcValueResolver implements ResetInterface
         if (null === $fiche) {
             return $this->ownValue($own, $this->noFicheWarning($ec));
         }
-        if ($this->isInPorteur($fiche, $ec)) {
+        if ($fiche->isHorsDiplome() || null === $fiche->getFormation() || $this->isInPorteur($fiche, $ec)) {
             return $this->ownValue($own, self::WARN_IMPOSSIBLE);
         }
         $candidates = $this->porteurEcs($fiche, $ec);
@@ -178,8 +193,15 @@ final class EcValueResolver implements ResetInterface
             return $this->ownValue($own, self::WARN_SANS_PORTEUR);
         }
 
+        $porteur = $this->resolve($candidates[0], $key);
+        // l'EC porteur est lui-même retombé sur sa valeur propre (boucle ou autre repli) : sa valeur n'est pas
+        // une valeur « du porteur », l'EC utilisateur garde la sienne et l'avertissement remonte
+        if (self::SOURCE_EC === $porteur->source && null !== $porteur->warning) {
+            return $this->ownValue($own, $porteur->warning);
+        }
+
         return new ResolvedValue(
-            $this->resolve($candidates[0], $key)->value,
+            $porteur->value,
             self::SOURCE_PORTEUR,
             false,
             \count($candidates) > 1 ? self::WARN_PLUSIEURS : null,
@@ -272,15 +294,10 @@ final class EcValueResolver implements ResetInterface
         return \is_array($identiques) && true === ($identiques[$key] ?? false);
     }
 
-    private function writtenSource(TreeNode $ec, string $key): ?string
-    {
-        $sources = $ec->getAttribute('sources');
-        $source = \is_array($sources) ? ($sources[$key] ?? null) : null;
-
-        return \in_array($source, self::SOURCES, true) ? $source : null;
-    }
-
-    /** Id de fiche de l'attribut `ficheMatiere` ; null pour un ancien libellé (R2) ou une absence. */
+    /**
+     * Id de fiche de l'attribut `ficheMatiere` ; null pour un ancien libellé (R2) ou une absence.
+     * Une chaîne de chiffres vaut aussi un id : les formulaires postent des chaînes.
+     */
     private function ficheId(TreeNode $node): ?int
     {
         $raw = $node->getAttribute('ficheMatiere');

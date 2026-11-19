@@ -209,6 +209,58 @@ final class EcValueResolverTest extends DatabaseTestCase
         self::assertNotNull($r->warning);
     }
 
+    public function testLoopGuardOnMutualPorteurSources(): void
+    {
+        // fiche sans parcours porteur dans une formation à parcours : aucun EC n'est « dans le porteur »,
+        // chacun trouve l'autre comme EC porteur
+        $fiche = $this->fiche(null, 'Algo', ['mccc' => ['fiche' => true]]);
+        $this->em->flush();
+        $a = $this->use($this->ecsOf($this->parcours[0])[0], $fiche);
+        $a->setAttribute('sources', ['mccc' => 'porteur'])->setAttribute('mccc', ['a' => true]);
+        $b = $this->use($this->ecsOf($this->parcours[1])[0], $fiche);
+        $b->setAttribute('sources', ['mccc' => 'porteur'])->setAttribute('mccc', ['b' => true]);
+
+        self::assertSame($b, $this->resolver->porteurEc($a));
+        self::assertSame($a, $this->resolver->porteurEc($b));
+        foreach ([[$a, ['a' => true]], [$b, ['b' => true]]] as [$ec, $own]) {
+            $r = $this->resolver->resolve($ec, 'mccc');
+            self::assertSame($own, $r->value);
+            self::assertSame('ec', $r->source);
+            self::assertNotNull($r->warning);
+        }
+    }
+
+    public function testHorsDiplomePorteurIsImpossible(): void
+    {
+        $fiche = (new FicheMatiere())->setHorsDiplome(true)->setData(['libelle' => 'Libre']);
+        $this->em->persist($fiche);
+        $this->em->flush();
+        $ec = $this->use($this->ecsOf($this->parcours[0])[0], $fiche);
+        $ec->setAttribute('sources', ['ects' => 'porteur'])->setAttribute('ects', 2);
+
+        $r = $this->resolver->resolve($ec, 'ects');
+        self::assertSame(2, $r->value);
+        self::assertSame('ec', $r->source);
+        self::assertSame('Source impossible : valeur propre de l\'EC utilisée.', $r->warning);
+    }
+
+    public function testRequestedSourceReturnsWrittenOrDefault(): void
+    {
+        $fiche = $this->fiche($this->parcours[1]->nid, 'Algo');
+        $this->em->persist(new FicheMatiereMutualisation($fiche, $this->formation, $this->parcours[0]->nid));
+        $this->em->flush();
+        $ec = $this->use($this->ecsOf($this->parcours[0])[0], $fiche);
+        $ec->setAttribute('sources', ['hours' => 'porteur', 'ects' => 'inconnue']);
+
+        self::assertSame('porteur', $this->resolver->requestedSource($ec, 'hours'));
+        self::assertSame('fiche', $this->resolver->requestedSource($ec, 'ects'));
+        self::assertSame('fiche', $this->resolver->requestedSource($ec, 'mccc'));
+        self::assertSame('ec', $this->resolver->requestedSource($ec, 'competencies'));
+        $ue = $ec->getParent();
+        self::assertNotNull($ue);
+        self::assertSame('ec', $this->resolver->requestedSource($ue, 'hours'));
+    }
+
     public function testMissingFicheFallsBackToOwnValue(): void
     {
         $ec = $this->ecsOf($this->parcours[0])[0];
