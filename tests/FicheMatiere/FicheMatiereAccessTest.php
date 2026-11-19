@@ -29,7 +29,13 @@ final class FicheMatiereAccessTest extends DatabaseTestCase
         $this->access = static::getContainer()->get(FicheMatiereAccess::class);
         $this->formation = FormationFactory::create(static::getContainer())->fromType('L', 3, avecParcours: true, withLeaves: true);
         $this->doc = static::getContainer()->get(Maquette::class)->open($this->formation);
+        // deux vrais parcours frères (la fabrique n'en crée qu'un)
+        $this->doc->duplicateNode($this->doc->parcoursNodes()[0]);
         $this->parcours = $this->doc->parcoursNodes();
+        self::assertCount(2, $this->parcours);
+        self::assertNotNull($this->parcours[0]->nid);
+        self::assertNotNull($this->parcours[1]->nid);
+        self::assertNotSame($this->parcours[0]->nid, $this->parcours[1]->nid);
     }
 
     public function testRelationPorteur(): void
