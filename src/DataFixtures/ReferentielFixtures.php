@@ -43,9 +43,8 @@ final class ReferentielFixtures extends Fixture
             'Bac+2' => 'Bac+2', 'Bac+3' => 'Bac+3', 'Bac+5' => 'Bac+5',
         ], RefCategory::Libre, null],
         // conservé Libre, non repris dans la dernière liste mais sans équivalent entité identifié
-        ['modalites_enseignement', 'Modalités d’enseignement', 'Présentiel, distance, hybride, alternance.', [
-            'En présentiel' => 'En présentiel', 'À distance' => 'À distance',
-            'Hybride (présentiel + distanciel)' => 'Hybride (présentiel + distanciel)', 'En alternance' => 'En alternance',
+        ['modalites_enseignement', 'Modalités d’enseignement', 'Présentiel, distanciel ou hybride.', [
+            'En présentiel' => 'En présentiel', 'En distanciel' => 'En distanciel', 'Hybride' => 'Hybride',
         ], RefCategory::Libre, null],
 
         // ─── Lier à des entités : listes destinées à pointer vers de vraies entités/API dans l'appli finale ───
@@ -59,16 +58,17 @@ final class ReferentielFixtures extends Fixture
             'Informatique' => 'Informatique', 'Mathématiques' => 'Mathématiques',
             'Physique' => 'Physique', 'MIAGE' => 'MIAGE',
         ], RefCategory::Entite, 'Mention (référentiel ORéOF)'],
-        ['rythmes', 'Rythmes de formation', 'Temps plein, alternance, temps partiel…', [
-            'Temps plein' => 'Temps plein', 'Alternance' => 'Alternance',
-            'Temps partiel' => 'Temps partiel', 'À distance' => 'À distance',
+        ['rythmes', 'Rythmes de formation', 'Temps plein, temps partiel, cours du soir, summer school.', [
+            'Temps plein' => 'Temps plein', 'Temps partiel' => 'Temps partiel',
+            'Cours du soir' => 'Cours du soir', 'Summer School' => 'Summer School',
         ], RefCategory::Entite, 'Rythme de formation (référentiel ORéOF)'],
         ['langues', 'Langues d’enseignement', 'Langues des cours (hors cours de langue).', [
             'Français' => 'Français', 'Anglais' => 'Anglais',
             'Français et anglais' => 'Français et anglais', 'Autre' => 'Autre',
         ], RefCategory::Entite, 'Langue (référentiel ORéOF)'],
-        ['villes', 'Villes', 'Villes d’implantation d’un établissement/composante.', [
-            'Paris' => 'Paris', 'Lyon' => 'Lyon', 'Marseille' => 'Marseille',
+        ['villes', 'Villes', 'Lieux de formation proposés pour une formation et ses parcours.', [
+            'Châlons-en-Champagne' => 'Châlons-en-Champagne', 'Charleville-Mézières' => 'Charleville-Mézières',
+            'Chaumont' => 'Chaumont', 'Reims' => 'Reims', 'Troyes' => 'Troyes',
         ], RefCategory::Entite, 'Ville (référentiel géographique)'],
         ['etablissements', 'Établissements', 'Établissements porteurs d’une formation.', [
             'Université A' => 'Université A', 'Université B' => 'Université B',

@@ -137,7 +137,7 @@ final class FormResolverTest extends DatabaseTestCase
         $v = $this->variantOf('param_organisation_formation');
         $v->addValidationRule(new ValidationRule('contact', ValidationRule::ONE_OF, 'organisation', ['contacts', 'mention']));
 
-        self::assertSame(['rncp_code', 'contact'], array_map(static fn (ValidationRule $r) => $r->id, $this->resolver->validationRules($v)));
+        self::assertSame(['rncp_code', 'alternance', 'contact'], array_map(static fn (ValidationRule $r) => $r->id, $this->resolver->validationRules($v)));
     }
 
     public function testRequiredKeysOverrideFieldDefInTabValidator(): void

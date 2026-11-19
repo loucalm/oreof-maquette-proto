@@ -46,7 +46,7 @@ final class ValidationRulesTest extends WebTestCase
     /** Organisation complète sauf ce que le test fait varier. */
     private function organisation(array $override): array
     {
-        return $override + ['niveauEntree' => 'Bac', 'niveauSortie' => 'Bac+3', 'respMention' => 'M. Dupont'];
+        return $override + ['niveauEntree' => 'Bac', 'niveauSortie' => 'Bac+3', 'respMention' => 'M. Dupont', 'localisations' => ['Reims'], 'composanteInscription' => 'UFR Sciences', 'regimes' => ['FI']];
     }
 
     public function testRegistryDrivesTheFieldEditor(): void

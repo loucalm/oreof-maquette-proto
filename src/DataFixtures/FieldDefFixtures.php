@@ -31,6 +31,7 @@ final class FieldDefFixtures extends Fixture
         ['diplome', 'Type de diplôme', 'organisation', 'choice', [], true, 'Fixé à la création de la formation, d’après son type de diplôme.', null, true],
         ['domaine', 'Domaine de formation', 'organisation', 'choice', [], true, null, 'domaines', true],
         ['composante', 'Composante porteuse de la formation', 'organisation', 'text', [], true, "Indiquer la composante porteuse du projet, qui aura en charge le dépôt de la demande de création de la formation", null, true],
+        ['sigle', 'Sigle de la formation', 'organisation', 'text', [], false, 'Facultatif, 250 caractères maximum.', null, false],
         ['contacts', 'Contacts de la formation', 'organisation', 'textarea', [], false, null, null, false],
         ['sep_org_specifiques', 'Informations spécifiques', 'organisation', 'separator', [], false, null, null, false],
         ['mention', 'Mention / spécialité', 'organisation', 'choice', [], false, null, 'mentions', false],
@@ -40,11 +41,25 @@ final class FieldDefFixtures extends Fixture
         ['codeRncp', 'Code RNCP', 'organisation', 'text', [], false, 'Indiquez le code RNCP (cf. www.francecompetences.fr).', null, false],
         ['nom', 'Nom du parcours', 'organisation', 'text', [], true, 'Nommer votre parcours', null, true],
         ['ectsTotal', "Volume d'ECTS total", 'organisation', 'number', [], true, 'Cela servira à vérifier le total d’ECTS de votre parcours', null, true],
-        ['modalitesEnseignement', 'Modalités d’enseignement de la formation', 'organisation', 'choice', [], true, null, 'modalites_enseignement', false],
+        ['localisations', 'Localisation(s) de la formation', 'organisation', 'checkbox', [], true, 'Au moins un lieu. Un parcours dispensé sur plusieurs sites est à dupliquer : un parcours par lieu de formation.', 'villes', false],
+        ['lieu', 'Précision du lieu', 'organisation', 'text', [], false, 'Campus, site, ou ville non proposée dans la liste.', null, false],
         ['composanteInscription', "Composante(s) à laquelle les étudiants pourront s'inscrire", 'organisation', 'choice', [], true, null, 'composantes', false],
         ['regimes', "Régime(s) d'inscription", 'organisation', 'checkbox', [], true, 'Choix multiples', 'regimes_inscription', false],
         ['modalitesAlternance', "Modalités de l'alternance", 'organisation', 'textarea', [], false, 'Indiquez en 3000 caractères maximum les périodes et leurs durées en centre ou en entreprise.', null, false],
-        ['lieu', 'Lieu(x) de la formation', 'organisation', 'text', [], false, 'Campus ou site(s) où se déroule le parcours.', null, false],
+        // ─── descriptif du parcours : chaque rubrique se masque par type de diplôme (variante du formulaire) ───
+        ['sep_org_descriptif', 'Descriptif', 'organisation', 'separator', [], false, null, null, false],
+        ['modalitesEnseignement', 'Modalités d’enseignement de la formation', 'organisation', 'choice', [], true, null, 'modalites_enseignement', false],
+        ['stage', 'Stage(s)', 'organisation', 'radio', ['oui' => 'Oui', 'non' => 'Non'], false, null, null, false],
+        ['stageDescription', 'Description du / des stage(s)', 'organisation', 'textarea', [], false, 'Indiquez en 3000 caractères maximum le nombre de stages, le(s) semestre(s) concerné(s) et leurs modalités.', null, false],
+        ['stageHeures', "Nombre d'heures de stage(s) prévu", 'organisation', 'number', [], false, null, null, false],
+        ['projetTutore', 'Projet(s) tutoré(s)', 'organisation', 'radio', ['oui' => 'Oui', 'non' => 'Non'], false, null, null, false],
+        ['projetTutoreDescription', 'Description du / des projet(s) tutoré(s)', 'organisation', 'textarea', [], false, 'Indiquez en 3000 caractères maximum le nombre de projets, le(s) semestre(s) concerné(s) et leurs modalités.', null, false],
+        ['projetTutoreHeures', "Nombre d'heures de projet(s) tutoré(s) prévu", 'organisation', 'number', [], false, null, null, false],
+        ['memoire', 'TER / Mémoire de recherche', 'organisation', 'radio', ['oui' => 'Oui', 'non' => 'Non'], false, null, null, false],
+        ['memoireDescription', 'Description du TER / mémoire', 'organisation', 'textarea', [], false, 'Indiquez en 3000 caractères maximum les modalités du TER ou du mémoire.', null, false],
+        ['situationPro', 'Mise(s) en situation professionnelle', 'organisation', 'radio', ['oui' => 'Oui', 'non' => 'Non'], false, null, null, false],
+        ['situationProDescription', 'Description de la / des mise(s) en situation professionnelle', 'organisation', 'textarea', [], false, 'Indiquez en 3000 caractères maximum les modalités des mises en situation professionnelle.', null, false],
+        ['situationProHeures', "Nombre d'heures de mise en situation professionnelle prévu", 'organisation', 'number', [], false, null, null, false],
         ['codeApogee', 'Code Apogée de la mention', 'organisation', 'text', [], false, 'Code de la mention dans Apogée', null, false],
         ['sep_org_responsables', 'Responsable(s)', 'organisation', 'separator', [], false, null, null, false],
         ['respMention', 'Responsable de la mention', 'organisation', 'choice', [], true, 'Responsable principale de la mention', 'responsables', true],
@@ -52,21 +67,23 @@ final class FieldDefFixtures extends Fixture
         ['respParcours', 'Responsable du parcours', 'organisation', 'choice', [], true, 'Responsable principale du parcours', 'responsables', true],
         ['coRespParcours', 'Co-responsable du parcours', 'organisation', 'choice', [], false, 'Co-Responsable du parcours', 'responsables', false],
         // ─── présentation ───
-        ['objectif', 'Objectif', 'presentation', 'textarea', [], true, 'Expliquez brièvement les objectifs de cet élément.', null, false],
-        ['motsCles', 'Mots clés', 'presentation', 'textarea', [], true, 'Mots clés caractérisant le parcours.', null, false],
+        ['objectif', 'Objectif', 'presentation', 'textarea', [], true, 'Indiquez en 3000 caractères maximum la finalité de la formation et/ou les activités visées après le diplôme.', null, false],
+        ['motsCles', 'Mots clés', 'presentation', 'textarea', [], true, 'Indiquez en 3000 caractères maximum les mots clés caractérisant le parcours.', null, false],
         ['resultats', 'Résultats attendus', 'presentation', 'textarea', [], true, 'Indiquez en 3000 caractères maximum les compétences acquises via la formation (compétences à acquérir, à améliorer ou à entretenir).', null, false],
-        ['contenu', 'Contenu', 'presentation', 'textarea', [], true, 'Expliquez brièvement le contenu de cet élément.', null, false],
+        ['contenu', 'Contenu', 'presentation', 'textarea', [], true, 'Indiquez en 3000 caractères maximum les thématiques traitées, en cohérence avec les objectifs.', null, false],
         ['langue', 'Langue', 'presentation', 'choice', [], true, "Langue dans laquelle sont dispensés les cours (à l'exception des cours de langue).", 'langues', false],
         ['niveauLangue', 'Niveau de langue', 'presentation', 'choice', [], true, 'Indiquez le niveau de langue souhaité pour intégrer le parcours.', 'niveaux_langue', false],
+        ['prerequis', 'Prérequis recommandés', 'presentation', 'textarea', [], false, 'Indiquez en 3000 caractères maximum les prérequis pédagogiques (diplômes conseillés) pour réussir dans la formation.', null, false],
         ['sep_pres_rythme', 'Rythme de formation', 'presentation', 'separator', [], false, null, null, false],
         ['rythme', 'Rythme', 'presentation', 'choice', [], false, 'Choisissez un rythme de formation ou précisez-le ci-dessous.', 'rythmes', false],
-        ['rythmePrecision', 'Précision du rythme', 'presentation', 'textarea', [], false, null, null, false],
+        ['rythmePrecision', 'Précision du rythme', 'presentation', 'textarea', [], false, 'Indiquez en 3000 caractères maximum le déroulé, le calendrier, les périodes…', null, false],
         ['sep_pres_contacts', 'Contacts', 'presentation', 'separator', [], false, null, null, false],
         ['contactsParcours', 'Contacts', 'presentation', 'textarea', [], false, null, null, false],
+        ['secretariat', 'Coordonnées du secrétariat pédagogique', 'presentation', 'textarea', [], false, 'Adresse postale, téléphone et adresse mail générique.', null, false],
         ['sep_pres_apres', 'Et après…', 'presentation', 'separator', [], false, null, null, false],
         ['poursuiteEtudes', "Poursuite d'études", 'presentation', 'textarea', [], true, "Indiquez en 3000 caractères maximum quelles sont les poursuites d'études envisageables.", null, false],
-        ['debouches', 'Débouchés', 'presentation', 'textarea', [], true, "Indiquez les principaux débouchés professionnels accessibles à l'issue de cette formation.", null, false],
-        ['codesRome', 'Code(s) ROME', 'presentation', 'choice', [], true, 'Ajoutez les codes ROME pour préciser les métiers accessibles aux diplômés.', 'codes_rome', false],
+        ['debouches', 'Débouchés', 'presentation', 'textarea', [], true, "Indiquez en 3000 caractères maximum les principaux débouchés professionnels accessibles à l'issue de cette formation.", null, false],
+        ['codesRome', 'Code(s) ROME', 'presentation', 'checkbox', [], true, 'Choix multiples : codes ROME des métiers accessibles aux diplômés.', 'codes_rome', false],
     ];
 
     public function load(ObjectManager $manager): void
@@ -107,13 +124,13 @@ final class FieldDefFixtures extends Fixture
                 ->setType($type)
                 ->setOptions($options)
                 ->setReferentielKey($referentielKey)
-                ->setAllowExtra(\in_array($key, ['mention', 'composanteInscription', 'respMention', 'coRespMention', 'respParcours', 'coRespParcours', 'langue', 'niveauLangue', 'codesRome'], true))
+                ->setAllowExtra(\in_array($key, ['mention', 'composanteInscription', 'respMention', 'coRespMention', 'respParcours', 'coRespParcours', 'langue', 'niveauLangue'], true))
                 ->setRequired($required)
                 ->setHelp($help)
                 ->setPosition($position)
                 ->setLocked($locked)
-                // l'aide annonce « 3000 caractères maximum » : la borne la fait respecter
-                ->setMax(str_contains((string) $help, '3000 caractères') ? 3000 : null)
+                // l'aide annonce « N caractères maximum » : la borne la fait respecter
+                ->setMax(preg_match('/(\d+) caractères maximum/u', (string) $help, $m) ? (float) $m[1] : null)
                 ->setSystem(true);
             $manager->persist($field);
         }

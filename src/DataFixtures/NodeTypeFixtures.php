@@ -22,6 +22,14 @@ use Doctrine\Persistence\ObjectManager;
  */
 final class NodeTypeFixtures extends Fixture
 {
+    /** Rubrique « Descriptif » du parcours : stages, projets tutorés, TER / mémoire, mises en situation professionnelle. */
+    private const DESCRIPTIF = [
+        'stage', 'stageDescription', 'stageHeures',
+        'projetTutore', 'projetTutoreDescription', 'projetTutoreHeures',
+        'memoire', 'memoireDescription',
+        'situationPro', 'situationProDescription', 'situationProHeures',
+    ];
+
     public function load(ObjectManager $manager): void
     {
         $defs = [
@@ -77,10 +85,10 @@ final class NodeTypeFixtures extends Fixture
         // des nœuds d'arbre, cf. NodeTypeRepository::forTree()). Leur entrée et leur rang dans
         // le canevas par défaut (cf. CanvasDefaults) reproduisent la fiche historique ; BCC,
         // Structure et ramification sont des écrans intégrés (src/Formulaire/Builtin/).
-        $orgFormation = ['name', 'diplome', 'domaine', 'composante', 'contacts', 'sep_org_specifiques', 'mention', 'niveauEntree', 'niveauSortie', 'rncp', 'codeRncp', 'codeApogee', 'sep_org_responsables', 'respMention', 'coRespMention'];
-        $orgParcours = ['nom', 'ectsTotal', 'modalitesEnseignement', 'composanteInscription', 'regimes', 'modalitesAlternance', 'lieu', 'codeApogee', 'sep_org_responsables', 'respParcours', 'coRespParcours'];
+        $orgFormation = ['name', 'diplome', 'domaine', 'composante', 'sigle', 'contacts', 'sep_org_specifiques', 'mention', 'niveauEntree', 'niveauSortie', 'rncp', 'codeRncp', 'localisations', 'lieu', 'composanteInscription', 'regimes', 'modalitesAlternance', 'codeApogee', 'sep_org_responsables', 'respMention', 'coRespMention'];
+        $orgParcours = ['nom', 'ectsTotal', 'localisations', 'lieu', 'composanteInscription', 'regimes', 'modalitesAlternance', 'sep_org_descriptif', 'modalitesEnseignement', ...self::DESCRIPTIF, 'codeApogee', 'sep_org_responsables', 'respParcours', 'coRespParcours'];
         $presFormation = ['objectif', 'resultats', 'contenu', 'sep_pres_rythme', 'rythme', 'rythmePrecision'];
-        $presParcours = ['objectif', 'motsCles', 'resultats', 'contenu', 'langue', 'niveauLangue', 'sep_pres_rythme', 'rythme', 'rythmePrecision', 'sep_pres_contacts', 'contactsParcours', 'sep_pres_apres', 'poursuiteEtudes', 'debouches', 'codesRome'];
+        $presParcours = ['objectif', 'motsCles', 'resultats', 'contenu', 'langue', 'niveauLangue', 'prerequis', 'sep_pres_rythme', 'rythme', 'rythmePrecision', 'sep_pres_contacts', 'contactsParcours', 'secretariat', 'sep_pres_apres', 'poursuiteEtudes', 'debouches', 'codesRome'];
 
         $paramDefs = [
             // clé, libellé, icône, position, champs, portée, entrée du canevas par défaut, rang dans ce canevas
@@ -93,9 +101,14 @@ final class NodeTypeFixtures extends Fixture
         $rules = [
             'param_organisation_formation' => [
                 new ValidationRule('rncp_code', ValidationRule::REQUIRED_IF, 'organisation', ['codeRncp'], 'rncp', 'eq', 'oui'),
+                new ValidationRule('alternance', ValidationRule::REQUIRED_IF, 'organisation', ['modalitesAlternance'], 'regimes', 'contains', 'FI_APP'),
             ],
             'param_organisation_parcours' => [
                 new ValidationRule('alternance', ValidationRule::REQUIRED_IF, 'organisation', ['modalitesAlternance'], 'regimes', 'contains', 'FI_APP'),
+                new ValidationRule('stage', ValidationRule::REQUIRED_IF, 'organisation', ['stageDescription'], 'stage', 'eq', 'oui'),
+                new ValidationRule('projet_tutore', ValidationRule::REQUIRED_IF, 'organisation', ['projetTutoreDescription'], 'projetTutore', 'eq', 'oui'),
+                new ValidationRule('memoire', ValidationRule::REQUIRED_IF, 'organisation', ['memoireDescription'], 'memoire', 'eq', 'oui'),
+                new ValidationRule('situation_pro', ValidationRule::REQUIRED_IF, 'organisation', ['situationProDescription'], 'situationPro', 'eq', 'oui'),
             ],
         ];
         foreach ($paramDefs as [$key, $label, $icon, $position, $fieldKeys, $scope, $entryKey, $entryPosition]) {

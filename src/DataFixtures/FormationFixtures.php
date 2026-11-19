@@ -246,14 +246,19 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
         ]);
         // fiche parcours de la formation sans parcours (parcours unique, cf. App\Formulaire\Fiche\MonoParcoursFiche)
         $doc->setFormationParam('parcours.organisation', [
+                'localisations' => ['Reims'],
                 'regimes' => ['FI', 'FC'],
                 'modalitesAlternance' => 'Sans objet (formation initiale à temps plein).',
+                'stage' => 'oui',
+                'stageDescription' => 'Un stage de 8 semaines minimum au semestre 6, en entreprise ou en laboratoire.',
+                'stageHeures' => 280,
+                'projetTutore' => 'non',
             ]);
         $doc->setFormationParam('parcours.presentation', [
                 'langue' => 'Français',
                 'poursuiteEtudes' => "Master informatique, master MIAGE, écoles d'ingénieurs sur titre.",
                 'debouches' => 'Développeur, administrateur systèmes et bases de données, assistant chef de projet.',
-                'codesRome' => 'M1805 — Études et développement informatique',
+                'codesRome' => ['M1805 — Études et développement informatique'],
             ]);
         $this->offre($doc, ['statut' => 'soumis_cfvu', 'note' => true], [180, 150, 120]);
         $this->maquette->save($formation, $doc, 'Démo');
@@ -292,7 +297,8 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
             'composanteInscription' => 'UFR Sciences Exactes et Naturelles',
             'regimes' => ['FI', 'FI_APP'],
             'modalitesAlternance' => 'Rythme 3 semaines entreprise / 2 semaines université en L3.',
-            'lieu' => 'Campus principal',
+            'localisations' => ['Reims'],
+            'lieu' => 'Campus Moulin de la Housse',
             'respParcours' => 'B. Dupont',
         ]);
         $doc->setParcoursParam($info->nid, 'presentation', [
@@ -302,10 +308,10 @@ final class FormationFixtures extends Fixture implements DependentFixtureInterfa
             'contenu' => 'Programmation avancée, architecture logicielle, bases de données, gestion de projet.',
             'langue' => 'Français',
             'niveauLangue' => 'B2',
-            'rythme' => 'Alternance',
+            'rythme' => 'Temps partiel',
             'poursuiteEtudes' => 'Master informatique, master MIAGE.',
             'debouches' => "Ingénieur d'études, chef de projet junior.",
-            'codesRome' => 'M1805 — Études et développement informatique',
+            'codesRome' => ['M1805 — Études et développement informatique', 'M1802 — Expertise et support en systèmes d’information'],
         ]);
 
         // une année sans capacité (anomalie de démonstration), le parcours Mathématiques non ouvert

@@ -76,6 +76,28 @@ final class FicheEntryTest extends WebTestCase
         self::assertSame('Campus', $data['lieu']);
     }
 
+    /** Rubriques des fiches d'aide à la rédaction : descriptif du parcours, bornes de 3000 caractères, choix multiples. */
+    public function testParcoursDescriptifFollowsTheWritingGuide(): void
+    {
+        $formation = $this->formation(true);
+        $parcours = $this->firstParcours($formation);
+
+        $crawler = $this->client->request('GET', $this->parcoursUrl($formation, $parcours, 'organisation'));
+        self::assertResponseIsSuccessful();
+        self::assertSame('3000', $crawler->filter('textarea[name="p[stageDescription]"]')->attr('maxlength'));
+        self::assertCount(5, $crawler->filter('input[name="p[localisations][]"]'));
+        self::assertCount(2, $crawler->filter('input[name="p[situationPro]"]'));
+
+        $this->client->request('POST', $this->parcoursUrl($formation, $parcours, 'organisation'), ['p' => ['stage' => 'oui']], [], ['HTTP_ACCEPT' => 'application/json']);
+        $out = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertStringContainsString('obligatoire si', $out['issues']['stageDescription'][0] ?? '');
+
+        $this->client->request('POST', $this->parcoursUrl($formation, $parcours, 'presentation'), ['p' => ['codesRome' => ['M1805', 'M1802'], 'prerequis' => 'Bac général']]);
+        $data = $this->parcoursParam($formation, $parcours, 'presentation');
+        self::assertSame(['M1805', 'M1802'], $data['codesRome']);
+        self::assertSame('Bac général', $data['prerequis']);
+    }
+
     public function testBoundFieldsWriteToEntity(): void
     {
         $formation = $this->formation(true);
