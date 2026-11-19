@@ -10,6 +10,8 @@ use App\Diplome\TypeDiplomeResolver;
 use App\Diplome\VersionMccc;
 use App\Entity\Formation;
 use App\FicheMatiere\EcValueResolver;
+use App\FicheMatiere\FicheMatiereAccess;
+use App\FicheMatiere\FicheRelation;
 use App\Maquette\Doc\MaquetteDoc;
 use App\Maquette\Doc\TreeNode;
 use App\Validation\TabValidator;
@@ -33,6 +35,7 @@ final class Completion
         private readonly TypeDiplomeResolver $resolver,
         private readonly EcValueResolver $values,
         private readonly VersionMccc $versionMccc,
+        private readonly FicheMatiereAccess $ficheAccess,
     ) {
     }
 
@@ -119,8 +122,14 @@ final class Completion
     {
         if (null === $this->values->ficheId($node)) {
             $out[] = ['key' => 'ficheMatiere', 'label' => mb_strtolower($def['label']), 'tab' => $def['domain']];
-        } elseif (null === $this->values->fiche($node)) {
+
+            return;
+        }
+        $fiche = $this->values->fiche($node);
+        if (null === $fiche) {
             $out[] = ['key' => 'ficheMatiere', 'label' => 'fiche matière introuvable', 'tab' => $def['domain']];
+        } elseif (FicheRelation::Interdite === $this->ficheAccess->relation($fiche, $node)) {
+            $out[] = ['key' => 'ficheMatiere', 'label' => 'fiche matière non autorisée dans ce parcours', 'tab' => $def['domain']];
         }
     }
 

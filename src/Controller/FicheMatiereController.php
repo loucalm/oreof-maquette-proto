@@ -5,14 +5,18 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\FicheMatiere;
+use App\Entity\FicheMatiereMutualisation;
 use App\Entity\Formation;
 use App\FicheMatiere\EcValueResolver;
 use App\FicheMatiere\FicheMatiereEditor;
 use App\FicheMatiere\FicheMatiereForms;
+use App\FicheMatiere\FicheMatiereMutualiser;
 use App\FicheMatiere\FicheMatiereUsage;
 use App\Maquette\Doc\TreeNode;
 use App\Maquette\Maquette;
+use App\Repository\FicheMatiereMutualisationRepository;
 use App\Repository\FicheMatiereRepository;
+use App\Repository\FormationRepository;
 use App\Twig\RoleExtension;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
@@ -35,6 +39,10 @@ final class FicheMatiereController extends AbstractController
         private readonly FicheMatiereEditor $editor,
         private readonly FicheMatiereUsage $usage,
         private readonly RoleExtension $roles,
+        private readonly Maquette $maquette,
+        private readonly FormationRepository $formations,
+        private readonly FicheMatiereMutualisationRepository $mutualisations,
+        private readonly FicheMatiereMutualiser $mutualiser,
     ) {
     }
 
@@ -165,8 +173,161 @@ final class FicheMatiereController extends AbstractController
     public function edit(FicheMatiere $fiche, string $tab): Response
     {
         $this->denyHorsDiplome($fiche);
+        $tab = $this->validTab($fiche, $tab);
+        if ('mutualisation' === $tab) {
+            return $this->mutualisationPage($fiche);
+        }
 
-        return $this->page($fiche, $this->validTab($fiche, $tab), $this->values($fiche));
+        return $this->page($fiche, $tab, $this->values($fiche));
+    }
+
+    #[Route('/fiches-matieres/{id}/mutualisation', name: 'fiche_matiere_mutualisation_add', methods: ['POST'])]
+    #[IsCsrfTokenValid(self::CSRF_ID, tokenKey: self::CSRF_FIELD)]
+    public function mutualisationAdd(FicheMatiere $fiche, Request $request): Response
+    {
+        $this->denyHorsDiplome($fiche);
+        $formation = $this->requestFormation($request);
+        $this->mutualiser->add($fiche, $formation, $this->requestParcours($request, $formation));
+
+        return $this->mutualisationBack($fiche, $request);
+    }
+
+    #[Route('/fiches-matieres/{id}/mutualisation/{mid}/retirer', name: 'fiche_matiere_mutualisation_remove', methods: ['POST'])]
+    #[IsCsrfTokenValid(self::CSRF_ID, tokenKey: self::CSRF_FIELD)]
+    public function mutualisationRemove(FicheMatiere $fiche, FicheMatiereMutualisation $mid, Request $request): Response
+    {
+        $this->denyHorsDiplome($fiche);
+        if ($mid->getFiche()->getId() !== $fiche->getId()) {
+            throw $this->createNotFoundException();
+        }
+        $impacts = $this->removalImpacts($this->mutualiser->impactsOfRemoval($mid));
+        if ([] !== $impacts && !$this->confirmed($request)) {
+            return $this->confirmImpacts($fiche, $request, $impacts, $this->generateUrl('fiche_matiere_mutualisation_remove', ['id' => $fiche->getId(), 'mid' => $mid->getId()]));
+        }
+        $this->mutualiser->remove($mid);
+
+        return $this->mutualisationBack($fiche, $request);
+    }
+
+    #[Route('/fiches-matieres/{id}/mutualisation/tout-retirer', name: 'fiche_matiere_mutualisation_clear', methods: ['POST'])]
+    #[IsCsrfTokenValid(self::CSRF_ID, tokenKey: self::CSRF_FIELD)]
+    public function mutualisationClear(FicheMatiere $fiche, Request $request): Response
+    {
+        $this->denyHorsDiplome($fiche);
+        $impacts = [];
+        foreach ($this->mutualisations->findBy(['fiche' => $fiche]) as $mutualisation) {
+            $impacts = array_merge($impacts, $this->removalImpacts($this->mutualiser->impactsOfRemoval($mutualisation)));
+        }
+        if ([] !== $impacts && !$this->confirmed($request)) {
+            return $this->confirmImpacts($fiche, $request, $impacts, $this->generateUrl('fiche_matiere_mutualisation_clear', ['id' => $fiche->getId()]));
+        }
+        $this->mutualiser->clear($fiche);
+
+        return $this->mutualisationBack($fiche, $request);
+    }
+
+    #[Route('/fiches-matieres/{id}/porteur', name: 'fiche_matiere_porteur', methods: ['POST'])]
+    #[IsCsrfTokenValid(self::CSRF_ID, tokenKey: self::CSRF_FIELD)]
+    public function porteur(FicheMatiere $fiche, Request $request): Response
+    {
+        $this->denyHorsDiplome($fiche);
+        $formation = $this->requestFormation($request);
+        $parcoursNid = $this->requestParcours($request, $formation);
+        $result = $this->mutualiser->changePorteur($fiche, $formation, $parcoursNid, $this->confirmed($request));
+        if (!$result->saved) {
+            return $this->confirmImpacts($fiche, $request, $result->impacts, $this->generateUrl('fiche_matiere_porteur', ['id' => $fiche->getId()]), [
+                'formation' => (string) $formation->getId(),
+                'parcours' => (string) ($parcoursNid ?? ''),
+            ]);
+        }
+        $this->addFlash('success', sprintf('Porteur de la fiche « %s » changé.', $fiche->getLibelle()));
+
+        return $this->mutualisationBack($fiche, $request);
+    }
+
+    /**
+     * @param list<array{formation: string, path: string, key: string}> $impacts
+     * @param array<string, string>                                     $params
+     */
+    private function confirmImpacts(FicheMatiere $fiche, Request $request, array $impacts, string $url, array $params = []): Response
+    {
+        if ('json' === $request->getPreferredFormat()) {
+            return $this->json(['impacts' => $impacts], 422);
+        }
+
+        return $this->mutualisationPage($fiche, $impacts, 422, ['url' => $url, 'params' => $params]);
+    }
+
+    /** @param list<array{formation: Formation, ec: TreeNode, path: string}> $usages */
+    private function removalImpacts(array $usages): array
+    {
+        return array_map(static fn (array $usage): array => [
+            'formation' => $usage['formation']->getName(),
+            'path' => $usage['path'],
+            'key' => 'parcours',
+        ], $usages);
+    }
+
+    /**
+     * @param list<array{formation: string, path: string, key: string}> $impacts
+     * @param array{url: string, params: array<string, string>}|null     $pending
+     */
+    private function mutualisationPage(FicheMatiere $fiche, array $impacts = [], int $status = 200, ?array $pending = null): Response
+    {
+        $formations = $this->formations->findAllRecent();
+        $parcours = [];
+        foreach ($formations as $formation) {
+            $parcours[$formation->getId()] = array_map(
+                static fn (TreeNode $p): array => ['nid' => $p->nid, 'label' => $p->getDisplayLabel()],
+                $this->maquette->open($formation)->parcoursNodes(),
+            );
+        }
+
+        return $this->render('fiche_matiere/mutualisation.html.twig', [
+            'fiche' => $fiche,
+            'tabs' => $this->tabs($fiche),
+            'mutualisations' => $this->mutualisations->findBy(['fiche' => $fiche]),
+            'formations' => $formations,
+            'parcours' => $parcours,
+            'impacts' => $impacts,
+            'pending' => $pending,
+            'usages' => $this->usage->usages($fiche),
+            'status' => $this->usage->status($fiche),
+        ], new Response(status: $status));
+    }
+
+    private function mutualisationBack(FicheMatiere $fiche, Request $request): Response
+    {
+        if ('json' === $request->getPreferredFormat()) {
+            return $this->json(['saved' => true]);
+        }
+
+        return $this->redirectToRoute('fiche_matiere_edit', ['id' => $fiche->getId(), 'tab' => 'mutualisation']);
+    }
+
+    private function requestFormation(Request $request): Formation
+    {
+        $id = $request->request->get('formation');
+        $formation = \is_numeric($id) ? $this->formations->find((int) $id) : null;
+
+        return $formation ?? throw $this->createNotFoundException('Formation inconnue.');
+    }
+
+    private function requestParcours(Request $request, Formation $formation): ?string
+    {
+        $nid = $request->request->get('parcours');
+        $nid = \is_string($nid) && '' !== $nid ? $nid : null;
+        $this->assertParcoursOf($formation, $nid, array_map(
+            static fn (TreeNode $p): string => $p->nid,
+            $this->maquette->open($formation)->parcoursNodes(),
+        ));
+
+        return $nid;
+    }
+
+    private function confirmed(Request $request): bool
+    {
+        return $request->request->getBoolean('confirmImpact');
     }
 
     /**
@@ -188,39 +349,6 @@ final class FicheMatiereController extends AbstractController
             'status' => $this->usage->status($fiche),
             'saveUrl' => $this->generateUrl('fiche_matiere_save', ['id' => $fiche->getId(), 'tab' => $tab]),
         ], new Response(status: $status));
-    }
-
-    #[Route('/fiches-matieres/{id}/{tab}', name: 'fiche_matiere_save', methods: ['POST'], defaults: ['tab' => 'identite'])]
-    #[IsCsrfTokenValid(self::CSRF_ID, tokenKey: self::CSRF_FIELD)]
-    public function save(FicheMatiere $fiche, string $tab, Request $request): Response
-    {
-        $this->denyHorsDiplome($fiche);
-        // un POST vise un onglet existant pour cette fiche (pas de repli silencieux sur « identite »)
-        if (!\in_array($tab, $this->tabs($fiche), true)) {
-            throw $this->createNotFoundException();
-        }
-        $posted = $request->request->all('p');
-        $issues = $this->editor->issues($fiche, $this->editor->fields($fiche, $tab), $posted);
-
-        $impacts = [];
-        if ([] === $issues) {
-            $impacts = $this->editor->save($fiche, $tab, $posted, $request->request->getBoolean('confirmImpact'))->impacts;
-        }
-
-        if ('json' === $request->getPreferredFormat()) {
-            return $this->json([
-                'status' => $this->usage->status($fiche),
-                'issues' => $issues,
-                'impacts' => $impacts,
-            ]);
-        }
-
-        // erreurs ou imposition à confirmer : la page est réaffichée avec la saisie, les erreurs et les EC touchés
-        if ([] !== $issues || [] !== $impacts) {
-            return $this->page($fiche, $tab, $posted + $this->values($fiche), $issues, $impacts, 422);
-        }
-
-        return $this->redirectToRoute('fiche_matiere_edit', ['id' => $fiche->getId(), 'tab' => $tab]);
     }
 
     /** Valeurs affichées : `defaults` pour les quatre clés de valeurs, `imposed` pour les cases, `data` pour le reste. */
@@ -287,5 +415,38 @@ final class FicheMatiereController extends AbstractController
         if (!$ok) {
             throw $this->createNotFoundException('Parcours inconnu dans cette formation.');
         }
+    }
+
+    #[Route('/fiches-matieres/{id}/{tab}', name: 'fiche_matiere_save', methods: ['POST'], defaults: ['tab' => 'identite'])]
+    #[IsCsrfTokenValid(self::CSRF_ID, tokenKey: self::CSRF_FIELD)]
+    public function save(FicheMatiere $fiche, string $tab, Request $request): Response
+    {
+        $this->denyHorsDiplome($fiche);
+        // un POST vise un onglet existant pour cette fiche (pas de repli silencieux sur « identite »)
+        if (!\in_array($tab, $this->tabs($fiche), true)) {
+            throw $this->createNotFoundException();
+        }
+        $posted = $request->request->all('p');
+        $issues = $this->editor->issues($fiche, $this->editor->fields($fiche, $tab), $posted);
+
+        $impacts = [];
+        if ([] === $issues) {
+            $impacts = $this->editor->save($fiche, $tab, $posted, $request->request->getBoolean('confirmImpact'))->impacts;
+        }
+
+        if ('json' === $request->getPreferredFormat()) {
+            return $this->json([
+                'status' => $this->usage->status($fiche),
+                'issues' => $issues,
+                'impacts' => $impacts,
+            ]);
+        }
+
+        // erreurs ou imposition à confirmer : la page est réaffichée avec la saisie, les erreurs et les EC touchés
+        if ([] !== $issues || [] !== $impacts) {
+            return $this->page($fiche, $tab, $posted + $this->values($fiche), $issues, $impacts, 422);
+        }
+
+        return $this->redirectToRoute('fiche_matiere_edit', ['id' => $fiche->getId(), 'tab' => $tab]);
     }
 }

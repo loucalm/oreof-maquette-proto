@@ -55,6 +55,9 @@
                     <a href="{{ path('fiche_matiere_edit', {id: fiche.id}) }}" class="font-medium hover:underline" style="color:var(--c-primary)">{{ fiche.libelle }}</a>
                     <span class="text-xs text-gray-400">{{ 'fiche_matiere.index.ec_count'|trans({'%count%': counts[fiche.id]}, 'fiche_matiere') }}</span>
                     <span class="flex-1"></span>
+                    {% if key == 'orphelines' %}
+                        <a href="{{ path('fiche_matiere_edit', {id: fiche.id, tab: 'mutualisation'}) }}" class="rounded-lg border px-2 py-1 text-xs hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'fiche_matiere.index.choose_porteur'|trans({}, 'fiche_matiere') }}</a>
+                    {% endif %}
                     <form method="post" action="{{ path('fiche_matiere_duplicate', {id: fiche.id}) }}{{ backQuery }}">
                         <input type="hidden" name="_csrf_token" value="{{ token }}">
                         <button type="submit" class="rounded-lg border px-2 py-1 text-xs hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'fiche_matiere.index.duplicate'|trans({}, 'fiche_matiere') }}</button>

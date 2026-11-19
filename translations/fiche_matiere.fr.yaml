@@ -11,6 +11,7 @@ fiche_matiere:
     duplicate: Dupliquer
     delete: Supprimer
     delete_confirm: Supprimer cette fiche ?
+    choose_porteur: Choisir un porteur
     empty: Aucune fiche
     ec_count: '%count% EC'
     group:
@@ -31,3 +32,18 @@ fiche_matiere:
   impact:
     title: "Imposer cette valeur masquera la valeur propre des EC suivants :"
     confirm: Confirmer l'imposition
+  mutualisation:
+    formation: Formation
+    parcours: Parcours
+    add:
+      title: Mutualiser vers un parcours
+      button: Autoriser
+    remove: Retirer
+    clear: Tout retirer
+    list:
+      title: Parcours autorisés
+      empty: Aucune mutualisation
+    porteur:
+      title: Parcours porteur
+      help: "Changer le porteur fige les valeurs déjà remplies dans les EC et retire les compétences étrangères à la nouvelle formation porteuse."
+      button: Changer le porteur
