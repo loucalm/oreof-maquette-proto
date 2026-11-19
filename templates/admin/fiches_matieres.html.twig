@@ -1,0 +1,45 @@
+{% extends 'admin/_layout.html.twig' %}
+{% set adminSection = 'fiches_matieres' %}
+{% block title %}{{ 'admin.fiches_matieres.title'|trans({}, 'admin') }}{% endblock %}
+
+{% block admin_body %}
+
+<div class="mb-5">
+    <h2 class="text-lg font-bold">{{ 'admin.fiches_matieres.heading'|trans({}, 'admin') }}</h2>
+    <p class="text-sm text-gray-500">
+        {{ 'admin.fiches_matieres.description'|trans({}, 'admin') }}
+    </p>
+</div>
+
+<div class="rounded-xl border bg-white p-5 space-y-5" style="border-color:var(--c-border)">
+    <form method="post" action="{{ path('admin_fiche_matiere_create') }}" class="flex flex-wrap items-end gap-3">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token(constant('App\\Controller\\FicheMatiereController::CSRF_ID')) }}">
+        <label class="flex-1 min-w-48 text-xs font-medium text-gray-500">
+            {{ 'admin.fiches_matieres.libelle_field'|trans({}, 'admin') }}
+            <input type="text" name="libelle" required maxlength="250" class="fld mt-1">
+        </label>
+        <label class="text-xs font-medium text-gray-500">
+            {{ 'admin.fiches_matieres.type_field'|trans({}, 'admin') }}
+            <select name="typeDiplome" class="fld mt-1">
+                <option value="">{{ 'admin.fiches_matieres.all_types'|trans({}, 'admin') }}</option>
+                {% for type in types %}
+                    <option value="{{ type.id }}">{{ type.label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <button type="submit" class="rounded-lg px-3 py-1.5 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'admin.fiches_matieres.create'|trans({}, 'admin') }}</button>
+    </form>
+
+    <div class="space-y-2">
+    {% for row in rows %}
+        <div data-fiche-row data-fiche-id="{{ row.fiche.id }}" class="flex flex-wrap items-center gap-3 rounded-lg border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+            <a href="{{ path('fiche_matiere_edit', {id: row.fiche.id}) }}" data-turbo-frame="_top" class="font-medium hover:underline" style="color:var(--c-primary)">{{ row.fiche.libelle }}</a>
+            <span class="text-xs text-gray-500">{{ row.fiche.typeDiplome ? row.fiche.typeDiplome.label : 'admin.fiches_matieres.all_types'|trans({}, 'admin') }}</span>
+            <span class="text-xs text-gray-400">{{ 'admin.fiches_matieres.ec_count'|trans({'%count%': row.usages}, 'admin') }}</span>
+        </div>
+    {% else %}
+        <p class="text-xs text-gray-400">{{ 'admin.fiches_matieres.empty'|trans({}, 'admin') }}</p>
+    {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -47,3 +47,15 @@ admin:
       Supprimer le référentiel « %label% » ? Les valeurs déjà saisies dans les formulaires restent en
       base mais la liste ne sera plus proposée.
     no_value: Aucune valeur.
+  fiches_matieres:
+    title: Fiches matières hors diplôme
+    heading: Fiches matières hors diplôme
+    description: >-
+      Fiches sans formation porteuse, utilisables par toutes les formations. Leur création et leur
+      modification sont réservées à l’administration.
+    libelle_field: Libellé de la fiche
+    type_field: Type de diplôme (facultatif)
+    all_types: Tous
+    create: Créer la fiche
+    ec_count: '%count% EC'
+    empty: Aucune fiche hors diplôme.
