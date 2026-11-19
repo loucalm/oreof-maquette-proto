@@ -1,0 +1,305 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\FicheMatiere;
+
+use App\Entity\FicheMatiere;
+use App\Maquette\Doc\MaquetteDoc;
+use App\Maquette\Doc\TreeNode;
+use App\Maquette\Maquette;
+use App\Repository\FicheMatiereRepository;
+use Symfony\Component\DependencyInjection\Attribute\AutowireServiceClosure;
+use Symfony\Contracts\Service\ResetInterface;
+
+/**
+ * Valeurs effectives d'un EC (spec fiche matière §7.1, §7.2) : `hours`, `ects`, `mccc`, `competencies`.
+ *
+ * Ordre : imposition par la fiche → source écrite dans `sources` (sinon source par défaut) → valeur de
+ * cette source ; une source qui ne peut pas répondre retombe sur la valeur propre de l'EC, avec un
+ * avertissement. Tout lecteur de ces valeurs passe par ici.
+ */
+final class EcValueResolver implements ResetInterface
+{
+    public const SOURCE_FICHE = 'fiche';
+    public const SOURCE_EC = 'ec';
+    public const SOURCE_PARENT = 'parent';
+    public const SOURCE_PORTEUR = 'porteur';
+
+    public const SOURCES = [self::SOURCE_FICHE, self::SOURCE_EC, self::SOURCE_PARENT, self::SOURCE_PORTEUR];
+    public const KEYS = ['hours', 'ects', 'mccc', 'competencies'];
+
+    private const WARN_INTROUVABLE = 'Fiche matière introuvable.';
+    private const WARN_IMPOSSIBLE = 'Source impossible : valeur propre de l\'EC utilisée.';
+    private const WARN_SANS_PORTEUR = 'Aucun EC du parcours porteur n\'utilise cette fiche.';
+    private const WARN_PLUSIEURS = 'Plusieurs EC du parcours porteur utilisent cette fiche : le premier est repris.';
+    private const WARN_BOUCLE = 'Reprise en boucle entre EC : valeur propre de l\'EC utilisée.';
+
+    /** @var array<int, FicheMatiere> cache par requête, id → fiche trouvée */
+    private array $fiches = [];
+
+    /** @var array<string, true> résolutions en cours (EC + clé), contre les reprises en boucle */
+    private array $resolving = [];
+
+    /**
+     * @param \Closure(): Maquette $maquette fermeture : Maquette dépend (via Completion) des lecteurs
+     *                                       de valeurs résolues, qui dépendent de ce service
+     */
+    public function __construct(
+        private readonly FicheMatiereRepository $repository,
+        private readonly FicheMatiereAccess $access,
+        #[AutowireServiceClosure(Maquette::class)]
+        private readonly \Closure $maquette,
+    ) {
+    }
+
+    public function resolve(TreeNode $ec, string $key): ResolvedValue
+    {
+        $own = $ec->getAttribute($key);
+        if (!\in_array($key, self::KEYS, true) || !$this->isElement($ec)) {
+            return new ResolvedValue($own, self::SOURCE_EC);
+        }
+
+        $frame = $this->frame($ec, $key);
+        if (isset($this->resolving[$frame])) {
+            return new ResolvedValue($own, self::SOURCE_EC, false, self::WARN_BOUCLE);
+        }
+        $this->resolving[$frame] = true;
+        try {
+            return $this->resolveElement($ec, $key, $own);
+        } finally {
+            unset($this->resolving[$frame]);
+        }
+    }
+
+    /** Raccourci : valeur effective ; pour un nœud qui n'est pas le niveau élément, son attribut. */
+    public function value(TreeNode $node, string $key): mixed
+    {
+        return $this->resolve($node, $key)->value;
+    }
+
+    /** Fiche de l'EC ; null sans attribut `ficheMatiere` entier (ancien libellé compris) ou si l'id est introuvable. */
+    public function fiche(TreeNode $ec): ?FicheMatiere
+    {
+        $id = $this->ficheId($ec);
+        if (null === $id) {
+            return null;
+        }
+        if (!isset($this->fiches[$id])) {
+            $fiche = $this->repository->find($id);
+            if (null === $fiche) {
+                return null;
+            }
+            $this->fiches[$id] = $fiche;
+        }
+
+        return $this->fiches[$id];
+    }
+
+    /** Source d'une valeur quand `sources` ne l'écrit pas (§7.2, D6). */
+    public function defaultSource(TreeNode $ec, string $key): string
+    {
+        if (!\in_array($key, self::KEYS, true) || !$this->isElement($ec)) {
+            return self::SOURCE_EC;
+        }
+        if ($this->parentShares($ec, $key)) {
+            return self::SOURCE_PARENT;
+        }
+        if (null === $this->ficheId($ec)) {
+            return self::SOURCE_EC;
+        }
+        $fiche = $this->fiche($ec);
+        // fiche introuvable : `fiche` reste la source attendue, le résolveur signale qu'elle ne répond pas
+        if (null !== $fiche && 'competencies' === $key && !$this->isInPorteur($fiche, $ec)) {
+            return self::SOURCE_EC;
+        }
+
+        return self::SOURCE_FICHE;
+    }
+
+    /** Premier EC du parcours porteur (ordre de l'arbre) qui utilise la même fiche ; null si l'EC y est lui-même. */
+    public function porteurEc(TreeNode $ec): ?TreeNode
+    {
+        $fiche = $this->fiche($ec);
+        if (null === $fiche || $this->isInPorteur($fiche, $ec)) {
+            return null;
+        }
+
+        return $this->porteurEcs($fiche, $ec)[0] ?? null;
+    }
+
+    /** Libellé propre de l'EC s'il est rempli, sinon celui de sa fiche. */
+    public function label(TreeNode $ec): string
+    {
+        if ('' !== trim($ec->getLabel())) {
+            return $ec->getLabel();
+        }
+
+        return $this->fiche($ec)?->getLibelle() ?? $ec->getLabel();
+    }
+
+    public function reset(): void
+    {
+        $this->fiches = [];
+        $this->resolving = [];
+    }
+
+    // ─── interne ───
+
+    private function resolveElement(TreeNode $ec, string $key, mixed $own): ResolvedValue
+    {
+        $fiche = $this->fiche($ec);
+        if (null !== $fiche && \in_array($key, FicheMatiere::IMPOSABLE, true) && $fiche->isImposed($key)) {
+            return new ResolvedValue($fiche->getDefault($key), self::SOURCE_FICHE, true);
+        }
+
+        return match ($this->writtenSource($ec, $key) ?? $this->defaultSource($ec, $key)) {
+            self::SOURCE_FICHE => null !== $fiche
+                ? new ResolvedValue($fiche->getDefault($key), self::SOURCE_FICHE)
+                : $this->ownValue($own, $this->noFicheWarning($ec)),
+            self::SOURCE_PARENT => $this->parentShares($ec, $key)
+                ? new ResolvedValue($ec->getParent()?->getAttribute($key), self::SOURCE_PARENT)
+                : $this->ownValue($own, self::WARN_IMPOSSIBLE),
+            self::SOURCE_PORTEUR => $this->fromPorteur($ec, $fiche, $key, $own),
+            default => new ResolvedValue($own, self::SOURCE_EC),
+        };
+    }
+
+    private function fromPorteur(TreeNode $ec, ?FicheMatiere $fiche, string $key, mixed $own): ResolvedValue
+    {
+        if (null === $fiche) {
+            return $this->ownValue($own, $this->noFicheWarning($ec));
+        }
+        if ($this->isInPorteur($fiche, $ec)) {
+            return $this->ownValue($own, self::WARN_IMPOSSIBLE);
+        }
+        $candidates = $this->porteurEcs($fiche, $ec);
+        if ([] === $candidates) {
+            return $this->ownValue($own, self::WARN_SANS_PORTEUR);
+        }
+
+        return new ResolvedValue(
+            $this->resolve($candidates[0], $key)->value,
+            self::SOURCE_PORTEUR,
+            false,
+            \count($candidates) > 1 ? self::WARN_PLUSIEURS : null,
+        );
+    }
+
+    private function ownValue(mixed $own, string $warning): ResolvedValue
+    {
+        return new ResolvedValue($own, self::SOURCE_EC, false, $warning);
+    }
+
+    private function noFicheWarning(TreeNode $ec): string
+    {
+        return null !== $this->ficheId($ec) ? self::WARN_INTROUVABLE : self::WARN_IMPOSSIBLE;
+    }
+
+    /**
+     * EC qui utilisent la fiche sous son parcours porteur (toute la structure pédagogique pour un parcours
+     * unique), en profondeur d'abord dans l'ordre de l'arbre.
+     *
+     * @return list<TreeNode>
+     */
+    private function porteurEcs(FicheMatiere $fiche, TreeNode $ec): array
+    {
+        $doc = $this->porteurDoc($fiche, $ec);
+        if (null === $doc) {
+            return [];
+        }
+        $nid = $fiche->getParcoursNid();
+        $roots = null === $nid ? $doc->pedagogicalRoots() : array_filter([$doc->node($nid)]);
+
+        $found = [];
+        $walk = function (TreeNode $node) use (&$walk, &$found, $fiche, $ec): void {
+            if ($node !== $ec && $this->isElement($node) && $this->ficheId($node) === $fiche->getId()) {
+                $found[] = $node;
+            }
+            foreach ($node->getChildren() as $child) {
+                $walk($child);
+            }
+        };
+        foreach ($roots as $root) {
+            $walk($root);
+        }
+
+        return $found;
+    }
+
+    /** Document de la formation porteuse : celui de l'EC quand c'est la même formation (modifications en cours comprises). */
+    private function porteurDoc(FicheMatiere $fiche, TreeNode $ec): ?MaquetteDoc
+    {
+        $formation = $fiche->getFormation();
+        if ($fiche->isHorsDiplome() || null === $formation) {
+            return null;
+        }
+        if (null !== $ec->doc && $this->sameFormation($fiche, $ec)) {
+            return $ec->doc;
+        }
+
+        return ($this->maquette)()->open($formation);
+    }
+
+    /** L'EC est-il dans le parcours porteur de sa fiche (comme FicheRelation::Porteur, sans requête) ? */
+    private function isInPorteur(FicheMatiere $fiche, TreeNode $ec): bool
+    {
+        return !$fiche->isHorsDiplome()
+            && $this->sameFormation($fiche, $ec)
+            && $this->access->parcoursOf($ec)?->nid === $fiche->getParcoursNid();
+    }
+
+    private function sameFormation(FicheMatiere $fiche, TreeNode $ec): bool
+    {
+        $porteuse = $fiche->getFormation();
+        $formation = $ec->getFormation();
+        if (null === $porteuse || null === $formation) {
+            return false;
+        }
+
+        return $porteuse === $formation || (null !== $porteuse->getId() && $porteuse->getId() === $formation->getId());
+    }
+
+    /** Le parent direct est un bloc de choix qui déclare cette valeur identique pour ses enfants. */
+    private function parentShares(TreeNode $ec, string $key): bool
+    {
+        $parent = $ec->getParent();
+        if (null === $parent || !$parent->isChoiceBloc()) {
+            return false;
+        }
+        $identiques = $parent->getAttribute('enfantsIdentiques');
+
+        return \is_array($identiques) && true === ($identiques[$key] ?? false);
+    }
+
+    private function writtenSource(TreeNode $ec, string $key): ?string
+    {
+        $sources = $ec->getAttribute('sources');
+        $source = \is_array($sources) ? ($sources[$key] ?? null) : null;
+
+        return \in_array($source, self::SOURCES, true) ? $source : null;
+    }
+
+    /** Id de fiche de l'attribut `ficheMatiere` ; null pour un ancien libellé (R2) ou une absence. */
+    private function ficheId(TreeNode $node): ?int
+    {
+        $raw = $node->getAttribute('ficheMatiere');
+        if (\is_int($raw)) {
+            return $raw > 0 ? $raw : null;
+        }
+
+        return \is_string($raw) && 1 === preg_match('/^[1-9]\d*$/', $raw) ? (int) $raw : null;
+    }
+
+    private function isElement(TreeNode $node): bool
+    {
+        return $node->getType()->isElementLevel();
+    }
+
+    private function frame(TreeNode $ec, string $key): string
+    {
+        $owner = $ec->getFormation()?->getId() ?? 'o'.spl_object_id($ec->doc ?? $ec);
+
+        return $owner.'#'.$ec->nid.'#'.$key;
+    }
+}

@@ -10,3 +10,6 @@ services:
     # Pas encore injecté ailleurs : sinon retiré du conteneur de test.
     App\FicheMatiere\FicheMatiereAccess:
         public: true
+
+    App\FicheMatiere\EcValueResolver:
+        public: true
