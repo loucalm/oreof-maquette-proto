@@ -111,6 +111,7 @@ final class TreeNode
     public function setAttributes(array $attributes): self
     {
         $this->attributes = $attributes;
+        $this->doc?->touch();
 
         return $this;
     }
@@ -127,6 +128,7 @@ final class TreeNode
         } else {
             $this->attributes[$key] = $value;
         }
+        $this->doc?->touch();
 
         return $this;
     }

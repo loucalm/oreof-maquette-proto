@@ -73,7 +73,7 @@
                 </tr>
             {% else %}
                 {% set caps = n.effectiveCapabilities() %}
-                {% set h = n.getAttribute('hours') ?? {} %}
+                {% set h = ec_value(n, 'hours').value ?? {} %}
                 <tr data-quick-grid-target="row" data-url="{{ path('formation_quick_grid_save', {fid: formation.id, nid: n.id}) }}">
                     <th scope="row" class="qg-name" style="padding-left: {{ 12 + r.depth * 16 }}px">
                         <span class="status-dot" data-total="status:{{ n.id }}" data-status="{{ v.status }}"></span>
@@ -83,7 +83,7 @@
                     </th>
                     <td>
                         {% if caps.ects ?? false %}
-                            <input type="number" min="0" step="0.5" name="ects" value="{{ n.getAttribute('ects') }}" data-col="ects"
+                            <input type="number" min="0" step="0.5" name="ects" value="{{ ec_value(n, 'ects').value }}" data-col="ects"
                                    data-quick-grid-target="input" class="qg-input" {{ readonly ? 'disabled' }} aria-label="ECTS — {{ label }}">
                         {% else %}<span class="qg-na">—</span>{% endif %}
                     </td>

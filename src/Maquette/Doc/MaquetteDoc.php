@@ -24,6 +24,12 @@ final class MaquetteDoc
     public array $index = [];
 
     /**
+     * Compteur de modifications : les mémos calculés sur l'arbre (ex. EC du parcours porteur d'une fiche)
+     * s'invalident quand il change. Incrémenté par les mutateurs du document et des nœuds.
+     */
+    public int $revision = 0;
+
+    /**
      * Document 1/3 — sections « Paramètre de la formation » (mono).
      *
      * @var array<string, array<string, mixed>>
@@ -42,6 +48,11 @@ final class MaquetteDoc
         public readonly Formation $formation,
         public array $types = [],
     ) {
+    }
+
+    public function touch(): void
+    {
+        ++$this->revision;
     }
 
     // ─── accès ───
@@ -142,6 +153,7 @@ final class MaquetteDoc
      */
     public function addNode(?string $parentNid, string $typeKey, string $label = '', ?string $code = null): TreeNode
     {
+        $this->touch();
         $type = $this->types[$typeKey] ?? null;
         if ($type === null) {
             throw new \InvalidArgumentException("Type de nœud inconnu : « $typeKey ».");
@@ -168,6 +180,7 @@ final class MaquetteDoc
      */
     public function moveNode(TreeNode $node, ?TreeNode $newParent, int $index): void
     {
+        $this->touch();
         $this->detach($node);
         $node->parent = $newParent;
 
@@ -191,6 +204,7 @@ final class MaquetteDoc
      */
     public function removeNode(TreeNode $node, bool $force = false): bool
     {
+        $this->touch();
         if (!$force) {
             if ($node->isLocked('delete')) {
                 return false;
@@ -221,6 +235,7 @@ final class MaquetteDoc
      */
     public function duplicateNode(TreeNode $node, ?TreeNode $parent = null): TreeNode
     {
+        $this->touch();
         $parent ??= $node->parent;
         $copy = $this->cloneSubtree($node, $parent, $node->label !== '' ? $node->label.' (copie)' : '');
 
@@ -239,6 +254,7 @@ final class MaquetteDoc
      */
     public function importSubtree(TreeNode $external, ?TreeNode $parent): TreeNode
     {
+        $this->touch();
         $copy = $this->cloneSubtree($external, $parent, $external->label);
         if ($parent !== null) {
             $parent->children[] = $copy;
@@ -257,6 +273,7 @@ final class MaquetteDoc
      */
     public function reorderRegularBlocs(?TreeNode $context, TreeNode $bloc, int $index): void
     {
+        $this->touch();
         $bucket = $context !== null ? $context->children : $this->roots;
 
         $nonBlocs = [];
@@ -290,6 +307,7 @@ final class MaquetteDoc
     /** Reconstruit `index` + liens parent/doc à plat depuis `roots`. */
     public function reindex(): void
     {
+        $this->touch();
         $this->index = [];
         $walk = function (array $nodes, ?TreeNode $parent) use (&$walk): void {
             foreach ($nodes as $n) {

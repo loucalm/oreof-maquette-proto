@@ -105,6 +105,19 @@ final class ResolvedReadersTest extends DatabaseTestCase
         self::assertNotNull(static::getContainer()->get(McccTableBuilder::class)->build($this->formation));
     }
 
+    public function testMcccTypeNotAllowedEvenWhenNotRequired(): void
+    {
+        $this->useFiche(['mccc' => ['type' => 'ZZ', 'evaluations' => []]]);
+        $this->ec->setCapabilityOverrides(['mccc' => false]);
+        $completion = static::getContainer()->get(Completion::class);
+
+        $missing = $completion->missing($this->ec);
+        $count = $completion->node($this->ec);
+
+        self::assertContains(['key' => 'mccc', 'label' => 'type de MCCC non autorisé par le diplôme', 'tab' => 'mccc'], $missing);
+        self::assertGreaterThanOrEqual(0, $count['filled']);
+    }
+
     public function testAllowedMcccTypeIsNotAnAnomaly(): void
     {
         $this->useFiche(['mccc' => self::MCCC]);

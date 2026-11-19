@@ -23,6 +23,8 @@ use App\Validation\TabValidator;
  */
 final class Completion
 {
+    private const MCCC_NOT_ALLOWED = ['key' => 'mccc', 'label' => 'type de MCCC non autorisé par le diplôme', 'tab' => 'mccc'];
+
     public function __construct(
         private readonly AttributeCatalog $catalog,
         private readonly McccValidator $mcccValidator,
@@ -42,7 +44,7 @@ final class Completion
     public function node(TreeNode $node): array
     {
         $missing = $this->missing($node);
-        $req = $this->requiredCount($node) + $this->ruleCheck($node)['units'];
+        $req = $this->requiredCount($node) + $this->ruleCheck($node)['units'] + ($this->mcccAnomalyOutsideRequired($node) ? 1 : 0);
 
         return ['req' => $req, 'filled' => $req - \count($missing)];
     }
@@ -82,7 +84,7 @@ final class Completion
             if (!$provided) {
                 $out[] = ['key' => $key, 'label' => mb_strtolower($def['label']), 'tab' => $def['domain']];
             } elseif ($key === 'mccc' && !$this->mcccTypeAllowed($node, $v)) {
-                $out[] = ['key' => $key, 'label' => 'type de MCCC non autorisé par le diplôme', 'tab' => $def['domain']];
+                $out[] = self::MCCC_NOT_ALLOWED;
             } elseif ($key === 'mccc' && $this->mcccValidator->hasError($node)) {
                 $out[] = [
                     'key' => $key,
@@ -91,6 +93,11 @@ final class Completion
                     'detail' => implode(' · ', $this->mcccValidator->errorMessages($node)),
                 ];
             }
+        }
+
+        // D5 hors champ requis : une MCCC dont le type n'est pas permis est une anomalie même si elle n'est pas obligatoire
+        if ($this->mcccAnomalyOutsideRequired($node)) {
+            $out[] = self::MCCC_NOT_ALLOWED;
         }
 
         // règles des onglets (obligatoire sous condition, au moins un parmi) et bornes des champs
@@ -115,6 +122,15 @@ final class Completion
         } elseif (null === $this->values->fiche($node)) {
             $out[] = ['key' => 'ficheMatiere', 'label' => 'fiche matière introuvable', 'tab' => $def['domain']];
         }
+    }
+
+    /** L'anomalie D5 compte pour une unité en plus quand `mccc` n'est pas un champ requis du nœud. */
+    private function mcccAnomalyOutsideRequired(TreeNode $node): bool
+    {
+        $caps = $node->effectiveCapabilities();
+        $required = ($caps['mccc'] ?? false) && ($this->catalog->all()['mccc']['required'] ?? false);
+
+        return !$required && !$this->mcccTypeAllowed($node, $this->values->value($node, 'mccc'));
     }
 
     /** D5 : le type de MCCC résolu doit figurer parmi ceux de la version du diplôme (null : pas de restriction). */

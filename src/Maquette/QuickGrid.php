@@ -91,6 +91,8 @@ final class QuickGrid
         }
 
         if (($caps['hours'] ?? false) && \is_array($input['hours'] ?? null)) {
+            // volontairement la valeur PROPRE de l'EC (base de fusion de la saisie, pas la valeur résolue) :
+            // les règles d'écriture selon la source viennent à la tâche 11
             $hours = \is_array($node->getAttribute('hours')) ? $node->getAttribute('hours') : [];
             $cols = $this->columns();
             foreach (array_keys($cols['places']) as $place) {

@@ -38,6 +38,9 @@ final class EcValueResolver implements ResetInterface
     /** @var array<int, FicheMatiere> cache par requête, id → fiche trouvée */
     private array $fiches = [];
 
+    /** @var \WeakMap<MaquetteDoc, array{rev: int, size: int, lists: array<string, list<TreeNode>>}> EC du parcours porteur par document et fiche, invalidés par MaquetteDoc::$revision */
+    private \WeakMap $porteurCache;
+
     /** @var array<string, true> résolutions en cours (EC + clé), contre les reprises en boucle */
     private array $resolving = [];
 
@@ -51,6 +54,7 @@ final class EcValueResolver implements ResetInterface
         #[AutowireServiceClosure(Maquette::class)]
         private readonly \Closure $maquette,
     ) {
+        $this->porteurCache = new \WeakMap();
     }
 
     public function resolve(TreeNode $ec, string $key): ResolvedValue
@@ -157,6 +161,7 @@ final class EcValueResolver implements ResetInterface
     {
         $this->fiches = [];
         $this->resolving = [];
+        $this->porteurCache = new \WeakMap();
     }
 
     // ─── interne ───
@@ -230,23 +235,31 @@ final class EcValueResolver implements ResetInterface
         if (null === $doc) {
             return [];
         }
-        $nid = $fiche->getParcoursNid();
-        $roots = null === $nid ? $doc->pedagogicalRoots() : array_filter([$doc->node($nid)]);
-
-        $found = [];
-        $walk = function (TreeNode $node) use (&$walk, &$found, $fiche, $ec): void {
-            if ($node !== $ec && $this->isElement($node) && $this->ficheId($node) === $fiche->getId()) {
-                $found[] = $node;
-            }
-            foreach ($node->getChildren() as $child) {
-                $walk($child);
-            }
-        };
-        foreach ($roots as $root) {
-            $walk($root);
+        $cache = $this->porteurCache[$doc] ?? null;
+        if (null === $cache || $cache['rev'] !== $doc->revision || $cache['size'] !== \count($doc->index)) {
+            $cache = ['rev' => $doc->revision, 'size' => \count($doc->index), 'lists' => []];
         }
+        $nid = $fiche->getParcoursNid();
+        $slot = $fiche->getId().'#'.($nid ?? '');
+        if (!isset($cache['lists'][$slot])) {
+            $roots = null === $nid ? $doc->pedagogicalRoots() : array_filter([$doc->node($nid)]);
+            $found = [];
+            $walk = function (TreeNode $node) use (&$walk, &$found, $fiche): void {
+                if ($this->isElement($node) && $this->ficheId($node) === $fiche->getId()) {
+                    $found[] = $node;
+                }
+                foreach ($node->getChildren() as $child) {
+                    $walk($child);
+                }
+            };
+            foreach ($roots as $root) {
+                $walk($root);
+            }
+            $cache['lists'][$slot] = $found;
+        }
+        $this->porteurCache[$doc] = $cache;
 
-        return $found;
+        return array_values(array_filter($cache['lists'][$slot], static fn (TreeNode $n): bool => $n !== $ec));
     }
 
     /** Document de la formation porteuse : celui de l'EC quand c'est la même formation (modifications en cours comprises). */

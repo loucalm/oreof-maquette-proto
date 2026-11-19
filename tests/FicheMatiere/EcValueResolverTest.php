@@ -115,6 +115,34 @@ final class EcValueResolverTest extends DatabaseTestCase
         self::assertNotNull($impossible->warning);
     }
 
+    public function testPorteurListIsMemoisedButNeverStale(): void
+    {
+        $fiche = $this->fiche($this->parcours[0]->nid, 'Algo', ['ects' => 1]);
+        $this->em->persist(new FicheMatiereMutualisation($fiche, $this->formation, $this->parcours[1]->nid));
+        $this->em->flush();
+        $first = $this->use($this->ecsOf($this->parcours[0])[0], $fiche);
+        $user = $this->use($this->ecsOf($this->parcours[1])[0], $fiche);
+        $user->setAttribute('sources', ['ects' => 'porteur']);
+        $first->setAttribute('sources', ['ects' => 'ec'])->setAttribute('ects', 7);
+
+        self::assertSame(7, $this->resolver->resolve($user, 'ects')->value);
+        self::assertSame(7, $this->resolver->resolve($user, 'ects')->value, 'deuxième résolution : même résultat');
+
+        // modification de l'arbre dans la même requête (sans reset) : un nouvel EC porteur, placé avant
+        $second = $this->doc->addNode($first->getParent()->nid, 'ec', 'Autre');
+        $this->use($second, $fiche)->setAttribute('sources', ['ects' => 'ec'])->setAttribute('ects', 9);
+        $this->doc->moveNode($second, $first->getParent(), 0);
+        self::assertSame($second, $this->resolver->porteurEc($user));
+        self::assertSame(9, $this->resolver->resolve($user, 'ects')->value);
+
+        // l'EC porteur ne pointe plus la fiche
+        $second->setAttribute('ficheMatiere', null);
+        self::assertSame($first, $this->resolver->porteurEc($user));
+
+        $this->resolver->reset();
+        self::assertSame($first, $this->resolver->porteurEc($user));
+    }
+
     public function testPorteurSource(): void
     {
         $fiche = $this->fiche($this->parcours[0]->nid, 'Algo', ['mccc' => ['fiche' => true]]);

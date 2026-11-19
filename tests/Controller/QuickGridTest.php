@@ -96,4 +96,25 @@ final class QuickGridTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(422);
     }
+
+    public function testGridShowsResolvedValues(): void
+    {
+        [$formation, $nid] = $this->licenceWithEc();
+        $fiche = (new \App\Entity\FicheMatiere())->setFormation($formation)->setParcoursNid(null)
+            ->setData(['libelle' => 'Algo'])->setDefaults(['ects' => 4, 'hours' => ['pres' => ['cm' => 10]]]);
+        $this->em->persist($fiche);
+        $this->em->flush();
+        $maquette = static::getContainer()->get(Maquette::class);
+        $doc = $maquette->open($formation);
+        $node = $doc->node($nid);
+        $node->setAttribute('ects', null)->setAttribute('hours', null)->setAttribute('ficheMatiere', $fiche->getId());
+        $maquette->save($formation, $doc, 'test', null, true);
+
+        $crawler = $this->client->request('GET', sprintf('/formations/%d/saisie-rapide', $formation->getId()));
+
+        self::assertResponseIsSuccessful();
+        $row = $crawler->filter(sprintf('tr[data-url$="/%s/saisie-rapide"]', $nid));
+        self::assertSame('4', $row->filter('input[name="ects"]')->attr('value'));
+        self::assertSame('10', $row->filter('input[name="hours[pres][cm]"]')->attr('value'));
+    }
 }

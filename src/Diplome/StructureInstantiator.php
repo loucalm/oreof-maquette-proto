@@ -37,6 +37,7 @@ final class StructureInstantiator
 
         $doc->formation->setAvecParcours($avecParcours)->setStructure($chain);
         $doc->roots = [];
+        $doc->touch();
         $doc->parcours = [];
         $doc->index = [];
 

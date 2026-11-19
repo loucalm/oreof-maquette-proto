@@ -169,9 +169,16 @@ final class StructureContextBuilder
     /** @return array<string, mixed> */
     private function row(TreeNode $node, ?VersionConfig $config): array
     {
-        $hours = $this->values->value($node, 'hours');
+        // jamais une valeur brute : hours, ects, mccc, competencies viennent du résolveur
+        $resolved = [];
+        foreach (EcValueResolver::KEYS as $key) {
+            $value = $this->values->value($node, $key);
+            if (null !== $value) {
+                $resolved[$key] = $value;
+            }
+        }
 
-        return array_merge($node->getAttributes(), null === $hours ? [] : ['hours' => $hours], [
+        return array_merge($node->getAttributes(), $resolved, [
             'nid' => $node->getId(),
             'typeKey' => $node->typeKey,
             'hostTypeKey' => $this->hostTypeKey($node),

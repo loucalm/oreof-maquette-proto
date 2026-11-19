@@ -24,6 +24,9 @@ final class VersionMccc implements ResetInterface
     /** @var \WeakMap<Formation, array{0: ?TypeDiplomeVersion}> version résolue par formation (évite de la recalculer à chaque nœud affiché) */
     private \WeakMap $versions;
 
+    /** @var list<MccType>|null types de MCCC, lus une fois par requête */
+    private ?array $allTypes = null;
+
     public function __construct(
         private readonly TypeDiplomeResolver $resolver,
         private readonly MccTypeRepository $types,
@@ -46,6 +49,7 @@ final class VersionMccc implements ResetInterface
     public function reset(): void
     {
         $this->versions = new \WeakMap();
+        $this->allTypes = null;
     }
 
     /** @return list<MccType> types proposés pour ce nœud, ou null sans version */
@@ -56,7 +60,7 @@ final class VersionMccc implements ResetInterface
             return null;
         }
         return array_values(array_filter(
-            $this->types->allOrdered(),
+            $this->allTypes ??= $this->types->allOrdered(),
             static fn (MccType $t): bool => isset($config->mccc[$t->getKey()]),
         ));
     }
