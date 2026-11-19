@@ -31,6 +31,7 @@ final class NodeController extends AbstractController
         private readonly Maquette $maquette,
         private readonly MaquetteBuilder $builder,
         private readonly AttributeCatalog $catalog,
+        private readonly \App\Maquette\AttributeReader $attributeReader,
     ) {
     }
 
@@ -98,9 +99,9 @@ final class NodeController extends AbstractController
                 continue;
             }
             $attrs[$key] = match ($def['field']) {
-                'number' => $this->numOrNull($request->request->get("attr_$key")),
-                'hours' => $this->readHours($request),
-                'mccc' => $this->readMccc($request),
+                'number' => $this->attributeReader->number($request->request->get("attr_$key")),
+                'hours' => $this->attributeReader->hours($request->request->all('attr_hours')),
+                'mccc' => $this->attributeReader->mccc($request->request->all('attr_mccc')),
                 'competencies' => array_values(array_filter(
                     array_map(static fn ($v) => trim((string) $v), $request->request->all('attr_competencies')),
                 )),
@@ -699,74 +700,5 @@ final class NodeController extends AbstractController
         }
 
         return false;
-    }
-
-    private function numOrNull(mixed $v): ?float
-    {
-        return ($v === null || $v === '') ? null : (float) $v;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function readHours(Request $request): array
-    {
-        $raw = $request->request->all('attr_hours');
-        if (!empty($raw['none'])) {
-            return ['none' => true];
-        }
-
-        $out = [];
-        foreach (array_keys(AttributeCatalog::HOUR_PLACES) as $p) {
-            foreach (array_keys(AttributeCatalog::HOUR_MODALITIES) as $m) {
-                $val = (float) ($raw[$p][$m] ?? 0);
-                if ($val > 0) {
-                    $out[$p][$m] = $val;
-                }
-            }
-        }
-        $te = (float) ($raw['te'] ?? 0);
-        if ($te > 0) {
-            $out['te'] = $te;
-        }
-
-        return $out;
-    }
-
-    /**
-     * MCCC : le type choisi, et si ce type comporte des épreuves à pondérer,
-     * la liste des épreuves saisies (`attr_mccc[evaluations][][type|weight]`).
-     * Les lignes vides (ni type, ni coefficient) sont ignorées.
-     *
-     * @return array<string, mixed>
-     */
-    private function readMccc(Request $request): array
-    {
-        $raw = $request->request->all('attr_mccc');
-        $type = trim((string) ($raw['type'] ?? ''));
-        if ('' === $type) {
-            return [];
-        }
-
-        $out = ['type' => $type];
-        $evaluations = [];
-        foreach ((array) ($raw['evaluations'] ?? []) as $row) {
-            $etype = \is_array($row) ? trim((string) ($row['type'] ?? '')) : '';
-            $weight = \is_array($row) ? (float) str_replace(',', '.', (string) ($row['weight'] ?? '')) : 0.0;
-            $dureeRaw = \is_array($row) ? trim((string) ($row['duree'] ?? '')) : '';
-            if ('' === $etype && $weight <= 0 && '' === $dureeRaw) {
-                continue;
-            }
-            $entry = ['type' => $etype, 'weight' => $weight];
-            if ('' !== $dureeRaw) {
-                $entry['duree'] = (float) str_replace(',', '.', $dureeRaw);
-            }
-            $evaluations[] = $entry;
-        }
-        if ([] !== $evaluations) {
-            $out['evaluations'] = $evaluations;
-        }
-
-        return $out;
     }
 }

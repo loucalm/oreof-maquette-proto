@@ -21,6 +21,10 @@
                                    name="{{ name }}[{{ place }}][{{ m }}]" value="{{ value[place][m] ?? '' }}"
                                    data-hours-target="input" class="fld pr-24">
                             <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-gray-400">{{ 'node.panel.hours_unit_label'|trans({'%mod%': mlabel}, 'node') }}</span>
+                            <label class="mt-1 flex items-center gap-2 text-xs text-gray-500">
+                                <input type="checkbox" name="{{ name }}[mutualise][{{ place }}][{{ m }}]" value="1" {{ (value.mutualise[place][m] ?? false) ? 'checked' }}>
+                                {{ 'node.panel.hours_mutualise_label'|trans({}, 'node') }}
+                            </label>
                         </div>
                     {% endfor %}
                 </div>

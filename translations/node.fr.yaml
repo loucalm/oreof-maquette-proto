@@ -83,6 +83,11 @@ node:
     hours_te_label: Volume horaire de travail étudiant (TE)
     hours_te_help: Précisez le volume horaire en TE (stage, projet, autonomie, …)
     mccc_type_label: Type de MCCC
+    mccc_sans_note_label: Sans note
+    mccc_assiduite_label: Contrôle d'assiduité
+    mccc_quitus_label: Quitus
+    mccc_quitus_texte_placeholder: Conditions d'obtention du quitus
+    hours_mutualise_label: Mutualisé
     no_mccc_types: >-
       Aucun type de MCCC proposé pour ce diplôme — configurez-en dans « Administration › Types de MCCC ».
     default_evaluations_label: Épreuves

@@ -38,6 +38,7 @@ final class MaquetteExtension extends AbstractExtension
         private readonly FicheNavigation $navigation,
         private readonly FicheFactory $fiches,
         private readonly \App\Formulaire\Preview\PreviewContext $preview,
+        private readonly \App\Diplome\TypeDiplomeResolver $diplomes,
     ) {
     }
 
@@ -83,6 +84,8 @@ final class MaquetteExtension extends AbstractExtension
             // types de MCCC proposés pour un nœud : ceux de la version du type de diplôme (selon la nature
             // de l'élément) ; sans version (formation non typée), tous ceux du catalogue
             new TwigFunction('mccc_types_for', fn (TreeNode $n) => $this->versionMccc->typesFor($n) ?? $this->mcctypes->allOrdered()),
+            // options MCCC (quitus, assiduité, sans note) de la version du type de diplôme ; toutes fausses sans version
+            new TwigFunction('mccc_options', $this->mcccOptions(...)),
             new TwigFunction('mccc_results', fn (TreeNode $n) => $this->mcccValidator->forNode($n)),
             new TwigFunction('mccc_type_label', function (string $key): ?string {
                 $t = $this->mcctypes->findOneByKey($key);
@@ -90,6 +93,17 @@ final class MaquetteExtension extends AbstractExtension
                 return null !== $t ? $t->getShortLabel().' — '.$t->getLabel() : null;
             }),
         ];
+    }
+
+    /**
+     * @return array{quitus: bool, assiduite: bool, sansNote: bool}
+     */
+    public function mcccOptions(TreeNode $node): array
+    {
+        $formation = $node->getFormation();
+
+        return (null !== $formation ? $this->diplomes->configFor($formation)?->options : null)
+            ?? ['quitus' => false, 'assiduite' => false, 'sansNote' => false];
     }
 
     /**

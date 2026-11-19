@@ -3,6 +3,7 @@
 {% set selectedType = value.type ?? '' %}
 {% set selectedMt = mtypes|filter(t => t.key == selectedType)|first %}
 {% set evals = value.evaluations ?? [] %}
+{% set opts = options|default(mccc_options(node)) %}
 <div data-controller="mccc">
     <div class="flex items-center gap-2">
         <span class="fld-label">{{ 'node.panel.mccc_type_label'|trans({}, 'node') }}</span>
@@ -40,6 +41,31 @@
         </button>
         <template data-mccc-target="rowTemplate">{{ ui.mcccRow('__INDEX__', '', '', '', name) }}</template>
     </div>
+
+    {% if opts.sansNote or opts.assiduite or opts.quitus %}
+        <div class="mt-4 space-y-2">
+            {% if opts.sansNote %}
+                <label class="flex items-center gap-3 text-sm">
+                    <input type="checkbox" class="switch" name="{{ name }}[sansNote]" value="1" {{ (value.sansNote ?? false) ? 'checked' }}>
+                    <span>{{ 'node.panel.mccc_sans_note_label'|trans({}, 'node') }}</span>
+                </label>
+            {% endif %}
+            {% if opts.assiduite %}
+                <label class="flex items-center gap-3 text-sm">
+                    <input type="checkbox" class="switch" name="{{ name }}[assiduite]" value="1" {{ (value.assiduite ?? false) ? 'checked' }}>
+                    <span>{{ 'node.panel.mccc_assiduite_label'|trans({}, 'node') }}</span>
+                </label>
+            {% endif %}
+            {% if opts.quitus %}
+                <label class="flex items-center gap-3 text-sm">
+                    <input type="checkbox" class="switch" name="{{ name }}[quitus]" value="1" {{ (value.quitus ?? false) ? 'checked' }}>
+                    <span>{{ 'node.panel.mccc_quitus_label'|trans({}, 'node') }}</span>
+                </label>
+                <textarea name="{{ name }}[quitusTexte]" rows="2" class="fld w-full"
+                          placeholder="{{ 'node.panel.mccc_quitus_texte_placeholder'|trans({}, 'node') }}">{{ value.quitusTexte ?? '' }}</textarea>
+            {% endif %}
+        </div>
+    {% endif %}
 </div>
 
 {% set results = mccc_results(node) %}
