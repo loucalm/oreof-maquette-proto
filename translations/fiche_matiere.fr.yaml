@@ -1,0 +1,17 @@
+fiche_matiere:
+  title: Fiche matière
+  subtitle: Saisie de la fiche
+  usage:
+    porteur: 'Porteur :'
+    summary: 'Utilisée par %ec% EC dans %parcours% parcours'
+    details: Voir le détail
+  tab:
+    identite: Identité
+    mutualisation: Mutualisation
+    presentation: Présentation
+    competences: Compétences
+    volume_horaire: Volumes horaires
+    mccc: MCCC
+  impact:
+    title: "Imposer cette valeur masquera la valeur propre des EC suivants :"
+    confirm: Confirmer l'imposition

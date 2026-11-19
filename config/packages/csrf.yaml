@@ -11,3 +11,5 @@ framework:
             - logout
             # actions POST hors formulaire de la section Diplômes (archiver, supprimer, nouvelle version…)
             - diplome
+            # enregistrement des onglets de la fiche matière
+            - fiche_matiere

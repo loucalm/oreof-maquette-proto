@@ -1,0 +1,55 @@
+{# Page d'une fiche matière : onglets (spec §6.3), bandeau d'usage et enregistrement par onglet.
+   Les champs sont rendus comme dans les sections Paramètre, mais avec `subject` = la fiche :
+   les widgets MCCC, heures et compétences ont besoin d'elle pour leurs options. #}
+{% macro field(fiche, f, data, errors) %}
+    <div class="fld-label">{{ f.label }}</div>
+    {% if f.required %}<div class="text-[11px] font-semibold text-red-500 uppercase tracking-wide">{{ 'common.required_badge'|trans({}, 'common') }}</div>{% endif %}
+    {% if f.help %}<div class="fld-help">{{ f.help }}</div>{% endif %}
+    {{ field_widget(f, f.key, data[f.key] ?? '', 'p[' ~ f.key ~ ']', fiche, [], 'param') }}
+    <div class="fld-error" data-field-errors="{{ f.key }}">{% for m in errors|default([]) %}<div>⚠ {{ m }}</div>{% endfor %}</div>
+{% endmacro %}
+<div class="panel-body" data-panel-active="fiche_matiere:{{ tab }}">
+    <div class="panel-head">
+        <h2 class="text-xl font-bold">{{ fiche.libelle ?: 'fiche_matiere.title'|trans({}, 'fiche_matiere') }}</h2>
+        <div class="text-sm text-gray-400">{{ 'fiche_matiere.subtitle'|trans({}, 'fiche_matiere') }}</div>
+    </div>
+
+    <div class="panel-scroll">
+        {% include 'fiche_matiere/_usage.html.twig' with {fiche: fiche, usages: usages} only %}
+
+        <nav class="flex flex-wrap gap-1 mt-4 border-b" style="border-color:var(--c-border)">
+            {% for t in tabs %}
+                <a href="{{ path('fiche_matiere_edit', {id: fiche.id, tab: t}) }}"
+                   data-fiche-tab="{{ t }}"
+                   class="px-3 py-2 text-sm{{ t == tab ? ' font-semibold' : '' }}"
+                   {% if t == tab %}style="color:var(--c-primary); border-bottom:2px solid var(--c-primary)"{% endif %}>
+                    {{ ('fiche_matiere.tab.' ~ t)|trans({}, 'fiche_matiere') }}
+                </a>
+            {% endfor %}
+        </nav>
+
+        <form method="post" action="{{ saveUrl }}" data-controller="autosave" data-autosave-key-value="fiche_matiere:{{ tab }}" class="panel-card space-y-5 mt-4">
+            <input type="hidden" name="{{ constant('App\\Controller\\FicheMatiereController::CSRF_FIELD') }}" value="{{ csrf_token(constant('App\\Controller\\FicheMatiereController::CSRF_ID')) }}" data-controller="csrf-protection" autocomplete="off">
+            <fieldset class="space-y-5">
+                {% for f in fields %}
+                    <div>{{ _self.field(fiche, f, values, issues[f.key] ?? []) }}</div>
+                {% endfor %}
+            </fieldset>
+            {% if impacts|default([]) %}
+            <div class="rounded-xl border px-4 py-3 text-sm" style="border-color:var(--c-border)">
+                <div class="font-semibold">{{ 'fiche_matiere.impact.title'|trans({}, 'fiche_matiere') }}</div>
+                <ul class="mt-1 space-y-1">
+                    {% for impact in impacts %}
+                        <li>{{ impact.formation }} — {{ impact.path }} ({{ impact.key }})</li>
+                    {% endfor %}
+                </ul>
+                <button type="submit" name="confirmImpact" value="1" class="mt-2 rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'fiche_matiere.impact.confirm'|trans({}, 'fiche_matiere') }}</button>
+            </div>
+            {% endif %}
+            <div class="pt-2 border-t" style="border-color:var(--c-border)">
+                <button data-autosave-target="submit" class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
+                <span data-autosave-target="status" class="text-xs" style="color:var(--c-muted)" aria-live="polite"></span>
+            </div>
+        </form>
+    </div>
+</div>
