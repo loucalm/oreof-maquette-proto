@@ -77,6 +77,9 @@ final class FicheMatiereAccess
                 $groups[] = $this->fiches->portedBy($formation, $ancestor->nid);
             }
             $groups[] = $this->fiches->mutualisedTo($formation, $parcours?->nid);
+            foreach ($this->ancestors($parcours) as $ancestor) {
+                $groups[] = $this->fiches->mutualisedTo($formation, $ancestor->nid);
+            }
         }
         $groups[] = $this->fiches->horsDiplome();
 
@@ -98,7 +101,7 @@ final class FicheMatiereAccess
     private function ancestors(?TreeNode $parcours): array
     {
         $result = [];
-        $seen = [];
+        $seen = null === $parcours ? [] : [$parcours->nid => true];
         for ($p = $parcours?->getParcoursParent(); null !== $p && !isset($seen[$p->nid]); $p = $p->getParcoursParent()) {
             $seen[$p->nid] = true;
             $result[] = $p;
@@ -114,10 +117,14 @@ final class FicheMatiereAccess
             return false;
         }
 
-        return null !== $this->mutualisations->findOneBy([
-            'fiche' => $fiche,
-            'formation' => $formation,
-            'parcoursNid' => $this->parcoursOf($ec)?->nid,
-        ]);
+        $parcours = $this->parcoursOf($ec);
+        $nids = [$parcours?->nid, ...array_map(static fn (TreeNode $a) => $a->nid, $this->ancestors($parcours))];
+        foreach ($nids as $nid) {
+            if (null !== $this->mutualisations->findOneBy(['fiche' => $fiche, 'formation' => $formation, 'parcoursNid' => $nid])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

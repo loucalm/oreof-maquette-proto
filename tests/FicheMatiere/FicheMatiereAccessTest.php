@@ -116,6 +116,55 @@ final class FicheMatiereAccessTest extends DatabaseTestCase
         self::assertSame([$fiche], $this->access->available($ec));
     }
 
+    public function testMutualisationToAncestorReachesDescendant(): void
+    {
+        $portail = $this->parcours[0];
+        $sub = $this->doc->addNode(null, 'parcours', 'Sous-parcours');
+        $sub->setParcoursParent($portail);
+        $ec = $this->doc->addNode($sub->nid, 'ec', 'EC');
+        $fiche = $this->fiche($this->parcours[1]->nid, 'Frère');
+        $this->em->persist(new FicheMatiereMutualisation($fiche, $this->formation, $portail->nid));
+        $this->em->flush();
+
+        self::assertSame(FicheRelation::Mutualisee, $this->access->relation($fiche, $ec));
+        self::assertSame([$fiche], $this->access->available($ec));
+    }
+
+    public function testParcoursParentCycleDoesNotLoop(): void
+    {
+        $a = $this->parcours[0];
+        $b = $this->doc->addNode(null, 'parcours', 'B');
+        $b->setParcoursParent($a);
+        $a->setParcoursParent($b);
+        $ec = $this->doc->addNode($a->nid, 'ec', 'EC');
+        $fiche = $this->fiche($a->nid, 'A');
+        $this->em->flush();
+
+        self::assertSame(FicheRelation::Porteur, $this->access->relation($fiche, $ec));
+        self::assertSame([$fiche], $this->access->available($ec));
+        $autre = $this->fiche($b->nid, 'B');
+        $this->em->flush();
+        self::assertSame(FicheRelation::Ancetre, $this->access->relation($autre, $ec));
+    }
+
+    public function testAvailableFullOrder(): void
+    {
+        $portail = $this->parcours[0];
+        $sub = $this->doc->addNode(null, 'parcours', 'Sous-parcours');
+        $sub->setParcoursParent($portail);
+        $ec = $this->doc->addNode($sub->nid, 'ec', 'EC');
+        $porteuse = $this->fiche($sub->nid, 'Zz porteuse');
+        $this->em->persist(new FicheMatiereMutualisation($porteuse, $this->formation, $sub->nid));
+        $ancetre = $this->fiche($portail->nid, 'Yy ancêtre');
+        $mut = $this->fiche($this->parcours[1]->nid, 'Aa mutualisée');
+        $this->em->persist(new FicheMatiereMutualisation($mut, $this->formation, $sub->nid));
+        $libre = (new FicheMatiere())->setHorsDiplome(true)->setData(['libelle' => 'Bb libre']);
+        $this->em->persist($libre);
+        $this->em->flush();
+
+        self::assertSame([$porteuse, $ancetre, $mut, $libre], $this->access->available($ec));
+    }
+
     private function fiche(?string $nid, string $libelle): FicheMatiere
     {
         $fiche = (new FicheMatiere())->setFormation($this->formation)->setParcoursNid($nid)->setData(['libelle' => $libelle]);
