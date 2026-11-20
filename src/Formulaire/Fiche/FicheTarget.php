@@ -44,4 +44,11 @@ interface FicheTarget
 
     /** @param array<string, mixed> $input valeurs postées sous `b[]` ; seules les clés présentes sont écrites */
     public function writeBound(array $input): void;
+
+    /**
+     * Clés des champs que cette fiche ne porte pas : ils sont retirés de ses formulaires (affichage, statut, anomalies).
+     *
+     * @return list<string>
+     */
+    public function omittedFields(): array;
 }

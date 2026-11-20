@@ -68,7 +68,7 @@
         <div class="flex items-center justify-between gap-2">
             <h3 class="font-semibold" data-level-label>{{ o.label }}</h3>
             {% if not o.element %}
-                {% set btn = 'inline-flex h-7 w-7 items-center justify-center rounded hover:bg-secondary-100' %}
+                {% set btn = 'inline-flex h-7 w-7 items-center justify-center rounded hover:bg-secondary-100 disabled:pointer-events-none disabled:opacity-30' %}
                 <div class="flex shrink-0 items-center gap-0.5">
                     <button type="button" data-action="structure-tree#up" class="{{ btn }}" title="{{ (t ~ 'up')|trans({}, 'diplome') }}" aria-label="{{ (t ~ 'up')|trans({}, 'diplome') }}">{{ ux_icon('ph:arrow-up', {class: 'icon'}) }}</button>
                     <button type="button" data-action="structure-tree#down" class="{{ btn }}" title="{{ (t ~ 'down')|trans({}, 'diplome') }}" aria-label="{{ (t ~ 'down')|trans({}, 'diplome') }}">{{ ux_icon('ph:arrow-down', {class: 'icon'}) }}</button>
@@ -101,7 +101,9 @@
 
         <div>
             <span class="st-lab">{{ (t ~ 'ects_label')|trans({}, 'diplome') }}</span>
-            <div class="flex flex-wrap items-center gap-2">
+            {# ECTS déjà saisis à un niveau au-dessus (ou EC rattachés par coefficient) : rien à régler ici, cf. structure_tree_controller.js #}
+            <p class="text-sm st-muted" data-ects-elsewhere hidden></p>
+            <div class="flex flex-wrap items-center gap-2" data-ects-field>
                 {{ form_widget(lv.ectsMode, {attr: {class: sel, 'data-field': 'ectsMode'}}) }}
                 <div data-ects-bound {{ lv.ectsMode.vars.value == 'free' ? 'hidden' }}>{{ rows.boundWidget(lv.ectsBound) }}</div>
             </div>

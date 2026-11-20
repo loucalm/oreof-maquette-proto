@@ -74,6 +74,17 @@ final class StructureType extends AbstractType
         if (\count($natures) !== \count(array_unique($natures))) {
             $add('diplome.wizard.structure.error.duplicate_ec_type');
         }
+        // les niveaux de temps (année, semestre…) restent au-dessus des autres niveaux
+        $indexed = $this->nodeTypes->findAllIndexed();
+        $structural = false;
+        foreach ($chain as $key) {
+            $temporal = isset($indexed[$key]) && $indexed[$key]->isTemporel();
+            if ($temporal && $structural) {
+                $add('diplome.wizard.structure.error.temporal_order');
+                break;
+            }
+            $structural = $structural || !$temporal;
+        }
         $this->validateDuration($data, $levels, $order, $chain, $context);
         $this->validateElementLevel($levels, $order, $chain, $context);
         // le premier niveau n'a pas de nombre saisi (il découle de la durée) : son verrou ne demande rien

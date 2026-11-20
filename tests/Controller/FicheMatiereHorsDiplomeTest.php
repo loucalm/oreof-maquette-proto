@@ -16,7 +16,7 @@ use App\Tests\Support\SameOriginCsrf;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-/** Fiches matière hors diplôme : liste et création dans l'administration, disponibilité dans toutes les formations. */
+/** Fiches matière hors diplôme : liste et création (offre de formation, réservée à l'admin), disponibilité dans toutes les formations. */
 final class FicheMatiereHorsDiplomeTest extends WebTestCase
 {
     use ResetsDatabase;
@@ -46,7 +46,7 @@ final class FicheMatiereHorsDiplomeTest extends WebTestCase
         $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, 'Licence utilisatrice', avecParcours: true, withLeaves: true);
         $this->linkFiche($formation, $used);
 
-        $crawler = $this->client->request('GET', '/administration/fiches-matieres');
+        $crawler = $this->client->request('GET', '/fiches-matieres/hors-diplome');
 
         self::assertResponseIsSuccessful();
         $rows = $crawler->filter('[data-fiche-row]');
@@ -85,7 +85,7 @@ final class FicheMatiereHorsDiplomeTest extends WebTestCase
         $this->client->request('POST', '/role/responsable');
         self::assertResponseRedirects('/');
 
-        $this->client->request('GET', '/administration/fiches-matieres');
+        $this->client->request('GET', '/fiches-matieres/hors-diplome');
         self::assertResponseRedirects('/');
 
         $this->post(['libelle' => 'Fiche intruse']);
@@ -165,7 +165,7 @@ final class FicheMatiereHorsDiplomeTest extends WebTestCase
     /** @param array<string, mixed> $params */
     private function post(array $params): void
     {
-        $this->client->request('POST', '/administration/fiches-matieres', $params + [
+        $this->client->request('POST', '/fiches-matieres/hors-diplome', $params + [
             '_csrf_token' => $this->csrfToken(FicheMatiereController::CSRF_ID),
         ]);
     }

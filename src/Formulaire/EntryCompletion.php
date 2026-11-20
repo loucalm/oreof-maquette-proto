@@ -43,10 +43,12 @@ final class EntryCompletion
         return null === $form ? [] : $this->forms->fields($form);
     }
 
-    /** @return list<ResolvedField> */
+    /** @return list<ResolvedField> champs du formulaire de l'entrée, sans ceux que la fiche ne porte pas */
     public function fields(FicheTarget $fiche, string $entryKey): array
     {
-        return $this->formFields($fiche->formation(), $fiche->fiche(), $entryKey);
+        $form = $this->form($fiche->formation(), $fiche->fiche(), $entryKey);
+
+        return null === $form ? [] : $this->targetFields($fiche, $form);
     }
 
     /** @return list<ResolvedField> champs qui portent une valeur (séparateurs exclus) */
@@ -61,7 +63,7 @@ final class EntryCompletion
         if (null === $form) {
             return 'empty';
         }
-        $fields = $this->forms->fields($form);
+        $fields = $this->targetFields($fiche, $form);
         $value = $this->valueReader($fiche, $entryKey);
         $required = array_values(array_filter($fields, static fn (ResolvedField $f) => $f->required));
         $check = $this->check($form, $fields, $value);
@@ -89,11 +91,20 @@ final class EntryCompletion
             return [];
         }
         $out = [];
-        foreach ($this->check($form, $this->forms->fields($form), $this->valueReader($fiche, $entryKey))['issues'] as $issue) {
+        foreach ($this->check($form, $this->targetFields($fiche, $form), $this->valueReader($fiche, $entryKey))['issues'] as $issue) {
             $out[$issue['key']][] = $issue['label'];
         }
 
         return $out;
+    }
+
+    /** @return list<ResolvedField> */
+    private function targetFields(FicheTarget $fiche, NodeType $form): array
+    {
+        $omitted = $fiche->omittedFields();
+        $fields = $this->forms->fields($form);
+
+        return [] === $omitted ? $fields : array_values(array_filter($fields, static fn (ResolvedField $f) => !\in_array($f->getKey(), $omitted, true)));
     }
 
     /** @return callable(string): mixed */

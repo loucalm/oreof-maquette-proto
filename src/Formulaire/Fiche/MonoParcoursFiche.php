@@ -8,8 +8,8 @@ use App\Diplome\Spec\CanvasSpec;
 
 /**
  * Fiche parcours d'une formation sans parcours (parcours unique) : données rangées sur la
- * formation sous `parametres['parcours.<entrée>']`, ECTS total porté par la formation ; le nom
- * du parcours reste un champ de données.
+ * formation sous `parametres['parcours.<entrée>']`, ECTS total porté par la formation. Pas de nom
+ * de parcours : une formation a 0 à n parcours, nommés à leur création (page de l'offre).
  */
 final class MonoParcoursFiche extends AbstractFicheTarget
 {
@@ -28,6 +28,11 @@ final class MonoParcoursFiche extends AbstractFicheTarget
     public function setData(string $entryKey, array $data): void
     {
         $this->doc->setFormationParam(self::PREFIX.$entryKey, $data);
+    }
+
+    public function omittedFields(): array
+    {
+        return ['nom'];
     }
 
     public function bound(): array

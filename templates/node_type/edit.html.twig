@@ -186,16 +186,22 @@
 ] %}
 
 {% block bouton_header %}
-    <twig:Button variant="success" :soft="false" :outline="true" icon="ph:arrow-left" :label="'common.back_to_list'|trans({}, 'common')" :href="path('node_type_index')"/>
+    {% if retour %}
+        <twig:Button variant="primary" icon="ph:arrow-left" :label="'node_type.edit.back_to_canvas'|trans({}, 'node_type')" :href="retour"/>
+    {% else %}
+        <twig:Button variant="success" :soft="false" :outline="true" icon="ph:arrow-left" :label="'common.back_to_list'|trans({}, 'common')" :href="path('node_type_index')"/>
+    {% endif %}
 {% endblock %}
 
 {% block body %}
 <turbo-frame id="admin-content">
 <div class="mx-auto max-w-4xl" data-controller="impact">
     {% if retour %}
-        <div class="mb-3">
-            <a href="{{ retour }}" data-turbo-frame="_top" class="text-sm hover:underline text-primary-600">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'node_type.edit.back_to_canvas'|trans({}, 'node_type') }}</a>
-        </div>
+        <twig:Alerte type="info" class="mb-4" data-back-to-canvas>
+            <p class="font-semibold">{{ 'node_type.edit.from_canvas_title'|trans({}, 'node_type') }}</p>
+            <p class="mt-1 text-sm">{{ 'node_type.edit.from_canvas_help'|trans({}, 'node_type') }}</p>
+            <a href="{{ retour }}" data-turbo-frame="_top" class="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-primary-700 hover:underline">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'node_type.edit.back_to_canvas'|trans({}, 'node_type') }}</a>
+        </twig:Alerte>
     {% endif %}
     {% set isParam = not isNew and nodeType.family.value == 'parameter' %}
 
@@ -359,7 +365,7 @@
 
         <div class="flex gap-2 pt-1">
             <button class="inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent bg-primary-600 font-medium text-white transition-colors hover:bg-primary-700 px-3 py-1.5 text-sm">{{ 'common.save'|trans({}, 'common') }}</button>
-            <a href="{{ path('node_type_index') }}" data-turbo-frame="_top" class="inline-flex items-center justify-center gap-1.5 rounded-md border border-secondary-300 bg-secondary-50 font-medium text-secondary-600 transition-colors hover:bg-secondary-100 hover:text-secondary-800 px-3 py-1.5 text-sm">{{ 'common.cancel'|trans({}, 'common') }}</a>
+            <a href="{{ retour ?: path('node_type_index') }}" data-turbo-frame="_top" class="inline-flex items-center justify-center gap-1.5 rounded-md border border-secondary-300 bg-secondary-50 font-medium text-secondary-600 transition-colors hover:bg-secondary-100 hover:text-secondary-800 px-3 py-1.5 text-sm">{{ 'common.cancel'|trans({}, 'common') }}</a>
         </div>
     </form>
 

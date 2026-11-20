@@ -609,4 +609,9 @@ dialog.help-drawer:modal {
 .icon-picker-cell.is-selected { background: color-mix(in srgb, var(--c-primary) 12%, white); color: var(--c-primary); outline: 1px solid var(--c-primary); }
 
 /* champ compact (grilles, tableaux de paramètres) */
-.fld.fld-sm { padding: .25rem .5rem; font-size: 13px; }
+/* champ compact (bornes, durée, choix en ligne) : largeur du contenu. `.fld` n'est pas dans une couche Tailwind et
+   l'emporte sur les utilitaires : les largeurs utilisées avec `.fld-sm` sont donc redonnées ici. */
+.fld.fld-sm { padding: .25rem .5rem; font-size: 13px; width: auto; }
+.fld.fld-sm.w-full { width: 100%; }
+.fld.fld-sm.w-14 { width: 3.5rem; }
+.fld.fld-sm.w-20 { width: 5rem; }

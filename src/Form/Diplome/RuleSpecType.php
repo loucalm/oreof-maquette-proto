@@ -106,7 +106,8 @@ final class RuleSpecType extends AbstractType
     /** @return array{0: class-string, 1: array<string, mixed>} */
     private function field(RuleParam $param): array
     {
-        $options = ['label' => $param->label, 'required' => false, 'translation_domain' => false];
+        // le type sert au résumé de la règle (rule_params_controller.js : une nature s'affiche par son libellé)
+        $options = ['label' => $param->label, 'required' => false, 'translation_domain' => false, 'attr' => ['data-param-type' => $param->type]];
 
         return match ($param->type) {
             'int' => [IntegerType::class, $options],

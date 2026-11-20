@@ -11,6 +11,21 @@
 
 {% block body %}
 
+{% if pending %}
+    <twig:Alerte type="warning" class="mb-4" data-pending-draft>
+        <p class="font-semibold">{{ 'diplome.index.pending.title'|trans({'%label%': pending.label ?: 'diplome.index.pending.untitled'|trans({}, 'diplome')}, 'diplome') }}</p>
+        <p class="mt-1 text-sm">{{ 'diplome.index.pending.help'|trans({}, 'diplome') }}</p>
+        <div class="mt-3 flex flex-wrap items-center gap-2">
+            <twig:Button variant="warning" :soft="false" icon="ph:arrow-right" :label="'diplome.index.pending.resume'|trans({}, 'diplome')" :href="path('diplome_wizard_start')"/>
+            <form method="post" action="{{ path('diplome_wizard_discard') }}"
+                  data-controller="confirm" data-confirm-message-value="{{ 'diplome.index.pending.discard_confirm'|trans({}, 'diplome') }}">
+                {% include 'diplome/_csrf.html.twig' %}
+                <twig:Button type="submit" variant="danger" :soft="false" :outline="true" size="sm" icon="ph:trash" :label="'diplome.index.pending.discard'|trans({}, 'diplome')"/>
+            </form>
+        </div>
+    </twig:Alerte>
+{% endif %}
+
 <section class="rounded-xl border border-secondary-200 bg-surface shadow-sm">
     <div class="border-b border-secondary-200 p-4">
         <h2 class="flex items-center gap-2 text-lg font-semibold text-text">{{ ux_icon('ph:graduation-cap', {class: 'h-5 w-5 text-primary'}) }} {{ 'diplome.index.list_title'|trans({}, 'diplome') }}</h2>

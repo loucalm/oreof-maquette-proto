@@ -29,27 +29,41 @@
     </div>
 {% endmacro %}
 
+{#
+    Ligne de règle : une phrase (sévérité, règle, portée) et, repliés derrière « Modifier », les champs du gabarit.
+    Le formulaire est ouvert d'office pour une règle neuve (sans gabarit) ou en erreur. Phrase : rule_params_controller.js.
+#}
 {% macro rule(f) %}
     {% import _self as m %}
-    <div data-collection-row data-rule-row data-controller="rule-params" class="rounded-md border px-3 py-2 border-secondary-200">
+    {% set open = not f.template.vars.value or not f.vars.valid %}
+    <div data-collection-row data-rule-row data-controller="rule-params" data-action="change->rule-params#sync input->rule-params#summarize"
+         class="rounded-lg border border-secondary-200 bg-white">
         {{ form_widget(f.uid) }}
-        <div class="flex items-start gap-3">
-            <div class="flex-1 space-y-2">
-                <div class="grid grid-cols-2 gap-3 xl:grid-cols-[1.6fr_1fr_1fr_1fr]">
-                    {{ m.field(f.template) }}
-                    {{ m.field(f.scopeLevel) }}
-                    {{ m.field(f.scopePosition) }}
-                    {{ m.field(f.severity) }}
-                </div>
-                {% for group in f %}{% if group.vars.name starts with 'params_' %}
-                    <div data-rule-params-target="group" data-template="{{ group.vars.name|slice(7) }}" class="grid grid-cols-2 gap-3 xl:grid-cols-4">
-                        {% for param in group %}
-                            {{ m.field(param) }}
-                        {% endfor %}
-                    </div>
-                {% endif %}{% endfor %}
+        <div class="flex items-center gap-3 px-3 py-2">
+            <span data-rule-params-target="severity"
+                  class="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold bg-danger-50 text-danger-700 data-[severity=warning]:bg-warning-50 data-[severity=warning]:text-warning-700"></span>
+            <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium text-secondary-900" data-rule-params-target="sentence"></p>
+                <p class="text-xs text-secondary-500" data-rule-params-target="scope" hidden></p>
             </div>
+            <button type="button" data-action="rule-params#toggle" data-rule-params-target="toggle" aria-expanded="{{ open ? 'true' : 'false' }}"
+                    class="shrink-0 rounded-md border border-secondary-300 px-2 py-1 text-xs font-medium text-secondary-600 hover:bg-secondary-50">{{ 'common.edit'|trans({}, 'common') }}</button>
             {{ m.controls() }}
+        </div>
+        <div data-rule-params-target="body" class="space-y-2 border-t border-secondary-200 px-3 py-3" {{ open ? '' : 'hidden' }}>
+            <div class="grid grid-cols-2 gap-3 xl:grid-cols-[1.6fr_1fr_1fr_1fr]">
+                {{ m.field(f.template) }}
+                {{ m.field(f.scopeLevel) }}
+                {{ m.field(f.scopePosition) }}
+                {{ m.field(f.severity) }}
+            </div>
+            {% for group in f %}{% if group.vars.name starts with 'params_' %}
+                <div data-rule-params-target="group" data-template="{{ group.vars.name|slice(7) }}" class="grid grid-cols-2 gap-3 xl:grid-cols-4">
+                    {% for param in group %}
+                        {{ m.field(param) }}
+                    {% endfor %}
+                </div>
+            {% endif %}{% endfor %}
         </div>
     </div>
 {% endmacro %}

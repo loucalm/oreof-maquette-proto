@@ -54,38 +54,37 @@
         {% endfor %}
     </div>
 
-    {# ─── lier à des entités : référentiels destinés à référencer une vraie entité dans l'appli finale ─── #}
-    <div class="rounded-xl border bg-white p-5 space-y-4 border-secondary-200">
+    {# ─── lier à des entités : en production, ces listes sont gérées par les écrans existants d'ORéOF (CRUD) — rien à éditer ici ─── #}
+    <div class="rounded-xl border bg-white p-5 space-y-4 border-secondary-200" data-ref-entites>
         <div>
             <div class="text-xs font-bold uppercase tracking-wide text-primary-600">{{ 'admin.referentiels.entite_title'|trans({}, 'admin') }}</div>
             <p class="text-xs mt-1 text-secondary-500">{{ 'admin.referentiels.entite_description'|trans({}, 'admin') }}</p>
         </div>
-        {% for ref in entites %}
-            <div class="rounded-lg border p-3 border-secondary-200">
-                <div class="flex items-start justify-between gap-3">
-                    <div>
+        <table class="app-table">
+            <thead>
+                <tr>
+                    <th>{{ 'admin.referentiels.col_list'|trans({}, 'admin') }}</th>
+                    <th>{{ 'admin.referentiels.col_managed_by'|trans({}, 'admin') }}</th>
+                    <th class="text-right">{{ 'admin.referentiels.col_values'|trans({}, 'admin') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for ref in entites %}
+                {% set crudKey = 'admin.referentiels.crud.' ~ ref.key %}
+                {% set crud = crudKey|trans({}, 'admin') %}
+                <tr>
+                    <td>
                         <span class="font-medium text-sm">{{ ref.label }}</span>
-                        <code class="text-xs ml-1 text-secondary-500">{{ ref.key }}</code>
-                        {% if ref.system %}<span class="pill ml-1">{{ 'common.badge_socle'|trans({}, 'common') }}</span>{% endif %}
                         {% if ref.description %}<div class="fld-help mt-0.5">{{ ref.description }}</div>{% endif %}
-                        {% if ref.entiteCible %}<div class="fld-help mt-0.5">{{ 'admin.referentiels.entite_cible_prefix'|trans({}, 'admin') }} {{ ref.entiteCible }}</div>{% endif %}
-                    </div>
-                    <div class="shrink-0 whitespace-nowrap text-right">
-                        <a href="{{ path('referentiel_edit', {id: ref.id}) }}" data-turbo-frame="_top" class="inline-flex items-center gap-1 rounded-md border border-warning-500 px-2 py-1 text-xs font-medium text-warning-700 transition-colors hover:bg-warning-500 hover:text-secondary-900">{{ ux_icon('ph:pencil-simple', {class: 'h-3.5 w-3.5'}) }} {{ 'common.edit'|trans({}, 'common') }}</a>
-                        <span class="text-xs ml-2 text-secondary-500" title="{{ 'admin.referentiels.go_to_entity_title'|trans({}, 'admin') }}">{{ 'admin.referentiels.go_to_entity'|trans({}, 'admin') }}</span>
-                    </div>
-                </div>
-                <div class="flex flex-wrap gap-1.5 mt-2">
-                    {% for k, label in ref.values %}
-                        <span class="rounded-md border px-2 py-0.5 text-xs border-secondary-200 bg-white">
-                            {{ label }}{% if k is not same as(loop.index0) and k != label %}<span class="text-secondary-400"> · {{ k }}</span>{% endif %}
-                        </span>
-                    {% else %}
-                        <span class="text-xs text-secondary-500">{{ 'admin.referentiels.no_value'|trans({}, 'admin') }}</span>
-                    {% endfor %}
-                </div>
-            </div>
-        {% endfor %}
+                    </td>
+                    <td class="text-sm">
+                        <span class="inline-flex items-center gap-1.5 text-secondary-700">{{ ux_icon('ph:arrow-square-out', {class: 'h-4 w-4 text-primary-600'}) }} {{ crud != crudKey ? crud : ref.entiteCible }}</span>
+                    </td>
+                    <td class="text-right text-sm text-secondary-500 whitespace-nowrap">{{ 'admin.referentiels.values_count'|trans({'%count%': ref.values|length}, 'admin') }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}

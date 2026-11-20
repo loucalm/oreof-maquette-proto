@@ -12,7 +12,7 @@
         children: [
             {label: 'layout.nav.offer_formations'|trans({}, 'layout'), url: path('formation_index')},
             {label: 'layout.nav.offer_consolidation'|trans({}, 'layout'), url: path('offre_index')},
-        ],
+        ]|merge(is_admin() ? [{label: 'layout.nav.offer_fiches_hors_diplome'|trans({}, 'layout'), url: path('fiche_matiere_hors_diplome')}] : []),
     },
     {label: 'layout.nav.steering'|trans({}, 'layout'), disabled: true, children: []},
     {label: 'layout.nav.councils'|trans({}, 'layout'), disabled: true, children: []},

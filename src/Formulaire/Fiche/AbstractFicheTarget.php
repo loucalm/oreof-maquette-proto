@@ -32,6 +32,11 @@ abstract class AbstractFicheTarget implements FicheTarget
         return $this->doc;
     }
 
+    public function omittedFields(): array
+    {
+        return [];
+    }
+
     public function value(string $fieldKey, array $data): mixed
     {
         $bound = $this->bound();

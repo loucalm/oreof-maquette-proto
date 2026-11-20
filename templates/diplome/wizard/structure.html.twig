@@ -73,6 +73,7 @@
     typesMany: (t ~ 'types_many')|trans({}, 'diplome'),
     coef: (t ~ 'coef')|trans({}, 'diplome'),
     countPer: (t ~ 'count_per')|trans({}, 'diplome'),
+    ectsElsewhere: (t ~ 'ects_elsewhere')|trans({}, 'diplome'),
 } %}
 
 <p class="text-sm mb-4 st-muted">{{ 'diplome.wizard.structure.help'|trans({}, 'diplome') }}</p>
@@ -139,7 +140,7 @@
                 <div class="relative" style="margin-left: {{ max(0, levels|length - 1) * 22 }}px" data-structure-tree-target="addWrap">
                     <button type="button" class="st-add" data-action="structure-tree#toggleAddMenu" aria-haspopup="true">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ (t ~ 'add_level')|trans({}, 'diplome') }}</button>
                     <div class="st-menu" data-structure-tree-target="addMenu" hidden>
-                        {% for nt in nodeTypes %}{% if not nt.element %}
+                        {% for nt in nodeTypes %}{% if not nt.element and nt.offered %}
                             <button type="button" data-action="structure-tree#addLevel" data-type-key="{{ nt.key }}" data-type-label="{{ nt.label }}" data-temporal="{{ nt.temporal ? '1' : '0' }}">{{ nt.label }}</button>
                         {% endif %}{% endfor %}
                         <p class="px-2 py-1 text-xs st-muted" data-add-empty hidden>{{ (t ~ 'add_level_none')|trans({}, 'diplome') }}</p>
@@ -151,7 +152,24 @@
         <div class="st-rest min-w-0 space-y-4">
             {# Règles d'obligation, sous l'arbre #}
             {% set proto = rows.rule(form.rules.vars.prototype) %}
-            <section class="border-t pt-3 border-secondary-200" data-controller="collection" data-collection-prototype-value="{{ proto|e('html_attr') }}" data-collection-index-value="{{ form.rules|keys|reduce((max, k) => k >= max ? k + 1 : max, 0) }}" data-section="rule">
+            {% set r = 'diplome.wizard.structure.rule_sentence.' %}
+            {% set ruleLabels = {
+                sentences: {
+                    child_count: (r ~ 'child_count')|trans({}, 'diplome'),
+                    attribute_value: (r ~ 'attribute_value')|trans({}, 'diplome'),
+                    attribute_sum: (r ~ 'attribute_sum')|trans({}, 'diplome'),
+                    min_element_type: (r ~ 'min_element_type')|trans({}, 'diplome'),
+                    ratio: (r ~ 'ratio')|trans({}, 'diplome'),
+                    same_child_value: (r ~ 'same_child_value')|trans({}, 'diplome'),
+                },
+                empty: (r ~ 'empty')|trans({}, 'diplome'),
+                bound: {exact: (r ~ 'bound.exact')|trans({}, 'diplome'), between: (r ~ 'bound.between')|trans({}, 'diplome'), min: (r ~ 'bound.min')|trans({}, 'diplome'), max: (r ~ 'bound.max')|trans({}, 'diplome'), none: (r ~ 'bound.none')|trans({}, 'diplome')},
+                scope: {all: (r ~ 'scope.all')|trans({}, 'diplome'), first: (r ~ 'scope.first')|trans({}, 'diplome'), last: (r ~ 'scope.last')|trans({}, 'diplome'), number: (r ~ 'scope.number')|trans({}, 'diplome')},
+                edit: 'common.edit'|trans({}, 'common'),
+                close: (r ~ 'close')|trans({}, 'diplome'),
+            } %}
+            <section class="border-t pt-3 border-secondary-200" data-controller="collection" data-collection-prototype-value="{{ proto|e('html_attr') }}" data-collection-index-value="{{ form.rules|keys|reduce((max, k) => k >= max ? k + 1 : max, 0) }}" data-section="rule"
+                     data-rule-labels="{{ ruleLabels|json_encode|e('html_attr') }}">
                 <h3 class="text-sm font-semibold">{{ form_label(form.rules) }}</h3>
                 <p class="text-xs st-muted">{{ 'diplome.wizard.structure.rule_section_help'|trans({}, 'diplome') }}</p>
                 {{ form_errors(form.rules) }}

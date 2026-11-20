@@ -28,6 +28,9 @@ final class AdminAccessSubscriber
         'formation_create',
         'formation_structure_save',
         'formation_reset',
+        // fiches matière hors diplôme : rangées dans l'offre de formation (comme ORéOF v2), gérées par l'admin
+        'fiche_matiere_hors_diplome',
+        'fiche_matiere_hors_diplome_create',
     ];
 
     /** Routes à prefixe admin mais accessibles au responsable (action côté formation). */

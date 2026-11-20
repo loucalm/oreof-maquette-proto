@@ -337,14 +337,44 @@ final class DiplomeWizardStructureTest extends WebTestCase
     public function testLevelsAreOrderedByTheirPosition(): void
     {
         $payload = self::payload($this->startFrom('L'));
-        // UE et semestre échangés par leur rang (déplacement des blocs dans la page)
-        foreach ([0, 2, 1, 3] as $i => $position) {
-            $payload['levels'][$i]['position'] = (string) $position;
+        // lignes envoyées dans le désordre (ajouts et déplacements dans la page) : c'est le rang qui fait l'ordre
+        foreach (array_keys($payload['levels']) as $i) {
+            $payload['levels'][$i]['position'] = (string) $i;
         }
+        $payload['levels'] = array_reverse($payload['levels']);
         $this->submit($payload);
 
         self::assertResponseRedirects();
-        self::assertSame(['annee', 'ue', 'semestre', 'ec'], array_column($this->storedStructure()['levels'], 'typeKey'));
+        self::assertSame(['annee', 'semestre', 'ue', 'ec'], array_column($this->storedStructure()['levels'], 'typeKey'));
+    }
+
+    public function testTemporalLevelsStayAboveTheOthers(): void
+    {
+        $payload = self::payload($this->startFrom('L'));
+        // UE placée au-dessus du semestre : un niveau de temps ne se range pas sous une UE
+        foreach ([0, 2, 1, 3] as $i => $position) {
+            $payload['levels'][$i]['position'] = (string) $position;
+        }
+        $crawler = $this->submit($payload);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('Les niveaux de temps (année, semestre…) se placent au-dessus des autres niveaux', $crawler->text());
+    }
+
+    public function testEctsAreEnteredOncePerBranch(): void
+    {
+        $payload = self::payload($this->startFrom('L'));
+        // ECTS saisis sur l'UE : ceux de l'EC, même envoyés, restent libres
+        $payload['levels'][2]['ectsMode'] = 'node';
+        $payload['levels'][2]['ectsBound'] = ['mode' => 'exact', 'value' => '6', 'upper' => ''];
+        $payload['levels'][3]['ectsMode'] = 'node';
+        $payload['levels'][3]['ectsBound'] = ['mode' => 'exact', 'value' => '3', 'upper' => ''];
+        $this->submit($payload);
+
+        self::assertResponseRedirects();
+        $levels = array_column($this->storedStructure()['levels'], null, 'typeKey');
+        self::assertSame(['min' => 6, 'max' => 6], $levels['ue']['ects']);
+        self::assertNull($levels['ec']['ects']);
     }
 
     public function testLevelsHaveNoImposedElementControls(): void

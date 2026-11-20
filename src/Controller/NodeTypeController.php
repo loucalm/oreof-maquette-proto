@@ -188,7 +188,7 @@ final class NodeTypeController extends AbstractController
             'concerned' => $isNew || !self::isFicheForm($nodeType) ? [] : $this->usage->formationsConcerned($nodeType),
             'newParentFields' => !$isNew && $nodeType->isVariant() ? $this->forms->newParentFields($nodeType) : [],
             'previewable' => !$isNew && self::isPreviewable($nodeType),
-            'retour' => self::returnUrl($request),
+            'retour' => $this->rememberedReturn($request, $nodeType),
         ]);
     }
 
@@ -591,6 +591,28 @@ final class NodeTypeController extends AbstractController
         $walk(null, 0);
 
         return $out;
+    }
+
+    /**
+     * URL de retour au canevas d'un diplôme : reçue en `?retour=` à l'arrivée (« Adapter », « Modifier »), puis gardée en
+     * session pour ce formulaire, car ses enregistrements redirigent sans elle. Sans elle, l'admin perdait le chemin vers
+     * l'assistant (et croyait son diplôme en cours perdu).
+     */
+    private function rememberedReturn(Request $request, ?NodeType $nodeType): ?string
+    {
+        $url = self::returnUrl($request);
+        if (null === $nodeType?->getId() || !$request->hasSession()) {
+            return $url;
+        }
+        $key = 'node_type_retour_'.$nodeType->getId();
+        if (null !== $url) {
+            $request->getSession()->set($key, $url);
+
+            return $url;
+        }
+        $remembered = $request->getSession()->get($key);
+
+        return \is_string($remembered) ? $remembered : null;
     }
 
     /** URL de retour (canevas d'un diplôme), acceptée seulement si elle reste dans /diplomes/. */

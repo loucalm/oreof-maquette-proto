@@ -36,12 +36,29 @@ admin:
       d’heure, lieux, régimes d’inscription, niveaux de langue/entrée/sortie…
     entite_title: Lier à des entités
     entite_description: >-
-      Référentiels destinés à référencer de vraies entités (ou API externes) dans l’application finale —
-      établissement, composante, ville, plateforme d’admission, annuaire, ROME, RNCP… Restent des listes
-      plates avec des valeurs fictives dans ce prototype.
-    entite_cible_prefix: 'Cible finale :'
-    go_to_entity: Aller à l’entité
-    go_to_entity_title: Non disponible dans ce prototype — pointera vers la vraie entité dans l’application finale.
+      Listes qui, dans ORéOF, viennent d'entités déjà gérées par leurs propres écrans (domaines, composantes,
+      villes, annuaire…) ou d'API externes (ROME, RNCP). Rien à saisir ici : on les modifie dans l'écran indiqué.
+      Le prototype n'en garde que des valeurs de démonstration.
+    col_list: Liste
+    col_managed_by: Gérée dans ORéOF par
+    col_values: Démonstration
+    values_count: '{0} aucune valeur|{1} 1 valeur|]1,Inf[ %count% valeurs'
+    crud:
+      domaines: Administration › Domaines
+      mentions: Administration › Mentions
+      rythmes: Administration › Rythmes de formation
+      langues: Administration › Langues
+      villes: Administration › Villes
+      etablissements: Administration › Établissements
+      composantes: Administration › Composantes
+      plateformes_admission: Administration › Plateformes d'admission
+      types_ue: Administration › Types d'UE
+      types_ec: Administration › Types d'EC
+      types_epreuve: Administration › Types d'épreuve
+      responsables: Gestion des utilisateurs
+      codes_rome: API France Travail (ROME)
+      competences_rncp: API France compétences (RNCP)
+      nature_elp: Administration › Natures d'UE / EC
     new_button: Nouveau référentiel
     delete_confirm: >-
       Supprimer le référentiel « %label% » ? Les valeurs déjà saisies dans les formulaires restent en

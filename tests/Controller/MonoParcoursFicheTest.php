@@ -124,12 +124,14 @@ final class MonoParcoursFicheTest extends WebTestCase
     public function testSwitchingParcoursModeKeepsParcoursData(): void
     {
         $formation = FormationFactory::create(static::getContainer())->fromType('L', 3, 'Licence Informatique', false, true);
+        // pas de nom de parcours sur la fiche du parcours unique : un « nom » posté est ignoré
         $this->client->request('POST', sprintf('/formations/%d/parcours-unique/parametre/organisation', $formation->getId()), ['p' => ['nom' => 'Parcours unique', 'lieu' => 'Campus Nord'], 'b' => ['ectsTotal' => '180']]);
+        self::assertArrayNotHasKey('nom', $this->reload($formation)->getParametre('parcours.organisation'));
 
         $this->client->request('POST', sprintf('/formations/%d/settings', $formation->getId()), ['avecParcours' => '1']);
         $fresh = $this->reload($formation);
         $parcours = static::getContainer()->get(Maquette::class)->open($fresh)->parcoursNodes()[0];
-        self::assertSame('Parcours unique', $parcours->getLabel());
+        self::assertSame('Licence Informatique', $parcours->getLabel(), 'Le parcours créé prend le nom de la formation.');
         self::assertSame(180, $parcours->getAttribute('ects'));
         self::assertSame('Campus Nord', $parcours->getParametre('organisation')['lieu'] ?? null);
         self::assertSame([], $fresh->getParametre('parcours.organisation'));
@@ -137,7 +139,7 @@ final class MonoParcoursFicheTest extends WebTestCase
         $this->client->request('POST', sprintf('/formations/%d/settings', $formation->getId()), ['avecParcours' => '0']);
         $back = $this->reload($formation)->getParametre('parcours.organisation');
         self::assertSame('Campus Nord', $back['lieu'] ?? null);
-        self::assertSame('Parcours unique', $back['nom'] ?? null);
+        self::assertSame('Licence Informatique', $back['nom'] ?? null, 'Le nom du parcours est gardé pour un retour en multi-parcours.');
     }
 
     public function testSwitchingToMonoKeepsDataOfOtherParcours(): void

@@ -17,12 +17,12 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 
 /**
- * Fiches matière hors diplôme : liste et création dans l'administration. Le préfixe `admin_`
- * suffit à réserver ces pages à l'administrateur (AdminAccessSubscriber).
+ * Fiches matière hors diplôme : liste et création, rangées dans l'offre de formation comme dans ORéOF v2
+ * (`/fiches-matiere/hors-diplome`), pas dans l'administration. Réservées à l'admin par AdminAccessSubscriber::ADMIN_ROUTES.
  */
 final class FicheMatiereAdminController extends AbstractController
 {
-    #[Route('/administration/fiches-matieres', name: 'admin_fiches_matieres', methods: ['GET'])]
+    #[Route('/fiches-matieres/hors-diplome', name: 'fiche_matiere_hors_diplome', methods: ['GET'], priority: 10)]
     public function index(FicheMatiereRepository $fiches, FicheMatiereUsage $usage, TypeDiplomeRepository $types): Response
     {
         $rows = [];
@@ -30,13 +30,13 @@ final class FicheMatiereAdminController extends AbstractController
             $rows[] = ['fiche' => $fiche, 'usages' => \count($usage->usages($fiche))];
         }
 
-        return $this->render('admin/fiches_matieres.html.twig', [
+        return $this->render('fiche_matiere/hors_diplome.html.twig', [
             'rows' => $rows,
             'types' => $types->findAllOrdered(false),
         ]);
     }
 
-    #[Route('/administration/fiches-matieres', name: 'admin_fiche_matiere_create', methods: ['POST'])]
+    #[Route('/fiches-matieres/hors-diplome', name: 'fiche_matiere_hors_diplome_create', methods: ['POST'], priority: 10)]
     #[IsCsrfTokenValid(FicheMatiereController::CSRF_ID, tokenKey: FicheMatiereController::CSRF_FIELD)]
     public function create(
         Request $request,
@@ -47,7 +47,7 @@ final class FicheMatiereAdminController extends AbstractController
         if ('' === $libelle || mb_strlen($libelle) > 250) {
             $this->addFlash('warning', 'Le libellé de la fiche est obligatoire et ne peut pas dépasser 250 caractères.');
 
-            return $this->redirectToRoute('admin_fiches_matieres');
+            return $this->redirectToRoute('fiche_matiere_hors_diplome');
         }
 
         $fiche = (new FicheMatiere())

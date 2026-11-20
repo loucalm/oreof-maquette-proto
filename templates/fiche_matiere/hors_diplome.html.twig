@@ -1,18 +1,18 @@
-{% extends 'admin/_layout.html.twig' %}
-{% set adminSection = 'fiches_matieres' %}
+{% extends 'base.html.twig' %}
+{# Fiches matière hors diplôme (utilisables par toutes les formations) — rangées dans l'offre de formation, comme ORéOF v2. #}
 {% block title %}{{ 'admin.fiches_matieres.title'|trans({}, 'admin') }}{% endblock %}
 
-{% block admin_body %}
+{% set header_title = 'admin.fiches_matieres.heading'|trans({}, 'admin') %}
+{% set header_description = 'admin.fiches_matieres.description'|trans({}, 'admin') %}
+{% set header_breadcrumb = [
+    {label: 'formation.index.breadcrumb_offer'|trans({}, 'formation')},
+    {label: header_title},
+] %}
 
-<div class="-mx-6 -mt-6 mb-6 border-b border-secondary-200 px-6 py-4">
-    <h2 class="flex items-center gap-2 text-lg font-semibold text-text">{{ ux_icon(_sections[adminSection].icon, {class: 'h-5 w-5 text-primary'}) }} {{ 'admin.fiches_matieres.heading'|trans({}, 'admin') }}</h2>
-    <p class="mt-1 text-sm text-secondary">
-        {{ 'admin.fiches_matieres.description'|trans({}, 'admin') }}
-    </p>
-</div>
+{% block body %}
 
 <div class="rounded-xl border bg-white p-5 space-y-5 border-secondary-200">
-    <form method="post" action="{{ path('admin_fiche_matiere_create') }}" class="flex flex-wrap items-end gap-3">
+    <form method="post" action="{{ path('fiche_matiere_hors_diplome_create') }}" class="flex flex-wrap items-end gap-3">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token(constant('App\\Controller\\FicheMatiereController::CSRF_ID')) }}">
         <label class="fld-label min-w-48 flex-1">
             {{ 'admin.fiches_matieres.libelle_field'|trans({}, 'admin') }}

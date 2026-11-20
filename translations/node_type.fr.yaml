@@ -35,6 +35,8 @@ node_type:
     variant_of: Variante de « %parent% »
     variant_help: Ce formulaire reprend son formulaire de départ ; seuls ses écarts (champs masqués ou ajoutés, libellés, caractère obligatoire, ordre) sont enregistrés ici.
     back_to_canvas: Retour au canevas du diplôme
+    from_canvas_title: Vous adaptez ce formulaire pour un type de diplôme.
+    from_canvas_help: "Vos changements s'enregistrent ici ; le diplôme en cours (même non terminé) vous attend dans son canevas."
     usage_title: Utilisé par
     usage_none: Aucun diplôme n'utilise ce formulaire.
     impact_confirm: Je confirme que la modification s'applique aussitôt aux %count% formation(s) concernée(s).

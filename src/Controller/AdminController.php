@@ -8,7 +8,6 @@ use App\Entity\FieldDef;
 use App\Enum\RefCategory;
 use App\Repository\DerogationRequestRepository;
 use App\Repository\FieldDefRepository;
-use App\Repository\FicheMatiereRepository;
 use App\Repository\MccTypeRepository;
 use App\Repository\NodeTypeRepository;
 use App\Repository\ReferentielRepository;
@@ -30,7 +29,6 @@ final class AdminController extends AbstractController
         'overview' => ['label' => 'Vue d’ensemble', 'route' => 'admin_index', 'icon' => 'ph:gear'],
         'types' => ['label' => 'Types d’élément pédagogique', 'route' => 'node_type_index', 'icon' => 'ph:puzzle-piece'],
         'referentiels' => ['label' => 'Référentiels', 'route' => 'admin_referentiels', 'icon' => 'ph:books'],
-        'fiches_matieres' => ['label' => 'Fiches matières', 'route' => 'admin_fiches_matieres', 'icon' => 'ph:books'],
         'mcctypes' => ['label' => 'Types de MCCC', 'route' => 'admin_mcctypes', 'icon' => 'ph:list-checks'],
         'validations' => ['label' => 'Règles de validation', 'route' => 'admin_validations', 'icon' => 'ph:check-square-offset'],
         'derogations' => ['label' => 'Dérogations', 'route' => 'admin_derogations', 'icon' => 'ph:flag'],
@@ -44,7 +42,6 @@ final class AdminController extends AbstractController
         MccTypeRepository $mcctypes,
         DerogationRequestRepository $derogations,
         TranslationFileManager $translations,
-        FicheMatiereRepository $fiches,
     ): Response {
         $allTypes = $types->findAllOrdered();
         $allMccTypes = $mcctypes->allOrdered();
@@ -64,12 +61,6 @@ final class AdminController extends AbstractController
                     'count' => \count($referentiels->allOrdered()),
                     'sub' => 'nomenclatures',
                     'text' => 'Les listes de valeurs des formulaires : domaines, régimes, langues, codes ROME…',
-                ],
-                [
-                    'section' => 'fiches_matieres',
-                    'count' => \count($fiches->horsDiplome()),
-                    'sub' => 'hors diplôme',
-                    'text' => 'Les fiches matière utilisables par toutes les formations, créées et modifiées ici par l’administration.',
                 ],
                 [
                     'section' => 'mcctypes',

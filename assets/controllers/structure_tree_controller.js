@@ -51,7 +51,11 @@ export default class extends Controller {
         this.addMenuTarget.hidden = !this.addMenuTarget.hidden;
     }
 
-    /** Ajoute un niveau du type choisi juste avant le niveau élément, puis l'ouvre dans le panneau. */
+    /**
+     * Ajoute un niveau du type choisi, puis l'ouvre dans le panneau. Les niveaux de temps (année, semestre…) restent
+     * au-dessus des autres : un niveau de temps s'ajoute après le dernier niveau de temps, un autre juste avant le
+     * niveau élément (là où se trouve le bouton « + niveau »).
+     */
     addLevel(event) {
         const { typeKey, typeLabel, temporal } = event.currentTarget.dataset;
         const index = String(this.indexValue);
@@ -68,7 +72,8 @@ export default class extends Controller {
         row.dataset.treeLevel = typeKey;
         if (temporal === '1') row.dataset.temporal = '';
         row.querySelector('[data-level-label]').textContent = typeLabel;
-        this.treeTarget.insertBefore(row, this.elementRow() ?? this.addWrapTarget);
+        const before = temporal === '1' ? this.rows().find((r) => !r.hasAttribute('data-temporal')) : this.elementRow();
+        this.treeTarget.insertBefore(row, before ?? this.addWrapTarget);
 
         this.addMenuTarget.hidden = true;
         this.layout();
@@ -78,15 +83,22 @@ export default class extends Controller {
     up(event) {
         const row = this.rowOf(event);
         const previous = row?.previousElementSibling;
-        if (previous?.matches('[data-tree-level]')) this.treeTarget.insertBefore(row, previous);
+        if (previous && this.canSwap(previous, row)) this.treeTarget.insertBefore(row, previous);
         this.layout();
     }
 
     down(event) {
         const row = this.rowOf(event);
         const next = row?.nextElementSibling;
-        if (next?.matches('[data-tree-level]') && !next.matches('[data-element-level]')) this.treeTarget.insertBefore(next, row);
+        if (next && this.canSwap(row, next)) this.treeTarget.insertBefore(next, row);
         this.layout();
+    }
+
+    /** `upper` et `lower` (voisins) peuvent s'échanger : niveaux de la chaîne, hors niveau élément, sans faire passer un niveau de temps sous un autre. */
+    canSwap(upper, lower) {
+        return upper.matches('[data-tree-level]') && lower.matches('[data-tree-level]')
+            && !lower.matches('[data-element-level]')
+            && upper.hasAttribute('data-temporal') === lower.hasAttribute('data-temporal');
     }
 
     remove(event) {
@@ -166,12 +178,16 @@ export default class extends Controller {
             if (i !== aboveIndex && link && link.value !== 'contains') link.value = 'contains';
             panel.querySelector('[data-ec-link-note]').hidden = link?.value !== 'coefficient';
 
-            // ECTS : un niveau élément rattaché par coefficient a des ECTS libres (ils sont saisis au niveau au-dessus)
+            // ECTS : saisis une seule fois par branche. Sous un niveau qui les saisit (ou pour des EC rattachés par
+            // coefficient, dont les ECTS se saisissent au niveau au-dessus), le réglage disparaît et reste « libres ».
             const ectsMode = this.field(row, 'ectsMode');
             if (ectsMode) {
-                const forced = coefRow;
-                if (forced && ectsMode.value !== 'free') ectsMode.value = 'free';
-                ectsMode.querySelectorAll('option').forEach((option) => { option.disabled = forced && option.value !== 'free'; });
+                const owner = coefRow ? rows[aboveIndex] : rows.slice(0, i).find((above) => this.field(above, 'ectsMode')?.value === 'node');
+                if (owner && ectsMode.value !== 'free') ectsMode.value = 'free';
+                panel.querySelector('[data-ects-field]').hidden = Boolean(owner);
+                const note = panel.querySelector('[data-ects-elsewhere]');
+                note.hidden = !owner;
+                note.textContent = owner ? this.labelsValue.ectsElsewhere.replace('%level%', this.lower(this.labelOf(owner))) : '';
                 panel.querySelector('[data-ects-bound]').hidden = ectsMode.value === 'free';
             }
 
@@ -184,9 +200,18 @@ export default class extends Controller {
             const coef = row.querySelector('[data-coef]');
             coef.hidden = !coefRow;
             coef.textContent = coefRow ? this.labelsValue.coef.replace('%level%', this.labelOf(rows[aboveIndex])) : '';
+
+            // monter / descendre : seulement quand l'échange est permis
+            const upButton = panel.querySelector('[data-action="structure-tree#up"]');
+            if (upButton) upButton.disabled = i === 0 || !this.canSwap(rows[i - 1], row);
+            const downButton = panel.querySelector('[data-action="structure-tree#down"]');
+            if (downButton) downButton.disabled = i === last || !this.canSwap(row, rows[i + 1]);
         });
 
-        this.addWrapTarget.style.marginLeft = `${Math.max(0, last) * 22}px`;
+        // « + niveau » se place là où s'insère un nouveau niveau : juste au-dessus du niveau élément, à sa hauteur
+        const element = this.elementRow();
+        this.treeTarget.insertBefore(this.addWrapTarget, element);
+        this.addWrapTarget.style.marginLeft = element ? element.style.marginLeft : `${Math.max(0, last + 1) * 22}px`;
         this.syncDurationLevels(rows);
         this.summarize(rows);
     }

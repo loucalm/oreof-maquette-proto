@@ -57,6 +57,17 @@ final class DiplomeWizardController extends AbstractController
         return $this->redirectToRoute('diplome_wizard_step', ['step' => $this->steps->keys()[0]]);
     }
 
+    /** Abandonne la création en cours (bandeau de la liste des diplômes). */
+    #[Route('/diplomes/nouveau/abandonner', name: 'diplome_wizard_discard', methods: ['POST'], priority: 10)]
+    #[IsCsrfTokenValid(DiplomeController::CSRF_ID, tokenKey: DiplomeController::CSRF_FIELD)]
+    public function discard(SessionInterface $session): RedirectResponse
+    {
+        $session->remove(WizardDraft::SESSION_KEY);
+        $this->addFlash('info', $this->translator->trans('diplome.index.pending.discarded', [], 'diplome'));
+
+        return $this->redirectToRoute('diplome_index');
+    }
+
     #[Route('/diplomes/nouveau/enregistrer', name: 'diplome_wizard_save', methods: ['POST'])]
     #[IsCsrfTokenValid(DiplomeController::CSRF_ID, tokenKey: DiplomeController::CSRF_FIELD)]
     public function save(SessionInterface $session): RedirectResponse

@@ -16,6 +16,14 @@ diplome:
     col_formations: Formations
     col_version: Dernière version
     badge_archived: archivé
+    pending:
+      title: "Création en cours : %label%"
+      untitled: type de diplôme sans nom
+      help: "Ce type de diplôme n'est pas encore enregistré : il vous attend tel que vous l'avez laissé."
+      resume: Reprendre la création
+      discard: Abandonner
+      discard_confirm: "Abandonner la création en cours ? Ce qui a été saisi sera perdu."
+      discarded: Création abandonnée.
     archive: Archiver
     unarchive: Désarchiver
     delete: Supprimer
@@ -162,6 +170,7 @@ diplome:
         locked_label: Dans la formation
         ec_link_label: 'Les %element%…'
         ects_label: ECTS
+        ects_elsewhere: "Les ECTS se saisissent au niveau %level% : rien à régler ici."
         more: Plus de réglages
         link_fiche: fiche
       duration_level: Niveau qui compte la durée
@@ -170,6 +179,26 @@ diplome:
       natures: Types d'EC
       natures_help: "Chaque EC reçoit un type ; il choisit sa fiche (onglet Formulaires) et sert aux règles (ex. SAÉ ≥ 40 %)."
       rules: Règles
+      rule_sentence:
+        child_count: "Nombre d'enfants[ de type %childType%] : %bound%"
+        attribute_value: "%attribute% de chaque enfant : %bound%"
+        attribute_sum: "Somme des %attribute% des enfants[ de type %childType%] : %bound%"
+        min_element_type: "Au moins %min|1% EC de type « %nature% »"
+        ratio: "Part des %attribute% portée par les EC « %numeratorNature% » : %op% %percent% %"
+        same_child_value: "Même %attribute% pour tous les enfants"
+        empty: "Nouvelle règle : choisissez un gabarit."
+        close: Replier
+        bound:
+          exact: "exactement %n%"
+          between: "entre %min% et %max%"
+          min: "au moins %n%"
+          max: "au plus %n%"
+          none: sans borne
+        scope:
+          all: "Dans chaque %level%"
+          first: "%level% de début"
+          last: "%level% de fin"
+          number: "%level% n° %n%"
       rule_template: Gabarit de règle
       rule_scope: Portée (niveau)
       rule_position: Position dans le niveau
@@ -197,6 +226,7 @@ diplome:
         no_level: Définissez au moins un niveau.
         locked_exact: Un niveau verrouillé a un nombre exact.
         duplicate_level: Un même type de nœud ne peut pas figurer deux fois dans la chaîne.
+        temporal_order: "Les niveaux de temps (année, semestre…) se placent au-dessus des autres niveaux de la chaîne."
         duplicate_ec_type: Deux types d'EC ont la même clé (libellés trop proches).
         ec_type_label: Un type d'EC doit avoir un libellé.
         ec_type_key: "Le type d'EC « %label% » n'a pas de clé utilisable : son libellé doit contenir des lettres ou des chiffres."

@@ -23,6 +23,12 @@ use App\Repository\NodeTypeRepository;
 /** Étape « Structure » : niveaux, bornes, types d'EC et règles du type de diplôme. */
 final class StructureStep extends AbstractWizardStep
 {
+    /**
+     * Types structurels jamais proposés comme niveau de la chaîne : le parcours est l'embranchement réglé par la case
+     * « Parcours autorisés », le bloc de choix n'existe que par conversion d'un ELP (cf. NodeTypeFixtures).
+     */
+    private const NOT_A_LEVEL = ['parcours', 'bloc_choix'];
+
     public function __construct(
         private readonly RuleTemplateRegistry $templates,
         private readonly StructurePreview $preview,
@@ -80,9 +86,12 @@ final class StructureStep extends AbstractWizardStep
         $rows = array_values($formData['levels'] ?? []);
         $order = array_keys($rows);
         usort($order, static fn (int $a, int $b) => [(int) ($rows[$a]['position'] ?? $a), $a] <=> [(int) ($rows[$b]['position'] ?? $b), $b]);
-        $levels = array_map(static function (int $i, int $at) use ($rows): LevelSpec {
+        // ECTS saisis une seule fois par branche : sous un niveau qui les saisit, ils restent libres (le panneau ne les propose plus)
+        $ectsAbove = false;
+        $levels = array_map(static function (int $i, int $at) use ($rows, &$ectsAbove): LevelSpec {
             $row = $rows[$i];
-            $mode = $row['ectsMode'] ?? EctsModeType::FREE;
+            $mode = $ectsAbove ? EctsModeType::FREE : ($row['ectsMode'] ?? EctsModeType::FREE);
+            $ectsAbove = $ectsAbove || EctsModeType::NODE === $mode;
             $ects = $row['ectsBound'] ?? null;
 
             return new LevelSpec(
@@ -150,7 +159,7 @@ final class StructureStep extends AbstractWizardStep
     /**
      * Types de nœud qui peuvent former un niveau, dans l'ordre : ce que l'arbre doit savoir d'eux, sans tester leur clé.
      *
-     * @return array<string, array{key: string, label: string, inSentence: string, temporal: bool, element: bool}>
+     * @return array<string, array{key: string, label: string, inSentence: string, temporal: bool, element: bool, offered: bool}>
      */
     private function structuralTypes(): array
     {
@@ -163,6 +172,7 @@ final class StructureStep extends AbstractWizardStep
                     'inSentence' => self::inSentence($type->getLabel()),
                     'temporal' => $type->isTemporel(),
                     'element' => $type->isElementLevel(),
+                    'offered' => !\in_array($type->getKey(), self::NOT_A_LEVEL, true),
                 ];
             }
         }

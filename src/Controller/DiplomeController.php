@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Diplome\DurationLabeler;
+use App\Diplome\WizardDraft;
 use App\Entity\TypeDiplome;
 use App\Diplome\Wizard\WizardStepRegistry;
 use App\Repository\FormationRepository;
@@ -13,6 +14,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -40,7 +42,7 @@ final class DiplomeController extends AbstractController
     }
 
     #[Route('/diplomes', name: 'diplome_index', methods: ['GET'])]
-    public function index(): Response
+    public function index(SessionInterface $session): Response
     {
         $all = $this->types->findAllOrdered();
         $labelsByKey = [];
@@ -67,7 +69,13 @@ final class DiplomeController extends AbstractController
             ];
         }
 
-        return $this->render('diplome/index.html.twig', ['rows' => $rows]);
+        // création en cours (brouillon de l'assistant, en session) : la liste la signale pour qu'on puisse la reprendre
+        $draft = $session->get(WizardDraft::SESSION_KEY);
+        $pending = $draft instanceof WizardDraft && ($draft->informationsValid || [] !== $draft->configData)
+            ? ['label' => (string) ($draft->informationsData()['label'] ?? '') ?: (string) ($draft->informationsData()['sigle'] ?? '')]
+            : null;
+
+        return $this->render('diplome/index.html.twig', ['rows' => $rows, 'pending' => $pending]);
     }
 
     #[Route('/diplomes/{id}/archiver', name: 'diplome_archive', methods: ['POST'])]
