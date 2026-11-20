@@ -1,0 +1,20 @@
+# Import ORéOF v2 (bin/console app:import-v2), cas 2 : on n'a qu'un dump SQL de la base v2.
+# Une base MariaDB jetable (« v2-db ») charge le dump au premier démarrage (quelques minutes pour ~200 Mo).
+#   OREOF_V2_DUMP=/chemin/vers/oreof_v2.sql docker compose -f compose.yaml -f compose.v2-dump.yaml up -d
+#   (ou : make v2-dump DUMP=/chemin/vers/oreof_v2.sql)
+#   .env.local : OREOF_V2_DATABASE_URL=mysql://root:proto@v2-db:3306/oreof_v2
+# Pour recharger un autre dump : docker compose -f compose.yaml -f compose.v2-dump.yaml down -v
+# Mode d'emploi complet : docs/import-v2.md
+services:
+  v2-db:
+    image: mariadb:10.8
+    container_name: proto-v2-db
+    environment:
+      MARIADB_ROOT_PASSWORD: proto
+      MARIADB_DATABASE: oreof_v2
+    volumes:
+      - ${OREOF_V2_DUMP:?indiquez le dump SQL dans OREOF_V2_DUMP}:/docker-entrypoint-initdb.d/oreof_v2.sql:ro
+      - v2-db-data:/var/lib/mysql
+
+volumes:
+  v2-db-data:

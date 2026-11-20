@@ -1,0 +1,13 @@
+# Import ORéOF v2 (bin/console app:import-v2), cas 1 : la pile oreof-stack tourne sur la machine.
+# Le conteneur du proto rejoint son réseau et voit la base sous le nom « oreof-db ».
+#   docker compose -f compose.yaml -f compose.v2-stack.yaml up -d      (ou : make v2-stack)
+#   .env.local : OREOF_V2_DATABASE_URL=mysql://oreof:<mot de passe>@oreof-db:3306/oreof_v2
+# Mode d'emploi complet : docs/import-v2.md
+services:
+  app:
+    networks: [default, oreof]
+
+networks:
+  oreof:
+    name: ${OREOF_V2_NETWORK:-oreof-stack_default}
+    external: true

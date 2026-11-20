@@ -16,6 +16,10 @@ make db-reset    # recrée la base SQLite + fixtures de démo
 
 Autres : `make sh`, `make console ARGS="…"`, `make cc`, `make logs`.
 
+**Données réelles d'ORéOF v2** : `make import-v2-exemple` ajoute trois formations v2 anonymisées (sans accès à la
+base v2). Avec la pile `oreof-stack` ou un dump SQL, `make import-v2 ARGS="--list"` puis
+`ARGS="--formation=<id>"` : mode d'emploi dans [docs/import-v2.md](docs/import-v2.md).
+
 > **Après mise à jour de la branche `feat/types-diplome`** (types de diplôme configurables) : le schéma de
 > la base a changé et le prototype n'a pas de migrations. Lancez `make db-reset` avant de rouvrir
 > l'application. **Attention : cette commande efface toutes les données locales** (formations et

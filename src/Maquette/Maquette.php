@@ -271,10 +271,22 @@ final class Maquette
         return $rows;
     }
 
-    /** Avant suppression définitive de la formation (sinon révisions orphelines). */
+    /**
+     * Avant suppression définitive de la formation (sinon révisions orphelines). La maquette ouverte est aussi
+     * oubliée : une formation créée ensuite dans le même processus peut reprendre le même identifiant.
+     */
     public function deleteHistory(Formation $formation): void
     {
         $this->revisions->deleteAllFor($formation);
+        // la suppression en masse ne touche pas les révisions déjà chargées : elles ne doivent plus être suivies
+        foreach ($this->em->getUnitOfWork()->getIdentityMap()[FormationRevision::class] ?? [] as $revision) {
+            if ($revision instanceof FormationRevision && $revision->getFormation() === $formation) {
+                $this->em->detach($revision);
+            }
+        }
+        if (null !== $formation->getId()) {
+            unset($this->cache[$formation->getId()], $this->before[$formation->getId()]);
+        }
     }
 
     /**
