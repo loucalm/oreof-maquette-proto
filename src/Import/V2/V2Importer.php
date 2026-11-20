@@ -9,6 +9,7 @@ use App\Entity\FicheMatiere;
 use App\Entity\FicheMatiereMutualisation;
 use App\Entity\FieldDef;
 use App\Entity\Formation;
+use App\Entity\MccType;
 use App\Entity\Referentiel;
 use App\Entity\TypeDiplome;
 use App\Enum\RefCategory;
@@ -31,7 +32,8 @@ use Doctrine\ORM\EntityManagerInterface;
  *
  * C'est le seul endroit qui connaît le modèle fixe de v2 (semestres numérotés, UE, EC) : il le range dans la chaîne
  * de niveaux de la version du type de diplôme. Une formation déjà importée (même identifiant v2) est remplacée.
- * Non repris à ce stade : MCCC, mutualisations, compétences (BCC), workflows, historique.
+ * MCCC : type, épreuves de première session, options ; la seconde session est gardée à part (`rattrapage`).
+ * Non repris à ce stade : compétences (BCC), workflows, historique.
  */
 final class V2Importer
 {
@@ -60,6 +62,9 @@ final class V2Importer
 
     /** Numéro du premier semestre du type de diplôme en cours d'import (LP : 5). */
     private int $firstSemestre = 1;
+
+    /** @var array<string, true>|null */
+    private ?array $mccTypeKeys = null;
 
     /** Parcours (nid) en cours de remplissage ; null pour une formation sans parcours. */
     private ?string $currentParcours = null;
@@ -155,7 +160,11 @@ final class V2Importer
         foreach ($f['fiches'] ?? [] as $fiche) {
             $entity = (new FicheMatiere())->setFormation($formation);
             $entity->setData($this->resolveAll($fiche['data'] ?? []));
-            $entity->setDefaults($fiche['defaults'] ?? []);
+            $defaults = $fiche['defaults'] ?? [];
+            if (isset($defaults['mccc'])) {
+                $defaults['mccc'] = $this->mccc($defaults['mccc']);
+            }
+            $entity->setDefaults($defaults);
             $this->em->persist($entity);
             $ficheRows[] = [$entity, $fiche['parcoursId'] ?? null];
         }
@@ -291,10 +300,12 @@ final class V2Importer
             'ecType' => $this->value('ecType', $ec['type'] ?? null),
             'natureElement' => self::natureElement($ec['type'] ?? null, $natures),
             'ficheMatiere' => $ficheId,
-            // ECTS et heures saisis sur l'EC dans v2 : ce sont eux qui comptent, pas ceux de la fiche (source par défaut)
+            'mccc' => null !== ($ec['mccc'] ?? null) ? $this->mccc($ec['mccc']) : null,
+            // ECTS, heures et MCCC saisis sur l'EC dans v2 : ce sont eux qui comptent, pas ceux de la fiche (source par défaut)
             'sources' => null === $ficheId ? null : array_filter([
                 'ects' => null !== ($ec['ects'] ?? null) ? EcValueResolver::SOURCE_EC : null,
                 'hours' => [] !== ($ec['hours'] ?? []) ? EcValueResolver::SOURCE_EC : null,
+                'mccc' => null !== ($ec['mccc'] ?? null) ? EcValueResolver::SOURCE_EC : null,
             ]),
         ]);
     }
@@ -316,6 +327,38 @@ final class V2Importer
         }
 
         return $node;
+    }
+
+    /**
+     * MCCC de l'extrait → valeur du champ `mccc` : le libellé de chaque type d'épreuve devient sa clé dans le référentiel
+     * `types_epreuve` (ajoutée si absente). Le type de MCCC, s'il n'existe pas dans le prototype, est signalé.
+     *
+     * @param array<string, mixed> $mccc
+     *
+     * @return array<string, mixed>
+     */
+    private function mccc(array $mccc): array
+    {
+        foreach (['evaluations', 'rattrapage'] as $list) {
+            foreach ($mccc[$list] ?? [] as $i => $evaluation) {
+                if (isset($evaluation['type'])) {
+                    $mccc[$list][$i]['type'] = $this->addReferentielValues('types_epreuve', [$evaluation['type']])[0] ?? $evaluation['type'];
+                }
+            }
+        }
+        $type = $mccc['type'] ?? null;
+        if (null !== $type && !isset($this->mccTypes()[$type])) {
+            $this->report[] = sprintf('Type de MCCC « %s » absent du prototype : MCCC importées sans type.', $type);
+            unset($mccc['type']);
+        }
+
+        return $mccc;
+    }
+
+    /** @return array<string, true> clés des types de MCCC du prototype */
+    private function mccTypes(): array
+    {
+        return $this->mccTypeKeys ??= array_fill_keys(array_map(static fn (MccType $t) => $t->getKey(), $this->em->getRepository(MccType::class)->findAll()), true);
     }
 
     /** Remplace une formation déjà importée depuis le même identifiant v2 (ses fiches et son historique avec). */

@@ -23,6 +23,23 @@ final class V2Reader
     /** Niveaux RNCP de v2 (NiveauFormationEnum) → libellés des référentiels du prototype. */
     private const NIVEAUX = [14 => 'Baccalauréat', 15 => 'Bac+2', 16 => 'Bac+3', 17 => 'Bac+5', 18 => 'Bac+8'];
 
+    /** Types de MCCC de v2 (`type_mccc`) → types du prototype (MccType). */
+    private const MCCC_TYPES = ['cc' => 'CC', 'ct' => 'CT', 'cc_ct' => 'CC_CT', 'cci' => 'CCI', 'cc_tp' => 'CC'];
+
+    /** Modalités d'évaluation du BUT dans v2 (translations/but.fr.yaml) : codes rangés dans `type_epreuve`. */
+    private const BUT_MODALITES = [
+        'td_tp_oral' => 'TD/TP Oral', 'td_tp_ecrit' => 'TD/TP Écrit', 'td_tp_rapport' => 'TD/TP Rapport', 'td_tp_autre' => 'TD/TP Autre évaluation',
+        'cm_ecrit' => 'Épreuve promotion entière Écrit', 'cm_rapport' => 'Épreuve promotion entière Rapport',
+        'iut_portfolio' => 'Portfolio', 'iut_livrable' => 'Livrable', 'iut_rapport' => 'Rapport', 'iut_soutenance' => 'Soutenance',
+        'hors_iut_entreprise' => 'Stage / Entreprise', 'hors_iut_rapport' => 'Stage / Rapport', 'hors_iut_soutenance' => 'Stage / Soutenance',
+    ];
+
+    /** @var array<int, string>|null types d'épreuve de v2 : id → libellé */
+    private ?array $epreuves = null;
+
+    /** La formation en cours de lecture est un BUT : seules ses MCCC suivent les modalités codées du BUT. */
+    private bool $but = false;
+
     /** Modalités d'enseignement de v2 (ModaliteEnseignementEnum) → référentiel `modalites_enseignement`. */
     private const MODALITES = [0 => 'En présentiel', 1 => 'Hybride', 2 => 'En distanciel'];
 
@@ -77,6 +94,7 @@ final class V2Reader
     public function extract(array $formationIds): array
     {
         $this->people = [];
+        $this->epreuves = null;
         $formations = [];
         foreach ($formationIds as $id) {
             $formations[] = $this->formation($id);
@@ -127,6 +145,7 @@ final class V2Reader
              WHERE f.id = :id',
             ['id' => $id],
         ) ?: throw new \InvalidArgumentException(sprintf('Formation v2 n°%d introuvable.', $id));
+        $this->but = 'BUT' === $f['type_court'];
 
         $parcours = [];
         $fiches = [];
@@ -318,6 +337,11 @@ final class V2Reader
                 'nature' => self::nature($ec['nature_libelle']),
                 'choix' => (bool) $ec['nature_choix'] || (bool) $ec['nature_libre'],
                 'hours' => self::hours($ec),
+                'mccc' => $this->mccc('ec_id', (int) $ec['id'], $ec['type_mccc'] ?? null, [
+                    'quitus' => (bool) ($ec['quitus'] ?? false),
+                    'quitusTexte' => self::text($ec['quitus_text'] ?? null),
+                    'assiduite' => (bool) ($ec['controle_assiduite'] ?? false),
+                ]),
                 'fiche' => $ficheId,
                 'children' => $this->ecs($ueId, (int) $ec['id'], $fiches),
             ];
@@ -348,8 +372,135 @@ final class V2Reader
                 'ectsImposes' => self::yesNo($f['ects_impose'] ?? null),
                 'mcccImposes' => self::yesNo($f['mccc_impose'] ?? null),
             ]),
-            'defaults' => self::compact(['ects' => self::number($f['ects'] ?? null), 'hours' => self::hours($f)]),
+            'defaults' => self::compact([
+                'ects' => self::number($f['ects'] ?? null),
+                'hours' => self::hours($f),
+                'mccc' => $this->mccc('fiche_matiere_id', $id, $f['type_mccc'] ?? null, [
+                    'quitus' => (bool) ($f['quitus'] ?? false),
+                    'quitusTexte' => self::text($f['quitus_text'] ?? null),
+                    'sansNote' => (bool) ($f['sans_note'] ?? false),
+                ]),
+            ]),
         ];
+    }
+
+    /**
+     * MCCC d'un EC (`ec_id`) ou d'une fiche (`fiche_matiere_id`, lignes propres à la fiche), au format du prototype :
+     * type, épreuves de la première session (type, pourcentage, durée en minutes, nombre), épreuves de seconde session
+     * à part (`rattrapage`, que le prototype ne gère pas encore), options. Null sans épreuve.
+     *
+     * Données de v2 nettoyées : les lignes de modalités du BUT (codes `td_tp_oral`…) ne valent que pour un BUT, et seules
+     * leurs lignes non nulles comptent (les autres sont le modèle vide créé pour chaque fiche) ; une ligne répétée
+     * (copies d'une campagne à l'autre) n'est gardée qu'une fois — pour une modalité du BUT, la plus récente ; deux
+     * générations d'une même épreuve qui dépassent ensemble 100 % ne gardent que la plus récente.
+     *
+     * @param array<string, mixed> $options
+     *
+     * @return array<string, mixed>|null
+     */
+    private function mccc(string $column, int $id, mixed $type, array $options): ?array
+    {
+        $rows = $this->db->fetchAllAssociative(
+            'SELECT * FROM mccc WHERE '.$column.' = :id'.('fiche_matiere_id' === $column ? ' AND ec_id IS NULL' : '').' ORDER BY numero_session, numero_epreuve, id',
+            ['id' => $id],
+        );
+        $type = self::MCCC_TYPES[strtolower(trim((string) $type))] ?? null;
+        $first = [];
+        $second = [];
+        $but = false;
+        $seen = [];
+        $groups = [];
+        $butRows = [];
+        foreach ($rows as $row) {
+            $codes = json_decode((string) ($row['type_epreuve'] ?? '[]'), true);
+            $codes = \is_array($codes) ? array_values(array_filter($codes, static fn ($c) => null !== $c && '' !== $c)) : [];
+            if ([] !== $codes && isset(self::BUT_MODALITES[(string) $codes[0]])) {
+                // modalité du BUT : la plus récente par code (lignes triées par id plus bas)
+                if ($this->but) {
+                    $butRows[(string) $codes[0]] = $row;
+                }
+                continue;
+            }
+            $key = implode('|', [$row['numero_session'], $row['numero_epreuve'], $row['type_epreuve'], $row['pourcentage'], $row['libelle'], $row['duree']]);
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $groups[implode('|', [$row['numero_session'], $row['numero_epreuve'], $row['controle_continu'] ?? '', $row['examen_terminal'] ?? ''])][] = [$row, $codes];
+        }
+        // deux générations d'une même épreuve (ancienne ligne sans type, nouvelle typée…) : à elles deux plus de 100 %,
+        // seule la plus récente compte
+        foreach ($groups as $group) {
+            $total = array_sum(array_map(static fn (array $g) => (float) ($g[0]['pourcentage'] ?? 0), $group));
+            foreach ($total > 100 ? [end($group)] : $group as [$row, $codes]) {
+                $this->addEvaluation($row, $codes, $type, false, $first, $second);
+            }
+        }
+        foreach ($butRows as $code => $row) {
+            $weight = self::number($row['pourcentage']);
+            if (null !== $weight && 0 != $weight) {
+                $but = true;
+                $this->addEvaluation($row, [$code], $type, true, $first, $second);
+            }
+        }
+        if ([] === $first && [] === $second) {
+            return null;
+        }
+
+        return self::compact([
+            'type' => $type ?? ($but ? 'CC' : null),
+            'evaluations' => $first,
+            'rattrapage' => $second,
+        ] + array_filter($options));
+    }
+
+    /**
+     * Ajoute une épreuve v2 à la première ou à la seconde session.
+     *
+     * @param array<string, mixed>       $row
+     * @param list<mixed>                $codes types d'épreuve de la ligne
+     * @param list<array<string, mixed>> $first
+     * @param list<array<string, mixed>> $second
+     */
+    private function addEvaluation(array $row, array $codes, ?string $type, bool $isBut, array &$first, array &$second): void
+    {
+        $weight = self::number($row['pourcentage']);
+        $label = implode(' / ', array_map(fn ($c) => $this->epreuve($c), $codes))
+            ?: trim((string) preg_replace('/\s+\d+$/', '', (string) ($row['libelle'] ?? '')));
+        $evaluation = array_filter([
+            'type' => '' !== $label ? $label : null,
+            'weight' => $weight,
+            'duree' => self::minutes($row['duree'] ?? null),
+            'nombre' => (int) ($row['nb_epreuves'] ?? 1) > 1 ? (int) $row['nb_epreuves'] : null,
+        ], static fn ($v) => null !== $v);
+        // CCI : `numero_session` y numérote les épreuves ; ailleurs, la session 2 est la seconde chance
+        if ('CCI' !== $type && !$isBut && 2 === (int) $row['numero_session']) {
+            $second[] = $evaluation;
+        } else {
+            $first[] = $evaluation;
+        }
+    }
+
+    /** Libellé d'un type d'épreuve de v2 : identifiant de `type_epreuve`, ou code de modalité du BUT. */
+    private function epreuve(mixed $code): string
+    {
+        if (\is_string($code) && isset(self::BUT_MODALITES[$code])) {
+            return self::BUT_MODALITES[$code];
+        }
+        $this->epreuves ??= array_map('strval', array_column($this->db->fetchAllAssociative('SELECT id, libelle FROM type_epreuve'), 'libelle', 'id'));
+
+        return $this->epreuves[(int) $code] ?? (string) $code;
+    }
+
+    /** Durée v2 (« 03:00:00 ») en minutes. */
+    private static function minutes(mixed $duree): ?int
+    {
+        if (!\is_string($duree) || 1 !== preg_match('/^(\d+):(\d{2})/', $duree, $m)) {
+            return null;
+        }
+        $minutes = (int) $m[1] * 60 + (int) $m[2];
+
+        return $minutes > 0 ? $minutes : null;
     }
 
     private function person(mixed $userId): ?string

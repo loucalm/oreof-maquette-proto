@@ -30,14 +30,15 @@ final class MccTypeFixtures extends Fixture
     public function load(ObjectManager $manager): void
     {
         foreach (self::SEED as $i => [$key, $short, $label]) {
+            // chaque type a sa liste d'épreuves (type, durée, %) : les MCCC importées d'ORéOF v2 en ont pour tous les types
             $type = (new MccType($key, $label))
                 ->setShortLabel($short)
                 ->setPosition($i * 10)
+                ->setSchema(['collections' => ['evaluations' => ['label' => 'Épreuves']]])
                 ->setSystem(true);
 
             if ('CCI' === $key) {
                 $type
-                    ->setSchema(['collections' => ['evaluations' => ['label' => 'Épreuves']]])
                     ->setProfiles([
                         [
                             'key' => 'licence',

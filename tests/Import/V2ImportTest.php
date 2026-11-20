@@ -65,6 +65,29 @@ final class V2ImportTest extends KernelTestCase
         self::assertSame('Cartographie', $formation['fiches'][0]['data']['libelle']);
     }
 
+    public function testReaderTranslatesMccc(): void
+    {
+        $extract = (new V2Reader(self::v2()))->extract([10, 30]);
+        $ec = $extract['formations'][0]['parcours'][0]['semestres'][0]['ues'][0]['ecs'][0];
+
+        self::assertSame('CC_CT', $ec['mccc']['type']);
+        self::assertSame([
+            ['type' => 'Contrôle continu', 'weight' => 40, 'nombre' => 2],
+            ['type' => 'Ecrit terminal', 'weight' => 60, 'duree' => 120],
+        ], $ec['mccc']['evaluations']);
+        self::assertSame([['type' => 'Ecrit terminal', 'weight' => 100]], $ec['mccc']['rattrapage'], 'Seconde session gardée à part.');
+        self::assertTrue($ec['mccc']['quitus']);
+        self::assertSame('Assiduité aux TD', $ec['mccc']['quitusTexte']);
+
+        $cci = $extract['formations'][0]['fiches'][0]['defaults']['mccc'];
+        self::assertSame('CCI', $cci['type']);
+        self::assertSame([50, 25, 25], array_column($cci['evaluations'], 'weight'));
+        self::assertSame(['Contrôle continu intégral'], array_values(array_unique(array_column($cci['evaluations'], 'type'))));
+
+        $but = $extract['formations'][1]['fiches'][0]['defaults']['mccc'];
+        self::assertSame(['type' => 'CC', 'evaluations' => [['type' => 'Épreuve promotion entière Écrit', 'weight' => 100]]], $but, 'Modèle BUT : lignes à 0 % ignorées, ligne la plus récente par modalité, type contrôle continu.');
+    }
+
     public function testImporterBuildsFormationsInThePrototype(): void
     {
         $report = $this->importer()->import((new V2Reader(self::v2()))->extract([10, 30]));
@@ -85,8 +108,21 @@ final class V2ImportTest extends KernelTestCase
         $ec = array_values(array_filter($doc->allNodes(), static fn (TreeNode $n) => 'ec' === $n->typeKey && 'Lire une carte' === $n->getLabel()))[0];
         self::assertSame(3, $ec->getAttribute('ects'));
         // ECTS saisis sur l'EC dans v2 (3), pas ceux de sa fiche (5)
-        self::assertSame(3, static::getContainer()->get(EcValueResolver::class)->value($ec, 'ects'));
+        $values = static::getContainer()->get(EcValueResolver::class);
+        self::assertSame(3, $values->value($ec, 'ects'));
+        // MCCC de l'EC (CC + CT), types d'épreuve rangés dans le référentiel
+        $mccc = $values->value($ec, 'mccc');
+        self::assertSame('CC_CT', $mccc['type']);
+        $epreuves = $this->em->getRepository(Referentiel::class)->findOneBy(['key' => 'types_epreuve'])->getValues();
+        self::assertSame(['Contrôle continu', 'Ecrit terminal'], array_map(static fn (array $e) => $epreuves[$e['type']], $mccc['evaluations']));
+        // le panneau de l'EC montre les épreuves de sa MCCC CC + CT (liste d'épreuves active pour tous les types)
+        $client = static::getContainer()->get('test.client');
+        $panel = $client->request('GET', sprintf('/formations/%d/nodes/%s', $mono->getId(), $ec->nid));
+        $weights = array_values(array_filter($panel->filter('[data-mccc-target="row"] input[name$="[weight]"]')->each(static fn ($i) => (string) $i->attr('value'))));
+        self::assertSame(['40', '60'], $weights);
         $fiche = $this->em->getRepository(FicheMatiere::class)->find($ec->getAttribute('ficheMatiere'));
+        // la fiche porte sa CCI en valeurs par défaut
+        self::assertSame('CCI', $fiche->getDefault('mccc')['type']);
         self::assertSame('Cartographie', $fiche->getLibelle());
         self::assertSame($mono->getId(), $fiche->getFormation()->getId());
 
@@ -107,6 +143,8 @@ final class V2ImportTest extends KernelTestCase
         $fiches = static::getContainer()->get(EcValueResolver::class);
         foreach (array_filter($multiDoc->allNodes(), static fn (TreeNode $n) => 'ec' === $n->typeKey) as $historio) {
             self::assertNotSame(FicheRelation::Interdite, $access->relation($fiches->fiche($historio), $historio), $historio->getLabel());
+            // sans MCCC propre, l'EC prend celles de sa fiche (modèle BUT : CC)
+            self::assertSame('CC', $fiches->value($historio, 'mccc')['type'] ?? null);
         }
         // le parcours qui commence au semestre 3 garde ses numéros v2 : année 2, semestre 3
         self::assertSame(2, $parcours[1]->getPeriodeDebut());
@@ -256,8 +294,9 @@ final class V2ImportTest extends KernelTestCase
             'parcours' => 'id, formation_id, libelle, ville_id, composante_inscription_id, rythme_formation_id, parcours_parent_id, regime_inscription, modalites_alternance, modalites_enseignement, has_stage, stage_text, nb_heures_stages, has_projet, projet_text, nb_heures_projet, has_memoire, memoire_text, has_situation_pro, situation_pro_text, nb_heures_situation_pro, code_apogee, resp_parcours_id, co_responsable_id, objectifs_parcours, mots_cles, resultats_attendus, contenu_formation, prerequis, rythme_formation_texte, coord_secretariat, poursuites_etudes, debouches, codes_rome',
             'semestre' => 'id, ordre, semestre_raccroche_id', 'semestre_parcours' => 'id, semestre_id, parcours_id, ordre',
             'ue' => 'id, semestre_id, type_ue_id, nature_ue_ec_id, ordre, ue_parent_id, libelle, ue_raccrochee_id, description_ue_libre, ects, code_apogee',
-            'element_constitutif' => 'id, ue_id, ec_parent_id, type_ec_id, nature_ue_ec_id, fiche_matiere_id, ordre, libelle, texte_ec_libre, code, code_apogee, ects, volume_cm_presentiel, volume_td_presentiel, volume_tp_presentiel, volume_cm_distanciel, volume_td_distanciel, volume_tp_distanciel, volume_te',
-            'fiche_matiere' => 'id, parcours_id, hors_diplome, libelle, libelle_anglais, sigle, code_apogee, description, objectifs, modalite_enseignement, responsable_fiche_matiere_id, volumes_horaires_impose, ects_impose, mccc_impose, ects, volume_cm_presentiel, volume_td_presentiel, volume_tp_presentiel, volume_cm_distanciel, volume_td_distanciel, volume_tp_distanciel, volume_te',
+            'element_constitutif' => 'id, ue_id, ec_parent_id, type_ec_id, nature_ue_ec_id, fiche_matiere_id, ordre, libelle, texte_ec_libre, code, code_apogee, ects, type_mccc, quitus, quitus_text, controle_assiduite, volume_cm_presentiel, volume_td_presentiel, volume_tp_presentiel, volume_cm_distanciel, volume_td_distanciel, volume_tp_distanciel, volume_te',
+            'fiche_matiere' => 'id, parcours_id, hors_diplome, libelle, libelle_anglais, sigle, code_apogee, description, objectifs, modalite_enseignement, responsable_fiche_matiere_id, volumes_horaires_impose, ects_impose, mccc_impose, ects, type_mccc, sans_note, quitus, quitus_text, volume_cm_presentiel, volume_td_presentiel, volume_tp_presentiel, volume_cm_distanciel, volume_td_distanciel, volume_tp_distanciel, volume_te',
+            'mccc' => 'id, ec_id, fiche_matiere_id, libelle, numero_session, pourcentage, nb_epreuves, type_epreuve, duree, numero_epreuve, controle_continu, examen_terminal',
         ];
         foreach ($tables as $table => $columns) {
             $db->executeStatement(sprintf('CREATE TABLE "%s" (%s)', $table, $columns));
@@ -265,6 +304,7 @@ final class V2ImportTest extends KernelTestCase
         $insert = static fn (string $table, array $row) => $db->insert('"'.$table.'"', $row);
 
         $insert('type_diplome', ['id' => 1, 'libelle_court' => 'L']);
+        $insert('type_diplome', ['id' => 2, 'libelle_court' => 'BUT']);
         $insert('mention', ['id' => 1, 'libelle' => 'Géographie']);
         $insert('domaine', ['id' => 1, 'libelle' => 'Sciences humaines et sociales']);
         $insert('composante', ['id' => 1, 'libelle' => 'UFR Lettres']);
@@ -275,6 +315,7 @@ final class V2ImportTest extends KernelTestCase
         $insert('nature_ue_ec', ['id' => 4, 'libelle' => 'UE à choix restreint', 'choix' => 1, 'libre' => 0]);
         $insert('nature_ue_ec', ['id' => 8, 'libelle' => 'EC obligatoire', 'choix' => 0, 'libre' => 0]);
         $insert('user', ['id' => 7, 'prenom' => 'Ada', 'nom' => 'Lovelace']);
+        $insert('type_epreuve', ['id' => 1, 'libelle' => 'Ecrit terminal']);
 
         // formation sans parcours (« Parcours par défaut »)
         $insert('formation', ['id' => 10, 'type_diplome_id' => 1, 'mention_id' => 1, 'domaine_id' => 1, 'composante_porteuse_id' => 1, 'sigle' => 'GEO', 'niveau_entree' => 14, 'niveau_sortie' => 16, 'in_rncp' => 1, 'code_rncp' => 'RNCP1', 'regime_inscription' => '["Formation Initiale"]', 'responsable_mention_id' => 7, 'objectifs_formation' => 'Former des géographes.']);
@@ -290,15 +331,28 @@ final class V2ImportTest extends KernelTestCase
         $insert('ue', ['id' => 3, 'semestre_id' => 1000, 'ue_parent_id' => 2, 'ordre' => 1, 'libelle' => 'Option A', 'ects' => 3]);
         $insert('ue', ['id' => 4, 'semestre_id' => null, 'ue_parent_id' => 2, 'ordre' => 2, 'libelle' => 'Option B', 'ects' => 3]);
         $insert('ue', ['id' => 5, 'semestre_id' => 1002, 'ordre' => 1, 'libelle' => 'UE mutualisée', 'ects' => 30]);
-        $insert('element_constitutif', ['id' => 1, 'ue_id' => 1, 'type_ec_id' => 1, 'nature_ue_ec_id' => 8, 'fiche_matiere_id' => 500, 'ordre' => 1, 'libelle' => 'Lire une carte', 'ects' => 3, 'volume_cm_presentiel' => 12, 'volume_td_presentiel' => 6, 'volume_tp_presentiel' => 0, 'volume_te' => 4]);
+        // MCCC de l'EC : CC 40 % + CT 60 % (écrit de 2 h), seconde session CT 100 %
+        $insert('mccc', ['id' => 1, 'ec_id' => 1, 'libelle' => 'Contrôle continu', 'numero_session' => 1, 'pourcentage' => 40, 'nb_epreuves' => 2, 'type_epreuve' => '[]', 'numero_epreuve' => 1]);
+        $insert('mccc', ['id' => 2, 'ec_id' => 1, 'libelle' => 'Contrôle terminal', 'numero_session' => 1, 'pourcentage' => 60, 'nb_epreuves' => 1, 'type_epreuve' => '["1"]', 'duree' => '02:00:00', 'numero_epreuve' => 1]);
+        $insert('mccc', ['id' => 3, 'ec_id' => 1, 'libelle' => 'Contrôle terminal', 'numero_session' => 2, 'pourcentage' => 100, 'nb_epreuves' => 1, 'type_epreuve' => '[]', 'numero_epreuve' => 1, 'examen_terminal' => 1]);
+        // seconde génération de la même épreuve de session 2, typée : seule elle compte
+        $insert('mccc', ['id' => 4, 'ec_id' => 1, 'libelle' => 'Contrôle terminal', 'numero_session' => 2, 'pourcentage' => 100, 'nb_epreuves' => 1, 'type_epreuve' => '["1"]', 'numero_epreuve' => 1, 'examen_terminal' => 1]);
+        // MCCC de la fiche : CCI en trois épreuves (numero_session y numérote les épreuves)
+        foreach ([1 => 50, 2 => 25, 3 => 25] as $n => $pct) {
+            $insert('mccc', ['id' => 10 + $n, 'fiche_matiere_id' => 500, 'libelle' => 'Contrôle continu intégral '.$n, 'numero_session' => $n, 'pourcentage' => $pct, 'nb_epreuves' => 1, 'type_epreuve' => '[]']);
+        }
+        // copie identique d'une ligne (campagne suivante) et modalité du BUT sur une fiche de licence : ignorées
+        $insert('mccc', ['id' => 14, 'fiche_matiere_id' => 500, 'libelle' => 'Contrôle continu intégral 3', 'numero_session' => 3, 'pourcentage' => 25, 'nb_epreuves' => 1, 'type_epreuve' => '[]']);
+        $insert('mccc', ['id' => 15, 'fiche_matiere_id' => 500, 'libelle' => 'td_tp_oral', 'numero_session' => 1, 'pourcentage' => 100, 'nb_epreuves' => 1, 'type_epreuve' => '["td_tp_oral"]']);
+        $insert('element_constitutif', ['id' => 1, 'ue_id' => 1, 'type_ec_id' => 1, 'nature_ue_ec_id' => 8, 'fiche_matiere_id' => 500, 'ordre' => 1, 'libelle' => 'Lire une carte', 'ects' => 3, 'type_mccc' => 'cc_ct', 'quitus' => 1, 'quitus_text' => 'Assiduité aux TD', 'volume_cm_presentiel' => 12, 'volume_td_presentiel' => 6, 'volume_tp_presentiel' => 0, 'volume_te' => 4]);
         // EC à choix dont les options n'ont pas d'UE (comme dans v2)
         $insert('element_constitutif', ['id' => 2, 'ue_id' => 1, 'ordre' => 2, 'libelle' => 'Langue au choix']);
         $insert('element_constitutif', ['id' => 3, 'ec_parent_id' => 2, 'ordre' => 1, 'libelle' => 'Anglais']);
         $insert('element_constitutif', ['id' => 4, 'ec_parent_id' => 2, 'ordre' => 2, 'libelle' => 'Espagnol']);
-        $insert('fiche_matiere', ['id' => 500, 'parcours_id' => 100, 'hors_diplome' => 0, 'libelle' => 'Cartographie', 'responsable_fiche_matiere_id' => 7, 'ects' => 5]);
+        $insert('fiche_matiere', ['id' => 500, 'parcours_id' => 100, 'hors_diplome' => 0, 'libelle' => 'Cartographie', 'responsable_fiche_matiere_id' => 7, 'ects' => 5, 'type_mccc' => 'cci']);
 
-        // formation à deux parcours, le second rattaché au premier (ramification)
-        $insert('formation', ['id' => 30, 'type_diplome_id' => 1, 'mention_texte' => 'Histoire', 'domaine_id' => 1]);
+        // BUT à deux parcours, le second rattaché au premier (ramification)
+        $insert('formation', ['id' => 30, 'type_diplome_id' => 2, 'mention_texte' => 'Histoire', 'domaine_id' => 1]);
         $insert('parcours', ['id' => 300, 'formation_id' => 30, 'libelle' => 'Tronc commun']);
         $insert('parcours', ['id' => 301, 'formation_id' => 30, 'libelle' => 'Spécialité', 'parcours_parent_id' => 300]);
         $insert('semestre', ['id' => 3000, 'ordre' => 1]);
@@ -311,6 +365,10 @@ final class V2ImportTest extends KernelTestCase
         $insert('element_constitutif', ['id' => 30, 'ue_id' => 30, 'fiche_matiere_id' => 600, 'ordre' => 1, 'libelle' => 'Historiographie', 'ects' => 6]);
         $insert('element_constitutif', ['id' => 31, 'ue_id' => 31, 'fiche_matiere_id' => 600, 'ordre' => 1, 'libelle' => 'Historiographie 2', 'ects' => 6]);
         $insert('fiche_matiere', ['id' => 600, 'parcours_id' => 300, 'hors_diplome' => 0, 'libelle' => 'Historiographie']);
+        // MCCC « façon BUT » : modalités codées, les lignes à 0 % sont le modèle vide
+        $insert('mccc', ['id' => 20, 'fiche_matiere_id' => 600, 'libelle' => 'td_tp_oral', 'numero_session' => 1, 'pourcentage' => 0, 'nb_epreuves' => 1, 'type_epreuve' => '["td_tp_oral"]']);
+        $insert('mccc', ['id' => 21, 'fiche_matiere_id' => 600, 'libelle' => 'cm_ecrit', 'numero_session' => 1, 'pourcentage' => 50, 'nb_epreuves' => 1, 'type_epreuve' => '["cm_ecrit"]']);
+        $insert('mccc', ['id' => 22, 'fiche_matiere_id' => 600, 'libelle' => 'cm_ecrit', 'numero_session' => 1, 'pourcentage' => 100, 'nb_epreuves' => 1, 'type_epreuve' => '["cm_ecrit"]']);
 
         return $db;
     }

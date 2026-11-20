@@ -97,10 +97,19 @@ téléphones des textes libres masqués. Relisez tout de même le fichier avant 
 | UE ou EC à choix (enfants, même sans semestre ou UE dans v2) | bloc de choix (« UE à choix » / « EC à choix » sans libellé) |
 | textes riches (HTML de l'éditeur v2)                         | texte simple (paragraphes, listes « - », entités décodées)  |
 | fiches matière des EC                                        | fiches portées par la formation importée                    |
+| MCCC d'un EC (`type_mccc` + lignes `mccc`)                   | champ MCCC de l'EC : type (cc → CC, ct → CT, cc_ct → CC + CT, cci → CCI), épreuves de 1re session (type d'épreuve, %, durée), options (quitus, assiduité) |
+| MCCC d'une fiche matière                                     | MCCC par défaut de la fiche (l'EC sans MCCC propre les reprend) |
+| seconde session (rattrapage)                                 | gardée dans la valeur (`rattrapage`), pas encore affichée par le prototype |
+| MCCC du BUT (modalités TD/TP, CM, portfolio, stage… en %)    | type CC, une épreuve par modalité non nulle                 |
 | domaines, mentions, composantes, villes, types d'UE/EC…      | valeurs ajoutées aux référentiels (rien n'est retiré)       |
 
-Pas encore repris : MCCC, mutualisations (au sens partage entre formations), compétences / BCC,
-workflows et validations, historique, commentaires, utilisateurs et droits.
+Pas encore repris : mutualisations entre formations, compétences / BCC, workflows et validations, historique,
+commentaires, utilisateurs et droits.
+
+MCCC : dans le prototype, seul le type CCI affiche sa liste d'épreuves. Pour voir (et modifier) les épreuves importées
+des types CC, CT et CC + CT, activer « Collection d'épreuves » sur ces types dans Administration › Types de MCCC.
+Les données v2 sont nettoyées à l'import : lignes BUT réservées aux BUT, lignes répétées d'une campagne à l'autre
+retirées, et de deux générations d'une même épreuve (plus de 100 % à elles deux) seule la plus récente est gardée.
 
 Une formation v2 peut sortir des bornes de son type de diplôme dans le prototype : elle est importée telle quelle
 et les écarts apparaissent dans « Vérifier la saisie ». Les anomalies de v2 repérées (semestres en double dans un
