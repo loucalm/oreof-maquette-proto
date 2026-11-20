@@ -180,6 +180,7 @@ formation:
   graph:
     box_stats: '%pct% % saisi · %ects% / %target% ECTS'
     box_stats_no_target: '%pct% % saisi · %ects% ECTS'
+    progress: '%pct% % saisi'
     title_suffix: arborescence des parcours
     breadcrumb_list: Liste des formations
     heading: Arborescence des parcours

@@ -31,7 +31,7 @@ final class ParcoursGraph
 
     /**
      * @return array{
-     *     rows: list<array{node: TreeNode, row: int, colStart: int, colEnd: int}>,
+     *     rows: list<array{node: TreeNode, row: int, colStart: int, colEnd: int, depth: int}>,
      *     edges: list<array{from: string, to: string, path: string}>,
      *     cols: int, unit: string,
      *     parcours: list<TreeNode>,
@@ -56,7 +56,7 @@ final class ParcoursGraph
         $rows = [];
         $rowIndex = 0;
         $seen = [];
-        $visit = function (TreeNode $p) use (&$visit, &$rows, &$rowIndex, &$seen, $childrenOf): void {
+        $visit = function (TreeNode $p, int $depth = 0) use (&$visit, &$rows, &$rowIndex, &$seen, $childrenOf): void {
             if (isset($seen[$p->getId()])) {
                 return; // garde-fou anti-cycle
             }
@@ -66,9 +66,10 @@ final class ParcoursGraph
                 'row' => $rowIndex++,
                 'colStart' => $p->getPeriodeDebut(),
                 'colEnd' => $p->getPeriodeFin(),
+                'depth' => $depth,
             ];
             foreach ($childrenOf[$p->getId()] ?? [] as $child) {
-                $visit($child);
+                $visit($child, $depth + 1);
             }
         };
         foreach ($parcours as $p) {

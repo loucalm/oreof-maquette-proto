@@ -6,6 +6,7 @@
 
 {% if standalone %}
     {% set header_title = 'formation.graph.heading'|trans({}, 'formation') %}
+    {% set header_description = formation.name ~ ' · ' ~ 'formation.index.parcours_count'|trans({'%count%': graph.parcours|length}, 'formation') %}
     {% set header_breadcrumb = [
     {label: 'formation.index.breadcrumb_offer'|trans({}, 'formation')},
     {label: 'formation.index.heading'|trans({}, 'formation'), url: path('formation_index')},
@@ -14,8 +15,17 @@
     ] %}
 {% endif %}
 
+{% block bouton_header %}
+    {% if standalone %}
+        <twig:Button variant="secondary" icon="ph:arrow-left" :label="'formation.editor.structure_config_link'|trans({}, 'formation')" :href="path('formation_editor', {id: formation.id, param: 'structure'})"/>
+    {% endif %}
+{% endblock %}
+
 {% block body %}
 {% set g = graph %}
+{% if standalone %}
+    {{ _self.timeline(g, formation, parcoursViews, parcoursProgress, current) }}
+{% else %}
 {# candidats de parenté calculés une fois par parcours, réutilisés par la boîte SVG (data-candidates) et par le <select> du tableau #}
 {% set candidatesByNode = {} %}
 {% if not standalone %}
@@ -108,7 +118,10 @@
                         <rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ g.boxH }}" rx="10"
                               fill="{{ isCurrent ? '#c7d2fe' : '#eef2ff' }}" stroke="{{ isCurrent ? '#4f46e5' : '#c7d2fe' }}" stroke-width="{{ isCurrent ? 2.5 : 1.5 }}"/>
                         {% set pv = parcoursViews[r.node.id] ?? null %}
-                        <text x="{{ b.x + b.w / 2 }}" y="{{ b.cy - (pv ? 3 : -4) }}" text-anchor="middle" font-size="13" font-weight="{{ isCurrent ? 700 : 600 }}" fill="#3730a3">{{ r.node.label ?: 'formation.graph.parcours_fallback'|trans({}, 'formation') }}</text>
+                        {# libellé ramené à la largeur de la boîte (≈ 7,5 px par caractère), nom complet au survol #}
+                        {% set boxLabel = r.node.label ?: 'formation.graph.parcours_fallback'|trans({}, 'formation') %}
+                        {% set maxChars = max(8, (b.w / 7.5)|round(0, 'floor')) %}
+                        <text x="{{ b.x + b.w / 2 }}" y="{{ b.cy - (pv ? 3 : -4) }}" text-anchor="middle" font-size="13" font-weight="{{ isCurrent ? 700 : 600 }}" fill="#3730a3"><title>{{ boxLabel }}</title>{{ boxLabel|length > maxChars ? boxLabel|slice(0, maxChars - 1)|trim ~ '…' : boxLabel }}</text>
                         {% if pv %}
                             {% set pct = parcoursProgress[r.node.id] ?? 0 %}
                             <text x="{{ b.x + b.w / 2 }}" y="{{ b.cy + 14 }}" text-anchor="middle" font-size="11" fill="{{ pct == 100 ? '#15803d' : '#6b7280' }}">{% set target = pv.node.getAttribute('ects') %}{{ (target ? 'formation.graph.box_stats' : 'formation.graph.box_stats_no_target')|trans({'%pct%': pct, '%ects%': pv.totalEcts|round(1), '%target%': target}, 'formation') }}</text>
@@ -181,4 +194,76 @@
     </div>
 </div>
 </turbo-frame>
+{% endif %}
 {% endblock %}
+
+{#
+    Page autonome : frise des parcours sur toute la largeur. À gauche le nom (sur deux lignes au plus, en retrait sous
+    son parcours parent), à droite une barre sur les périodes couvertes, remplie selon l'avancement de la saisie.
+#}
+{% macro timeline(g, formation, parcoursViews, parcoursProgress, current) %}
+    {% if g.parcours is empty %}
+        <div class="rounded-xl border border-dashed border-secondary-200 bg-white p-8 text-center text-sm text-secondary-500">
+            {{ 'formation.graph.empty'|trans({}, 'formation') }}
+        </div>
+    {% else %}
+        <section class="rounded-2xl border border-secondary-200 bg-white shadow-sm">
+            <p class="border-b border-secondary-200 px-5 py-3 text-xs text-secondary-500">
+                {{ 'formation.graph.axis_note'|trans({'%unit%': g.unit|lower}, 'formation')|raw }}
+                {{ 'formation.graph.standalone_note'|trans({'%unit%': g.unit|lower}, 'formation') }}
+            </p>
+            <div class="overflow-x-auto">
+                <div class="grid min-w-[720px]" style="grid-template-columns: minmax(220px, 30%) repeat({{ g.cols }}, minmax(0, 1fr));" data-parcours-timeline>
+                    {# en-tête : périodes #}
+                    <div class="border-b border-secondary-200 bg-secondary-50 px-5 py-2.5 text-[11px] font-black uppercase tracking-wider text-secondary-500">{{ 'formation.graph.parcours_fallback'|trans({}, 'formation') }}</div>
+                    {% for a in 1..g.cols %}
+                        <div class="border-b border-l border-secondary-200 bg-secondary-50 px-3 py-2.5 text-center text-[11px] font-black uppercase tracking-wider text-secondary-500">
+                            {%- if g.unit|lower == 'année' %}{{ 'formation.graph.year_ordinal'|trans({'%n%': a, '%suffix%': a == 1 ? 'ère' : 'ème'}, 'formation') }}{% else %}{{ g.unit }} {{ a }}{% endif -%}
+                        </div>
+                    {% endfor %}
+
+                    {% for r in g.rows %}
+                        {% set node = r.node %}
+                        {% set isCurrent = current and node.id == current %}
+                        {% set pv = parcoursViews[node.id] ?? null %}
+                        {% set pct = parcoursProgress[node.id] ?? 0 %}
+                        {% set tone = pct >= 100 ? 'success' : (pct < 30 ? 'danger' : 'info') %}
+                        {% set url = path('parcours_editor', {fid: formation.id, nid: node.id}) %}
+                        {% set label = node.label ?: 'formation.graph.parcours_fallback'|trans({}, 'formation') %}
+                        {% set rowBorder = loop.last ? '' : 'border-b border-secondary-100' %}
+
+                        {# nom du parcours #}
+                        <div class="{{ rowBorder }} flex min-w-0 items-start gap-2 px-5 py-3 {{ isCurrent ? 'bg-primary-50' }}" style="padding-left: {{ 1.25 + r.depth * 1.25 }}rem" data-parcours-row="{{ node.id }}">
+                            {% if r.depth > 0 %}<span class="mt-0.5 shrink-0 text-secondary-400" title="{{ 'formation.graph.child_of'|trans({'%parent%': node.parcoursParent.label ?: '—'}, 'formation') }}">{{ ux_icon('ph:arrow-bend-down-right', {class: 'h-4 w-4'}) }}</span>{% endif %}
+                            <div class="min-w-0">
+                                <a href="{{ url }}" class="line-clamp-2 font-semibold text-secondary-900 hover:text-primary-700 hover:underline" title="{{ label }}">{{ label }}</a>
+                                <div class="mt-0.5 text-xs text-secondary-500">
+                                    {{ 'formation.graph.period_range'|trans({'%unit%': g.unit|lower, '%start%': r.colStart, '%end%': r.colEnd}, 'formation') }}
+                                    {% if isCurrent %}<span class="ml-1 font-semibold text-primary-700">· {{ 'formation.graph.you_are_here_pill'|trans({}, 'formation') }}</span>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        {# frise : cellules vides de la grille, puis la barre sur ses périodes #}
+                        {% for a in 1..g.cols %}
+                            <div class="{{ rowBorder }} border-l border-secondary-100 {{ isCurrent ? 'bg-primary-50' }}" style="grid-row: {{ loop.parent.loop.index + 1 }}; grid-column: {{ a + 1 }}"></div>
+                        {% endfor %}
+                        <a href="{{ url }}" class="group relative z-10 mx-2 my-2.5 flex min-w-0 flex-col justify-center overflow-hidden rounded-lg border px-3 py-1.5 transition-shadow hover:shadow-md
+                                  {{ isCurrent ? 'border-primary-500 ring-2 ring-primary-200' : 'border-' ~ tone ~ '-200' }} bg-{{ tone }}-50"
+                           style="grid-row: {{ loop.index + 1 }}; grid-column: {{ r.colStart + 1 }} / {{ r.colEnd + 2 }}"
+                           aria-label="{{ label }} — {{ 'formation.graph.period_range'|trans({'%unit%': g.unit|lower, '%start%': r.colStart, '%end%': r.colEnd}, 'formation') }}">
+                            <span class="absolute inset-y-0 left-0 bg-{{ tone }}-100 transition-[width]" style="width: {{ min(100, pct) }}%" aria-hidden="true"></span>
+                            <span class="relative flex items-center justify-between gap-2 text-xs">
+                                <span class="font-bold text-{{ tone }}-700">{{ 'formation.graph.progress'|trans({'%pct%': pct}, 'formation') }}</span>
+                                {% if pv %}
+                                    {% set target = node.getAttribute('ects') %}
+                                    <span class="whitespace-nowrap text-secondary-600">{{ target ? (pv.totalEcts|round(1) ~ ' / ' ~ target) : pv.totalEcts|round(1) }} ECTS</span>
+                                {% endif %}
+                            </span>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+    {% endif %}
+{% endmacro %}

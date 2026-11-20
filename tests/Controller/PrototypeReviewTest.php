@@ -102,6 +102,22 @@ final class PrototypeReviewTest extends WebTestCase
         self::assertStringNotContainsString('Nom du parcours', $crawler->text());
     }
 
+    public function testParcoursTimelineShowsEveryParcoursOnItsYears(): void
+    {
+        $formation = $this->em->getRepository(\App\Entity\Formation::class)->findOneBy(['name' => 'Licence Sciences & Technologies (démo avec parcours)']);
+
+        $crawler = $this->client->request('GET', sprintf('/formations/%d/parcours', $formation->getId()));
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('[data-parcours-timeline]'));
+        self::assertCount(0, $crawler->filter('svg[viewBox] marker#pg-arrow'), 'Page autonome : frise HTML, pas le graphe de l’éditeur.');
+        self::assertCount(1, $crawler->filter('h1:contains("Arborescence des parcours"), h2:contains("Arborescence des parcours")'), 'Titre une seule fois.');
+        $rows = $crawler->filter('[data-parcours-row]');
+        self::assertGreaterThan(1, $rows->count());
+        // un parcours enfant est en retrait sous son parent
+        self::assertGreaterThan(0, $crawler->filter('[data-parcours-row] [title^="enfant de"]')->count());
+    }
+
     private function startWizard(): void
     {
         $licence = $this->em->getRepository(TypeDiplome::class)->findOneBy(['key' => 'L']);
