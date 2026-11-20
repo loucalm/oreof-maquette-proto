@@ -254,11 +254,12 @@ final class V2Reader
      */
     private function ues(int $semestreId, ?int $parentId, array &$fiches): array
     {
+        // options d'une UE à choix : rattachées à leur seule UE parente (dans v2, leur semestre peut manquer ou différer)
         $rows = $this->db->fetchAllAssociative(
             'SELECT u.*, tu.libelle AS type_libelle, n.libelle AS nature_libelle, n.choix AS nature_choix, n.libre AS nature_libre
              FROM ue u LEFT JOIN type_ue tu ON tu.id = u.type_ue_id LEFT JOIN nature_ue_ec n ON n.id = u.nature_ue_ec_id
-             WHERE u.semestre_id = :s AND '.(null === $parentId ? 'u.ue_parent_id IS NULL' : 'u.ue_parent_id = :p').' ORDER BY u.ordre, u.id',
-            ['s' => $semestreId] + (null === $parentId ? [] : ['p' => $parentId]),
+             WHERE '.(null === $parentId ? 'u.semestre_id = :id AND u.ue_parent_id IS NULL' : 'u.ue_parent_id = :id').' ORDER BY u.ordre, u.id',
+            ['id' => $parentId ?? $semestreId],
         );
         $out = [];
         foreach ($rows as $u) {
@@ -284,7 +285,7 @@ final class V2Reader
     }
 
     /**
-     * EC d'une UE (ou EC « enfants » d'un EC à choix), dans l'ordre.
+     * EC d'une UE (ou EC « enfants » d'un EC à choix, rattachés à leur seul parent : dans v2 leur UE peut manquer), dans l'ordre.
      *
      * @param array<int, array<string, mixed>> $fiches
      *
@@ -299,8 +300,8 @@ final class V2Reader
              LEFT JOIN type_ec te ON te.id = ec.type_ec_id
              LEFT JOIN nature_ue_ec n ON n.id = ec.nature_ue_ec_id
              LEFT JOIN fiche_matiere fm ON fm.id = ec.fiche_matiere_id
-             WHERE ec.ue_id = :u AND '.(null === $parentId ? 'ec.ec_parent_id IS NULL' : 'ec.ec_parent_id = :p').' ORDER BY ec.ordre, ec.id',
-            ['u' => $ueId] + (null === $parentId ? [] : ['p' => $parentId]),
+             WHERE '.(null === $parentId ? 'ec.ue_id = :id AND ec.ec_parent_id IS NULL' : 'ec.ec_parent_id = :id').' ORDER BY ec.ordre, ec.id',
+            ['id' => $parentId ?? $ueId],
         );
         $out = [];
         foreach ($rows as $ec) {
@@ -408,14 +409,35 @@ final class V2Reader
         return null !== $sigle ? trim($name.' ('.$sigle.')') : $name;
     }
 
+    /** Texte nettoyé ; le HTML des éditeurs de v2 (Trix : `<div><!--block-->…`) devient du texte simple (cf. plainText()). */
     private static function text(mixed $v): ?string
     {
         if (null === $v) {
             return null;
         }
-        $v = trim((string) $v);
+        $v = trim(self::plainText((string) $v));
 
         return '' === $v ? null : $v;
+    }
+
+    /**
+     * HTML de v2 → texte : un paragraphe, un bloc ou un saut de ligne deviennent un retour à la ligne, un élément de
+     * liste « - … » ; balises, commentaires et entités (&nbsp;…) disparaissent. Un texte sans balise n'est que décodé.
+     */
+    public static function plainText(string $html): string
+    {
+        if (1 !== preg_match('/<[a-z!\/][^>]*>/i', $html)) {
+            return trim(str_replace("\u{a0}", ' ', html_entity_decode($html, \ENT_QUOTES | \ENT_HTML5, 'UTF-8')));
+        }
+        $text = (string) preg_replace('/<!--.*?-->/s', '', $html);
+        $text = (string) preg_replace('/<li[^>]*>/i', "\n- ", $text);
+        $text = (string) preg_replace('/<br\s*\/?>|<\/(div|p|h[1-6]|ul|ol|blockquote|tr)>/i', "\n", $text);
+        $text = html_entity_decode(strip_tags($text), \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
+        $text = str_replace("\u{a0}", ' ', $text);
+        $lines = array_map(static fn (string $l) => trim((string) preg_replace('/[ \t]+/', ' ', $l)), explode("\n", $text));
+        $text = implode("\n", $lines);
+
+        return trim((string) preg_replace("/\n{3,}/", "\n\n", $text));
     }
 
     private static function number(mixed $v): int|float|null

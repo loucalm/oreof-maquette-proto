@@ -29,7 +29,7 @@
     ]) %}
 {% endif %}
 
-<nav class="topbar-nav sticky top-0 z-50 border-b border-secondary-200 bg-surface shadow-sm">
+<nav class="topbar-nav sticky top-0 z-50 border-b border-secondary-200 bg-surface shadow-sm" data-controller="topbar">
     <div class="mx-auto max-w-full px-4 sm:px-6 lg:px-8">
         <div class="topbar-row flex flex-wrap justify-between 2xl:h-16 2xl:flex-nowrap">
 
@@ -39,7 +39,7 @@
                     {% if is_admin() %}<span class="whitespace-nowrap text-danger">/ Adm.</span>{% endif %}
                 </a>
 
-                <div class="topbar-menu order-3 hidden h-12 w-full min-w-0 items-center gap-0.5 border-t border-secondary-200 md:flex lg:gap-1 2xl:order-none 2xl:h-full 2xl:w-auto 2xl:gap-2 2xl:border-0">
+                <div id="topbar-menu" data-topbar-target="menu" class="topbar-menu order-3 hidden h-12 w-full min-w-0 items-center gap-0.5 border-t border-secondary-200 md:flex lg:gap-1 2xl:order-none 2xl:h-full 2xl:w-auto 2xl:gap-2 2xl:border-0">
                     <span class="topbar-link" aria-disabled="true" title="{{ _soon }}">{{ 'layout.nav.dashboard'|trans({}, 'layout') }}</span>
 
                     {% for item in _menu %}
@@ -72,8 +72,12 @@
             </div>
 
             <div class="topbar-right order-2 flex h-16 shrink-0 items-center gap-3 2xl:order-none 2xl:gap-5">
+                {# petit écran : la navigation est repliée derrière ce bouton #}
+                <button type="button" class="grid h-9 w-9 place-items-center rounded-lg border border-secondary-200 text-secondary-600 md:hidden"
+                        data-topbar-target="button" data-action="topbar#toggle" aria-controls="topbar-menu" aria-expanded="false"
+                        aria-label="{{ 'layout.nav.menu'|trans({}, 'layout') }}">{{ ux_icon('ph:list', {class: 'h-5 w-5'}) }}</button>
                 {# icônes d'action de v2 (recherche, commentaires, signalement, notifications) : fictives #}
-                <div class="flex items-center gap-1 text-secondary-500">
+                <div class="hidden items-center gap-1 text-secondary-500 sm:flex">
                     {% for i in ['ph:magnifying-glass', 'ph:chat-circle', 'ph:bug', 'ph:bell'] %}
                         <span class="grid h-9 w-9 place-items-center rounded-full opacity-70" aria-disabled="true" title="{{ _soon }}">{{ ux_icon(i, {class: 'h-5 w-5'}) }}</span>
                     {% endfor %}

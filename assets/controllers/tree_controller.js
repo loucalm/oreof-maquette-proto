@@ -5,7 +5,7 @@ import { showGuardRefusal } from '../guard_refusal.js';
 /**
  * Panneau « Structure de la formation » :
  *  - glisser-déposer imbriqué des nœuds (SortableJS) ;
- *  - pliage persistant des branches ;
+ *  - pliage des branches : tout est replié par défaut, les branches ouvertes sont retenues (par page) ;
  *  - surbrillance du nœud / de la section actifs, synchronisée avec le
  *    contenu réellement chargé dans le <turbo-frame id="node-panel">.
  *
@@ -18,8 +18,12 @@ export default class extends Controller {
     static targets = ['addForm', 'addParent', 'addType', 'addAfter', 'addButton', 'addChoiceButton', 'dupForm', 'dupButton', 'delForm', 'delButton', 'derogNodeId', 'derogContext'];
 
     connect() {
-        this.storeKey = 'tree-collapsed';
-        this.restoreCollapsed();
+        // branches ouvertes, par page (les identifiants de nœud ne sont uniques que dans une formation)
+        this.storeKey = `tree-expanded:${window.location.pathname}`;
+        this.restoreExpanded();
+        // un rafraîchissement par morphing remet les classes du serveur (tout replié) : on rouvre
+        this.onMorph = () => this.restoreExpanded();
+        document.addEventListener('turbo:morph', this.onMorph);
 
         this.sortables = [];
         this.element.querySelectorAll('ul.tree-list').forEach((list) => {
@@ -53,6 +57,7 @@ export default class extends Controller {
         this.sortables = [];
         this.element.removeEventListener('click', this.onNavClick);
         if (this.panel) this.panel.removeEventListener('turbo:frame-load', this.onFrameLoad);
+        document.removeEventListener('turbo:morph', this.onMorph);
     }
 
     // ─── surbrillance ───
@@ -155,7 +160,7 @@ export default class extends Controller {
                     }
                     li = li.parentElement ? li.parentElement.closest('li') : null;
                 }
-                if (changed) this.persistCollapsed();
+                if (changed) this.persistExpanded();
                 target.scrollIntoView({ block: 'nearest' });
             }
         }
@@ -289,10 +294,10 @@ export default class extends Controller {
         const li = event.target.closest('li[data-node-id]');
         if (!li) return;
         li.classList.toggle('collapsed');
-        this.persistCollapsed();
+        this.persistExpanded();
     }
 
-    get collapsedSet() {
+    get expandedSet() {
         try {
             return new Set(JSON.parse(localStorage.getItem(this.storeKey) || '[]'));
         } catch {
@@ -300,15 +305,21 @@ export default class extends Controller {
         }
     }
 
-    restoreCollapsed() {
-        const set = this.collapsedSet;
-        this.element.querySelectorAll('li[data-node-id]').forEach((li) => {
-            if (set.has(li.dataset.nodeId)) li.classList.add('collapsed');
+    /** L'arbre arrive replié (classe posée par le serveur) : rouvre les branches que l'utilisateur avait ouvertes. */
+    restoreExpanded() {
+        const set = this.expandedSet;
+        this.element.querySelectorAll('li.collapsed[data-node-id]').forEach((li) => {
+            if (set.has(li.dataset.nodeId)) li.classList.remove('collapsed');
         });
+        // le nœud actif reste visible
+        const active = this.element.querySelector('.tree-row.is-active');
+        for (let li = active?.closest('li'); li; li = li.parentElement?.closest('li')) li.classList.remove('collapsed');
     }
 
-    persistCollapsed() {
-        const ids = [...this.element.querySelectorAll('li.collapsed[data-node-id]')].map((li) => li.dataset.nodeId);
+    persistExpanded() {
+        const ids = [...this.element.querySelectorAll('li[data-node-id]:not(.collapsed)')]
+            .filter((li) => li.querySelector(':scope > .tree-row > .tree-chevron'))
+            .map((li) => li.dataset.nodeId);
         try {
             localStorage.setItem(this.storeKey, JSON.stringify(ids));
         } catch { /* ignore */ }

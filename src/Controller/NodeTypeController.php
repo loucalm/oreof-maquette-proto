@@ -596,7 +596,8 @@ final class NodeTypeController extends AbstractController
     /**
      * URL de retour au canevas d'un diplôme : reçue en `?retour=` à l'arrivée (« Adapter », « Modifier »), puis gardée en
      * session pour ce formulaire, car ses enregistrements redirigent sans elle. Sans elle, l'admin perdait le chemin vers
-     * l'assistant (et croyait son diplôme en cours perdu).
+     * l'assistant (et croyait son diplôme en cours perdu). Elle n'est reprise que si l'on vient des pages de ce même
+     * formulaire (enregistrement, ajout de champ…) : ouvert depuis l'administration, il n'a pas de retour au canevas.
      */
     private function rememberedReturn(Request $request, ?NodeType $nodeType): ?string
     {
@@ -605,12 +606,19 @@ final class NodeTypeController extends AbstractController
             return $url;
         }
         $key = 'node_type_retour_'.$nodeType->getId();
+        $session = $request->getSession();
         if (null !== $url) {
-            $request->getSession()->set($key, $url);
+            $session->set($key, $url);
 
             return $url;
         }
-        $remembered = $request->getSession()->get($key);
+        $referer = (string) parse_url((string) $request->headers->get('referer'), \PHP_URL_PATH);
+        if (!str_contains($referer, '/node-types/'.$nodeType->getId().'/')) {
+            $session->remove($key);
+
+            return null;
+        }
+        $remembered = $session->get($key);
 
         return \is_string($remembered) ? $remembered : null;
     }

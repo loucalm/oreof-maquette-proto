@@ -124,7 +124,9 @@ final class RuleSpecType extends AbstractType
         $choices = [];
         foreach ($this->fieldDefs->allOrdered() as $field) {
             if ('number' === $field->getType()) {
-                $choices[$field->getLabel().' ('.$field->getKey().')'] = $field->getKey();
+                // « ECTS (%type%) » : le type n'est connu qu'au niveau de la règle, le gabarit de libellé tombe
+                $label = trim((string) preg_replace('/\s*\(%type%\)/', '', $field->getLabel()));
+                $choices[$label.' ('.$field->getKey().')'] = $field->getKey();
             }
         }
 

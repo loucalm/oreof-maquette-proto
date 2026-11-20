@@ -75,7 +75,7 @@
                             {% if curCat %}<div class="text-[11px] font-semibold uppercase tracking-wide text-secondary-400 mt-2">{{ curCat }}</div>{% endif %}
                         {% endif %}
                         <div class="flex flex-wrap gap-x-2 text-sm py-0.5">
-                            <span class="text-secondary-400">{{ def.label }} :</span>
+                            <span class="text-secondary-400">{{ def.label|replace({'%type%': n.type.label}) }} :</span>
                             <span class="text-secondary-800">{{ m.fieldval(key, def, n) }}</span>
                         </div>
                     {% endif %}
@@ -98,7 +98,7 @@
                     {% for f in shown %}
                         {% set v = pfiche.value(f.key, entry.data) %}
                         <div class="flex flex-wrap gap-x-2 text-sm py-0.5">
-                            <span class="text-secondary-400">{{ f.label }} :</span>
+                            <span class="text-secondary-400">{{ f.label|replace({'%type%': n.type.label}) }} :</span>
                             <span class="text-secondary-800 whitespace-pre-line">{{ v is iterable ? v|join(', ') : v }}</span>
                         </div>
                     {% endfor %}
@@ -116,12 +116,13 @@
     <ul class="tree-list {{ views.0.node.parent ? 'tree-children' }}">
         {% for view in views %}
             {% set n = view.node %}
-            <li data-node-id="{{ n.id }}">
+            <li data-node-id="{{ n.id }}" {{ view.children ? 'class="collapsed"' }}>
                 <div class="tree-row" data-action="click->rotree#select" data-rotree-id-param="{{ n.id }}">
                     <span class="status-dot" data-status="{{ view.status }}" title="{{ view.status }}"></span>
                     <span class="type-badge"><span class="opacity-70">{{ ux_icon(n.type.icon, {class: 'icon'}) }}</span> [{{ n.type.label }}]</span>
                     {% if view.ref %}<span class="tree-ref">{{ view.ref }}</span>{% endif %}
-                    <span class="tree-label">{{ n.label ?: '—' }}</span>
+                    {% set label = n.type.temporel ? node_display_label(n, view.ref) : (n.label ?: n.type.label) %}
+                    <span class="tree-label tree-label-clamp" title="{{ label }}">{{ label }}</span>
                     {% if view.ectsTarget %}<span class="tree-ects {{ view.ectsReached ? 'text-success-600' : 'text-secondary-400' }}">{{ view.totalEcts|round }}/{{ view.ectsTarget }}</span>{% endif %}
                     {% if view.children %}
                         <button type="button" class="tree-chevron" data-action="rotree#toggle" aria-label="{{ 'formation.tree.toggle_aria'|trans({}, 'formation') }}">{{ ux_icon('ph:caret-right', {class: 'icon'}) }}</button>

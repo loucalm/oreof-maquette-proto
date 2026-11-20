@@ -6,11 +6,13 @@ namespace App\Import\V2;
 
 use App\Diplome\Spec\EcType;
 use App\Entity\FicheMatiere;
+use App\Entity\FicheMatiereMutualisation;
 use App\Entity\FieldDef;
 use App\Entity\Formation;
 use App\Entity\Referentiel;
 use App\Entity\TypeDiplome;
 use App\Enum\RefCategory;
+use App\FicheMatiere\EcValueResolver;
 use App\FicheMatiere\FicheMatiereLifecycle;
 use App\Maquette\Doc\MaquetteDoc;
 use App\Maquette\Doc\TreeNode;
@@ -39,8 +41,31 @@ final class V2Importer
     /** @var list<string> */
     private array $report = [];
 
+    /**
+     * Libellés v2 qui désignent une valeur déjà présente sous un autre libellé dans le prototype
+     * (référentiel → libellé v2 normalisé → clé du prototype).
+     */
+    private const ALIASES = [
+        'regimes_inscription' => [
+            'formation continue contrat professionnalisation' => 'FC_PRO',
+            'formation continue en contrat de professionnalisation' => 'FC_PRO',
+        ],
+    ];
+
     /** @var array<string, ?FieldDef> */
     private array $fieldDefs = [];
+
+    /** @var array<string, Referentiel> référentiels lus ou créés pendant l'import (un créé n'est pas encore en base) */
+    private array $refs = [];
+
+    /** Numéro du premier semestre du type de diplôme en cours d'import (LP : 5). */
+    private int $firstSemestre = 1;
+
+    /** Parcours (nid) en cours de remplissage ; null pour une formation sans parcours. */
+    private ?string $currentParcours = null;
+
+    /** @var array<int, list<?string>> id de fiche du prototype → parcours (nid) des EC qui l'utilisent */
+    private array $ficheUses = [];
 
     public function __construct(
         private readonly EntityManagerInterface $em,
@@ -61,6 +86,7 @@ final class V2Importer
     public function import(array $extract): array
     {
         $this->report = [];
+        $this->refs = [];
         foreach ($extract['referentiels'] ?? [] as $key => $labels) {
             $this->addReferentielValues((string) $key, (array) $labels);
         }
@@ -101,7 +127,14 @@ final class V2Importer
             $parcoursList = \array_slice($parcoursList, 0, 1);
             $mono = true;
         }
-        $years = max(1, ...array_map(static fn (array $p) => self::yearSpan($p)[1], $parcoursList ?: [['semestres' => []]]));
+        // semestre n de v2 → année du diplôme, à partir du premier semestre du type (LP : semestre 5 = année 1)
+        $this->firstSemestre = 1;
+        foreach ($structure->levels as $level) {
+            if ('semestre' === $level->typeKey) {
+                $this->firstSemestre = max(1, $level->startAt);
+            }
+        }
+        $years = max(1, ...array_map(fn (array $p) => $this->yearSpan($p)[1], $parcoursList ?: [['semestres' => []]]));
 
         $formation = (new Formation((string) $f['name']))
             ->setTypeDiplome($type)
@@ -133,10 +166,11 @@ final class V2Importer
 
         $natures = $structure->natures;
         $parents = [];
+        $this->ficheUses = [];
         foreach ($parcoursList as $p) {
             $container = null;
             if (!$mono) {
-                [$first, $last] = self::yearSpan($p);
+                [$first, $last] = $this->yearSpan($p);
                 $container = $doc->addNode(null, 'parcours', (string) $p['label']);
                 $container->setAttribute('periodeDebut', $first)->setAttribute('periodeFin', $last);
                 $nids[(int) $p['id']] = $container->nid;
@@ -150,6 +184,11 @@ final class V2Importer
                     $doc->setFormationParam('parcours.'.$entry, $this->resolveAll($data));
                 }
             }
+            $this->currentParcours = $container?->nid;
+            $ordres = array_map(static fn (array $sem) => (int) $sem['ordre'], $p['semestres'] ?? []);
+            if (\count($ordres) !== \count(array_unique($ordres))) {
+                $this->report[] = sprintf('Formation v2 n°%d, parcours « %s » : semestres en double dans v2 (%s), importés tels quels.', $id, $p['label'], implode(', ', $ordres));
+            }
             $this->semestres($doc, $container, $p['semestres'] ?? [], $chain, $natures, $ficheIds);
         }
         foreach ($parents as [$node, $parentId]) {
@@ -157,8 +196,17 @@ final class V2Importer
                 $node->setParcoursParent($doc->node($nids[$parentId]));
             }
         }
+        // une fiche sert un parcours porteur (celui de v2, sinon le premier qui l'utilise) ; les autres parcours qui
+        // l'utilisent la reçoivent par mutualisation, comme une fiche partagée de v2
         foreach ($ficheRows as [$entity, $parcoursId]) {
-            $entity->setParcoursNid(null !== $parcoursId ? ($nids[$parcoursId] ?? null) : null);
+            $used = array_values(array_unique(array_filter($this->ficheUses[$entity->getId()] ?? [], static fn ($nid) => null !== $nid)));
+            $porteur = null !== $parcoursId && isset($nids[$parcoursId]) ? $nids[$parcoursId] : ($used[0] ?? null);
+            $entity->setParcoursNid($porteur);
+            foreach ($used as $nid) {
+                if ($nid !== $porteur) {
+                    $this->em->persist(new FicheMatiereMutualisation($entity, $formation, $nid));
+                }
+            }
         }
 
         foreach ($f['fiche'] ?? [] as $entry => $data) {
@@ -186,7 +234,7 @@ final class V2Importer
         foreach ($semestres as $s) {
             $parent = $container;
             if ($withYears) {
-                $year = (int) ceil(max(1, (int) $s['ordre']) / 2);
+                $year = $this->yearOf((int) $s['ordre']);
                 $years[$year] ??= $doc->addNode($container?->nid, 'annee');
                 $parent = $years[$year];
             }
@@ -206,7 +254,7 @@ final class V2Importer
     {
         // UE à choix : bloc de choix dont les options sont les UE « enfants »
         if ([] !== ($ue['children'] ?? [])) {
-            $bloc = $this->node($doc, $parent, 'bloc_choix', $ue, ['choiceCount' => 1]);
+            $bloc = $this->node($doc, $parent, 'bloc_choix', ['label' => ($ue['label'] ?? '') ?: 'UE à choix'] + $ue, ['choiceCount' => 1]);
             foreach ($ue['children'] as $child) {
                 $this->ue($doc, $bloc, $child, $natures, $ficheIds);
             }
@@ -227,18 +275,27 @@ final class V2Importer
     private function ec(MaquetteDoc $doc, TreeNode $parent, array $ec, array $natures, array $ficheIds): void
     {
         if ([] !== ($ec['children'] ?? [])) {
-            $bloc = $this->node($doc, $parent, 'bloc_choix', $ec, ['choiceCount' => 1]);
+            $bloc = $this->node($doc, $parent, 'bloc_choix', ['label' => ($ec['label'] ?? '') ?: 'EC à choix'] + $ec, ['choiceCount' => 1]);
             foreach ($ec['children'] as $child) {
                 $this->ec($doc, $bloc, $child, $natures, $ficheIds);
             }
 
             return;
         }
+        $ficheId = null !== ($ec['fiche'] ?? null) ? ($ficheIds[(int) $ec['fiche']] ?? null) : null;
+        if (null !== $ficheId) {
+            $this->ficheUses[$ficheId][] = $this->currentParcours;
+        }
         $this->node($doc, $parent, 'ec', $ec, [
             'hours' => $ec['hours'] ?? null,
             'ecType' => $this->value('ecType', $ec['type'] ?? null),
             'natureElement' => self::natureElement($ec['type'] ?? null, $natures),
-            'ficheMatiere' => null !== ($ec['fiche'] ?? null) ? ($ficheIds[(int) $ec['fiche']] ?? null) : null,
+            'ficheMatiere' => $ficheId,
+            // ECTS et heures saisis sur l'EC dans v2 : ce sont eux qui comptent, pas ceux de la fiche (source par défaut)
+            'sources' => null === $ficheId ? null : array_filter([
+                'ects' => null !== ($ec['ects'] ?? null) ? EcValueResolver::SOURCE_EC : null,
+                'hours' => [] !== ($ec['hours'] ?? []) ? EcValueResolver::SOURCE_EC : null,
+            ]),
         ]);
     }
 
@@ -326,12 +383,13 @@ final class V2Importer
      */
     private function addReferentielValues(string $key, array $labels): array
     {
-        $ref = $this->referentiels->findOneByKey($key);
+        $ref = $this->refs[$key] ??= $this->referentiels->findOneByKey($key);
         if (null === $ref) {
             $ref = (new Referentiel($key, ucfirst(str_replace('_', ' ', $key))))
                 ->setCategory(RefCategory::Entite)
                 ->setEntiteCible('ORéOF v2 (import)');
             $this->em->persist($ref);
+            $this->refs[$key] = $ref;
             $this->report[] = sprintf('Référentiel « %s » créé.', $key);
         }
         $values = $ref->getValues();
@@ -348,6 +406,10 @@ final class V2Importer
                 continue;
             }
             $n = self::normalize($label);
+            $alias = self::ALIASES[$key][$n] ?? null;
+            if (null !== $alias && \array_key_exists($alias, $values)) {
+                $index[$n] = $alias;
+            }
             if (!isset($index[$n])) {
                 $values[$label] = $label;
                 $index[$n] = $label;
@@ -391,17 +453,23 @@ final class V2Importer
     }
 
     /**
-     * Première et dernière année couvertes par les semestres d'un parcours (semestre n → année ⌈n/2⌉).
+     * Première et dernière année couvertes par les semestres d'un parcours.
      *
      * @param array<string, mixed> $parcours
      *
      * @return array{0: int, 1: int}
      */
-    private static function yearSpan(array $parcours): array
+    private function yearSpan(array $parcours): array
     {
-        $years = array_map(static fn (array $s) => (int) ceil(max(1, (int) $s['ordre']) / 2), $parcours['semestres'] ?? []);
+        $years = array_map(fn (array $s) => $this->yearOf((int) $s['ordre']), $parcours['semestres'] ?? []);
 
         return [] === $years ? [1, 1] : [min($years), max($years)];
+    }
+
+    /** Année du diplôme d'un semestre v2 : deux semestres par année, à compter du premier semestre du type. */
+    private function yearOf(int $semestre): int
+    {
+        return (int) ceil(max(1, $semestre - $this->firstSemestre + 1) / 2);
     }
 
     private static function normalize(string $s): string

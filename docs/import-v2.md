@@ -91,10 +91,11 @@ téléphones des textes libres masqués. Relisez tout de même le fichier avant 
 | formation (mention, sigle, niveaux, RNCP, objectifs…)        | fiche formation (Organisation, Présentation)                |
 | « Parcours par défaut » seul                                 | formation sans parcours, fiche du parcours par défaut       |
 | parcours (lieu, régimes, stage, débouchés, codes ROME…)      | parcours (nœud + fiche), ramification (`parcours_parent_id`) |
-| semestres numérotés                                          | années (semestre n → année ⌈n/2⌉) et semestres             |
+| semestres numérotés                                          | années et semestres, à compter du 1er semestre du type (LP : S5 = année 1) ; un parcours qui commence plus tard garde ses numéros (S3 → « Année 2, Semestre 3 ») |
 | semestre / UE « raccrochés » (mutualisés)                    | contenu de la source recopié                                |
 | UE, EC (libellé, code Apogée, ECTS, heures, type, nature)    | nœuds UE / EC                                               |
-| UE ou EC à choix (enfants)                                   | bloc de choix                                               |
+| UE ou EC à choix (enfants, même sans semestre ou UE dans v2) | bloc de choix (« UE à choix » / « EC à choix » sans libellé) |
+| textes riches (HTML de l'éditeur v2)                         | texte simple (paragraphes, listes « - », entités décodées)  |
 | fiches matière des EC                                        | fiches portées par la formation importée                    |
 | domaines, mentions, composantes, villes, types d'UE/EC…      | valeurs ajoutées aux référentiels (rien n'est retiré)       |
 
@@ -102,7 +103,8 @@ Pas encore repris : MCCC, mutualisations (au sens partage entre formations), com
 workflows et validations, historique, commentaires, utilisateurs et droits.
 
 Une formation v2 peut sortir des bornes de son type de diplôme dans le prototype : elle est importée telle quelle
-et les écarts apparaissent dans « Vérifier la saisie ».
+et les écarts apparaissent dans « Vérifier la saisie ». Les anomalies de v2 repérées (semestres en double dans un
+parcours…) sont signalées dans le compte rendu de la commande.
 
 ## Code
 

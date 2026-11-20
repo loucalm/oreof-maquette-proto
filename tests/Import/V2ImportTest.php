@@ -11,6 +11,10 @@ use App\Import\V2\V2ExtractFile;
 use App\Import\V2\V2Importer;
 use App\Import\V2\V2Reader;
 use App\Maquette\Doc\TreeNode;
+use App\Maquette\MaquetteBuilder;
+use App\FicheMatiere\EcValueResolver;
+use App\FicheMatiere\FicheMatiereAccess;
+use App\FicheMatiere\FicheRelation;
 use App\Maquette\Maquette;
 use App\Tests\Support\ResetsDatabase;
 use Doctrine\DBAL\Connection;
@@ -46,14 +50,15 @@ final class V2ImportTest extends KernelTestCase
         self::assertSame('Bac+3', $formation['fiche']['organisation']['niveauSortie']);
         $parcours = $formation['parcours'][0];
         self::assertTrue($parcours['defaut']);
-        self::assertSame(['Formation Initiale', 'Formation Continue'], $parcours['fiche']['organisation']['regimes']);
+        self::assertSame(['Formation Initiale', 'Formation Continue', 'Formation Continue Contrat Professionnalisation'], $parcours['fiche']['organisation']['regimes']);
         self::assertSame([1, 2], array_column($parcours['semestres'], 'ordre'));
         // S2 « raccroché » : ses UE sont celles du semestre source
         self::assertSame('UE mutualisée', $parcours['semestres'][1]['ues'][0]['label']);
         // UE à choix et ses options, EC avec heures et fiche
         $choix = $parcours['semestres'][0]['ues'][1];
         self::assertSame('À choix restreint', $choix['nature']);
-        self::assertSame(['Option A', 'Option B'], array_column($choix['children'], 'label'));
+        self::assertSame(['Option A', 'Option B'], array_column($choix['children'], 'label'), 'Une option sans semestre reste rattachée à son UE parente.');
+        self::assertSame(['Anglais', 'Espagnol'], array_column($parcours['semestres'][0]['ues'][0]['ecs'][1]['children'], 'label'), 'Les options d’un EC à choix sans UE sont reprises.');
         $ec = $parcours['semestres'][0]['ues'][0]['ecs'][0];
         self::assertSame(['pres' => ['cm' => 12, 'td' => 6], 'te' => 4], $ec['hours']);
         self::assertSame(500, $ec['fiche']);
@@ -70,18 +75,23 @@ final class V2ImportTest extends KernelTestCase
         $doc = static::getContainer()->get(Maquette::class)->open($mono);
         $semestres = array_values(array_filter($doc->allNodes(), static fn (TreeNode $n) => 'semestre' === $n->typeKey));
         self::assertCount(2, $semestres);
-        $bloc = array_values(array_filter($doc->allNodes(), static fn (TreeNode $n) => 'bloc_choix' === $n->typeKey))[0];
+        $bloc = array_values(array_filter($doc->allNodes(), static fn (TreeNode $n) => 'bloc_choix' === $n->typeKey && 'UE à choix' === $n->getLabel()))[0];
         self::assertSame(['Option A', 'Option B'], array_map(static fn (TreeNode $n) => $n->getLabel(), $bloc->getChildren()));
+        self::assertSame('UE à choix', $bloc->getLabel(), 'Libellé par défaut d’un bloc sans libellé v2.');
+        $ecBloc = array_values(array_filter($doc->allNodes(), static fn (TreeNode $n) => 'bloc_choix' === $n->typeKey && 'Langue au choix' === $n->getLabel()))[0];
+        self::assertSame(['Anglais', 'Espagnol'], array_map(static fn (TreeNode $n) => $n->getLabel(), $ecBloc->getChildren()));
         self::assertSame('choix_restreint', $bloc->getAttribute('nature'), 'Nature v2 rangée sur la clé du référentiel nature_elp.');
 
         $ec = array_values(array_filter($doc->allNodes(), static fn (TreeNode $n) => 'ec' === $n->typeKey && 'Lire une carte' === $n->getLabel()))[0];
         self::assertSame(3, $ec->getAttribute('ects'));
+        // ECTS saisis sur l'EC dans v2 (3), pas ceux de sa fiche (5)
+        self::assertSame(3, static::getContainer()->get(EcValueResolver::class)->value($ec, 'ects'));
         $fiche = $this->em->getRepository(FicheMatiere::class)->find($ec->getAttribute('ficheMatiere'));
         self::assertSame('Cartographie', $fiche->getLibelle());
         self::assertSame($mono->getId(), $fiche->getFormation()->getId());
 
         // fiche du parcours par défaut : libellés v2 rangés sur les clés du référentiel (« Formation Initiale » → FI)
-        self::assertSame(['FI', 'FC'], $mono->getParametre('parcours.organisation')['regimes']);
+        self::assertSame(['FI', 'FC', 'FC_PRO'], $mono->getParametre('parcours.organisation')['regimes'], 'Libellé v2 différent rapproché de la valeur existante.');
         self::assertSame('Ada Lovelace', $mono->getParametre('organisation')['respMention']);
         $villes = $this->em->getRepository(Referentiel::class)->findOneBy(['key' => 'villes'])->getValues();
         self::assertArrayHasKey('Troyes', $villes, 'Valeur v2 absente ajoutée au référentiel.');
@@ -91,6 +101,40 @@ final class V2ImportTest extends KernelTestCase
         $parcours = static::getContainer()->get(Maquette::class)->open($multi)->parcoursNodes();
         self::assertSame(['Tronc commun', 'Spécialité'], array_map(static fn (TreeNode $n) => $n->getLabel(), $parcours));
         self::assertSame($parcours[0]->nid, $parcours[1]->getParcoursParent()?->nid);
+        // la fiche du tronc commun reste utilisable dans la spécialité
+        $multiDoc = static::getContainer()->get(Maquette::class)->open($multi);
+        $access = static::getContainer()->get(FicheMatiereAccess::class);
+        $fiches = static::getContainer()->get(EcValueResolver::class);
+        foreach (array_filter($multiDoc->allNodes(), static fn (TreeNode $n) => 'ec' === $n->typeKey) as $historio) {
+            self::assertNotSame(FicheRelation::Interdite, $access->relation($fiches->fiche($historio), $historio), $historio->getLabel());
+        }
+        // le parcours qui commence au semestre 3 garde ses numéros v2 : année 2, semestre 3
+        self::assertSame(2, $parcours[1]->getPeriodeDebut());
+        $view = static::getContainer()->get(MaquetteBuilder::class)->buildSubtree($parcours[1]);
+        self::assertSame('2', $view->children[0]->ref);
+        self::assertSame('3', $view->children[0]->children[0]->ref);
+    }
+
+    public function testEctsEnteredOnAUnitCountAsIsAndTextsReadAsParagraphs(): void
+    {
+        $this->importer()->import((new V2Reader(self::v2()))->extract([10]));
+        $formation = $this->imported(10);
+
+        // UE « Bases » : 6 ECTS saisis sur l'UE, son EC n'en porte que 3 ; le semestre compte les ECTS des UE
+        $views = static::getContainer()->get(MaquetteBuilder::class)->build($formation);
+        $semestre = $views[0]->children[0];
+        self::assertSame(6.0, $semestre->children[0]->totalEcts);
+        self::assertSame(9.0, $semestre->totalEcts, '6 (Bases) + 3 (UE à choix : la plus lourde de ses options).');
+
+        $client = static::getContainer()->get('test.client');
+        $crawler = $client->request('GET', sprintf('/formations/%d/voir', $formation->getId()));
+        self::assertTrue($client->getResponse()->isSuccessful());
+        self::assertCount(0, $crawler->filter('.tree-label:contains("—")'), 'Années et semestres ont leur libellé par défaut.');
+        foreach (['voir', 'verifier'] as $page) {
+            $client->request('GET', sprintf('/formations/%d/%s', $formation->getId(), $page));
+            self::assertStringNotContainsString('%type%', (string) $client->getResponse()->getContent(), $page);
+        }
+        self::assertGreaterThan(0, $crawler->filter('.tree-label:contains("Semestre 1")')->count());
     }
 
     public function testImportingAgainReplacesThePreviousImport(): void
@@ -138,15 +182,38 @@ final class V2ImportTest extends KernelTestCase
 
     public function testCommandWithoutSourceExplainsHowToProceed(): void
     {
+        if ('' !== (string) ($_SERVER['OREOF_V2_DATABASE_URL'] ?? '')) {
+            self::markTestSkipped('OREOF_V2_DATABASE_URL est réglée sur ce poste.');
+        }
         $tester = new CommandTester((new Application(self::$kernel))->find('app:import-v2'));
 
         $status = $tester->execute([]);
 
-        if ('' !== (string) ($_SERVER['OREOF_V2_DATABASE_URL'] ?? '')) {
-            self::markTestSkipped('OREOF_V2_DATABASE_URL est réglée sur ce poste.');
-        }
         self::assertSame(Command::INVALID, $status);
         self::assertStringContainsString('--from=data/import-v2/exemple.json', preg_replace('/\s+/', ' ', $tester->getDisplay()));
+    }
+
+    public function testCommandRefusesBadInputWithAClearMessage(): void
+    {
+        $tester = new CommandTester((new Application(self::$kernel))->find('app:import-v2'));
+
+        self::assertSame(Command::INVALID, $tester->execute(['--formation' => ['abc'], '--source' => 'sqlite:///:memory:']));
+        self::assertStringContainsString('--formation attend', preg_replace('/\s+/', ' ', $tester->getDisplay()));
+
+        self::assertSame(Command::FAILURE, $tester->execute(['--from' => 'data/import-v2/absent.json']));
+        self::assertStringContainsString('introuvable', $tester->getDisplay());
+
+        // base joignable mais sans les tables v2
+        self::assertSame(Command::FAILURE, $tester->execute(['--source' => 'sqlite:///:memory:', '--list' => true]));
+        self::assertStringContainsString('Base ORéOF v2 injoignable ou inattendue', preg_replace('/\s+/', ' ', $tester->getDisplay()));
+    }
+
+    public function testHtmlFromV2BecomesPlainText(): void
+    {
+        self::assertSame("La licence est généraliste.\nElle forme :\n- des géographes\n- des urbanistes", V2Reader::plainText(
+            '<div><!--block-->La licence est <strong>généraliste</strong>.&nbsp;</div><div><!--block-->Elle forme :<ul><li>des géographes</li><li>des urbanistes</li></ul></div>',
+        ));
+        self::assertSame('Texte & propre', V2Reader::plainText('Texte &amp; propre'));
     }
 
     public function testVersionedExampleIsAnonymizedAndImportable(): void
@@ -211,19 +278,24 @@ final class V2ImportTest extends KernelTestCase
 
         // formation sans parcours (« Parcours par défaut »)
         $insert('formation', ['id' => 10, 'type_diplome_id' => 1, 'mention_id' => 1, 'domaine_id' => 1, 'composante_porteuse_id' => 1, 'sigle' => 'GEO', 'niveau_entree' => 14, 'niveau_sortie' => 16, 'in_rncp' => 1, 'code_rncp' => 'RNCP1', 'regime_inscription' => '["Formation Initiale"]', 'responsable_mention_id' => 7, 'objectifs_formation' => 'Former des géographes.']);
-        $insert('parcours', ['id' => 100, 'formation_id' => 10, 'libelle' => 'Parcours par défaut', 'ville_id' => 1, 'regime_inscription' => '{"0":"Formation Initiale","2":"Formation Continue"}', 'modalites_enseignement' => 0, 'has_stage' => 1, 'stage_text' => 'Stage de 8 semaines', 'coord_secretariat' => 'Secrétariat : scolarite@univ.fr', 'debouches' => 'Écrire à scolarite@univ.fr', 'codes_rome' => '[{"code":"K1802 - Développement local"}]']);
+        $insert('parcours', ['id' => 100, 'formation_id' => 10, 'libelle' => 'Parcours par défaut', 'ville_id' => 1, 'regime_inscription' => '{"0":"Formation Initiale","2":"Formation Continue","3":"Formation Continue Contrat Professionnalisation"}', 'modalites_enseignement' => 0, 'has_stage' => 1, 'stage_text' => 'Stage de 8 semaines', 'coord_secretariat' => 'Secrétariat : scolarite@univ.fr', 'debouches' => 'Écrire à scolarite@univ.fr', 'codes_rome' => '[{"code":"K1802 - Développement local"}]']);
         $insert('semestre', ['id' => 1000, 'ordre' => 1]);
         $insert('semestre', ['id' => 1001, 'ordre' => 2, 'semestre_raccroche_id' => 1002]);
         $insert('semestre', ['id' => 1002, 'ordre' => 2]);
         $insert('semestre_parcours', ['id' => 1, 'semestre_id' => 1000, 'parcours_id' => 100, 'ordre' => 1]);
         $insert('semestre_parcours', ['id' => 2, 'semestre_id' => 1001, 'parcours_id' => 100, 'ordre' => 2]);
         $insert('ue', ['id' => 1, 'semestre_id' => 1000, 'type_ue_id' => 1, 'nature_ue_ec_id' => 1, 'ordre' => 1, 'libelle' => 'Bases', 'ects' => 6]);
-        $insert('ue', ['id' => 2, 'semestre_id' => 1000, 'nature_ue_ec_id' => 4, 'ordre' => 2, 'libelle' => 'Options', 'ects' => 3]);
+        // UE à choix sans libellé ; une option sans semestre (comme dans v2)
+        $insert('ue', ['id' => 2, 'semestre_id' => 1000, 'nature_ue_ec_id' => 4, 'ordre' => 2, 'ects' => 3]);
         $insert('ue', ['id' => 3, 'semestre_id' => 1000, 'ue_parent_id' => 2, 'ordre' => 1, 'libelle' => 'Option A', 'ects' => 3]);
-        $insert('ue', ['id' => 4, 'semestre_id' => 1000, 'ue_parent_id' => 2, 'ordre' => 2, 'libelle' => 'Option B', 'ects' => 3]);
+        $insert('ue', ['id' => 4, 'semestre_id' => null, 'ue_parent_id' => 2, 'ordre' => 2, 'libelle' => 'Option B', 'ects' => 3]);
         $insert('ue', ['id' => 5, 'semestre_id' => 1002, 'ordre' => 1, 'libelle' => 'UE mutualisée', 'ects' => 30]);
         $insert('element_constitutif', ['id' => 1, 'ue_id' => 1, 'type_ec_id' => 1, 'nature_ue_ec_id' => 8, 'fiche_matiere_id' => 500, 'ordre' => 1, 'libelle' => 'Lire une carte', 'ects' => 3, 'volume_cm_presentiel' => 12, 'volume_td_presentiel' => 6, 'volume_tp_presentiel' => 0, 'volume_te' => 4]);
-        $insert('fiche_matiere', ['id' => 500, 'parcours_id' => 100, 'hors_diplome' => 0, 'libelle' => 'Cartographie', 'responsable_fiche_matiere_id' => 7, 'ects' => 3]);
+        // EC à choix dont les options n'ont pas d'UE (comme dans v2)
+        $insert('element_constitutif', ['id' => 2, 'ue_id' => 1, 'ordre' => 2, 'libelle' => 'Langue au choix']);
+        $insert('element_constitutif', ['id' => 3, 'ec_parent_id' => 2, 'ordre' => 1, 'libelle' => 'Anglais']);
+        $insert('element_constitutif', ['id' => 4, 'ec_parent_id' => 2, 'ordre' => 2, 'libelle' => 'Espagnol']);
+        $insert('fiche_matiere', ['id' => 500, 'parcours_id' => 100, 'hors_diplome' => 0, 'libelle' => 'Cartographie', 'responsable_fiche_matiere_id' => 7, 'ects' => 5]);
 
         // formation à deux parcours, le second rattaché au premier (ramification)
         $insert('formation', ['id' => 30, 'type_diplome_id' => 1, 'mention_texte' => 'Histoire', 'domaine_id' => 1]);
@@ -233,6 +305,12 @@ final class V2ImportTest extends KernelTestCase
         $insert('semestre', ['id' => 3001, 'ordre' => 3]);
         $insert('semestre_parcours', ['id' => 3, 'semestre_id' => 3000, 'parcours_id' => 300, 'ordre' => 1]);
         $insert('semestre_parcours', ['id' => 4, 'semestre_id' => 3001, 'parcours_id' => 301, 'ordre' => 1]);
+        // une fiche portée par le tronc commun, utilisée aussi par la spécialité (fiche partagée de v2)
+        $insert('ue', ['id' => 30, 'semestre_id' => 3000, 'ordre' => 1, 'libelle' => 'Méthodes', 'ects' => 6]);
+        $insert('ue', ['id' => 31, 'semestre_id' => 3001, 'ordre' => 1, 'libelle' => 'Méthodes avancées', 'ects' => 6]);
+        $insert('element_constitutif', ['id' => 30, 'ue_id' => 30, 'fiche_matiere_id' => 600, 'ordre' => 1, 'libelle' => 'Historiographie', 'ects' => 6]);
+        $insert('element_constitutif', ['id' => 31, 'ue_id' => 31, 'fiche_matiere_id' => 600, 'ordre' => 1, 'libelle' => 'Historiographie 2', 'ects' => 6]);
+        $insert('fiche_matiere', ['id' => 600, 'parcours_id' => 300, 'hors_diplome' => 0, 'libelle' => 'Historiographie']);
 
         return $db;
     }

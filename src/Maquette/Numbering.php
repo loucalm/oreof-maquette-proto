@@ -23,24 +23,41 @@ final class Numbering
     /**
      * Renseigne NodeView::ref pour tout l'arbre.
      *
+     * Chaque parcours numérote son contenu pour lui-même, à partir de sa période de début : un parcours qui commence
+     * en 2e année (`periodeDebut` = 2) a une « Année 2 » et, avec 2 semestres par année, des semestres 3, 4…
+     *
      * @param list<NodeView>     $roots
-     * @param array<string, int> $startAt typeKey → premier indice (défaut 1 ; LP : semestre à 5)
+     * @param array<string, int> $startAt   typeKey → premier indice (défaut 1 ; LP : semestre à 5)
+     * @param array<string, int> $perPeriod typeKey → nombre de nœuds de ce type par période (1 pour le premier niveau,
+     *                                      2 pour les semestres d'une année…), pour décaler un parcours qui commence plus tard
      */
-    public function apply(array $roots, array $startAt = []): void
+    public function apply(array $roots, array $startAt = [], array $perPeriod = []): void
     {
         /** @var array<string, int> $counters clé "refParent|typeKey" → compteur */
         $counters = [];
-        $this->walk($roots, '', $counters, $startAt);
+        $this->walk($roots, '', $counters, $startAt, $perPeriod);
     }
 
     /**
      * @param list<NodeView>       $views
      * @param array<string, int>   $counters
      * @param array<string, int>   $startAt
+     * @param array<string, int>   $perPeriod
      */
-    private function walk(array $views, string $parentRef, array &$counters, array $startAt): void
+    private function walk(array $views, string $parentRef, array &$counters, array $startAt, array $perPeriod): void
     {
         foreach ($views as $view) {
+            if ($view->node->isParcours()) {
+                // compteurs propres au parcours, décalés de sa période de début
+                $offset = $view->node->getPeriodeDebut() - 1;
+                $shifted = $startAt;
+                foreach ($perPeriod as $key => $count) {
+                    $shifted[$key] = ($startAt[$key] ?? 1) + $offset * $count;
+                }
+                $own = [];
+                $this->walk($view->children, $parentRef, $own, $shifted, $perPeriod);
+                continue;
+            }
             $type = $view->node->getType();
             if ($type->isNumbered() && $type->isGlobalNumbering()) {
                 $key = '__global__|'.$type->getKey();
@@ -56,7 +73,7 @@ final class Numbering
             } else {
                 $childRef = $parentRef;
             }
-            $this->walk($view->children, $childRef, $counters, $startAt);
+            $this->walk($view->children, $childRef, $counters, $startAt, $perPeriod);
         }
     }
 

@@ -47,6 +47,11 @@ final class PrototypeReviewTest extends WebTestCase
 
         self::assertCount(1, $crawler->filter('[data-back-to-canvas] a[href="/diplomes/nouveau/formulaires"]'));
         self::assertCount(1, $crawler->filter('a[href="/diplomes/nouveau/formulaires"]:contains("Annuler")'), '« Annuler » ramène au canevas, pas à la liste des types.');
+
+        // ouvert ensuite depuis l'administration : plus de retour au canevas
+        $this->client->request('GET', '/node-types');
+        $crawler = $this->client->request('GET', sprintf('/node-types/%d/edit', $variant->getId()));
+        self::assertCount(0, $crawler->filter('[data-back-to-canvas]'));
     }
 
     public function testDiplomaListOffersToResumeOrDiscardTheCreationInProgress(): void

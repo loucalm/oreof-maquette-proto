@@ -7,6 +7,7 @@ namespace App\Command;
 use App\Import\V2\V2ExtractFile;
 use App\Import\V2\V2Importer;
 use App\Import\V2\V2Reader;
+use Doctrine\DBAL\Exception as DbalException;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
@@ -44,6 +45,32 @@ final class ImportV2Command
         #[Option('Enregistre l’extrait JSON anonymisé dans ce fichier au lieu d’importer')] ?string $save = null,
         #[Option('Importe un extrait JSON enregistré (pas besoin de la base v2)')] ?string $from = null,
     ): int {
+        $ids = [];
+        foreach ($formation as $id) {
+            if (1 !== preg_match('/^\d+$/', (string) $id)) {
+                $io->error(sprintf('--formation attend l’identifiant v2 d’une formation (un nombre), pas « %s ». Voir --list.', $id));
+
+                return Command::INVALID;
+            }
+            $ids[] = (int) $id;
+        }
+
+        try {
+            return $this->run($io, $source, $list, $ids, $save, $from);
+        } catch (\InvalidArgumentException $e) {
+            $io->error($e->getMessage());
+        } catch (DbalException $e) {
+            $io->error(sprintf('Base ORéOF v2 injoignable ou inattendue : %s. Vérifiez OREOF_V2_DATABASE_URL (ou --source) et l’accès réseau (docs/import-v2.md).', $e->getMessage()));
+        } catch (\JsonException $e) {
+            $io->error(sprintf('Extrait JSON illisible : %s', $e->getMessage()));
+        }
+
+        return Command::FAILURE;
+    }
+
+    /** @param list<int> $formation */
+    private function run(SymfonyStyle $io, ?string $source, string|bool|null $list, array $formation, ?string $save, ?string $from): int
+    {
         if (null !== $from) {
             return $this->import($io, V2ExtractFile::load($this->path($from)), $from);
         }
@@ -63,7 +90,7 @@ final class ImportV2Command
             return Command::SUCCESS;
         }
 
-        $extract = $reader->extract(array_map('intval', $formation));
+        $extract = $reader->extract($formation);
         if (null !== $save) {
             V2ExtractFile::save($extract, $this->path($save));
             $io->success(sprintf('Extrait anonymisé enregistré : %s (%d formation(s)). Rejouez-le avec --from=%s', $save, \count($extract['formations']), $save));

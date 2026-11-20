@@ -10,7 +10,8 @@
         {% set hasChildren = view.children is not empty %}
         {% set canHaveChildren = types_allowed_for(node) is not empty %}
         {% set lockedDel = node.isLocked('delete') %}
-        <li data-node-id="{{ node.id }}" data-node-type="{{ node.type.key }}" data-node-host-type="{{ node.getEffectiveHostTypeKey() }}"
+        {# replié par défaut : tree_controller.js rouvre les branches ouvertes par l'utilisateur et le chemin du nœud actif #}
+        <li data-node-id="{{ node.id }}" data-node-type="{{ node.type.key }}" data-node-host-type="{{ node.getEffectiveHostTypeKey() }}" {{ hasChildren ? 'class="collapsed"' }}
             {{ lockedDel ? 'data-locked="1"' }} {{ node.isLocked('move') ? 'data-locked-move="1"' }} {{ node.isLocked('add') ? 'data-locked-add="1"' }}>
             <div class="tree-row {{ isChoice ? 'tree-row--choice' }} {{ parentIsChoice ? 'tree-row--choice-alt' }} {{ focus and focus == node.id ~ '' ? 'is-active' }}">
                 <span class="drag-handle" title="{{ 'formation.tree.drag_title'|trans({}, 'formation') }}">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>
@@ -19,8 +20,9 @@
                 {% if lockedDel %}<span class="tree-lock" title="{{ 'formation.tree.locked_title'|trans({}, 'formation') }}">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }}</span>{% endif %}
                 <span class="type-badge"><span class="opacity-70">{{ ux_icon(node.type.icon, {class: 'icon'}) }}</span> [{{ node.type.label }}]</span>
                 {% if view.ref %}<span class="tree-ref" title="{{ 'formation.tree.ref_title'|trans({}, 'formation') }}">{{ view.ref }}</span>{% endif %}
+                {% set label = node.type.temporel ? node_display_label(node, view.ref) : (node.label ?: '—') %}
                 <a href="{{ node_url(node) }}" data-turbo-frame="node-panel"
-                   class="tree-label">{{ node.type.temporel ? node_display_label(node, view.ref) : (node.label ?: '—') }}</a>
+                   class="tree-label" title="{{ label }}">{{ label }}</a>
                 {% if isChoice %}
                     <span class="choice-count" title="{{ 'formation.tree.choice_count_title'|trans({}, 'formation') }}">{{ 'formation.tree.choice_count'|trans({'%chosen%': node.getAttribute('choiceCount') ?: '?', '%total%': view.children|length}, 'formation') }}</span>
                 {% elseif parentIsChoice %}

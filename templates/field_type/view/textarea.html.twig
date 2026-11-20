@@ -1,1 +1,21 @@
-<span class="whitespace-pre-line">{{ value }}</span>
+{# Texte long en lecture : une ligne = un paragraphe, les lignes « - … » consécutives = une liste à puces ;
+   largeur limitée pour rester lisible. #}
+{% if value is iterable %}
+    <span class="whitespace-pre-line">{{ value|join("\n") }}</span>
+{% else %}
+    {% set items = [] %}
+    <div class="max-w-[75ch] space-y-2 leading-relaxed">
+        {% for line in (value ~ '')|split("\n")|merge(['']) %}
+            {% set t = line|trim %}
+            {% if t starts with '- ' or t starts with '• ' %}
+                {% set items = items|merge([t|slice(2)|trim]) %}
+            {% else %}
+                {% if items is not empty %}
+                    <ul class="list-disc space-y-0.5 pl-5">{% for item in items %}<li>{{ item }}</li>{% endfor %}</ul>
+                    {% set items = [] %}
+                {% endif %}
+                {% if t is not same as('') %}<p>{{ t }}</p>{% endif %}
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endif %}

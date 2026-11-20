@@ -14,7 +14,7 @@
         <title>{% block title %}{{ header_title is defined ? header_title|striptags : 'layout.default_title'|trans({}, 'layout') }}{% endblock %} - ORéOF</title>
         <link rel="icon" type="image/svg+xml" href="{{ asset('images/oreof-logo.svg') }}">
         {# Tailwind v4 compilé dans le navigateur (prototype : pas de build CSS). Le thème v2 est inséré tel quel. #}
-        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.5"></script>
         <style type="text/tailwindcss">{{ source('_layout/_tailwind.css') }}</style>
         {% block stylesheets %}{% endblock %}
         {% block javascripts %}

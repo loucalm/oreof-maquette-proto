@@ -32,7 +32,7 @@ final class MaquetteBuilder
     {
         $roots = $this->maquette->open($formation)->pedagogicalRoots();
         $views = array_map(fn (TreeNode $n) => $this->view($n), $roots);
-        $this->numbering->apply($views, $this->startAt($formation));
+        $this->numbering->apply($views, $this->startAt($formation), $this->perPeriod($formation));
 
         return $views;
     }
@@ -41,7 +41,7 @@ final class MaquetteBuilder
     {
         $view = $this->view($root);
         $formation = $root->getFormation();
-        $this->numbering->apply([$view], null === $formation ? [] : $this->startAt($formation));
+        $this->numbering->apply([$view], null === $formation ? [] : $this->startAt($formation), null === $formation ? [] : $this->perPeriod($formation));
 
         return $view;
     }
@@ -59,6 +59,29 @@ final class MaquetteBuilder
         }
 
         return $startAt;
+    }
+
+    /**
+     * Nœuds de chaque niveau par période (nœud du premier niveau) : 1 pour le premier niveau, puis le produit des
+     * nombres exacts par parent (2 semestres par année…). S'arrête au premier niveau sans nombre exact.
+     *
+     * @return array<string, int>
+     */
+    private function perPeriod(Formation $formation): array
+    {
+        $out = [];
+        $factor = 1;
+        foreach ($this->typeDiplomes->configFor($formation)?->structure->levels ?? [] as $i => $level) {
+            if ($i > 0) {
+                if (null === $level->count || !$level->count->isExact() || null === $level->count->min) {
+                    break;
+                }
+                $factor *= max(1, $level->count->min);
+            }
+            $out[$level->typeKey] = $factor;
+        }
+
+        return $out;
     }
 
     /**
@@ -119,7 +142,9 @@ final class MaquetteBuilder
             $childEcts = array_sum(array_map(static fn (NodeView $c) => $c->totalEcts, $children));
 
             $view->totalHours = $children === [] ? $ownHours : $childHours + $ownHours;
-            $view->totalEcts = $children === [] ? $ownEcts : $childEcts;
+            // ECTS saisis à ce niveau (UE d'un BUT, dont les EC n'apportent qu'un coefficient) : ils comptent tels quels ;
+            // sinon, la somme des enfants
+            $view->totalEcts = $children === [] || $ownEcts > 0 ? $ownEcts : $childEcts;
         }
 
         // --- statut ---

@@ -409,19 +409,23 @@ select.fld { font-weight: 700; }
     font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     flex: 1 1 auto; min-width: 0;
 }
+/* fiche descriptive (lecture) : libellé sur deux lignes au plus plutôt que coupé court */
+.tree-label.tree-label-clamp { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; }
 /* onglets de section (paramètres, BCC) : nom complet, retour à la ligne si besoin */
 .tree-label.tree-label-full { max-width: none; overflow: visible; text-overflow: clip; white-space: normal; }
 .tree-label:hover { text-decoration: underline; }
 .tree-ects { font-size: 11px; margin-left: auto; white-space: nowrap; flex: 0 0 auto; }
 .tree-chevron {
-    margin-left: auto; width: 18px; height: 18px; display: grid; place-items: center;
-    color: #9aa1ac; font-size: 13px; border-radius: 6px; background: none; border: 0; cursor: pointer;
-    transition: transform .15s;
+    margin-left: auto; width: 26px; height: 26px; display: grid; place-items: center; flex: 0 0 auto;
+    color: var(--sec-600); font-size: 15px; border-radius: 6px; background: var(--sec-50, #f8fafc);
+    border: 1px solid var(--sec-200, #e2e8f0); cursor: pointer;
+    transition: transform .15s, background-color .15s;
 }
-.tree-chevron:hover { background: #e6e8eb; }
+.tree-chevron .icon { width: 15px; height: 15px; }
+.tree-chevron:hover { background: var(--sec-100, #e6e8eb); color: var(--sec-800); }
 li:not(.collapsed) > .tree-row > .tree-chevron { transform: rotate(90deg); }
 .tree-ects + .tree-chevron { margin-left: 6px; }
-.tree-chevron-spacer { width: 18px; margin-left: auto; flex: 0 0 auto; }
+.tree-chevron-spacer { width: 26px; margin-left: auto; flex: 0 0 auto; }
 .tree-ects + .tree-chevron-spacer { margin-left: 6px; }
 
 /* ─── référentiel de compétences (BCC) ─── */
@@ -615,3 +619,12 @@ dialog.help-drawer:modal {
 .fld.fld-sm.w-full { width: 100%; }
 .fld.fld-sm.w-14 { width: 3.5rem; }
 .fld.fld-sm.w-20 { width: 5rem; }
+
+/* Topbar < md : navigation dépliée par le bouton « Menu » (topbar_controller.js), en liste verticale.
+   Hors couche Tailwind, pour l'emporter sur l'utilitaire `hidden` du conteneur. */
+@media (max-width: 47.999rem) {
+    .topbar-nav.is-open .topbar-menu { display: flex; flex-direction: column; align-items: stretch; height: auto; padding: .5rem 0; }
+    .topbar-nav.is-open .topbar-menu > div { height: auto; flex-direction: column; align-items: stretch; }
+    .topbar-nav.is-open .topbar-menu [data-navbar-dropdown-target="content"] { position: static; width: auto; padding: 0 0 0 1rem; }
+    .topbar-nav.is-open .topbar-menu [data-navbar-dropdown-target="content"] > div { border: 0; box-shadow: none; padding: 0; }
+}

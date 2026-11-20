@@ -15,6 +15,7 @@ layout:
   help_fake: Aide (fictif)
   nav:
     dashboard: Tableau de bord
+    menu: Menu
     offer: Offre de formation
     steering: Pilotage
     councils: Conseils

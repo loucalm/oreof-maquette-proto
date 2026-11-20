@@ -85,7 +85,7 @@ final class Completion
                 ? AttributeCatalog::hoursProvided($v)
                 : !($v === null || $v === '' || $v === []);
             if (!$provided) {
-                $out[] = ['key' => $key, 'label' => mb_strtolower($def['label']), 'tab' => $def['domain']];
+                $out[] = ['key' => $key, 'label' => self::chipLabel($def['label'], $node), 'tab' => $def['domain']];
             } elseif ($key === 'mccc' && !$this->mcccTypeAllowed($node, $v)) {
                 $out[] = self::MCCC_NOT_ALLOWED;
             } elseif ($key === 'mccc' && $this->mcccValidator->hasError($node)) {
@@ -121,7 +121,7 @@ final class Completion
     private function checkFiche(TreeNode $node, array $def, array &$out): void
     {
         if (null === $this->values->ficheId($node)) {
-            $out[] = ['key' => 'ficheMatiere', 'label' => mb_strtolower($def['label']), 'tab' => $def['domain']];
+            $out[] = ['key' => 'ficheMatiere', 'label' => self::chipLabel($def['label'], $node), 'tab' => $def['domain']];
 
             return;
         }
@@ -131,6 +131,18 @@ final class Completion
         } elseif (FicheRelation::Interdite === $this->ficheAccess->relation($fiche, $node)) {
             $out[] = ['key' => 'ficheMatiere', 'label' => 'fiche matière non autorisée dans ce parcours', 'tab' => $def['domain']];
         }
+    }
+
+    /**
+     * Libellé d'un champ dans la liste « à compléter » : `%type%` remplacé par le type du nœud (« ECTS (%type%) » →
+     * « ECTS (EC) »), minuscule initiale sauf pour un sigle (« Fiche matière » → « fiche matière », « ECTS » reste).
+     */
+    private static function chipLabel(string $label, TreeNode $node): string
+    {
+        $label = str_replace('%type%', $node->getType()->getLabel(), $label);
+        $second = mb_substr($label, 1, 1);
+
+        return '' !== $second && $second === mb_strtolower($second) ? mb_strtolower(mb_substr($label, 0, 1)).mb_substr($label, 1) : $label;
     }
 
     /** L'anomalie D5 compte pour une unité en plus quand `mccc` n'est pas un champ requis du nœud. */
