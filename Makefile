@@ -1,4 +1,4 @@
-.PHONY: up down restart logs sh console cc db-reset fixtures tw-build tw-watch install
+.PHONY: up down restart logs sh console cc db-reset fixtures install
 
 DC = docker compose
 EXEC = $(DC) exec app

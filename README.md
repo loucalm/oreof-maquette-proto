@@ -14,7 +14,7 @@ make up          # http://localhost:8830  (Symfony local server dans Docker)
 make db-reset    # recrée la base SQLite + fixtures de démo
 ```
 
-Autres : `make sh`, `make console ARGS="…"`, `make cc`, `make tw-watch`, `make logs`.
+Autres : `make sh`, `make console ARGS="…"`, `make cc`, `make logs`.
 
 > **Après mise à jour de la branche `feat/types-diplome`** (types de diplôme configurables) : le schéma de
 > la base a changé et le prototype n'a pas de migrations. Lancez `make db-reset` avant de rouvrir
@@ -48,6 +48,7 @@ Autres : `make sh`, `make console ARGS="…"`, `make cc`, `make tw-watch`, `make
 
 Symfony 8.1 / PHP 8.5 · Doctrine + SQLite · Twig + Stimulus + Turbo · AssetMapper.
 **Tailwind v4 est chargé au runtime via CDN** (`@tailwindcss/browser`, dans `base.html.twig`) —
-le binaire standalone du bundle ne scannait pas les templates dans ce conteneur ; pour un
-prototype le runtime suffit et supprime tout build CSS. Styles maison dans `assets/styles/app.css`.
+aucun build CSS. Styles maison dans `assets/styles/app.css`, servi tel quel par AssetMapper.
+Le bundle `symfonycasts/tailwind-bundle` a été retiré : il servait à la place de `app.css` une copie
+compilée (`var/tailwind/app.built.css`) qui n'était plus régénérée, donc des styles périmés.
 Conteneur : image `dannebicque/oreof-symfony-app` + `php8.5-sqlite3` (`docker/Dockerfile`).
