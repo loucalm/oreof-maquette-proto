@@ -1,0 +1,28 @@
+{#
+Composant Alerte (repris d'ORéOF v2, composant anonyme) :
+  <twig:Alerte type="warning" message="Texte" />
+  <twig:Alerte type="info">Contenu riche</twig:Alerte>
+#}
+{% props type = 'info', message = '', icone = null %}
+{% set icons = {
+    'info': 'ph:info-bold',
+    'help': 'ph:question-bold',
+    'success': 'ph:check-circle-bold',
+    'warning': 'ph:warning-bold',
+    'danger': 'ph:x-circle-bold',
+} %}
+{% set typeClass = {
+    'success': 'app-alert--success',
+    'danger': 'app-alert--danger',
+    'info': 'app-alert--info',
+    'help': 'app-alert--info',
+    'warning': 'app-alert--warning',
+}[type] ?? 'app-alert--info' %}
+
+<div class="app-alert {{ typeClass }} {{ attributes.render('class') }}" role="alert" {{ attributes.without('class') }}>
+    <div class="app-alert-icon">{{ ux_icon(icone ?? icons[type] ?? icons['info'], {class: 'h-7 w-7'}) }}</div>
+    <div class="app-alert-content">
+        {% block content %}{% endblock %}
+        {% if message %}<div class="mt-1">{{ message|raw }}</div>{% endif %}
+    </div>
+</div>

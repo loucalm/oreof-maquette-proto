@@ -5,6 +5,7 @@ common:
   remove: Retirer
   save: Enregistrer
   cancel: Annuler
+  back_to_list: Retour à la liste
   close: Fermer
   add: Ajouter
   badge_socle: socle

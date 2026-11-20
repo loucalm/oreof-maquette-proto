@@ -4,21 +4,21 @@
 
 {% block admin_body %}
 
-<div class="mb-5">
-    <h2 class="text-lg font-bold">{{ 'admin.fiches_matieres.heading'|trans({}, 'admin') }}</h2>
-    <p class="text-sm text-gray-500">
+<div class="-mx-6 -mt-6 mb-6 border-b border-secondary-200 px-6 py-4">
+    <h2 class="flex items-center gap-2 text-lg font-semibold text-text">{{ ux_icon(_sections[adminSection].icon, {class: 'h-5 w-5 text-primary'}) }} {{ 'admin.fiches_matieres.heading'|trans({}, 'admin') }}</h2>
+    <p class="mt-1 text-sm text-secondary">
         {{ 'admin.fiches_matieres.description'|trans({}, 'admin') }}
     </p>
 </div>
 
-<div class="rounded-xl border bg-white p-5 space-y-5" style="border-color:var(--c-border)">
+<div class="rounded-xl border bg-white p-5 space-y-5 border-secondary-200">
     <form method="post" action="{{ path('admin_fiche_matiere_create') }}" class="flex flex-wrap items-end gap-3">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token(constant('App\\Controller\\FicheMatiereController::CSRF_ID')) }}">
-        <label class="flex-1 min-w-48 text-xs font-medium text-gray-500">
+        <label class="fld-label min-w-48 flex-1">
             {{ 'admin.fiches_matieres.libelle_field'|trans({}, 'admin') }}
             <input type="text" name="libelle" required maxlength="250" class="fld mt-1">
         </label>
-        <label class="text-xs font-medium text-gray-500">
+        <label class="fld-label">
             {{ 'admin.fiches_matieres.type_field'|trans({}, 'admin') }}
             <select name="typeDiplome" class="fld mt-1">
                 <option value="">{{ 'admin.fiches_matieres.all_types'|trans({}, 'admin') }}</option>
@@ -27,18 +27,18 @@
                 {% endfor %}
             </select>
         </label>
-        <button type="submit" class="rounded-lg px-3 py-1.5 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'admin.fiches_matieres.create'|trans({}, 'admin') }}</button>
+        <button type="submit" class="inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent bg-primary-600 font-medium text-white transition-colors hover:bg-primary-700 px-3 py-1.5 text-sm">{{ 'admin.fiches_matieres.create'|trans({}, 'admin') }}</button>
     </form>
 
     <div class="space-y-2">
     {% for row in rows %}
-        <div data-fiche-row data-fiche-id="{{ row.fiche.id }}" class="flex flex-wrap items-center gap-3 rounded-lg border px-3 py-2 text-sm" style="border-color:var(--c-border)">
-            <a href="{{ path('fiche_matiere_edit', {id: row.fiche.id}) }}" data-turbo-frame="_top" class="font-medium hover:underline" style="color:var(--c-primary)">{{ row.fiche.libelle }}</a>
-            <span class="text-xs text-gray-500">{{ row.fiche.typeDiplome ? row.fiche.typeDiplome.label : 'admin.fiches_matieres.all_types'|trans({}, 'admin') }}</span>
-            <span class="text-xs text-gray-400">{{ 'admin.fiches_matieres.ec_count'|trans({'%count%': row.usages}, 'admin') }}</span>
+        <div data-fiche-row data-fiche-id="{{ row.fiche.id }}" class="flex flex-wrap items-center gap-3 rounded-lg border px-3 py-2 text-sm border-secondary-200">
+            <a href="{{ path('fiche_matiere_edit', {id: row.fiche.id}) }}" data-turbo-frame="_top" class="font-medium hover:underline text-primary-600">{{ row.fiche.libelle }}</a>
+            <span class="text-xs text-secondary-500">{{ row.fiche.typeDiplome ? row.fiche.typeDiplome.label : 'admin.fiches_matieres.all_types'|trans({}, 'admin') }}</span>
+            <span class="text-xs text-secondary-400">{{ 'admin.fiches_matieres.ec_count'|trans({'%count%': row.usages}, 'admin') }}</span>
         </div>
     {% else %}
-        <p class="text-xs text-gray-400">{{ 'admin.fiches_matieres.empty'|trans({}, 'admin') }}</p>
+        <p class="text-xs text-secondary-400">{{ 'admin.fiches_matieres.empty'|trans({}, 'admin') }}</p>
     {% endfor %}
     </div>
 </div>

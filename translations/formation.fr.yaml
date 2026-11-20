@@ -1,8 +1,16 @@
 formation:
+  header:
+    formation_info: Informations de la formation
+    parcours_info: Informations du parcours
+    year_title: Année universitaire
+    progress_title: Avancement de la saisie
+    quick_actions: Actions rapides
   index:
     batch_construction_confirm: Passer cette formation en construction ? Son contenu devient saisissable.
     page_title: Détails des mentions/spécialités · Prototype maquette
     heading: Détails des mentions/spécialités
+    found_count: '{1}formation trouvée|]1,Inf[formations trouvées'
+    undefined: Non définie
     subheading: Ici vous pouvez voir l'ensemble de vos formations créées
     check_lheo: Vérifier Export LHEO
     add_button: Ajouter une formation
@@ -93,7 +101,8 @@ formation:
     title_suffix: éditeur
     page_subtitle: Page de modification de la formation
     view_sheet: Voir la fiche descriptive
-    back_to_list: Retour à la liste des formation
+    completude: Complétude
+    back_to_list: Retour à la liste des formations
     breadcrumb_list: Liste des formations
     check_link: Vérifier la saisie
     consolidation_readonly: 'Phase de consolidation : seuls la structure et les noms sont modifiables. Passez en construction pour saisir ECTS, heures, MCCC…'
@@ -156,6 +165,7 @@ formation:
   parcours_editor:
     title_suffix: éditeur de parcours
     page_subtitle: Page de modification du parcours
+    header_description: 'Parcours de la formation « %formation% »'
     meta_formation: Formation
     meta_periods: Périodes
     meta_parent: Parcours parent
@@ -189,6 +199,7 @@ formation:
     candidate_option: '%label% · %unit%s %start%–%end%'
     save_button: Enregistrer la ramification
   view:
+    edit_formation_button: Modifier la formation
     title_suffix: consultation
     hours_line: '%mod% %place% : %hours% h'
     te_line: 'Travail étudiant : %hours% h'

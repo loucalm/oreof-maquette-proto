@@ -7,8 +7,8 @@
 <div class="panel-body" data-panel-active="param:{{ statusKey|default(entryKey) }}">
     <div class="panel-head">
         <h2 class="text-xl font-bold">{{ title }}</h2>
-        <div class="text-sm text-gray-400">{{ label }}</div>
-        <div class="text-sm text-gray-400 mt-1">{{ breadcrumb|join(' › ') }}</div>
+        <div class="text-sm text-secondary-400">{{ label }}</div>
+        <div class="text-sm text-secondary-400 mt-1">{{ breadcrumb|join(' › ') }}</div>
     </div>
 
     <div class="panel-scroll">
@@ -29,9 +29,9 @@
         {% endfor %}
         </fieldset>
 
-        <div class="pt-2 border-t" style="border-color:var(--c-border)">
-            <button data-autosave-target="submit" class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
-            <span data-autosave-target="status" class="text-xs" style="color:var(--c-muted)" aria-live="polite"></span>
+        <div class="pt-2 border-t border-secondary-200">
+            <button data-autosave-target="submit" class="inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent bg-primary-600 font-medium text-white transition-colors hover:bg-primary-700 px-3 py-1.5 text-sm">{{ 'common.save'|trans({}, 'common') }}</button>
+            <span data-autosave-target="status" class="text-xs text-secondary-500" aria-live="polite"></span>
         </div>
     </form>
     {% endfor %}

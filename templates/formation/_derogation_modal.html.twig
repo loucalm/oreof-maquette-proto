@@ -1,0 +1,32 @@
+{# Modale « Demander une dérogation » de l'éditeur (formation ou parcours) : contrôleurs modal + tree de la colonne gauche. #}
+            <dialog data-modal-target="dialog" data-action="click->modal#clickOutside"
+                    class="w-[min(520px,92vw)] border-0 bg-transparent p-0 backdrop:bg-black/40">
+                <form method="post" action="{{ path('formation_derogation_create', {fid: formation.id}) }}" data-turbo-frame="_top" class="app-modal-shell">
+                    <div class="app-modal-header">
+                        <div class="flex items-center gap-3">
+                            <twig:IconBox icon="ph:flag" variant="warning"/>
+                            <div>
+                                <h3 class="app-modal-title">{{ 'formation.editor.derogation_modal_title'|trans({}, 'formation') }}</h3>
+                                <p class="app-modal-subtitle" data-tree-target="derogContext">{{ 'formation.editor.derogation_modal_default_context'|trans({}, 'formation') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="app-modal-body space-y-4">
+                    <input type="hidden" name="nodeId" data-tree-target="derogNodeId" value="">
+                    {# écart structuré (rempli par le blocage de modification) : vide pour une demande libre #}
+                    <input type="hidden" name="ruleKey" value="{{ app.request.query.get('derogation') }}">
+                    <input type="hidden" name="scopeNid" value="{{ app.request.query.get('scope') }}">
+                    <input type="hidden" name="allowedValue" value="{{ app.request.query.get('value') }}">
+                    <div>
+                        <label class="fld-label">{{ 'formation.editor.derogation_message_label'|trans({}, 'formation') }}</label>
+                        <textarea name="message" rows="4" required class="fld mt-1" placeholder="{{ 'formation.editor.derogation_message_placeholder'|trans({}, 'formation') }}"></textarea>
+                    </div>
+                    </div>
+                    <div class="app-modal-footer">
+                        <div class="app-modal-footer-actions">
+                            <button type="button" data-action="modal#close" class="app-modal-footer-btn app-modal-footer-btn--secondary">{{ 'common.cancel'|trans({}, 'common') }}</button>
+                            <button class="app-modal-footer-btn app-modal-footer-btn--primary">{{ ux_icon('ph:paper-plane-tilt', {class: 'h-4 w-4'}) }} {{ 'formation.editor.derogation_submit_button'|trans({}, 'formation') }}</button>
+                        </div>
+                    </div>
+                </form>
+            </dialog>

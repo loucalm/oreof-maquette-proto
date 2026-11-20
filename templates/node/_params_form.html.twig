@@ -11,9 +11,9 @@
     <div class="flex items-start justify-between gap-3">
         <div>
             <div class="text-lg font-bold">{{ ux_icon('ph:gear', {class: 'icon'}) }} {{ 'node.params.title'|trans({}, 'node') }}</div>
-            <div class="text-xs text-gray-400">{{ node.formation.name }} › {{ node.label ?: T }}</div>
+            <div class="text-xs text-secondary-400">{{ node.formation.name }} › {{ node.label ?: T }}</div>
         </div>
-        <button type="button" data-action="modal#close" class="grid h-8 w-8 place-items-center rounded-lg border text-gray-500 hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:x', {class: 'icon'}) }}</button>
+        <button type="button" data-action="modal#close" class="grid h-8 w-8 place-items-center rounded-lg border text-secondary-500 hover:bg-secondary-50 border-secondary-200">{{ ux_icon('ph:x', {class: 'icon'}) }}</button>
     </div>
 
     {# navigation rapide entre nœuds #}
@@ -29,10 +29,10 @@
         <div class="fld-help">{{ 'node.params.jump_to_help'|trans({}, 'node') }}</div>
     </div>
 
-    <div class="flex items-center gap-3 text-gray-300 text-[11px] uppercase tracking-widest">
-        <div class="h-px flex-1 bg-gray-200"></div>{{ 'node.params.fields_title'|trans({}, 'node') }}<div class="h-px flex-1 bg-gray-200"></div>
+    <div class="flex items-center gap-3 text-secondary-300 text-[11px] uppercase tracking-widest">
+        <div class="h-px flex-1 bg-secondary-200"></div>{{ 'node.params.fields_title'|trans({}, 'node') }}<div class="h-px flex-1 bg-secondary-200"></div>
     </div>
-    <p class="text-xs text-gray-400 -mt-1">
+    <p class="text-xs text-secondary-400 -mt-1">
         {{ 'node.params.fields_note'|trans({'%admin_badge%': ux_icon('ph:lock-simple-fill', {class: 'icon'}) ~ ' admin'}, 'node')|raw }}
     </p>
 
@@ -43,7 +43,7 @@
             <label class="flex items-center gap-2 text-sm">
                 <input type="checkbox" name="capabilities[]" value="mutualisable"
                        {{ (caps.mutualisable ?? false) ? 'checked' }} {{ mutLocked ? 'disabled' }}>
-                <span class="uppercase text-xs tracking-wide text-gray-500">{{ 'node.params.mutualisable_label'|trans({}, 'node') }}</span>
+                <span class="uppercase text-xs tracking-wide text-secondary-500">{{ 'node.params.mutualisable_label'|trans({}, 'node') }}</span>
                 {% if mutLocked %}<span class="pill">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ 'node.params.admin_badge'|trans({}, 'node') }}</span>{% endif %}
             </label>
         {% endif %}
@@ -52,7 +52,7 @@
             {% for coreLabel in ['node.panel.parent_label'|trans({}, 'node'), 'node.panel.label_field'|trans({}, 'node')] %}
                 <label class="flex items-center gap-2 text-sm">
                     <input type="checkbox" checked disabled>
-                    <span class="uppercase text-xs tracking-wide text-gray-500">{{ coreLabel }}</span>
+                    <span class="uppercase text-xs tracking-wide text-secondary-500">{{ coreLabel }}</span>
                     <span class="pill">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ 'node.params.core_badge'|trans({}, 'node') }}</span>
                 </label>
             {% endfor %}
@@ -64,18 +64,18 @@
                 <label class="flex items-center gap-2 text-sm">
                     <input type="checkbox" name="capabilities[]" value="{{ key }}"
                            {{ (caps[key] ?? false) ? 'checked' }} {{ locked ? 'disabled' }}>
-                    <span class="uppercase text-xs tracking-wide text-gray-500">{{ labels[key] ?? key }}</span>
+                    <span class="uppercase text-xs tracking-wide text-secondary-500">{{ labels[key] ?? key }}</span>
                     {% if locked %}<span class="pill">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ 'node.params.admin_badge'|trans({}, 'node') }}</span>{% endif %}
                 </label>
             {% else %}
-                <p class="text-xs text-gray-400">{{ 'node.params.no_field'|trans({}, 'node') }}</p>
+                <p class="text-xs text-secondary-400">{{ 'node.params.no_field'|trans({}, 'node') }}</p>
             {% endfor %}
         </div>
 
-        <div class="flex flex-wrap items-center gap-3 pt-3 border-t" style="border-color:var(--c-border)">
-            <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
+        <div class="flex flex-wrap items-center gap-3 pt-3 border-t border-secondary-200">
+            <button class="inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent bg-primary-600 font-medium text-white transition-colors hover:bg-primary-700 px-3 py-1.5 text-sm">{{ 'common.save'|trans({}, 'common') }}</button>
             <a href="{{ path('node_type_edit', {id: node.type.id}) }}" target="_blank"
-               class="text-xs hover:underline" style="color:var(--c-muted)">{{ 'node.params.manage_type_link'|trans({'%type%': T}, 'node') }} {{ ux_icon('ph:arrow-square-out', {class: 'icon'}) }}</a>
+               class="text-xs hover:underline text-secondary-500">{{ 'node.params.manage_type_link'|trans({'%type%': T}, 'node') }} {{ ux_icon('ph:arrow-square-out', {class: 'icon'}) }}</a>
         </div>
     </form>
 </div>

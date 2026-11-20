@@ -10,21 +10,21 @@
         <div class="grid gap-2 sm:grid-cols-[140px_1fr]">
             {# une compétence n'a pas de libellé : son code (auto) + sa description la désignent #}
             {% if kind == 'bloc' %}
-                <label class="text-xs font-medium text-gray-500 sm:pt-2">{{ 'formation.bcc.bloc_label_field'|trans({}, 'formation') }}</label>
+                <label class="fld-label sm:pt-2">{{ 'formation.bcc.bloc_label_field'|trans({}, 'formation') }}</label>
                 <input name="label" value="{{ n.label }}" required class="fld">
             {% endif %}
             {# code = référence calculée depuis la position (BC 2 / 2.E) : jamais saisi à la main #}
-            <span class="text-xs font-medium text-gray-500 sm:pt-2">{{ 'formation.bcc.code_field'|trans({}, 'formation') }}</span>
+            <span class="fld-label sm:pt-2">{{ 'formation.bcc.code_field'|trans({}, 'formation') }}</span>
             <div class="text-sm sm:pt-2">
                 <span class="font-mono">{{ ref ?: '—' }}</span>
-                <span class="text-xs text-gray-400">· {{ 'formation.bcc.code_auto_help'|trans({}, 'formation') }}</span>
+                <span class="text-xs text-secondary-400">· {{ 'formation.bcc.code_auto_help'|trans({}, 'formation') }}</span>
             </div>
-            <label class="text-xs font-medium text-gray-500 sm:pt-2">{{ 'formation.bcc.description_field'|trans({}, 'formation') }}</label>
+            <label class="fld-label sm:pt-2">{{ 'formation.bcc.description_field'|trans({}, 'formation') }}</label>
             <textarea name="description" rows="{{ kind == 'bloc' ? 2 : 3 }}" {{ kind == 'bloc' ? '' : 'required' }} class="fld" placeholder="{{ 'formation.bcc.description_placeholder'|trans({}, 'formation') }}">{{ n.description }}</textarea>
         </div>
         <div class="mt-2 flex items-center gap-2">
-            <button class="rounded-lg px-3 py-1.5 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
-            <button type="button" data-action="bcc#cancel" class="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</button>
+            <button class="inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent bg-primary-600 font-medium text-white transition-colors hover:bg-primary-700 px-3 py-1.5 text-sm">{{ 'common.save'|trans({}, 'common') }}</button>
+            <button type="button" data-action="bcc#cancel" class="inline-flex items-center justify-center gap-1.5 rounded-md border border-secondary-300 bg-secondary-50 font-medium text-secondary-600 transition-colors hover:bg-secondary-100 hover:text-secondary-800 px-3 py-1.5 text-sm">{{ 'common.cancel'|trans({}, 'common') }}</button>
             <span class="flex-1"></span>
         </div>
     </form>
@@ -32,9 +32,19 @@
           data-bcc-target="edit" hidden class="bcc-edit -mt-1"
           data-controller="confirm"
           data-confirm-message-value="{{ kind == 'bloc' ? 'formation.bcc.delete_bloc_confirm'|trans({}, 'formation') : 'formation.bcc.delete_competency_confirm'|trans({}, 'formation') }}">
-        <button class="text-xs font-medium text-red-600 hover:underline">{{ ux_icon('ph:trash', {class: 'icon'}) }} {{ kind == 'bloc' ? 'formation.bcc.delete_bloc_button'|trans({}, 'formation') : 'formation.bcc.delete_competency_button'|trans({}, 'formation') }}</button>
+        <button class="text-xs font-medium text-danger-600 hover:underline">{{ ux_icon('ph:trash', {class: 'icon'}) }} {{ kind == 'bloc' ? 'formation.bcc.delete_bloc_button'|trans({}, 'formation') : 'formation.bcc.delete_competency_button'|trans({}, 'formation') }}</button>
     </form>
 {% endmacro %}
+
+{% if standalone %}
+    {% set header_title = 'formation.bcc.heading'|trans({}, 'formation') %}
+    {% set header_breadcrumb = [
+    {label: 'formation.index.breadcrumb_offer'|trans({}, 'formation')},
+    {label: 'formation.index.heading'|trans({}, 'formation'), url: path('formation_index')},
+    {label: formation.name, url: path('formation_view', {id: formation.id})},
+        {label: header_title},
+    ] %}
+{% endif %}
 
 {% block body %}
 {% import _self as bcc %}
@@ -45,42 +55,34 @@
      data-bcc-move-url-value="{{ path('bcc_move', {fid: formation.id, nid: '__ID__'}) }}">
 
     <div class="panel-head">
-        {% if standalone %}
-            <div class="mb-2 text-xs text-gray-400">
-                {{ ux_icon('ph:house', {class: 'icon'}) }} <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.index.breadcrumb_home'|trans({}, 'formation') }}</a> ›
-                <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.graph.breadcrumb_list'|trans({}, 'formation') }}</a> ›
-                <a href="{{ path('formation_view', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
-                {% if parcours %}{{ parcours.displayLabel }} › {% endif %}{{ 'formation.bcc.heading'|trans({}, 'formation') }}
-            </div>
-        {% endif %}
 
         <h2 class="text-xl font-bold">{{ 'formation.editor.bcc_section_label'|trans({}, 'formation') }}</h2>
-        <div class="text-sm text-gray-400">
+        <div class="text-sm text-secondary-400">
             {% if parcours %}{{ parcours.displayLabel }}{% else %}{{ formation.name }}{% endif %} · {{ 'formation.view.bloc_count'|trans({'%count%': blocs|length}, 'formation') }}
         </div>
-        <p class="text-xs text-gray-400 mt-1">
+        <p class="text-xs text-secondary-400 mt-1">
             {{ 'formation.bcc.intro'|trans({'%scope%': parcours ? 'formation.bcc.scope_parcours'|trans({}, 'formation') : 'formation.bcc.scope_mention'|trans({}, 'formation')}, 'formation') }}
         </p>
-        <p class="text-xs mt-1" style="color:var(--c-primary)">
+        <p class="text-xs mt-1 text-primary-600">
             {{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }} {{ 'formation.bcc.drag_hint'|trans({}, 'formation') }}
         </p>
     </div>
 
     <div class="panel-scroll">
-    <div class="flex items-center gap-3 text-gray-300 text-xs uppercase tracking-widest mb-4">
-        <div class="h-px flex-1 bg-gray-200"></div>{{ 'formation.bcc.structure_title'|trans({}, 'formation') }}<div class="h-px flex-1 bg-gray-200"></div>
+    <div class="flex items-center gap-3 text-secondary-300 text-xs uppercase tracking-widest mb-4">
+        <div class="h-px flex-1 bg-secondary-200"></div>{{ 'formation.bcc.structure_title'|trans({}, 'formation') }}<div class="h-px flex-1 bg-secondary-200"></div>
     </div>
 
     {% if not hasTransversal %}
         <form method="post" action="{{ addBlocUrl }}" data-turbo-frame="_top" class="mb-4">
             <input type="hidden" name="transversal" value="1">
-            <button class="w-full rounded-xl border border-dashed px-4 py-2.5 text-sm font-medium text-green-700 hover:bg-green-50"
-                    style="border-color:#86efac;background:#f0fdf4">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.bcc.add_transversal_button'|trans({}, 'formation') }}</button>
+            <button class="w-full rounded-xl border border-dashed px-4 py-2.5 text-sm font-medium text-success-700 hover:bg-success-50 border-success-300 bg-success-50"
+                   >{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.bcc.add_transversal_button'|trans({}, 'formation') }}</button>
         </form>
     {% endif %}
 
     {% if blocs is empty %}
-        <div class="rounded-xl border border-dashed p-8 text-center text-sm text-gray-500" style="border-color:var(--c-border)">
+        <div class="rounded-xl border border-dashed p-8 text-center text-sm text-secondary-500 border-secondary-200">
             {{ 'formation.bcc.empty'|trans({}, 'formation') }}
         </div>
     {% endif %}
@@ -114,7 +116,7 @@
                                 <div class="bcc-comp-row">
                                     <span class="drag-handle" data-bcc-handle title="{{ 'formation.bcc.drag_title'|trans({}, 'formation') }}">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>
                                     <div class="min-w-0 flex-1">
-                                        <div class="font-medium">{% if row.ref %}<span class="text-xs font-bold" style="color:var(--c-primary)">{{ row.ref }}</span> {% endif %}{% if c.description %}{{ c.description }}{% else %}<span class="italic font-normal text-gray-400">{{ 'formation.bcc.competence_no_description'|trans({}, 'formation') }}</span>{% endif %}</div>
+                                        <div class="font-medium">{% if row.ref %}<span class="text-xs font-bold text-primary-600">{{ row.ref }}</span> {% endif %}{% if c.description %}{{ c.description }}{% else %}<span class="italic font-normal text-secondary-400">{{ 'formation.bcc.competence_no_description'|trans({}, 'formation') }}</span>{% endif %}</div>
                                     </div>
                                     <button type="button" class="bcc-edit-btn bcc-edit-btn--light" data-action="bcc#toggle" data-bcc-id-param="{{ c.id }}" title="{{ 'formation.bcc.edit_delete_title'|trans({}, 'formation') }}">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }}</button>
                                 </div>
@@ -124,8 +126,8 @@
                     </ul>
 
                     <form method="post" action="{{ node_url(n, 'bcc_competence_add') }}" data-turbo-frame="_top" class="bcc-comp-add">
-                        <button class="rounded-lg border border-dashed px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-50"
-                                style="border-color:#86efac;background:#f0fdf4">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.bcc.add_competency_button'|trans({}, 'formation') }}</button>
+                        <button class="rounded-lg border border-dashed px-3 py-1.5 text-xs font-medium text-success-700 hover:bg-success-50 border-success-300 bg-success-50"
+                               >{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.bcc.add_competency_button'|trans({}, 'formation') }}</button>
                     </form>
                 </div>
             </div>

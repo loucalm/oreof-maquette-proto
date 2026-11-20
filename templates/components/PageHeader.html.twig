@@ -1,0 +1,67 @@
+{#
+Composant PageHeader (repris d'ORéOF v2, composant anonyme) — rendu par base.html.twig.
+  title, description, breadcrumb : liste de {label, url?, icon?} (le dernier = page courante),
+  sticky : se colle sous la topbar ; une fois collé (data-stuck="true", contrôleur page-header),
+  la description est masquée et le titre réduit.
+#}
+{% props title = '', description = '', breadcrumb = [], sticky = true, actions = null %}
+
+{% set slotActions %}{% block actions %}{% endblock %}{% endset %}
+{% set resolvedActions = slotActions|trim != '' ? slotActions : actions %}
+{% set hasActions = resolvedActions is not null and resolvedActions|trim != '' %}
+{% set hasDescription = description is not null and description|trim != '' %}
+{% set hasBreadcrumb = breadcrumb|length > 1 %}
+
+{% set rootClass = sticky
+    ? 'group sticky top-(--topbar-height) z-40 pt-4 pb-6 transition-[padding,background-color] duration-200 data-[stuck=true]:bg-bg data-[stuck=true]:pt-3 data-[stuck=true]:pb-4 sm:pt-6 sm:pb-8 sm:data-[stuck=true]:pt-3 sm:data-[stuck=true]:pb-4'
+    : 'pt-4 pb-6 sm:pt-6 sm:pb-8' %}
+
+<div class="{{ rootClass }} {{ attributes.render('class') }}"
+     {% if sticky %}data-controller="page-header" data-stuck="false"{% endif %}
+     {{ attributes.without('class') }}>
+    <section class="rounded-2xl border border-secondary-200 bg-white/90 p-4 shadow-sm backdrop-blur-sm transition-[padding] duration-200 sm:p-5 group-data-[stuck=true]:py-3 sm:group-data-[stuck=true]:py-3">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between group-data-[stuck=true]:gap-2 lg:group-data-[stuck=true]:items-center">
+            <div class="min-w-0 lg:flex-1 lg:pr-6">
+                <h1 id="title" class="text-xl font-black leading-tight tracking-tight text-secondary-900 transition-[font-size] duration-200 sm:text-3xl group-data-[stuck=true]:sm:text-xl lg:overflow-hidden lg:text-ellipsis lg:whitespace-nowrap">{{ title }}</h1>
+                {% if hasDescription %}
+                    <div class="grid grid-rows-[1fr] transition-[grid-template-rows,opacity] duration-200 group-data-[stuck=true]:grid-rows-[0fr] group-data-[stuck=true]:opacity-0">
+                        <p class="min-h-0 max-w-3xl overflow-hidden text-sm text-secondary-600">{{ description }}</p>
+                    </div>
+                {% endif %}
+            </div>
+            {% if hasActions %}
+                <div class="flex flex-wrap items-center gap-2 self-start lg:max-w-[60%] lg:shrink-0 lg:justify-end lg:self-start group-data-[stuck=true]:lg:self-center">
+                    {{ resolvedActions|raw }}
+                </div>
+            {% endif %}
+        </div>
+
+        {% if hasBreadcrumb %}
+            <div class="mt-4 border-t border-secondary-100 pt-3 transition-[margin,padding] duration-200 group-data-[stuck=true]:mt-2 group-data-[stuck=true]:pt-1.5">
+                <nav aria-label="{{ 'layout.breadcrumb'|trans({}, 'layout') }}">
+                    <ol class="flex flex-wrap items-center gap-1.5 text-sm group-data-[stuck=true]:gap-1 group-data-[stuck=true]:text-xs">
+                        {% for item in breadcrumb %}
+                            <li class="flex items-center gap-2">
+                                {% if not loop.first %}<span class="text-secondary-400" aria-hidden="true">/</span>{% endif %}
+                                {% if not loop.last and item.url is defined and item.url %}
+                                    <a href="{{ item.url }}"
+                                       class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-secondary-500 transition hover:bg-secondary-100 hover:text-secondary-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 group-data-[stuck=true]:px-1.5 group-data-[stuck=true]:py-0.5">
+                                        {% if item.icon is defined and item.icon %}{{ ux_icon(item.icon, {class: 'h-4 w-4 group-data-[stuck=true]:h-3.5 group-data-[stuck=true]:w-3.5', 'aria-hidden': 'true'}) }}{% endif %}
+                                        {{ item.label }}
+                                    </a>
+                                {% elseif not loop.last %}
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 text-secondary-500 group-data-[stuck=true]:px-1.5 group-data-[stuck=true]:py-0.5">
+                                        {% if item.icon is defined and item.icon %}{{ ux_icon(item.icon, {class: 'h-4 w-4', 'aria-hidden': 'true'}) }}{% endif %}
+                                        {{ item.label }}
+                                    </span>
+                                {% else %}
+                                    <span class="rounded-md bg-secondary-100 px-2 py-1 font-semibold text-secondary-700 group-data-[stuck=true]:px-1.5 group-data-[stuck=true]:py-0.5" aria-current="page">{{ item.label }}</span>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ol>
+                </nav>
+            </div>
+        {% endif %}
+    </section>
+</div>

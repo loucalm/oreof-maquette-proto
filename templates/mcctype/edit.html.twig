@@ -1,74 +1,80 @@
 {% extends 'base.html.twig' %}
 {% block title %}{{ isNew ? 'mcctype.edit.new_title'|trans({}, 'mcctype') : type.label }}{% endblock %}
 
+{% set header_title = isNew ? 'mcctype.edit.new_heading'|trans({}, 'mcctype') : 'mcctype.edit.edit_heading'|trans({'%label%': type.label}, 'mcctype') %}
+{% set header_breadcrumb = [
+    {label: 'admin.layout.kicker'|trans({}, 'admin'), url: path('admin_index')},
+    {label: 'mcctype.index.heading'|trans({}, 'mcctype'), url: path('admin_mcctypes')},
+    {label: isNew ? 'mcctype.edit.breadcrumb_new'|trans({}, 'mcctype') : type.label},
+] %}
+
+{% block bouton_header %}
+    <twig:Button variant="success" :soft="false" :outline="true" icon="ph:arrow-left" :label="'common.back_to_list'|trans({}, 'common')" :href="path('admin_mcctypes')"/>
+{% endblock %}
+
 {% block body %}
 <turbo-frame id="admin-content">
-<div class="max-w-3xl mx-auto">
-    <div class="text-xs" style="color:var(--c-muted)">
-        <a href="{{ path('admin_mcctypes') }}" data-turbo-frame="_top" class="hover:underline">{{ 'mcctype.index.heading'|trans({}, 'mcctype') }}</a> › {{ isNew ? 'mcctype.edit.breadcrumb_new'|trans({}, 'mcctype') : type.label }}
-    </div>
-    <h1 class="text-xl font-bold mt-1 mb-5">{{ isNew ? 'mcctype.edit.new_heading'|trans({}, 'mcctype') : 'mcctype.edit.edit_heading'|trans({'%label%': type.label}, 'mcctype') }}</h1>
-
-    <form method="post" {{ isNew ? 'data-turbo-frame="_top"' }} class="rounded-xl border bg-white p-5 space-y-4" style="border-color:var(--c-border)">
+<div class="mx-auto max-w-4xl">
+    <form method="post" {{ isNew ? 'data-turbo-frame="_top"' }} class="space-y-4 rounded-xl border border-secondary-200 bg-surface p-6 shadow-sm">
         <div class="grid grid-cols-3 gap-3">
             <label class="block">
-                <span class="text-xs font-medium">{{ 'mcctype.edit.short_label_field'|trans({}, 'mcctype') }}</span>
-                <input name="shortLabel" required value="{{ type.shortLabel ?? '' }}" placeholder="CCI" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                <span class="fld-label">{{ 'mcctype.edit.short_label_field'|trans({}, 'mcctype') }}</span>
+                <input name="shortLabel" required value="{{ type.shortLabel ?? '' }}" placeholder="CCI" class="fld mt-1 w-full">
             </label>
             <label class="block col-span-2">
-                <span class="text-xs font-medium">{{ 'mcctype.edit.label_field'|trans({}, 'mcctype') }}</span>
-                <input name="label" required value="{{ type.label ?? '' }}" placeholder="Contrôle continu intégral" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                <span class="fld-label">{{ 'mcctype.edit.label_field'|trans({}, 'mcctype') }}</span>
+                <input name="label" required value="{{ type.label ?? '' }}" placeholder="Contrôle continu intégral" class="fld mt-1 w-full">
             </label>
         </div>
 
         <div class="grid grid-cols-3 gap-3">
             <label class="block">
-                <span class="text-xs font-medium">{{ 'mcctype.edit.key_field'|trans({}, 'mcctype') }}</span>
-                <input name="key" value="{{ type.key ?? '' }}" placeholder="{{ 'mcctype.edit.key_placeholder'|trans({}, 'mcctype') }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                <span class="fld-label">{{ 'mcctype.edit.key_field'|trans({}, 'mcctype') }}</span>
+                <input name="key" value="{{ type.key ?? '' }}" placeholder="{{ 'mcctype.edit.key_placeholder'|trans({}, 'mcctype') }}" class="fld mt-1 w-full">
             </label>
             <label class="block col-span-2">
-                <span class="text-xs font-medium">{{ 'mcctype.edit.description_field'|trans({}, 'mcctype') }}</span>
-                <input name="description" value="{{ type.description ?? '' }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                <span class="fld-label">{{ 'mcctype.edit.description_field'|trans({}, 'mcctype') }}</span>
+                <input name="description" value="{{ type.description ?? '' }}" class="fld mt-1 w-full">
             </label>
         </div>
 
-        <div class="rounded-lg border p-3" style="border-color:var(--c-border)">
+        <div class="rounded-lg border p-3 border-secondary-200">
             <label class="flex items-center gap-2 text-sm font-medium">
                 <input type="checkbox" name="hasEvaluations" value="1" {{ (type.hasEvaluations ?? false) ? 'checked' }}>
                 {{ 'mcctype.edit.has_evaluations_label'|trans({}, 'mcctype') }}
             </label>
             <label class="block mt-2">
-                <span class="text-xs font-medium">{{ 'mcctype.edit.evaluations_label_field'|trans({}, 'mcctype') }}</span>
-                <input name="evaluationsLabel" value="{{ type.evaluationsLabel ?? 'Épreuves' }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                <span class="fld-label">{{ 'mcctype.edit.evaluations_label_field'|trans({}, 'mcctype') }}</span>
+                <input name="evaluationsLabel" value="{{ type.evaluationsLabel ?? 'Épreuves' }}" class="fld mt-1 w-full">
             </label>
         </div>
 
         <label class="block max-w-[140px]">
-            <span class="text-xs font-medium">{{ 'mcctype.edit.order_field'|trans({}, 'mcctype') }}</span>
-            <input type="number" name="position" value="{{ type.position ?? 100 }}" class="mt-1 w-full rounded-md border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+            <span class="fld-label">{{ 'mcctype.edit.order_field'|trans({}, 'mcctype') }}</span>
+            <input type="number" name="position" value="{{ type.position ?? 100 }}" class="fld mt-1 w-full">
         </label>
 
         <div class="flex gap-2 pt-1">
-            <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
-            <a href="{{ path('admin_mcctypes') }}" data-turbo-frame="_top" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</a>
+            <button class="inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent bg-primary-600 font-medium text-white transition-colors hover:bg-primary-700 px-3 py-1.5 text-sm">{{ 'common.save'|trans({}, 'common') }}</button>
+            <a href="{{ path('admin_mcctypes') }}" data-turbo-frame="_top" class="inline-flex items-center justify-center gap-1.5 rounded-md border border-secondary-300 bg-secondary-50 font-medium text-secondary-600 transition-colors hover:bg-secondary-100 hover:text-secondary-800 px-3 py-1.5 text-sm">{{ 'common.cancel'|trans({}, 'common') }}</a>
         </div>
     </form>
 
     {% if not isNew %}
-        <div class="rounded-xl border bg-white p-5 mt-4" style="border-color:var(--c-border)">
+        <div class="rounded-xl border bg-white p-5 mt-4 border-secondary-200">
             <div class="flex items-start justify-between mb-3">
                 <div>
-                    <div class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">{{ 'mcctype.edit.profiles_title'|trans({}, 'mcctype') }}</div>
-                    <p class="text-xs mt-1" style="color:var(--c-muted)">{{ 'mcctype.edit.profiles_description'|trans({}, 'mcctype') }}</p>
+                    <div class="text-xs font-bold uppercase tracking-wide text-primary-600">{{ 'mcctype.edit.profiles_title'|trans({}, 'mcctype') }}</div>
+                    <p class="text-xs mt-1 text-secondary-500">{{ 'mcctype.edit.profiles_description'|trans({}, 'mcctype') }}</p>
                 </div>
             </div>
 
             {% if type.profiles is empty %}
-                <p class="text-sm mb-3" style="color:var(--c-muted)">{{ 'mcctype.edit.profiles_empty'|trans({}, 'mcctype') }}</p>
+                <p class="text-sm mb-3 text-secondary-500">{{ 'mcctype.edit.profiles_empty'|trans({}, 'mcctype') }}</p>
             {% else %}
                 <div class="space-y-3 mb-4">
                     {% for profile in type.profiles %}
-                        <div class="rounded-lg border p-3" style="border-color:var(--c-border)">
+                        <div class="rounded-lg border p-3 border-secondary-200">
                             <div class="flex items-start justify-between gap-3">
                                 <div>
                                     <span class="font-semibold text-sm">{{ profile.label }}</span>
@@ -76,36 +82,36 @@
                                 </div>
                                 <div class="flex items-center gap-2 shrink-0">
                                     <form method="post" action="{{ path('mcctype_profile_duplicate', {id: type.id, profileKey: profile.key}) }}">
-                                        <button class="text-xs hover:underline" style="color:var(--c-muted)">{{ 'mcctype.edit.duplicate_profile_button'|trans({}, 'mcctype') }}</button>
+                                        <button class="text-xs hover:underline text-secondary-500">{{ 'mcctype.edit.duplicate_profile_button'|trans({}, 'mcctype') }}</button>
                                     </form>
                                     <form method="post" action="{{ path('mcctype_profile_delete', {id: type.id, profileKey: profile.key}) }}"
                                           data-controller="confirm" data-confirm-message-value="{{ 'mcctype.edit.delete_profile_confirm'|trans({'%label%': profile.label}, 'mcctype') }}">
-                                        <button class="text-xs text-red-600 hover:underline">{{ 'common.delete'|trans({}, 'common') }}</button>
+                                        <button class="text-xs text-danger-600 hover:underline">{{ 'common.delete'|trans({}, 'common') }}</button>
                                     </form>
                                 </div>
                             </div>
 
                             {% set cs = clauseStates[profile.key] %}
-                            <form method="post" action="{{ path('mcctype_profile_clauses', {id: type.id, profileKey: profile.key}) }}" class="rounded-lg border p-3 space-y-3 mt-3" style="border-color:var(--c-border);background:#f8f9fb">
+                            <form method="post" action="{{ path('mcctype_profile_clauses', {id: type.id, profileKey: profile.key}) }}" class="rounded-lg border p-3 space-y-3 mt-3 border-secondary-200 bg-secondary-50">
                                 <label class="flex flex-wrap items-center gap-2 text-sm">
                                     <input type="checkbox" name="count_on" value="1" {{ cs.count.on ? 'checked' }}>
                                     <span class="font-medium">{{ 'mcctype.edit.clause_count_label'|trans({}, 'mcctype') }}</span>
-                                    <select name="count_op" class="rounded-md border px-2 py-1 text-xs" style="border-color:var(--c-border)">
+                                    <select name="count_op" class="fld fld-sm">
                                         {% for k, l in ruleOps %}<option value="{{ k }}" {{ cs.count.op == k ? 'selected' }}>{{ l }}</option>{% endfor %}
                                     </select>
-                                    <input type="number" step="1" min="0" name="count_value" value="{{ cs.count.value }}" class="w-20 rounded-md border px-2 py-1 text-xs" style="border-color:var(--c-border)">
+                                    <input type="number" step="1" min="0" name="count_value" value="{{ cs.count.value }}" class="fld fld-sm w-20">
                                 </label>
 
                                 <label class="flex flex-wrap items-center gap-2 text-sm">
                                     <input type="checkbox" name="ponderation_on" value="1" {{ cs.ponderation.on ? 'checked' }}>
                                     <span class="font-medium">{{ 'mcctype.edit.clause_ponderation_label'|trans({}, 'mcctype') }}</span>
-                                    <span class="text-xs" style="color:var(--c-muted)">{{ 'mcctype.edit.clause_ponderation_sum_note'|trans({}, 'mcctype') }}</span>
+                                    <span class="text-xs text-secondary-500">{{ 'mcctype.edit.clause_ponderation_sum_note'|trans({}, 'mcctype') }}</span>
                                 </label>
                                 <label class="ml-6 flex flex-wrap items-center gap-2 text-sm">
                                     <input type="checkbox" name="ponderation_egale" value="1" {{ cs.ponderation.egale ? 'checked' }}>
                                     <span>{{ 'mcctype.edit.clause_ponderation_egale_label'|trans({}, 'mcctype') }}</span>
-                                    <input type="number" step="0.1" min="0" name="ponderation_max" value="{{ cs.ponderation.max }}" class="w-20 rounded-md border px-2 py-1 text-xs" style="border-color:var(--c-border)">
-                                    <span class="text-xs" style="color:var(--c-muted)">%</span>
+                                    <input type="number" step="0.1" min="0" name="ponderation_max" value="{{ cs.ponderation.max }}" class="fld fld-sm w-20">
+                                    <span class="text-xs text-secondary-500">%</span>
                                 </label>
 
                                 <label class="flex items-center gap-2 text-sm">
@@ -117,14 +123,14 @@
                                     <input type="checkbox" name="rattrapage_on" value="1" {{ cs.rattrapage ? 'checked' }}>
                                     <span class="font-medium">{{ 'mcctype.edit.clause_rattrapage_label'|trans({}, 'mcctype') }}</span>
                                 </label>
-                                <p class="text-[11px]" style="color:var(--c-muted)">{{ 'mcctype.edit.clause_rattrapage_help'|trans({}, 'mcctype') }}</p>
+                                <p class="text-[11px] text-secondary-500">{{ 'mcctype.edit.clause_rattrapage_help'|trans({}, 'mcctype') }}</p>
 
-                                <button class="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.save'|trans({}, 'common') }}</button>
+                                <button class="inline-flex items-center justify-center gap-1.5 rounded-md border border-secondary-300 bg-secondary-50 font-medium text-secondary-600 transition-colors hover:bg-secondary-100 hover:text-secondary-800 px-3 py-1.5 text-sm">{{ 'common.save'|trans({}, 'common') }}</button>
                             </form>
 
                             {% if profile.rules is not empty %}
                                 <div class="flex flex-wrap gap-1.5 mt-2">
-                                    {% for r in profile.rules %}<span class="rounded-md border px-2 py-0.5 text-xs" style="border-color:var(--c-border)">{{ r.label }}</span>{% endfor %}
+                                    {% for r in profile.rules %}<span class="rounded-md border px-2 py-0.5 text-xs border-secondary-200">{{ r.label }}</span>{% endfor %}
                                 </div>
                             {% endif %}
                         </div>
@@ -132,18 +138,18 @@
                 </div>
             {% endif %}
 
-            <form method="post" action="{{ path('mcctype_profile_add', {id: type.id}) }}" class="rounded-lg border border-dashed p-3 flex flex-wrap items-end gap-2" style="border-color:var(--c-border)">
+            <form method="post" action="{{ path('mcctype_profile_add', {id: type.id}) }}" class="rounded-lg border border-dashed p-3 flex flex-wrap items-end gap-2 border-secondary-200">
                 <label class="block flex-1 min-w-[160px]">
                     <span class="text-xs">{{ 'mcctype.edit.profile_label_field'|trans({}, 'mcctype') }}</span>
-                    <input name="label" required placeholder="Licence" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
+                    <input name="label" required placeholder="Licence" class="fld mt-1 w-full">
                 </label>
                 <label class="block flex-1 min-w-[200px]">
                     <span class="text-xs">{{ 'mcctype.edit.profile_description_field'|trans({}, 'mcctype') }}</span>
-                    <input name="description" class="mt-1 w-full rounded-md border px-2 py-1.5 text-sm" style="border-color:var(--c-border)">
+                    <input name="description" class="fld mt-1 w-full">
                 </label>
-                <button class="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'mcctype.edit.add_profile_button'|trans({}, 'mcctype') }}</button>
+                <button class="inline-flex items-center justify-center gap-1.5 rounded-md border border-secondary-300 bg-secondary-50 font-medium text-secondary-600 transition-colors hover:bg-secondary-100 hover:text-secondary-800 px-3 py-1.5 text-sm">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'mcctype.edit.add_profile_button'|trans({}, 'mcctype') }}</button>
             </form>
-            <p class="text-xs mt-2" style="color:var(--c-muted)">
+            <p class="text-xs mt-2 text-secondary-500">
                 {{ 'mcctype.edit.rules_help'|trans({}, 'mcctype') }}
             </p>
         </div>

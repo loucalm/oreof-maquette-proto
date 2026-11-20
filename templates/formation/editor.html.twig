@@ -10,100 +10,27 @@
 {% set currentItem = navItems|filter(i => i.current)|first %}
 {% set frameSrc = focus ? path('node_panel', {fid: formation.id, nid: focus}) : (currentItem ? currentItem.url : null) %}
 
+{% set header_title = formation.name %}
+{% set header_description = 'formation.editor.page_subtitle'|trans({}, 'formation') %}
+{% set header_breadcrumb = [
+    {label: 'formation.index.breadcrumb_offer'|trans({}, 'formation')},
+    {label: 'formation.index.heading'|trans({}, 'formation'), url: path('formation_index')},
+    {label: formation.name},
+] %}
+{% set header_sticky = false %}
+
+{% block bouton_header %}
+    <twig:Button variant="info" :soft="false" :outline="true" icon="ph:eye" :label="'formation.editor.view_sheet'|trans({}, 'formation')" :href="path('formation_view', {id: formation.id})"/>
+    <twig:Button variant="success" :soft="false" :outline="true" icon="ph:arrow-left" :label="'formation.editor.back_to_list'|trans({}, 'formation')" :href="path('formation_index')"/>
+{% endblock %}
+
 {% block body %}
 {% include 'formation/_preview_banner.html.twig' %}
 
-{# ─── en-tête compact : identité + statut + actions (l'éditeur reste visible sans défiler) ─── #}
-<div class="editor-header rounded-2xl border bg-white px-6 py-4 mb-4" style="border-color:var(--c-border)">
-    <div class="flex flex-wrap items-start justify-between gap-3">
-        <div class="min-w-0">
-            <div class="text-xs text-gray-400">
-                <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.editor.breadcrumb_list'|trans({}, 'formation') }}</a> ›
-            </div>
-            <h1 class="text-2xl font-extrabold tracking-tight">{{ formation.name }}</h1>
-            <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
-                <span>{{ formation.diplome ?: '—' }}</span>
-                {% if formation.domaine %}<span>· {{ formation.domaine }}</span>{% endif %}
-                {% if formation.composante %}<span>· {{ formation.composante }}</span>{% endif %}
-                <span>· {{ multi ? 'formation.index.parcours_count'|trans({'%count%': parcours_nodes(formation)|length}, 'formation') : 'formation.editor.meta_mono_parcours'|trans({}, 'formation') }}</span>
-                {% set derogs = formation_derogations(formation) %}
-                {% set derogPending = derogs|filter(d => d.isPending)|length %}
-                {% set derogDecided = derogs|length - derogPending %}
-                {% if derogs is not empty %}
-                    <a href="{{ path('formation_editor', {id: formation.id, param: 'structure'}) }}#derogations" class="pill hover:underline" style="background:#f1f5f9;color:#475569">
-                        {{ ux_icon('ph:flag', {class: 'icon'}) }}
-                        {% if derogPending %}{{ 'derogation.tracking.pending'|trans({'%count%': derogPending}, 'derogation') }}{% endif %}
-                        {% if derogPending and derogDecided %} · {% endif %}
-                        {% if derogDecided %}{{ 'derogation.tracking.decided'|trans({'%count%': derogDecided}, 'derogation') }}{% endif %}
-                    </a>
-                {% endif %}
-                {% if formation.phase.value == 'consolidation' %}
-                    <span class="pill" style="background:#fef3c7;color:#b45309">{{ ux_icon('ph:hourglass-medium', {class: 'icon'}) }} {{ 'formation.editor.consolidation_banner_title'|trans({}, 'formation') }}{{ formation.anneeUniversitaire ? ' — ' ~ formation.anneeUniversitaire }}</span>
-                {% else %}
-                    <span class="pill" style="background:#dcfce7;color:#166534">{{ 'formation.editor.open_banner_title'|trans({}, 'formation') }}</span>
-                {% endif %}
-            </div>
-        </div>
-        <div class="flex flex-wrap items-center gap-2">
-            <a href="{{ path('formation_check', {id: formation.id}) }}"
-               class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-               style="border-color:var(--c-border)">{{ ux_icon('ph:check-square-offset', {class: 'icon'}) }} {{ 'formation.editor.check_link'|trans({}, 'formation') }}</a>
-            <a href="{{ path('formation_quick_grid', {id: formation.id}|merge({})) }}"
-               class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-               style="border-color:var(--c-border)">{{ ux_icon('ph:table', {class: 'icon'}) }} {{ 'formation.editor.quick_grid_link'|trans({}, 'formation') }}</a>
-            <a href="{{ path('formation_view', {id: formation.id}) }}"
-               class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-               style="border-color:var(--c-border)">{{ ux_icon('ph:eye', {class: 'icon'}) }} {{ 'formation.editor.view_sheet'|trans({}, 'formation') }}</a>
-        <form method="post" action="{{ path('formation_undo', {id: formation.id}) }}" data-turbo-frame="_top">
-            <button type="submit" {{ canUndo ? '' : 'disabled' }} title="{{ 'formation.editor.undo_title'|trans({}, 'formation') }}"
-                    class="quickbar-icon-btn">{{ ux_icon('ph:arrow-counter-clockwise', {class: 'icon'}) }}</button>
-        </form>
-        <form method="post" action="{{ path('formation_redo', {id: formation.id}) }}" data-turbo-frame="_top">
-            <button type="submit" {{ canRedo ? '' : 'disabled' }} title="{{ 'formation.editor.redo_title'|trans({}, 'formation') }}"
-                    class="quickbar-icon-btn">{{ ux_icon('ph:arrow-clockwise', {class: 'icon'}) }}</button>
-        </form>
-        <a href="{{ path('formation_history', {id: formation.id}) }}"
-           class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-           style="border-color:var(--c-border)">{{ ux_icon('ph:clock-counter-clockwise', {class: 'icon'}) }} {{ 'formation.editor.history_link'|trans({}, 'formation') }}</a>
-        <a href="{{ path('formation_export', {id: formation.id}) }}"
-           class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-           style="border-color:var(--c-border)">{{ ux_icon('ph:download-simple', {class: 'icon'}) }} {{ 'formation.editor.export_link'|trans({}, 'formation') }}</a>
-        {% if is_admin() %}
-        <div class="relative" data-controller="menu">
-            <button type="button" data-action="menu#toggle"
-                    class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                    style="border-color:var(--c-border)">{{ ux_icon('ph:list', {class: 'icon'}) }} {{ 'formation.editor.ses_menu_button'|trans({}, 'formation') }} <span class="text-gray-400">{{ ux_icon('ph:caret-down', {class: 'icon'}) }}</span></button>
-            <div data-menu-target="menu" hidden
-                 class="absolute right-0 z-30 mt-1 w-64 rounded-xl border bg-white py-1.5 text-sm shadow-lg"
-                 style="border-color:var(--c-border)">
-                <div class="px-3 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">{{ 'layout.nav.administration'|trans({}, 'layout') }}</div>
-                <a href="{{ path('admin_index') }}" class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50">{{ ux_icon('ph:gear', {class: 'icon'}) }} {{ 'admin.index.title'|trans({}, 'admin') }}</a>
-                <a href="{{ path('node_type_index') }}" class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50">{{ ux_icon('ph:puzzle-piece', {class: 'icon'}) }} {{ 'node_type.index.heading'|trans({}, 'node_type') }}</a>
-                <a href="{{ path('admin_referentiels') }}" class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50">{{ ux_icon('ph:books', {class: 'icon'}) }} {{ 'admin.referentiels.title'|trans({}, 'admin') }}</a>
-                <div class="my-1 border-t" style="border-color:var(--c-border)"></div>
-                <a href="{{ path('formation_editor', {id: formation.id, param: 'structure'}) }}"
-                   class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50">{{ ux_icon('ph:arrow-bend-down-right', {class: 'icon'}) }} {{ 'formation.editor.structure_config_link'|trans({}, 'formation') }}</a>
-            </div>
-        </div>
-        {% endif %}
-        </div>
-    </div>
-    {% if formation.phase.value == 'consolidation' %}
-        <div class="mt-3 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-2.5 text-sm" style="border-color:#fcd34d;background:#fffbeb">
-            <span class="text-amber-800">{{ 'formation.editor.consolidation_banner_text'|trans({}, 'formation') }}</span>
-            <form method="post" action="{{ path('formation_phase_save', {id: formation.id}) }}" data-turbo-frame="_top" class="ml-auto"
-                  data-controller="confirm" data-confirm-message-value="{{ 'formation.editor.switch_to_construction_confirm'|trans({'%name%': formation.name}, 'formation') }}">
-                <input type="hidden" name="phase" value="construction">
-                <button class="rounded-lg border bg-white px-3 py-1.5 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-right', {class: 'icon'}) }} {{ 'formation.editor.switch_to_construction_button'|trans({}, 'formation') }}</button>
-            </form>
-        </div>
-    {% endif %}
-</div>
+{% include 'formation/_formation_header.html.twig' with {mode: 'edit'} %}
 
 {# ═══ éditeur ═══ #}
-<div class="rounded-2xl border bg-white p-3" style="border-color:var(--c-border)">
-
-    <div class="editor-shell grid lg:h-[calc(100vh-11rem)] min-h-[560px]" data-controller="resizable">
+<div class="editor-shell grid lg:h-[calc(100vh-var(--topbar-height)-2rem)] min-h-[560px]" data-controller="resizable">
         {{ include('formation/_aside_resizer.html.twig') }}
 
 
@@ -120,40 +47,26 @@
              data-tree-root-key-value="{{ formation.visibleRootTypeKey }}"
              {% endif %}>
 
-            <div class="px-4 pt-4 pb-3 border-b shrink-0" style="border-color:var(--c-border)">
-                <div class="flex items-center gap-2">
-                    <span class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">{{ 'formation.editor.structure_label'|trans({}, 'formation') }}</span>
-                    <span class="pill" style="background:#fef3c7;color:#b45309">{{ progress == 100 ? 'formation.index.bcc_complete'|trans({}, 'formation') : 'formation.index.bcc_incomplete'|trans({}, 'formation') }}</span>
-                </div>
-                <div class="mt-2 font-bold">{{ formation.name }}</div>
-                <div class="text-xs text-gray-400">{{ formation.composante ?: 'formation.editor.meta_composante_default'|trans({}, 'formation') }}</div>
-                <div class="mt-2">
-                    <div class="flex justify-between text-[11px] text-gray-400"><span>{{ 'formation.index.global_progress'|trans({}, 'formation') }}</span><span>{{ progress }}%</span></div>
-                    <div class="mt-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                        <div class="h-full rounded-full" style="width:{{ progress }}%;background:{{ progress < 30 ? 'var(--st-empty)' : (progress < 70 ? 'var(--st-incomplete)' : 'var(--st-ok)') }}"></div>
-                    </div>
-                </div>
-            </div>
+            {% include 'formation/_aside_head.html.twig' with {title: 'formation.editor.structure_label'|trans({}, 'formation'), name: formation.name, sub: formation.composante ?: 'formation.editor.meta_composante_default'|trans({}, 'formation')} %}
 
             <div class="flex-1 overflow-y-auto">
-                <div class="px-4 py-3 border-b" style="border-color:var(--c-border)">
-                    <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">{{ 'formation.editor.param_section_label'|trans({}, 'formation') }}</div>
+                <div class="border-b border-secondary-200 px-3 py-3">
+                    <p class="mb-2 px-3 text-[10px] font-black uppercase tracking-widest text-secondary-400">{{ 'formation.editor.param_section_label'|trans({}, 'formation') }}</p>
                     {% include 'formation/_fiche_nav.html.twig' with {items: navItems} %}
                 </div>
 
                 {% if multi %}
                     {# ─── liste des parcours (chaque ligne ouvre son éditeur) ─── #}
-                    <div class="px-4 py-3">
-                        <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">{{ 'formation.editor.parcours_list_label'|trans({}, 'formation') }}</div>
+                    <div class="px-3 py-3">
+                        <p class="mb-2 px-3 text-[10px] font-black uppercase tracking-widest text-secondary-400">{{ 'formation.editor.parcours_list_label'|trans({}, 'formation') }}</p>
                         {% for p in parcours_nodes(formation) %}
                             <a href="{{ path('parcours_editor', {fid: formation.id, nid: p.id}) }}"
-                               class="mb-2 flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold hover:bg-gray-50"
-                               style="border-color:var(--c-border)">
+                               class="mb-2 flex items-center justify-between gap-2 rounded-2xl border border-secondary-200 px-3 py-2.5 text-sm font-bold text-secondary-600 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700">
                                 <span class="min-w-0 truncate">{{ p.displayLabel }}</span>
-                                <span class="shrink-0 text-gray-300">{{ ux_icon('ph:caret-right', {class: 'icon'}) }}</span>
+                                <span class="shrink-0 text-secondary-300">{{ ux_icon('ph:caret-right', {class: 'icon'}) }}</span>
                             </a>
                         {% else %}
-                            <p class="text-xs text-gray-400 px-1 py-2">{{ 'formation.editor.no_parcours'|trans({}, 'formation') }}</p>
+                            <p class="text-xs text-secondary-400 px-1 py-2">{{ 'formation.editor.no_parcours'|trans({}, 'formation') }}</p>
                         {% endfor %}
                     </div>
                 {% else %}
@@ -164,15 +77,15 @@
                         <div class="mt-1.5 flex items-center gap-1.5 text-xs">
                             <button type="button" data-treefilter-target="mode" data-mode="all" class="tf-mode">{{ 'formation.tree.filter_all'|trans({}, 'formation') }}</button>
                             <button type="button" data-treefilter-target="mode" data-mode="todo" class="tf-mode">{{ 'formation.tree.filter_todo'|trans({}, 'formation') }}</button>
-                            <span class="ml-auto text-gray-400" data-treefilter-target="count" aria-live="polite"></span>
+                            <span class="ml-auto text-secondary-400" data-treefilter-target="count" aria-live="polite"></span>
                         </div>
-                        <p data-treefilter-target="empty" hidden class="mt-2 text-xs text-gray-400">{{ 'formation.tree.search_empty'|trans({}, 'formation') }}</p>
+                        <p data-treefilter-target="empty" hidden class="mt-2 text-xs text-secondary-400">{{ 'formation.tree.search_empty'|trans({}, 'formation') }}</p>
                     </div>
                     <div class="p-2" data-treefilter-target="tree">
                         {% if roots is not empty %}
                             {{ include('formation/_tree.html.twig', {views: roots, parentId: null, focus: focus, parentIsChoice: false, parentChoiceLabel: null}) }}
                         {% elseif not rootType %}
-                            <p class="text-sm px-2 py-8 text-center text-gray-400">
+                            <p class="text-sm px-2 py-8 text-center text-secondary-400">
                                 {{ 'formation.editor.no_skeleton_note'|trans({'%link_open%': '<a href="' ~ path('formation_param', {id: formation.id, key: 'structure'}) ~ '" data-turbo-frame="node-panel" class="underline">', '%link_close%': '</a>'}, 'formation')|raw }}
                             </p>
                         {% endif %}
@@ -181,7 +94,7 @@
             </div>
 
             {# ─── barre d'actions ─── #}
-            <div class="px-3 py-3 border-t shrink-0 flex items-center gap-2" style="border-color:var(--c-border)">
+            <div class="flex shrink-0 items-center gap-2 border-t border-secondary-200 bg-secondary-50/60 px-3 py-3">
                 {% if multi %}
                     <form method="post" action="{{ path('node_add', {fid: formation.id}) }}" data-turbo-frame="_top" class="flex-1">
                         <input type="hidden" name="parentId" value="">
@@ -201,7 +114,7 @@
                             class="tree-act-btn tree-act-btn--choice"
                             title="{{ 'formation.editor.add_choice_title'|trans({}, 'formation') }}">{{ ux_icon('ph:shuffle', {class: 'icon'}) }}</button>
                 {% else %}
-                    <span class="flex-1 text-xs text-gray-400">{{ 'formation.editor.no_structure_defined'|trans({}, 'formation') }}</span>
+                    <span class="flex-1 text-xs text-secondary-400">{{ 'formation.editor.no_structure_defined'|trans({}, 'formation') }}</span>
                 {% endif %}
 
                 {% if not multi %}
@@ -216,32 +129,12 @@
                     </form>
                 {% endif %}
                 <button type="button" data-action="modal#open"
-                        class="tree-act-btn" title="{{ 'formation.editor.request_derogation_title'|trans({}, 'formation') }}" style="border-color:#fde68a;background:#fffbeb;color:#b45309">
+                        class="tree-act-btn" title="{{ 'formation.editor.request_derogation_title'|trans({}, 'formation') }}">
                     {{ ux_icon('ph:flag', {class: 'icon'}) }}
                 </button>
             </div>
 
-            {# ─── modale : demander une dérogation ─── #}
-            <dialog data-modal-target="dialog" data-action="click->modal#clickOutside"
-                    class="rounded-2xl border-0 p-0 w-[min(480px,92vw)] backdrop:bg-black/40">
-                <form method="post" action="{{ path('formation_derogation_create', {fid: formation.id}) }}" data-turbo-frame="_top" class="p-6 space-y-4">
-                    <h3 class="text-lg font-bold">{{ ux_icon('ph:flag', {class: 'icon'}) }} {{ 'formation.editor.derogation_modal_title'|trans({}, 'formation') }}</h3>
-                    <p class="text-sm text-gray-500" data-tree-target="derogContext">{{ 'formation.editor.derogation_modal_default_context'|trans({}, 'formation') }}</p>
-                    <input type="hidden" name="nodeId" data-tree-target="derogNodeId" value="">
-                    {# écart structuré (rempli par le blocage de modification) : vide pour une demande libre #}
-                    <input type="hidden" name="ruleKey" value="{{ app.request.query.get('derogation') }}">
-                    <input type="hidden" name="scopeNid" value="{{ app.request.query.get('scope') }}">
-                    <input type="hidden" name="allowedValue" value="{{ app.request.query.get('value') }}">
-                    <div>
-                        <label class="text-xs font-medium">{{ 'formation.editor.derogation_message_label'|trans({}, 'formation') }}</label>
-                        <textarea name="message" rows="4" required class="fld mt-1" placeholder="{{ 'formation.editor.derogation_message_placeholder'|trans({}, 'formation') }}"></textarea>
-                    </div>
-                    <div class="flex items-center justify-end gap-2 pt-1">
-                        <button type="button" data-action="modal#close" class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</button>
-                        <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'formation.editor.derogation_submit_button'|trans({}, 'formation') }}</button>
-                    </div>
-                </form>
-            </dialog>
+            {% include 'formation/_derogation_modal.html.twig' %}
         </div>
 
         {# ─── panneau d'édition ─── #}
@@ -251,6 +144,5 @@
                 <div class="panel-empty">{{ 'formation.editor.select_prompt'|trans({}, 'formation') }}</div>
             {% endif %}
         </turbo-frame>
-    </div>
 </div>
 {% endblock %}

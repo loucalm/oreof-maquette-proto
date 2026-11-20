@@ -101,10 +101,10 @@ export default class extends Controller {
             <td class="px-4 py-2.5 align-top">
                 <span data-role="value-display" hidden class="text-sm"></span>
                 <input data-role="value-input" type="text" placeholder="Valeur" class="fld text-sm" />
-                <p data-role="error" hidden class="text-xs text-red-600 mt-1"></p>
+                <p data-role="error" hidden class="text-xs text-danger-600 mt-1"></p>
             </td>
             <td class="px-4 py-2.5 align-top text-right whitespace-nowrap">
-                <button type="button" data-role="save-btn" data-action="translation#save" class="text-xs text-green-700 hover:underline">Enregistrer</button>
+                <button type="button" data-role="save-btn" data-action="translation#save" class="text-xs text-success-700 hover:underline">Enregistrer</button>
                 <button type="button" data-action="translation#cancel" class="text-xs hover:underline ml-2" style="color:var(--c-muted)">Annuler</button>
             </td>
         `;

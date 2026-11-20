@@ -159,7 +159,7 @@ final class DiplomeWizardTest extends WebTestCase
         $this->client->request('GET', '/diplomes/nouveau', ['depuis' => $this->licenceVersionId()]);
         $this->submitInformations(['informations[label]' => 'Deust', 'informations[sigle]' => 'DEUST', 'informations[description]' => 'Desc test']);
         $crawler = $this->client->request('GET', '/diplomes/nouveau/recapitulatif');
-        $text = $crawler->filter('section')->text();
+        $text = $crawler->filter('section[data-wizard-step]')->text();
         foreach (['Desc test', 'Code Apogée', 'Accrédité', 'Passage en CFVU', 'Durée', 'Niveau 1', 'Niveaux de BCC', 'Fiche formation — 2 | Présentation'] as $needle) {
             self::assertStringContainsString($needle, $text);
         }
@@ -170,7 +170,7 @@ final class DiplomeWizardTest extends WebTestCase
         $but = $this->em->getRepository(TypeDiplome::class)->findOneBy(['key' => 'BUT']);
         $this->client->request('GET', '/diplomes/nouveau', ['depuis' => $but->latestVersion()->getId()]);
         $this->submitInformations(['informations[label]' => 'Bachelor', 'informations[sigle]' => 'BACH']);
-        $text = $this->client->request('GET', '/diplomes/nouveau/recapitulatif')->filter('section')->text();
+        $text = $this->client->request('GET', '/diplomes/nouveau/recapitulatif')->filter('section[data-wizard-step]')->text();
         foreach (['6 semestres', 'verrouillé', 'EC coefficientés', 'Ressource, SAÉ, Stage, Portfolio', '(position 6)'] as $needle) {
             self::assertStringContainsString($needle, $text);
         }

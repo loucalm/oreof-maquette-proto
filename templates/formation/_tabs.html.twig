@@ -1,14 +1,13 @@
-{# Onglets de la liste des formations : `active` = 'all' ou 'offre'. #}
-<div class="flex gap-1 border-b mb-4" style="border-color:var(--c-border)">
+{# Onglets de la liste des formations (onglets applicatifs v2) : `active` = 'all' ou 'offre'. #}
+<div class="app-tabs-list" role="tablist">
     {% for tab in [
-        {key: 'all', url: path('formation_index'), label: 'formation.index.tab_all'|trans({}, 'formation'), icon: null},
+        {key: 'all', url: path('formation_index'), label: 'formation.index.tab_all'|trans({}, 'formation'), icon: 'ph:list-bullets'},
         {key: 'offre', url: path('offre_index'), label: 'formation.index.tab_consolidation'|trans({}, 'formation'), icon: 'ph:hourglass-medium'},
     ] %}
         {% set on = tab.key == active %}
-        <a href="{{ tab.url }}" data-tab-link="{{ tab.key }}" {{ on ? 'aria-current="page"' }}
-           class="-mb-px rounded-t-lg border-b-2 px-3.5 py-2 text-sm font-medium {{ on ? '' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50' }}"
-           style="border-color:{{ on ? 'var(--c-primary)' : 'transparent' }};{{ on ? 'color:var(--c-primary)' }}">
-            {% if tab.icon %}{{ ux_icon(tab.icon, {class: 'icon'}) }} {% endif %}{{ tab.label }}
+        <a href="{{ tab.url }}" data-tab-link="{{ tab.key }}" role="tab" {{ on ? 'aria-current="page" aria-selected="true"' }}
+           class="app-tab {{ on ? 'app-tab-active' }}">
+            {% if tab.icon %}{{ ux_icon(tab.icon, {class: 'h-4 w-4'}) }}{% endif %}{{ tab.label }}
         </a>
     {% endfor %}
 </div>

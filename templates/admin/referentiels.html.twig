@@ -4,9 +4,9 @@
 
 {% block admin_body %}
 
-<div class="mb-5">
-    <h2 class="text-lg font-bold">{{ 'admin.referentiels.heading'|trans({}, 'admin') }}</h2>
-    <p class="text-sm text-gray-500">
+<div class="-mx-6 -mt-6 mb-6 border-b border-secondary-200 px-6 py-4">
+    <h2 class="flex items-center gap-2 text-lg font-semibold text-text">{{ ux_icon(_sections[adminSection].icon, {class: 'h-5 w-5 text-primary'}) }} {{ 'admin.referentiels.heading'|trans({}, 'admin') }}</h2>
+    <p class="mt-1 text-sm text-secondary">
         {{ 'admin.referentiels.description'|trans({}, 'admin') }}
     </p>
 </div>
@@ -14,40 +14,40 @@
 <div class="space-y-4">
 
     {# ─── libre : nomenclatures entièrement éditables ─── #}
-    <div class="rounded-xl border bg-white p-5 space-y-4" style="border-color:var(--c-border)">
+    <div class="rounded-xl border bg-white p-5 space-y-4 border-secondary-200">
         <div class="flex items-start justify-between">
             <div>
-                <div class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">{{ 'admin.referentiels.libre_title'|trans({}, 'admin') }}</div>
-                <p class="text-xs mt-1" style="color:var(--c-muted)">{{ 'admin.referentiels.libre_description'|trans({}, 'admin') }}</p>
+                <div class="text-xs font-bold uppercase tracking-wide text-primary-600">{{ 'admin.referentiels.libre_title'|trans({}, 'admin') }}</div>
+                <p class="text-xs mt-1 text-secondary-500">{{ 'admin.referentiels.libre_description'|trans({}, 'admin') }}</p>
             </div>
-            <a href="{{ path('referentiel_new') }}" data-turbo-frame="_top" class="shrink-0 rounded-md px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'admin.referentiels.new_button'|trans({}, 'admin') }}</a>
+            <a href="{{ path('referentiel_new') }}" data-turbo-frame="_top" class="inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent bg-primary-600 font-medium text-white transition-colors hover:bg-primary-700 px-3 py-1.5 text-sm shrink-0">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'admin.referentiels.new_button'|trans({}, 'admin') }}</a>
         </div>
         {% for ref in libres %}
-            <div class="rounded-lg border p-3" style="border-color:var(--c-border)">
+            <div class="rounded-lg border p-3 border-secondary-200">
                 <div class="flex items-start justify-between gap-3">
                     <div>
                         <span class="font-medium text-sm">{{ ref.label }}</span>
-                        <code class="text-xs ml-1" style="color:var(--c-muted)">{{ ref.key }}</code>
+                        <code class="text-xs ml-1 text-secondary-500">{{ ref.key }}</code>
                         {% if ref.system %}<span class="pill ml-1">{{ 'common.badge_socle'|trans({}, 'common') }}</span>{% endif %}
                         {% if ref.description %}<div class="fld-help mt-0.5">{{ ref.description }}</div>{% endif %}
                     </div>
                     <div class="shrink-0 whitespace-nowrap text-right">
-                        <a href="{{ path('referentiel_edit', {id: ref.id}) }}" data-turbo-frame="_top" class="text-xs hover:underline">{{ 'common.edit'|trans({}, 'common') }}</a>
+                        <a href="{{ path('referentiel_edit', {id: ref.id}) }}" data-turbo-frame="_top" class="inline-flex items-center gap-1 rounded-md border border-warning-500 px-2 py-1 text-xs font-medium text-warning-700 transition-colors hover:bg-warning-500 hover:text-secondary-900">{{ ux_icon('ph:pencil-simple', {class: 'h-3.5 w-3.5'}) }} {{ 'common.edit'|trans({}, 'common') }}</a>
                         {% if not ref.system %}
                             <form method="post" action="{{ path('referentiel_delete', {id: ref.id}) }}" class="inline"
                                   data-controller="confirm" data-confirm-message-value="{{ 'admin.referentiels.delete_confirm'|trans({'%label%': ref.label}, 'admin') }}">
-                                <button class="text-xs text-red-600 hover:underline ml-2">{{ 'common.delete'|trans({}, 'common') }}</button>
+                                <button class="text-xs text-danger-600 hover:underline ml-2">{{ 'common.delete'|trans({}, 'common') }}</button>
                             </form>
                         {% endif %}
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-1.5 mt-2">
                     {% for k, label in ref.values %}
-                        <span class="rounded-md border px-2 py-0.5 text-xs" style="border-color:var(--c-border);background:#fff">
-                            {{ label }}{% if k is not same as(loop.index0) and k != label %}<span class="text-gray-400"> · {{ k }}</span>{% endif %}
+                        <span class="rounded-md border px-2 py-0.5 text-xs border-secondary-200 bg-white">
+                            {{ label }}{% if k is not same as(loop.index0) and k != label %}<span class="text-secondary-400"> · {{ k }}</span>{% endif %}
                         </span>
                     {% else %}
-                        <span class="text-xs" style="color:var(--c-muted)">{{ 'admin.referentiels.no_value'|trans({}, 'admin') }}</span>
+                        <span class="text-xs text-secondary-500">{{ 'admin.referentiels.no_value'|trans({}, 'admin') }}</span>
                     {% endfor %}
                 </div>
             </div>
@@ -55,33 +55,33 @@
     </div>
 
     {# ─── lier à des entités : référentiels destinés à référencer une vraie entité dans l'appli finale ─── #}
-    <div class="rounded-xl border bg-white p-5 space-y-4" style="border-color:var(--c-border)">
+    <div class="rounded-xl border bg-white p-5 space-y-4 border-secondary-200">
         <div>
-            <div class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">{{ 'admin.referentiels.entite_title'|trans({}, 'admin') }}</div>
-            <p class="text-xs mt-1" style="color:var(--c-muted)">{{ 'admin.referentiels.entite_description'|trans({}, 'admin') }}</p>
+            <div class="text-xs font-bold uppercase tracking-wide text-primary-600">{{ 'admin.referentiels.entite_title'|trans({}, 'admin') }}</div>
+            <p class="text-xs mt-1 text-secondary-500">{{ 'admin.referentiels.entite_description'|trans({}, 'admin') }}</p>
         </div>
         {% for ref in entites %}
-            <div class="rounded-lg border p-3" style="border-color:var(--c-border)">
+            <div class="rounded-lg border p-3 border-secondary-200">
                 <div class="flex items-start justify-between gap-3">
                     <div>
                         <span class="font-medium text-sm">{{ ref.label }}</span>
-                        <code class="text-xs ml-1" style="color:var(--c-muted)">{{ ref.key }}</code>
+                        <code class="text-xs ml-1 text-secondary-500">{{ ref.key }}</code>
                         {% if ref.system %}<span class="pill ml-1">{{ 'common.badge_socle'|trans({}, 'common') }}</span>{% endif %}
                         {% if ref.description %}<div class="fld-help mt-0.5">{{ ref.description }}</div>{% endif %}
                         {% if ref.entiteCible %}<div class="fld-help mt-0.5">{{ 'admin.referentiels.entite_cible_prefix'|trans({}, 'admin') }} {{ ref.entiteCible }}</div>{% endif %}
                     </div>
                     <div class="shrink-0 whitespace-nowrap text-right">
-                        <a href="{{ path('referentiel_edit', {id: ref.id}) }}" data-turbo-frame="_top" class="text-xs hover:underline">{{ 'common.edit'|trans({}, 'common') }}</a>
-                        <span class="text-xs ml-2" style="color:var(--c-muted)" title="{{ 'admin.referentiels.go_to_entity_title'|trans({}, 'admin') }}">{{ 'admin.referentiels.go_to_entity'|trans({}, 'admin') }}</span>
+                        <a href="{{ path('referentiel_edit', {id: ref.id}) }}" data-turbo-frame="_top" class="inline-flex items-center gap-1 rounded-md border border-warning-500 px-2 py-1 text-xs font-medium text-warning-700 transition-colors hover:bg-warning-500 hover:text-secondary-900">{{ ux_icon('ph:pencil-simple', {class: 'h-3.5 w-3.5'}) }} {{ 'common.edit'|trans({}, 'common') }}</a>
+                        <span class="text-xs ml-2 text-secondary-500" title="{{ 'admin.referentiels.go_to_entity_title'|trans({}, 'admin') }}">{{ 'admin.referentiels.go_to_entity'|trans({}, 'admin') }}</span>
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-1.5 mt-2">
                     {% for k, label in ref.values %}
-                        <span class="rounded-md border px-2 py-0.5 text-xs" style="border-color:var(--c-border);background:#fff">
-                            {{ label }}{% if k is not same as(loop.index0) and k != label %}<span class="text-gray-400"> · {{ k }}</span>{% endif %}
+                        <span class="rounded-md border px-2 py-0.5 text-xs border-secondary-200 bg-white">
+                            {{ label }}{% if k is not same as(loop.index0) and k != label %}<span class="text-secondary-400"> · {{ k }}</span>{% endif %}
                         </span>
                     {% else %}
-                        <span class="text-xs" style="color:var(--c-muted)">{{ 'admin.referentiels.no_value'|trans({}, 'admin') }}</span>
+                        <span class="text-xs text-secondary-500">{{ 'admin.referentiels.no_value'|trans({}, 'admin') }}</span>
                     {% endfor %}
                 </div>
             </div>

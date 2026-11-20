@@ -1,83 +1,89 @@
 {% extends 'base.html.twig' %}
 {% block title %}{{ 'diplome.index.title'|trans({}, 'diplome') }}{% endblock %}
 
-{% block body %}
-<div class="mb-5 flex items-start justify-between">
-    <div>
-        <h1 class="text-xl font-bold">{{ 'diplome.index.heading'|trans({}, 'diplome') }}</h1>
-        <p class="text-sm" style="color:var(--c-muted)">{{ 'diplome.index.description'|trans({}, 'diplome') }}</p>
-    </div>
-    <a href="{{ path('diplome_wizard_start') }}" class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'diplome.index.new'|trans({}, 'diplome') }}</a>
-</div>
+{% set header_title = 'diplome.index.heading'|trans({}, 'diplome') %}
+{% set header_description = 'diplome.index.description'|trans({}, 'diplome') %}
+{% set header_breadcrumb = [{label: 'layout.nav.diplomes'|trans({}, 'layout')}] %}
 
-<div class="rounded-xl border bg-white overflow-hidden" style="border-color:var(--c-border)">
-    <table class="w-full text-sm">
-        <thead class="text-xs uppercase tracking-wide" style="color:var(--c-muted)">
-            <tr class="border-b" style="border-color:var(--c-border)">
-                <th class="text-left px-4 py-2.5">{{ 'diplome.index.col_label'|trans({}, 'diplome') }}</th>
-                <th class="text-left px-4 py-2.5">{{ 'diplome.index.col_sigle'|trans({}, 'diplome') }}</th>
-                <th class="text-left px-4 py-2.5">{{ 'diplome.index.col_based_on'|trans({}, 'diplome') }}</th>
-                <th class="text-left px-4 py-2.5">{{ 'diplome.index.col_duration'|trans({}, 'diplome') }}</th>
-                <th class="text-left px-4 py-2.5">{{ 'diplome.index.col_bcc'|trans({}, 'diplome') }}</th>
-                <th class="text-left px-4 py-2.5">{{ 'diplome.index.col_formations'|trans({}, 'diplome') }}</th>
-                <th class="text-left px-4 py-2.5">{{ 'diplome.index.col_version'|trans({}, 'diplome') }}</th>
-                <th class="px-4 py-2.5"></th>
+{% block bouton_header %}
+    <twig:Button variant="success" icon="ph:plus" :label="'diplome.index.new'|trans({}, 'diplome')" :href="path('diplome_wizard_start')"/>
+{% endblock %}
+
+{% block body %}
+
+<section class="rounded-xl border border-secondary-200 bg-surface shadow-sm">
+    <div class="border-b border-secondary-200 p-4">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-text">{{ ux_icon('ph:graduation-cap', {class: 'h-5 w-5 text-primary'}) }} {{ 'diplome.index.list_title'|trans({}, 'diplome') }}</h2>
+    </div>
+    <div class="overflow-x-auto p-4">
+    <table class="app-table">
+        <thead>
+            <tr>
+                <th>{{ 'diplome.index.col_label'|trans({}, 'diplome') }}</th>
+                <th>{{ 'diplome.index.col_sigle'|trans({}, 'diplome') }}</th>
+                <th>{{ 'diplome.index.col_based_on'|trans({}, 'diplome') }}</th>
+                <th>{{ 'diplome.index.col_duration'|trans({}, 'diplome') }}</th>
+                <th>{{ 'diplome.index.col_bcc'|trans({}, 'diplome') }}</th>
+                <th>{{ 'diplome.index.col_formations'|trans({}, 'diplome') }}</th>
+                <th>{{ 'diplome.index.col_version'|trans({}, 'diplome') }}</th>
+                <th class="text-right">{{ 'formation.index.col_actions'|trans({}, 'formation') }}</th>
             </tr>
         </thead>
         <tbody>
         {% for row in rows %}
             {% set t = row.type %}
-            <tr class="border-b last:border-0" style="border-color:var(--c-border)">
-                <td class="px-4 py-2.5">
-                    <span class="font-medium">{{ t.label }}</span>
-                    {% if t.archived %}<span class="pill ml-1">{{ 'diplome.index.badge_archived'|trans({}, 'diplome') }}</span>{% endif %}
+            <tr>
+                <td>
+                    <span class="font-medium text-text">{{ t.label }}</span>
+                    {% if t.archived %}<twig:Badge variant="warning" class="ml-1" :label="'diplome.index.badge_archived'|trans({}, 'diplome')"/>{% endif %}
                 </td>
-                <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ t.sigle }}</td>
-                <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ row.basedOn ?? '—' }}</td>
-                <td class="px-4 py-2.5" style="color:var(--c-muted)" data-col="duration">{{ row.duration ?? '—' }}</td>
-                <td class="px-4 py-2.5" style="color:var(--c-muted)" data-col="bcc">{{ row.bcc ?? '—' }}</td>
-                <td class="px-4 py-2.5" data-col="formations">{{ row.formations }}</td>
-                <td class="px-4 py-2.5" style="color:var(--c-muted)">{{ row.version ?? '—' }}</td>
-                <td class="px-4 py-2.5 whitespace-nowrap">
-                    <div class="flex items-center justify-end gap-0.5">
+                <td class="text-secondary-500">{{ t.sigle }}</td>
+                <td class="text-secondary-500">{{ row.basedOn ?? '—' }}</td>
+                <td class="text-secondary-500" data-col="duration">{{ row.duration ?? '—' }}</td>
+                <td class="text-secondary-500" data-col="bcc">{{ row.bcc ?? '—' }}</td>
+                <td class="" data-col="formations">{{ row.formations }}</td>
+                <td class="text-secondary-500">{{ row.version ?? '—' }}</td>
+                <td class="whitespace-nowrap">
+                    <div class="flex items-center justify-end gap-2">
                     {% if row.versionId %}
-                        <a href="{{ path('diplome_edit', {id: t.id, versionId: row.versionId, step: row.editStep}) }}" data-action="edit" class="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100" title="{{ 'diplome.index.edit'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.index.edit'|trans({}, 'diplome') }}">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }}</a>
+                        <a href="{{ path('diplome_edit', {id: t.id, versionId: row.versionId, step: row.editStep}) }}" data-action="edit" class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-secondary-400 text-secondary-600 transition-colors hover:bg-secondary-500 hover:text-white" title="{{ 'diplome.index.edit'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.index.edit'|trans({}, 'diplome') }}">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }}</a>
                         <form method="post" action="{{ path('diplome_version_new', {id: t.id}) }}">
                             {% include 'diplome/_csrf.html.twig' %}
-                            <button data-action="new-version" class="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100" title="{{ 'diplome.index.new_version'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.index.new_version'|trans({}, 'diplome') }}">{{ ux_icon('ph:calendar-plus', {class: 'icon'}) }}</button>
+                            <button data-action="new-version" class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-secondary-400 text-secondary-600 transition-colors hover:bg-secondary-500 hover:text-white" title="{{ 'diplome.index.new_version'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.index.new_version'|trans({}, 'diplome') }}">{{ ux_icon('ph:calendar-plus', {class: 'icon'}) }}</button>
                         </form>
-                        <a href="{{ path('diplome_wizard_start', {depuis: row.versionId}) }}" data-action="duplicate" class="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100" title="{{ 'diplome.index.duplicate'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.index.duplicate'|trans({}, 'diplome') }}">{{ ux_icon('ph:copy', {class: 'icon'}) }}</a>
+                        <a href="{{ path('diplome_wizard_start', {depuis: row.versionId}) }}" data-action="duplicate" class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-secondary-400 text-secondary-600 transition-colors hover:bg-secondary-500 hover:text-white" title="{{ 'diplome.index.duplicate'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.index.duplicate'|trans({}, 'diplome') }}">{{ ux_icon('ph:copy', {class: 'icon'}) }}</a>
                     {% endif %}
                     {% if t.archived %}
                         <form method="post" action="{{ path('diplome_unarchive', {id: t.id}) }}">
                             {% include 'diplome/_csrf.html.twig' %}
-                            <button class="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100" title="{{ 'diplome.index.unarchive'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.index.unarchive'|trans({}, 'diplome') }}">{{ ux_icon('ph:box-arrow-up', {class: 'icon'}) }}</button>
+                            <button class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-secondary-400 text-secondary-600 transition-colors hover:bg-secondary-500 hover:text-white" title="{{ 'diplome.index.unarchive'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.index.unarchive'|trans({}, 'diplome') }}">{{ ux_icon('ph:box-arrow-up', {class: 'icon'}) }}</button>
                         </form>
                     {% else %}
                         <form method="post" action="{{ path('diplome_archive', {id: t.id}) }}"
                               data-controller="confirm" data-confirm-message-value="{{ 'diplome.index.archive_confirm'|trans({'%label%': t.label}, 'diplome') }}">
                             {% include 'diplome/_csrf.html.twig' %}
-                            <button class="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100" title="{{ 'diplome.index.archive'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.index.archive'|trans({}, 'diplome') }}">{{ ux_icon('ph:archive-box', {class: 'icon'}) }}</button>
+                            <button class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-secondary-400 text-secondary-600 transition-colors hover:bg-secondary-500 hover:text-white" title="{{ 'diplome.index.archive'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.index.archive'|trans({}, 'diplome') }}">{{ ux_icon('ph:archive-box', {class: 'icon'}) }}</button>
                         </form>
                     {% endif %}
                     {% if row.formations == 0 %}
                         <form method="post" action="{{ path('diplome_delete', {id: t.id}) }}"
                               data-controller="confirm" data-confirm-message-value="{{ 'diplome.index.delete_confirm'|trans({'%label%': t.label}, 'diplome') }}">
                             {% include 'diplome/_csrf.html.twig' %}
-                            <button class="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100" style="color:#dc2626" title="{{ 'diplome.index.delete'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.index.delete'|trans({}, 'diplome') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
+                            <button class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-danger-600 text-danger-700 transition-colors hover:bg-danger-600 hover:text-white" title="{{ 'diplome.index.delete'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.index.delete'|trans({}, 'diplome') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
                         </form>
                     {% else %}
                         {# suppression impossible : poubelle grisée, la raison au survol #}
-                        <span class="inline-flex h-8 w-8 items-center justify-center rounded cursor-not-allowed" style="color:var(--c-muted);opacity:.45"
+                        <span class="inline-flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-md border border-secondary-200 text-secondary-300"
                               title="{{ 'diplome.index.delete_blocked'|trans({'%count%': row.formations}, 'diplome') }}" aria-disabled="true" data-action="delete-blocked">{{ ux_icon('ph:trash', {class: 'icon'}) }}</span>
                     {% endif %}
                     </div>
                 </td>
             </tr>
         {% else %}
-            <tr><td colspan="8" class="px-4 py-6 text-center" style="color:var(--c-muted)">{{ 'diplome.index.empty'|trans({}, 'diplome') }}</td></tr>
+            <tr><td colspan="8" class="px-4 py-6 text-center text-secondary-500">{{ 'diplome.index.empty'|trans({}, 'diplome') }}</td></tr>
         {% endfor %}
         </tbody>
     </table>
-</div>
+    </div>
+</section>
 {% endblock %}

@@ -17,7 +17,7 @@
     <div class="flex flex-wrap items-center justify-between gap-2">
         {% if ftype.input and not ftype.system %}
             {% set tl = node.type.label %}
-            <span class="fld-label">{{ def.label|replace({'%type%': tl}) }}{% if def.required ?? false %} <span class="text-red-500" aria-hidden="true">*</span><span class="sr-only">{{ 'common.required_badge'|trans({}, 'common') }}</span>{% endif %}</span>
+            <span class="fld-label">{{ def.label|replace({'%type%': tl}) }}{% if def.required ?? false %} <span class="text-danger-500" aria-hidden="true">*</span><span class="sr-only">{{ 'common.required_badge'|trans({}, 'common') }}</span>{% endif %}</span>
         {% endif %}
         <select name="sources[{{ key }}]" class="fld" style="max-width:18rem" aria-label="Source {{ key }}" {{ imposed ? 'disabled' }}>
             <option value="fiche" {{ current == 'fiche' ? 'selected' }}>{{ imposed ? 'Imposé par la fiche' : 'Reprendre la fiche' }}</option>
@@ -30,9 +30,9 @@
         {% if imposed %}<p class="fld-help">Imposé par la fiche</p>{% endif %}
         {{ field_widget(def, key, showField, 'attr_' ~ key, node, [], 'node') }}
     </fieldset>
-    {% if resolved.warning %}<p class="fld-help text-amber-700">{{ resolved.warning }}</p>{% endif %}
+    {% if resolved.warning %}<p class="fld-help text-warning-700">{{ resolved.warning }}</p>{% endif %}
     {% if pinned %}
-        <p class="fld-help text-amber-700" data-pinned-value="{{ key }}">
+        <p class="fld-help text-warning-700" data-pinned-value="{{ key }}">
             Valeur conservée : spécifique à cet EC
             <button type="submit" name="sources[{{ key }}]" value="fiche" class="underline font-medium ml-1">Reprendre la fiche</button>
         </p>

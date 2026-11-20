@@ -4,7 +4,7 @@
     <h3 class="text-sm font-semibold mt-4 mb-1">{{ section.title }}</h3>
     <dl class="grid grid-cols-3 gap-y-1 text-sm">
         {% for row in section.rows %}
-            <dt style="color:var(--c-muted)">{{ row[0] }}</dt><dd class="col-span-2">{{ row[1] }}</dd>
+            <dt class="text-secondary-500">{{ row[0] }}</dt><dd class="col-span-2">{{ row[1] }}</dd>
         {% endfor %}
     </dl>
 {% endfor %}
@@ -12,7 +12,7 @@
 {% if base %}
     <h3 class="text-sm font-semibold mt-6 mb-2">{{ 'diplome.wizard.recap.differences'|trans({'%base%': base.typeDiplome.label ~ ' ' ~ base.anneeUniversitaire}, 'diplome') }}</h3>
     {% if diff is empty %}
-        <p class="text-sm" style="color:var(--c-muted)" data-no-diff>{{ 'diplome.wizard.recap.identical'|trans({}, 'diplome') }}</p>
+        <p class="text-sm text-secondary-500" data-no-diff>{{ 'diplome.wizard.recap.identical'|trans({}, 'diplome') }}</p>
     {% else %}
         <ul class="text-sm space-y-1" data-diff>
         {% for change in diff %}
@@ -25,6 +25,6 @@
 {% block step_next %}
     <form method="post" action="{{ path('diplome_wizard_save') }}">
         {% include 'diplome/_csrf.html.twig' %}
-        <button class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'diplome.wizard.create'|trans({}, 'diplome') }}</button>
+        <button class="inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent bg-primary-600 font-medium text-white transition-colors hover:bg-primary-700 px-3 py-1.5 text-sm">{{ 'diplome.wizard.create'|trans({}, 'diplome') }}</button>
     </form>
 {% endblock %}

@@ -4,18 +4,18 @@
     {% set parcours = parcours|merge([u.formation.id ~ ':' ~ (u.ec.getParent() ? u.ec.getParent().nid : '')]) %}
 {% endfor %}
 {% set nParcours = parcours|length %}
-<div data-usage-summary class="rounded-xl border px-4 py-3 text-sm" style="border-color:var(--c-border)">
+<div data-usage-summary class="rounded-xl border px-4 py-3 text-sm border-secondary-200">
     <div class="flex items-center justify-between gap-3">
         <span>
             {% if fiche.formation %}{{ 'fiche_matiere.usage.porteur'|trans({}, 'fiche_matiere') }} {{ fiche.formation.name }} · {% endif %}
             {{ 'fiche_matiere.usage.summary'|trans({'%ec%': usages|length, '%parcours%': nParcours}, 'fiche_matiere') }}
         </span>
         {% if usages %}
-        <button type="button" data-controller="disclosure" data-action="disclosure#toggle" class="text-xs underline" style="color:var(--c-primary)">{{ 'fiche_matiere.usage.details'|trans({}, 'fiche_matiere') }}</button>
+        <button type="button" data-controller="disclosure" data-action="disclosure#toggle" class="text-xs underline text-primary-600">{{ 'fiche_matiere.usage.details'|trans({}, 'fiche_matiere') }}</button>
         {% endif %}
     </div>
     {% if usages %}
-    <ul class="mt-2 space-y-1 text-xs" style="color:var(--c-muted)" data-disclosure-target="content" hidden>
+    <ul class="mt-2 space-y-1 text-xs text-secondary-500" data-disclosure-target="content" hidden>
         {% for u in usages %}
             <li>{{ u.path }} <span class="opacity-60">({{ u.relation.value }})</span></li>
         {% endfor %}

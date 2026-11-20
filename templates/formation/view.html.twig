@@ -27,9 +27,9 @@
                 {% set hours = ec_value(n, 'hours').value %}
                 <div>
                     <div class="fld-cat">{{ domains[tab] ?? tab }}</div>
-                    <div class="flex flex-wrap gap-x-5 gap-y-1 text-sm text-gray-600 mt-2">
+                    <div class="flex flex-wrap gap-x-5 gap-y-1 text-sm text-secondary-600 mt-2">
                         {% if hours.none ?? false %}
-                            <span class="italic text-gray-400">{{ 'node.panel.hours_none_label'|trans({}, 'node') }}</span>
+                            <span class="italic text-secondary-400">{{ 'node.panel.hours_none_label'|trans({}, 'node') }}</span>
                         {% else %}
                             {% for hp, pl in HP %}{% for hm, ml in HM %}
                                 {% if hours[hp][hm] ?? false %}
@@ -45,9 +45,9 @@
                 {% set mccc = ec_value(n, 'mccc').value %}
                 <div>
                     <div class="fld-cat">{{ domains[tab] ?? tab }}</div>
-                    <div class="text-sm text-gray-600 mt-2">{{ mccc.type is defined ? (mccc_type_label(mccc.type) ?? mccc.type) : '—' }}</div>
+                    <div class="text-sm text-secondary-600 mt-2">{{ mccc.type is defined ? (mccc_type_label(mccc.type) ?? mccc.type) : '—' }}</div>
                     {% if mccc.evaluations ?? false %}
-                        <div class="mt-1.5 space-y-0.5 text-sm text-gray-600">
+                        <div class="mt-1.5 space-y-0.5 text-sm text-secondary-600">
                             {% for e in mccc.evaluations %}
                                 <div>{{ referentiel('types_epreuve')[e.type] ?? e.type }} — {{ e.weight }} %</div>
                             {% endfor %}
@@ -72,11 +72,11 @@
                         {% endif %}
                         {% if (def.category ?? null) != curCat %}
                             {% set curCat = def.category ?? null %}
-                            {% if curCat %}<div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mt-2">{{ curCat }}</div>{% endif %}
+                            {% if curCat %}<div class="text-[11px] font-semibold uppercase tracking-wide text-secondary-400 mt-2">{{ curCat }}</div>{% endif %}
                         {% endif %}
                         <div class="flex flex-wrap gap-x-2 text-sm py-0.5">
-                            <span class="text-gray-400">{{ def.label }} :</span>
-                            <span class="text-gray-800">{{ m.fieldval(key, def, n) }}</span>
+                            <span class="text-secondary-400">{{ def.label }} :</span>
+                            <span class="text-secondary-800">{{ m.fieldval(key, def, n) }}</span>
                         </div>
                     {% endif %}
                 {% endfor %}
@@ -86,7 +86,7 @@
         {% if n.isParcours %}
             {% set hasContent = true %}
             {% set unit = period_unit(n.formation)|lower %}
-            <div class="text-sm text-gray-500">
+            <div class="text-sm text-secondary-500">
                 {{ 'formation.graph.period_range'|trans({'%unit%': unit, '%start%': n.periodeDebut, '%end%': n.periodeFin}, 'formation') }}
                 {%- if n.parcoursParent %} · {{ 'formation.index.parcours_specialization_of'|trans({'%parent%': n.parcoursParent.label ?: '—'}, 'formation') }}{% endif -%}
             </div>
@@ -98,15 +98,15 @@
                     {% for f in shown %}
                         {% set v = pfiche.value(f.key, entry.data) %}
                         <div class="flex flex-wrap gap-x-2 text-sm py-0.5">
-                            <span class="text-gray-400">{{ f.label }} :</span>
-                            <span class="text-gray-800 whitespace-pre-line">{{ v is iterable ? v|join(', ') : v }}</span>
+                            <span class="text-secondary-400">{{ f.label }} :</span>
+                            <span class="text-secondary-800 whitespace-pre-line">{{ v is iterable ? v|join(', ') : v }}</span>
                         </div>
                     {% endfor %}
                 {% endif %}
             {% endfor %}
         {% endif %}
 
-        {% if not hasContent %}<div class="text-sm text-gray-400 italic">{{ 'formation.view.no_field'|trans({}, 'formation') }}</div>{% endif %}
+        {% if not hasContent %}<div class="text-sm text-secondary-400 italic">{{ 'formation.view.no_field'|trans({}, 'formation') }}</div>{% endif %}
     </div>
 {% endmacro %}
 
@@ -122,7 +122,7 @@
                     <span class="type-badge"><span class="opacity-70">{{ ux_icon(n.type.icon, {class: 'icon'}) }}</span> [{{ n.type.label }}]</span>
                     {% if view.ref %}<span class="tree-ref">{{ view.ref }}</span>{% endif %}
                     <span class="tree-label">{{ n.label ?: '—' }}</span>
-                    {% if view.ectsTarget %}<span class="tree-ects {{ view.ectsReached ? 'text-green-600' : 'text-gray-400' }}">{{ view.totalEcts|round }}/{{ view.ectsTarget }}</span>{% endif %}
+                    {% if view.ectsTarget %}<span class="tree-ects {{ view.ectsReached ? 'text-success-600' : 'text-secondary-400' }}">{{ view.totalEcts|round }}/{{ view.ectsTarget }}</span>{% endif %}
                     {% if view.children %}
                         <button type="button" class="tree-chevron" data-action="rotree#toggle" aria-label="{{ 'formation.tree.toggle_aria'|trans({}, 'formation') }}">{{ ux_icon('ph:caret-right', {class: 'icon'}) }}</button>
                     {% else %}<span class="tree-chevron-spacer"></span>{% endif %}
@@ -139,27 +139,27 @@
     {% for view in views %}
         {% set n = view.node %}
         <div data-rotree-target="detail" data-node="{{ n.id }}" hidden class="space-y-4">
-            <div class="text-sm text-gray-400">
+            <div class="text-sm text-secondary-400">
                 {%- for p in node_path(n) %}{% if not loop.first %} › {% endif %}{{ p.label ?: p.type.label }}{% endfor -%}
             </div>
             <div class="flex flex-wrap items-center gap-2">
                 <span class="status-dot" data-status="{{ view.status }}"></span>
                 <span class="type-badge">{{ ux_icon(n.type.icon, {class: 'icon'}) }} [{{ n.type.label }}]</span>
                 {% if view.ref %}<span class="tree-ref">{{ view.ref }}</span>{% endif %}
-                <h3 class="text-lg font-bold">{{ n.label ?: '—' }}</h3>
-                {% if n.code %}<code class="text-xs text-gray-400">{{ n.code }}</code>{% endif %}
+                <h3 class="text-xl font-black tracking-tight text-secondary-900">{{ n.label ?: '—' }}</h3>
+                {% if n.code %}<code class="text-xs text-secondary-400">{{ n.code }}</code>{% endif %}
             </div>
             <div class="flex flex-wrap gap-2">
-                {% if view.totalHours %}<span class="rounded-lg border px-3 py-1.5 text-xs" style="border-color:#fcd34d;background:#fffbeb">{{ 'node.panel.total_hours_label'|trans({}, 'node') }} <strong>{{ view.totalHours|round }}</strong></span>{% endif %}
-                <span class="rounded-lg border px-3 py-1.5 text-xs" style="border-color:#fcd34d;background:#fffbeb"><strong>{{ view.totalEcts|round }}</strong>{% if view.ectsTarget %} / {{ view.ectsTarget }}{% endif %} {{ 'node.panel.ects_unit'|trans({}, 'node') }}</span>
-                {% if n.mutualized %}<span class="pill" style="background:#fef3c7;color:#b45309">{{ 'formation.view.mutualized_badge'|trans({}, 'formation') }}</span>{% endif %}
+                {% if view.totalHours %}<span class="rounded-lg border px-3 py-1.5 text-xs border-warning-300 bg-warning-50">{{ 'node.panel.total_hours_label'|trans({}, 'node') }} <strong>{{ view.totalHours|round }}</strong></span>{% endif %}
+                <span class="rounded-lg border px-3 py-1.5 text-xs border-warning-300 bg-warning-50"><strong>{{ view.totalEcts|round }}</strong>{% if view.ectsTarget %} / {{ view.ectsTarget }}{% endif %} {{ 'node.panel.ects_unit'|trans({}, 'node') }}</span>
+                {% if n.mutualized %}<span class="pill bg-warning-100 text-warning-700">{{ 'formation.view.mutualized_badge'|trans({}, 'formation') }}</span>{% endif %}
             </div>
-            <div class="border-t pt-3" style="border-color:var(--c-border)">
+            <div class="border-t pt-3 border-secondary-200">
                 {{ m.nodefields(n, catalog, domains) }}
             </div>
 
             {% if view.children %}
-                <div class="border-t pt-3" style="border-color:var(--c-border)">
+                <div class="border-t pt-3 border-secondary-200">
                     <div class="fld-cat">{{ 'formation.view.node_content_title'|trans({}, 'formation') }}</div>
                     {{ m.subtree(view.children) }}
                 </div>
@@ -180,8 +180,8 @@
                     <span class="type-badge"><span class="opacity-70">{{ ux_icon(v.node.type.icon, {class: 'icon'}) }}</span> [{{ v.node.type.label }}]</span>
                     {% if v.ref %}<span class="tree-ref">{{ v.ref }}</span>{% endif %}
                     <span class="text-sm font-medium">{{ v.node.label ?: '—' }}</span>
-                    {% if v.node.code %}<code class="text-[11px] text-gray-400">{{ v.node.code }}</code>{% endif %}
-                    <span class="ml-auto shrink-0 text-[11px] text-gray-400 tabular-nums">
+                    {% if v.node.code %}<code class="text-[11px] text-secondary-400">{{ v.node.code }}</code>{% endif %}
+                    <span class="ml-auto shrink-0 text-[11px] text-secondary-400 tabular-nums">
                         {%- if v.totalHours %}{{ v.totalHours|round }} h · {% endif -%}
                         {{ v.totalEcts|round }}{% if v.ectsTarget %}/{{ v.ectsTarget }}{% endif %} {{ 'node.panel.ects_unit'|trans({}, 'node') }}
                     </span>
@@ -195,8 +195,8 @@
 {# ligne clé / valeur d'un paramètre #}
 {% macro prow(label, value) %}
     <div class="grid gap-1 py-2 sm:grid-cols-[240px_1fr]">
-        <dt class="text-sm text-gray-400">{{ label }}</dt>
-        <dd class="text-sm text-gray-800">{{ value }}</dd>
+        <dt class="text-sm text-secondary-400">{{ label }}</dt>
+        <dd class="text-sm text-secondary-800">{{ value }}</dd>
     </div>
 {% endmacro %}
 
@@ -218,10 +218,10 @@
         {% set parts = [{fiche: fiche, entry: entry}] %}
         {% if merged %}{% set parts = parts|merge(monoEntries|filter(e => e.key == entry.key)|map(e => {fiche: fiche_mono(formation), entry: e})) %}{% endif %}
         <div data-rotree-target="detail" data-node="param:{{ navKey }}" hidden class="space-y-4">
-            <div class="text-sm text-gray-400">{{ formation.name }} › {{ 'formation.view.formation_params_breadcrumb'|trans({}, 'formation') }}</div>
+            <div class="text-sm text-secondary-400">{{ formation.name }} › {{ 'formation.view.formation_params_breadcrumb'|trans({}, 'formation') }}</div>
             <div class="flex flex-wrap items-center gap-2">
                 <span class="status-dot" data-status="{{ statuses[navKey] ?? 'empty' }}"></span>
-                <h3 class="text-lg font-bold">{{ entry.label }}</h3>
+                <h3 class="text-xl font-black tracking-tight text-secondary-900">{{ entry.label }}</h3>
             </div>
             {% set rows = [] %}
             {% for part in parts %}
@@ -230,19 +230,19 @@
                 {% endfor %}
             {% endfor %}
             {% if rows is empty %}
-                <p class="text-sm text-gray-400 italic">{{ 'formation.view.section_empty'|trans({}, 'formation') }}</p>
+                <p class="text-sm text-secondary-400 italic">{{ 'formation.view.section_empty'|trans({}, 'formation') }}</p>
             {% else %}
-                <dl class="divide-y" style="border-color:var(--c-border)">
+                <dl class="divide-y border-secondary-200">
                     {% for row in rows %}
                         <div class="grid gap-1 py-2 sm:grid-cols-[240px_1fr]">
-                            <dt class="text-sm text-gray-400">{{ row.field.label }}</dt>
-                            <dd class="text-sm text-gray-800">{{ field_view(row.field, row.value) }}</dd>
+                            <dt class="text-sm text-secondary-400">{{ row.field.label }}</dt>
+                            <dd class="text-sm text-secondary-800">{{ field_view(row.field, row.value) }}</dd>
                         </div>
                     {% endfor %}
                 </dl>
             {% endif %}
             <a href="{{ path('formation_editor', {id: formation.id, param: navKey}) }}"
-               class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'formation.view.edit_section_button'|trans({}, 'formation') }}</a>
+               class="inline-flex items-center justify-center gap-1.5 rounded-md border border-secondary-300 bg-secondary-50 font-medium text-secondary-600 transition-colors hover:bg-secondary-100 hover:text-secondary-800 px-2 py-1 text-xs">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'formation.view.edit_section_button'|trans({}, 'formation') }}</a>
         </div>
     {% endif %}
     {% endfor %}
@@ -250,13 +250,13 @@
 
     {# écran intégré « Configuration de la structure » : récapitulatif de la configuration #}
     <div data-rotree-target="detail" data-node="param:structure" hidden class="space-y-4">
-            <div class="text-sm text-gray-400">{{ formation.name }} › {{ 'formation.view.formation_params_breadcrumb'|trans({}, 'formation') }}</div>
+            <div class="text-sm text-secondary-400">{{ formation.name }} › {{ 'formation.view.formation_params_breadcrumb'|trans({}, 'formation') }}</div>
             <div class="flex flex-wrap items-center gap-2">
                 <span class="status-dot" data-status="{{ formation.structure is empty ? 'empty' : 'ok' }}"></span>
-                <h3 class="text-lg font-bold">{{ 'formation.editor.structure_section_label'|trans({}, 'formation') }}</h3>
+                <h3 class="text-xl font-black tracking-tight text-secondary-900">{{ 'formation.editor.structure_section_label'|trans({}, 'formation') }}</h3>
             </div>
 
-            <dl class="divide-y" style="border-color:var(--c-border)">
+            <dl class="divide-y border-secondary-200">
                     {{ m.prow('formation.view.plabel.org_parcours'|trans({}, 'formation'), formation.avecParcours ? 'formation.view.multi_parcours_value'|trans({}, 'formation') : 'formation.editor.meta_mono_parcours'|trans({}, 'formation')) }}
                     {{ m.prow('formation.view.plabel.temporal_dimension'|trans({}, 'formation'),
                         formation.calendarSpan
@@ -264,27 +264,27 @@
                             : 'formation.view.temporal_dimension_deduced'|trans({'%unit%': period_unit(formation)|lower}, 'formation')) }}
                     {% if formation.ectsTotal %}{{ m.prow('formation.view.plabel.ects_total'|trans({}, 'formation'), formation.ectsTotal) }}{% endif %}
                     <div class="grid gap-1 py-2 sm:grid-cols-[240px_1fr]">
-                        <dt class="text-sm text-gray-400">{{ 'formation.view.plabel.hierarchy'|trans({}, 'formation') }}</dt>
-                        <dd class="flex flex-wrap items-center gap-1.5 text-sm text-gray-800">
+                        <dt class="text-sm text-secondary-400">{{ 'formation.view.plabel.hierarchy'|trans({}, 'formation') }}</dt>
+                        <dd class="flex flex-wrap items-center gap-1.5 text-sm text-secondary-800">
                             {% for tk in formation.effectiveStructure %}
                                 {% set tm = type_meta()[tk] ?? null %}
-                                {% if not loop.first %}<span class="text-gray-300">›</span>{% endif %}
+                                {% if not loop.first %}<span class="text-secondary-300">›</span>{% endif %}
                                 <span class="type-badge">{{ tm ? ux_icon(tm.icon, {class: 'icon'}) }} [{{ tm ? tm.label : tk }}]</span>
-                                {%- if tk == 'parcours' and formation.isSansParcours %}<span class="text-xs text-gray-400">{{ 'formation.view.implicit_badge'|trans({}, 'formation') }}</span>{% endif -%}
+                                {%- if tk == 'parcours' and formation.isSansParcours %}<span class="text-xs text-secondary-400">{{ 'formation.view.implicit_badge'|trans({}, 'formation') }}</span>{% endif -%}
                             {% endfor %}
                         </dd>
                     </div>
                 </dl>
 
             <a href="{{ path('formation_editor', {id: formation.id, param: 'structure'}) }}"
-               class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'formation.view.edit_section_button'|trans({}, 'formation') }}</a>
+               class="inline-flex items-center justify-center gap-1.5 rounded-md border border-secondary-300 bg-secondary-50 font-medium text-secondary-600 transition-colors hover:bg-secondary-100 hover:text-secondary-800 px-2 py-1 text-xs">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'formation.view.edit_section_button'|trans({}, 'formation') }}</a>
         </div>
 {% endmacro %}
 
 {# liste lecture seule de blocs de compétences #}
 {% macro bloclist(blocs) %}
     {% if blocs is empty %}
-        <p class="text-sm text-gray-400 italic">{{ 'formation.view.no_bloc'|trans({}, 'formation') }}</p>
+        <p class="text-sm text-secondary-400 italic">{{ 'formation.view.no_bloc'|trans({}, 'formation') }}</p>
     {% else %}
         <div class="space-y-3">
             {% set bcNum = 0 %}
@@ -305,12 +305,12 @@
                             {% if bcRef and c.type.numbered %}{% set cNum = cNum + 1 %}{% set cRef = bcRef ~ '.' ~ number_index(cNum, c.type.numberStyle) %}{% endif %}
                             <li class="bcc-comp"><div class="bcc-comp-row">
                                 <div class="min-w-0 flex-1">
-                                    <div class="font-medium">{% if cRef %}<span class="text-xs font-bold" style="color:var(--c-primary)">{{ cRef }}</span> {% endif %}{{ c.label }}{% if c.code %} <span class="text-xs font-normal text-gray-400">{{ c.code }}</span>{% endif %}</div>
-                                    {% if c.description %}<div class="text-xs text-gray-500">{{ c.description }}</div>{% endif %}
+                                    <div class="font-medium">{% if cRef %}<span class="text-xs font-bold text-primary-600">{{ cRef }}</span> {% endif %}{{ c.label }}{% if c.code %} <span class="text-xs font-normal text-secondary-400">{{ c.code }}</span>{% endif %}</div>
+                                    {% if c.description %}<div class="text-xs text-secondary-500">{{ c.description }}</div>{% endif %}
                                 </div>
                             </div></li>
                         {% else %}
-                            <li class="px-4 py-2 text-xs text-gray-400 italic">{{ 'formation.view.no_competency'|trans({}, 'formation') }}</li>
+                            <li class="px-4 py-2 text-xs text-secondary-400 italic">{{ 'formation.view.no_competency'|trans({}, 'formation') }}</li>
                         {% endfor %}
                     </ul>
                 </div>
@@ -323,17 +323,17 @@
 {% macro bccdetail(formation) %}
     {% import _self as m %}
     <div data-rotree-target="detail" data-node="bcc" hidden class="space-y-4">
-        <div class="text-sm text-gray-400">{{ formation.name }} › {{ 'formation.bcc.heading'|trans({}, 'formation') }}</div>
+        <div class="text-sm text-secondary-400">{{ formation.name }} › {{ 'formation.bcc.heading'|trans({}, 'formation') }}</div>
         <div class="flex flex-wrap items-center gap-2">
-            <h3 class="text-lg font-bold">{{ 'formation.editor.bcc_section_label'|trans({}, 'formation') }}</h3>
+            <h3 class="text-xl font-black tracking-tight text-secondary-900">{{ 'formation.editor.bcc_section_label'|trans({}, 'formation') }}</h3>
         </div>
         {% if formation.avecParcours %}
-            <p class="text-sm text-gray-500">{{ 'formation.view.bcc_per_parcours_note'|trans({}, 'formation') }}</p>
+            <p class="text-sm text-secondary-500">{{ 'formation.view.bcc_per_parcours_note'|trans({}, 'formation') }}</p>
             {% for p in parcours_nodes(formation) %}
                 <div class="space-y-2">
                     <div class="flex items-center gap-2 text-sm font-semibold">
                         <span class="status-dot" data-status="{{ bcc_status(p) }}"></span>{{ p.displayLabel }}
-                        <a href="{{ path('parcours_editor', {fid: formation.id, nid: p.id, bcc: 1}) }}" class="text-xs font-normal hover:underline" style="color:var(--c-primary)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'formation.view.edit_lowercase'|trans({}, 'formation') }}</a>
+                        <a href="{{ path('parcours_editor', {fid: formation.id, nid: p.id, bcc: 1}) }}" class="text-xs font-normal hover:underline text-primary-600">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'formation.view.edit_lowercase'|trans({}, 'formation') }}</a>
                     </div>
                     {{ m.bloclist(p.bccBlocs) }}
                 </div>
@@ -341,55 +341,38 @@
         {% else %}
             <div class="flex items-center gap-2">
                 <span class="status-dot" data-status="{{ bcc_status(formation) }}"></span>
-                <span class="text-sm text-gray-500">{{ 'formation.view.bloc_count'|trans({'%count%': mono_blocs(formation)|length}, 'formation') }}</span>
+                <span class="text-sm text-secondary-500">{{ 'formation.view.bloc_count'|trans({'%count%': mono_blocs(formation)|length}, 'formation') }}</span>
             </div>
             {{ m.bloclist(mono_blocs(formation)) }}
             <a href="{{ path('formation_editor', {id: formation.id}) }}?bcc=1"
-               class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'formation.view.edit_referentiel_button'|trans({}, 'formation') }}</a>
+               class="inline-flex items-center justify-center gap-1.5 rounded-md border border-secondary-300 bg-secondary-50 font-medium text-secondary-600 transition-colors hover:bg-secondary-100 hover:text-secondary-800 px-2 py-1 text-xs">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'formation.view.edit_referentiel_button'|trans({}, 'formation') }}</a>
         {% endif %}
     </div>
 {% endmacro %}
 
+{% set header_title = formation.name %}
+{% set header_description = 'formation.view.readonly_subtitle'|trans({}, 'formation') %}
+{% set header_breadcrumb = [
+    {label: 'formation.index.breadcrumb_offer'|trans({}, 'formation')},
+    {label: 'formation.index.heading'|trans({}, 'formation'), url: path('formation_index')},
+    {label: formation.name},
+] %}
+
+{% block bouton_header %}
+    <twig:Button variant="warning" :soft="false" :outline="true" icon="ph:pencil-simple" :label="'formation.view.edit_formation_button'|trans({}, 'formation')" :href="path('formation_editor', {id: formation.id})"/>
+    <twig:Button variant="success" :soft="false" :outline="true" icon="ph:arrow-left" :label="'formation.editor.back_to_list'|trans({}, 'formation')" :href="path('formation_index')"/>
+{% endblock %}
+
 {% block body %}
 {% import _self as m %}
 
-<div class="rounded-2xl border bg-white px-7 py-6 mb-4" style="border-color:var(--c-border)">
-    <div class="flex items-start justify-between gap-4">
-        <div>
-            <div class="text-xs text-gray-400">
-                {{ ux_icon('ph:house', {class: 'icon'}) }} <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.index.breadcrumb_home'|trans({}, 'formation') }}</a> ›
-                <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.editor.breadcrumb_list'|trans({}, 'formation') }}</a> › {{ formation.name }}
-            </div>
-            <h1 class="text-3xl font-extrabold tracking-tight mt-1">{{ formation.name }}</h1>
-            <p class="text-sm text-gray-500">{{ 'formation.view.readonly_subtitle'|trans({}, 'formation') }}</p>
-        </div>
-        <div class="flex items-center gap-2 shrink-0">
-            <span class="pill" style="background:#eef2ff;color:var(--c-primary)">{{ 'formation.view.readonly_pill'|trans({}, 'formation') }}</span>
-            <a href="{{ path('formation_history', {id: formation.id}) }}" class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:clock-counter-clockwise', {class: 'icon'}) }} {{ 'formation.editor.history_link'|trans({}, 'formation') }}</a>
-            <a href="{{ path('formation_export', {id: formation.id}) }}" class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:download-simple', {class: 'icon'}) }} {{ 'formation.view.export_json_button'|trans({}, 'formation') }}</a>
-            <a href="{{ path('formation_editor', {id: formation.id}) }}" class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'common.edit'|trans({}, 'common') }}</a>
-            <a href="{{ path('formation_index') }}" class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'formation.view.list_button'|trans({}, 'formation') }}</a>
-        </div>
-    </div>
-    <div class="mt-4 grid grid-cols-2 md:grid-cols-6 gap-4">
-        {% for k, v in {
-            (('formation.editor.meta_domaine'|trans({}, 'formation'))): formation.domaine ?: 'formation.editor.meta_domaine_default'|trans({}, 'formation'),
-            (('formation.editor.meta_diplome'|trans({}, 'formation'))): formation.diplome ?: '—',
-            (('formation.editor.meta_composante'|trans({}, 'formation'))): formation.composante ?: '—',
-            (('formation.editor.meta_parcours'|trans({}, 'formation'))): formation.avecParcours ? 'formation.view.multi_short'|trans({}, 'formation') : 'formation.view.mono_short'|trans({}, 'formation'),
-            (('formation.view.duree_label'|trans({}, 'formation'))): (formation.calendarSpan ? formation.calendarSpan ~ ' ' ~ period_unit(formation)|lower ~ (formation.calendarSpan > 1 ? 's' : '') : '—'),
-            (('formation.index.global_progress'|trans({}, 'formation'))): progress ~ '%'
-        } %}
-            <div><div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{{ k }}</div><div class="text-sm mt-1">{{ v }}</div></div>
-        {% endfor %}
-    </div>
-</div>
+{% include 'formation/_formation_header.html.twig' with {mode: 'view'} %}
 
-<div class="rounded-2xl border bg-white overflow-hidden" style="border-color:var(--c-border)" data-controller="rotree">
-    <div class="grid lg:grid-cols-[360px_1fr] lg:h-[calc(100vh-15rem)] min-h-[480px]">
+<div class="overflow-hidden rounded-xl border border-secondary-200 bg-white shadow-sm" data-controller="rotree">
+    <div class="grid lg:grid-cols-[360px_1fr] lg:h-[calc(100vh-var(--topbar-height)-2rem)] min-h-[480px]">
         {# colonne gauche : paramètres de la formation + arbre de structure #}
-        <div class="border-b lg:border-b-0 lg:border-r overflow-y-auto p-3" style="border-color:var(--c-border)">
-            <div class="px-2 pb-2 text-[11px] font-bold uppercase tracking-wide" style="color:var(--c-primary)">{{ 'formation.view.formation_params_breadcrumb'|trans({}, 'formation') }}</div>
+        <div class="overflow-y-auto border-b border-secondary-200 bg-secondary-50/40 p-3 lg:border-b-0 lg:border-r">
+            <div class="px-2 pb-3 pt-1 text-[10px] font-black uppercase tracking-[0.2em] text-secondary-400">{{ 'formation.view.formation_params_breadcrumb'|trans({}, 'formation') }}</div>
             <div class="mb-4 space-y-0.5">
                 {% for item in fiche_nav(formation)|filter(i => not i.builtin) %}
                     <div class="tree-row" data-action="click->rotree#select" data-rotree-id-param="param:{{ item.group ? item.group ~ '.' }}{{ item.key }}">
@@ -408,13 +391,13 @@
                     </div>
                 {% endif %}
                 {% if formation.avecParcours %}
-                    <a href="{{ path('formation_parcours_graph', {id: formation.id}) }}" class="block rounded-md px-2 py-1.5 text-sm hover:bg-gray-50" style="color:var(--c-primary)">{{ ux_icon('ph:map-trifold', {class: 'icon'}) }} {{ 'formation.editor.ramification_section_label'|trans({}, 'formation') }}</a>
+                    <a href="{{ path('formation_parcours_graph', {id: formation.id}) }}" class="block rounded-md px-2 py-1.5 text-sm hover:bg-secondary-50 text-primary-600">{{ ux_icon('ph:map-trifold', {class: 'icon'}) }} {{ 'formation.editor.ramification_section_label'|trans({}, 'formation') }}</a>
                 {% endif %}
             </div>
 
-            <div class="px-2 pb-2 text-[11px] font-bold uppercase tracking-wide" style="color:var(--c-primary)">{{ 'formation.view.structure_label'|trans({}, 'formation') }}</div>
+            <div class="px-2 pb-3 pt-1 text-[10px] font-black uppercase tracking-[0.2em] text-secondary-400">{{ 'formation.view.structure_label'|trans({}, 'formation') }}</div>
             {% if roots is empty %}
-                <p class="px-2 py-6 text-sm text-gray-400 italic">{{ 'formation.view.no_structure'|trans({}, 'formation') }}</p>
+                <p class="px-2 py-6 text-sm text-secondary-400 italic">{{ 'formation.view.no_structure'|trans({}, 'formation') }}</p>
             {% else %}
                 {{ m.rotree(roots) }}
             {% endif %}
@@ -422,7 +405,7 @@
 
         {# colonne droite : détail du nœud ou de la section sélectionnée #}
         <div class="overflow-y-auto p-7">
-            <div data-rotree-target="empty" class="grid h-full place-items-center text-sm text-gray-400">
+            <div data-rotree-target="empty" class="grid h-full place-items-center text-sm text-secondary-400">
                 {{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'formation.view.select_prompt'|trans({}, 'formation') }}
             </div>
             {{ m.paramdetails(formation) }}

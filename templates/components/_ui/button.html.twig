@@ -1,0 +1,36 @@
+{#
+Composant Button (repris d'ORéOF v2) — exemples :
+  <twig:Button label="Ajouter" variant="success" icon="ph:plus" href="{{ path('...') }}" />
+  <twig:Button label="Modifier" variant="warning" :soft="false" :outline="true" icon="ph:pencil-simple" href="{{ path('...') }}" />
+  <twig:Button label="Enregistrer" variant="success" :soft="false" type="submit" icon="ph:floppy-disk" />
+#}
+{% set isLink = href|trim != '' %}
+{% set iconAttrs = {class: 'h-4 w-4 shrink-0'} %}
+
+{% set innerContent %}
+    {% if icon != '' and not iconEnd %}{{ ux_icon(icon, iconAttrs) }}{% endif %}
+    {% if label != '' %}<span>{{ label }}</span>{% endif %}
+    {% block content %}{% endblock %}
+    {% if icon != '' and iconEnd %}{{ ux_icon(icon, iconAttrs) }}{% endif %}
+{% endset %}
+
+{% if isLink %}
+    <a href="{{ href }}"
+       class="{{ this.allClasses }}"
+       {% if tooltip %}title="{{ tooltip }}"{% endif %}
+       {% if target != '' %}target="{{ target }}"{% endif %}
+       {% if rel != '' %}rel="{{ rel }}"{% endif %}
+       {% if dataAction != '' %}data-action="{{ dataAction }}"{% endif %}
+       {% if disabled %}aria-disabled="true" tabindex="-1"{% endif %}
+       {{- attributes -}}
+    >{{ innerContent|raw }}</a>
+{% else %}
+    <button type="{{ type }}"
+            class="{{ this.allClasses }}"
+            {% if form != '' %}form="{{ form }}"{% endif %}
+            {% if tooltip %}title="{{ tooltip }}"{% endif %}
+            {% if dataAction != '' %}data-action="{{ dataAction }}"{% endif %}
+            {% if disabled %}disabled{% endif %}
+            {{- attributes -}}
+    >{{ innerContent|raw }}</button>
+{% endif %}

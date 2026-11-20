@@ -1,0 +1,147 @@
+{#
+En-tête d'une formation, repris du composant FormationHeader d'ORéOF v2 :
+informations (méta), état de la formation, avancement et actions rapides.
+Variables : formation, progress ; mode = 'edit' (défaut) | 'view' ;
+  parcours (optionnel : éditeur d'un parcours) ; canUndo / canRedo (mode edit).
+#}
+{% set mode = mode|default('edit') %}
+{% set parcours = parcours|default(null) %}
+{% set multi = formation.avecParcours %}
+{% set derogs = formation_derogations(formation) %}
+{% set derogPending = derogs|filter(d => d.isPending)|length %}
+{% set derogDecided = derogs|length - derogPending %}
+
+<div class="mb-4 rounded-2xl border border-secondary-200 bg-white shadow-sm">
+    <div class="space-y-4 p-4 sm:p-5">
+        <section class="rounded-2xl border border-secondary-200 bg-secondary-50/80 p-4 shadow-sm">
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-secondary-200/70 pb-2.5">
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <span class="app-meta-label mb-0">{{ parcours ? 'formation.header.parcours_info'|trans({}, 'formation') : 'formation.header.formation_info'|trans({}, 'formation') }}</span>
+                    {% if formation.anneeUniversitaire %}
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-info-100 px-2.5 py-0.5 text-xs font-semibold text-info-800" title="{{ 'formation.header.year_title'|trans({}, 'formation') }}">
+                            {{ ux_icon('ph:calendar-blank', {class: 'h-3.5 w-3.5 text-info-600'}) }}<span>{{ formation.anneeUniversitaire }}</span>
+                        </span>
+                    {% endif %}
+                    {% if derogs is not empty %}
+                        <twig:Badge variant="secondary" icon="ph:flag" :href="path('formation_editor', {id: formation.id, param: 'structure'}) ~ '#derogations'">
+                                {% if derogPending %}{{ 'derogation.tracking.pending'|trans({'%count%': derogPending}, 'derogation') }}{% endif %}
+                                {% if derogPending and derogDecided %} · {% endif %}
+                                {% if derogDecided %}{{ 'derogation.tracking.decided'|trans({'%count%': derogDecided}, 'derogation') }}{% endif %}
+                            </twig:Badge>
+                    {% endif %}
+                </div>
+                {% if is_admin() and mode == 'edit' %}
+                    <twig:Button variant="warning" :soft="false" :outline="true" icon="ph:pencil-simple" :label="'common.edit'|trans({}, 'common')"
+                                 :href="path('formation_editor', {id: formation.id, param: 'structure'})" :tooltip="'formation.editor.structure_config_link'|trans({}, 'formation')"/>
+                {% endif %}
+            </div>
+            <dl class="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-6">
+                <div>
+                    <dt class="app-meta-label">{{ 'formation.editor.meta_domaine'|trans({}, 'formation') }}</dt>
+                    <dd class="app-meta-value">{% if formation.domaine %}{{ formation.domaine }}{% else %}<twig:Badge variant="danger" :label="'formation.editor.meta_domaine_default'|trans({}, 'formation')"/>{% endif %}</dd>
+                </div>
+                <div>
+                    <dt class="app-meta-label">{{ 'formation.editor.meta_diplome'|trans({}, 'formation') }}</dt>
+                    <dd class="app-meta-value">{{ formation.diplome ?: '—' }}</dd>
+                </div>
+                <div>
+                    <dt class="app-meta-label">{{ 'formation.editor.meta_composante'|trans({}, 'formation') }}</dt>
+                    <dd class="app-meta-value">{% if formation.composante %}{{ formation.composante }}{% else %}<twig:Badge variant="danger" :label="'formation.index.undefined'|trans({}, 'formation')"/>{% endif %}</dd>
+                </div>
+                {% if parcours %}
+                    <div>
+                        <dt class="app-meta-label">{{ 'formation.parcours_editor.meta_formation'|trans({}, 'formation') }}</dt>
+                        <dd class="app-meta-value"><a href="{{ path('formation_editor', {id: formation.id}) }}" class="text-primary-700 hover:underline">{{ formation.name }}</a></dd>
+                    </div>
+                    <div>
+                        <dt class="app-meta-label">{{ 'formation.parcours_editor.meta_periods'|trans({}, 'formation') }}</dt>
+                        <dd class="app-meta-value">{{ period_unit(formation)|lower }}s {{ parcours.periodeDebut }}–{{ parcours.periodeFin }}</dd>
+                    </div>
+                    <div>
+                        <dt class="app-meta-label">{{ 'formation.parcours_editor.meta_parent'|trans({}, 'formation') }}</dt>
+                        <dd class="app-meta-value">{{ parcours.parcoursParent ? parcours.parcoursParent.displayLabel : '—' }}</dd>
+                    </div>
+                {% else %}
+                    <div>
+                        <dt class="app-meta-label">{{ 'formation.editor.meta_parcours'|trans({}, 'formation') }}</dt>
+                        <dd class="app-meta-value">{{ multi ? 'formation.index.parcours_count'|trans({'%count%': parcours_nodes(formation)|length}, 'formation') : 'formation.editor.meta_mono_parcours'|trans({}, 'formation') }}</dd>
+                    </div>
+                    <div>
+                        <dt class="app-meta-label">{{ 'formation.view.duree_label'|trans({}, 'formation') }}</dt>
+                        <dd class="app-meta-value">{{ formation.calendarSpan ? formation.calendarSpan ~ ' ' ~ period_unit(formation)|lower ~ (formation.calendarSpan > 1 ? 's') : '—' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="app-meta-label">{{ 'formation.index.global_progress'|trans({}, 'formation') }}</dt>
+                        <dd class="app-meta-value">{{ progress }} %</dd>
+                    </div>
+                {% endif %}
+            </dl>
+        </section>
+
+        <section class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            {% if formation.phase.value == 'consolidation' %}
+                <div class="flex flex-wrap items-center gap-3 rounded-2xl border border-warning-200 bg-warning-50 px-4 py-3 text-warning-800">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-warning-100 text-warning-700">{{ ux_icon('ph:hourglass-medium', {class: 'h-4 w-4'}) }}</div>
+                    <div>
+                        <p class="text-sm font-semibold">{{ 'formation.editor.consolidation_banner_title'|trans({}, 'formation') }}{{ formation.anneeUniversitaire ? ' — ' ~ formation.anneeUniversitaire }}</p>
+                        <p class="text-xs opacity-80">{{ 'formation.editor.consolidation_banner_text'|trans({}, 'formation') }}</p>
+                    </div>
+                    {% if mode == 'edit' %}
+                        <form method="post" action="{{ path('formation_phase_save', {id: formation.id}) }}" data-turbo-frame="_top" class="ml-2"
+                              data-controller="confirm" data-confirm-message-value="{{ 'formation.editor.switch_to_construction_confirm'|trans({'%name%': formation.name}, 'formation') }}">
+                            <input type="hidden" name="phase" value="construction">
+                            <twig:Button type="submit" variant="warning" icon="ph:arrow-right" :label="'formation.editor.switch_to_construction_button'|trans({}, 'formation')"/>
+                        </form>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="flex items-center gap-3 rounded-2xl border border-success-200 bg-success-50 px-4 py-3 text-success-800 shadow-sm">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-success-100 text-success-700">{{ ux_icon(mode == 'edit' ? 'ph:lock-simple-open' : 'ph:eye', {class: 'h-4 w-4'}) }}</div>
+                    <div>
+                        <p class="text-sm font-semibold">{{ mode == 'edit' ? 'formation.editor.open_banner_title'|trans({}, 'formation') : 'formation.view.readonly_pill'|trans({}, 'formation') }}</p>
+                        <p class="text-xs opacity-80">{{ mode == 'edit' ? 'formation.editor.open_banner_text'|trans({}, 'formation') : 'formation.view.readonly_subtitle'|trans({}, 'formation') }}</p>
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="w-full rounded-2xl border border-secondary-200 bg-white px-4 py-3 shadow-sm xl:w-80">
+                <p class="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-secondary-400">{{ 'formation.header.progress_title'|trans({}, 'formation') }}</p>
+                <twig:remplissage_progress :label="parcours ? parcours.displayLabel : 'formation.index.global_progress'|trans({}, 'formation')" :percent="progress"
+                                           :tone="progress >= 100 ? 'success' : (progress < 30 ? 'danger' : 'info')"/>
+            </div>
+        </section>
+
+        <section class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <div class="text-[11px] font-black uppercase tracking-[0.18em] text-secondary-400">{{ 'formation.header.quick_actions'|trans({}, 'formation') }}</div>
+            <div class="flex flex-wrap items-center gap-2">
+                {% if mode == 'edit' %}
+                    <form method="post" action="{{ path('formation_undo', {id: formation.id}) }}" data-turbo-frame="_top">
+                        <button type="submit" {{ canUndo|default(false) ? '' : 'disabled' }} title="{{ 'formation.editor.undo_title'|trans({}, 'formation') }}" aria-label="{{ 'formation.editor.undo_title'|trans({}, 'formation') }}"
+                                class="app-quick-btn app-quick-btn--secondary">{{ ux_icon('ph:arrow-counter-clockwise', {class: 'h-4 w-4'}) }}</button>
+                    </form>
+                    <form method="post" action="{{ path('formation_redo', {id: formation.id}) }}" data-turbo-frame="_top">
+                        <button type="submit" {{ canRedo|default(false) ? '' : 'disabled' }} title="{{ 'formation.editor.redo_title'|trans({}, 'formation') }}" aria-label="{{ 'formation.editor.redo_title'|trans({}, 'formation') }}"
+                                class="app-quick-btn app-quick-btn--secondary">{{ ux_icon('ph:arrow-clockwise', {class: 'h-4 w-4'}) }}</button>
+                    </form>
+                    <a href="{{ path('formation_check', {id: formation.id}) }}" class="app-quick-btn app-quick-btn--success">{{ ux_icon('ph:check-square-offset', {class: 'h-4 w-4'}) }} {{ 'formation.editor.check_link'|trans({}, 'formation') }}</a>
+                    <a href="{{ path('formation_quick_grid', parcours ? {id: formation.id, parcours: parcours.id} : {id: formation.id}) }}" class="app-quick-btn app-quick-btn--info">{{ ux_icon('ph:table', {class: 'h-4 w-4'}) }} {{ 'formation.editor.quick_grid_link'|trans({}, 'formation') }}</a>
+                {% endif %}
+                <a href="{{ path('formation_history', {id: formation.id}) }}" class="app-quick-btn app-quick-btn--warning">{{ ux_icon('ph:clock-counter-clockwise', {class: 'h-4 w-4'}) }} {{ 'formation.editor.history_link'|trans({}, 'formation') }}</a>
+                <a href="{{ path('formation_export', {id: formation.id}) }}" class="app-quick-btn app-quick-btn--primary">{{ ux_icon('ph:download-simple', {class: 'h-4 w-4'}) }} {{ mode == 'edit' ? 'formation.editor.export_link'|trans({}, 'formation') : 'formation.view.export_json_button'|trans({}, 'formation') }}</a>
+                {% if is_admin() and mode == 'edit' and not parcours %}
+                    <div class="relative" data-controller="menu">
+                        <button type="button" data-action="menu#toggle" class="app-quick-btn app-quick-btn--secondary">{{ ux_icon('ph:gear', {class: 'h-4 w-4'}) }} {{ 'formation.editor.ses_menu_button'|trans({}, 'formation') }} {{ ux_icon('ph:caret-down', {class: 'h-3.5 w-3.5'}) }}</button>
+                        <div data-menu-target="menu" hidden class="app-menu w-72">
+                            <div class="app-menu-title">{{ 'layout.nav.administration'|trans({}, 'layout') }}</div>
+                            <a href="{{ path('admin_index') }}" class="app-menu-item">{{ ux_icon('ph:gear', {class: 'h-4 w-4'}) }} {{ 'admin.index.title'|trans({}, 'admin') }}</a>
+                            <a href="{{ path('node_type_index') }}" class="app-menu-item">{{ ux_icon('ph:puzzle-piece', {class: 'h-4 w-4'}) }} {{ 'node_type.index.heading'|trans({}, 'node_type') }}</a>
+                            <a href="{{ path('admin_referentiels') }}" class="app-menu-item">{{ ux_icon('ph:books', {class: 'h-4 w-4'}) }} {{ 'admin.referentiels.title'|trans({}, 'admin') }}</a>
+                            <div class="app-menu-sep"></div>
+                            <a href="{{ path('formation_editor', {id: formation.id, param: 'structure'}) }}" class="app-menu-item app-menu-item--primary">{{ ux_icon('ph:arrow-bend-down-right', {class: 'h-4 w-4'}) }} {{ 'formation.editor.structure_config_link'|trans({}, 'formation') }}</a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+</div>

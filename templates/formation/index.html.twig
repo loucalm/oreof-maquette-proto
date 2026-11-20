@@ -1,146 +1,134 @@
 {% extends 'base.html.twig' %}
-{% block title %}{{ 'formation.index.page_title'|trans({}, 'formation') }}{% endblock %}
+{# Liste des formations — reprise de la page v2 « Détails des formations » (formation/index + _liste). #}
+
+{% set header_title = 'formation.index.heading'|trans({}, 'formation') %}
+{% set header_description = 'formation.index.subheading'|trans({}, 'formation') %}
+{% set header_breadcrumb = [
+    {label: 'formation.index.breadcrumb_offer'|trans({}, 'formation')},
+    {label: header_title},
+] %}
+
+{% block root_attrs %}data-controller="modal"{% endblock %}
+
+{% block bouton_header %}
+    <twig:Button variant="success" icon="ph:check" :label="'formation.index.check_lheo'|trans({}, 'formation')" :disabled="true" :tooltip="'common.coming_soon'|trans({}, 'common')"/>
+    {% if is_admin() %}
+        <twig:Button variant="success" icon="ph:plus" :label="'formation.index.add_button'|trans({}, 'formation')" dataAction="modal#open"/>
+    {% endif %}
+{% endblock %}
 
 {% block body %}
-<div data-controller="modal">
+<section class="space-y-4 rounded-2xl border border-secondary-200 bg-white p-4 shadow-sm sm:p-6">
+    {% include 'formation/_tabs.html.twig' with {active: 'all'} %}
 
-    {# ─── bandeau titre (fictif) ─── #}
-    <div class="rounded-2xl border bg-white px-7 py-6 mb-4" style="border-color:var(--c-border)">
-        <div class="flex items-start justify-between gap-4">
-            <div>
-                <h1 class="text-3xl font-extrabold tracking-tight">{{ 'formation.index.heading'|trans({}, 'formation') }}</h1>
-                <p class="text-sm text-gray-500">{{ 'formation.index.subheading'|trans({}, 'formation') }}</p>
-            </div>
-            <div class="flex items-center gap-2">
-                <span class="fake-btn" style="color:#15803d;border-color:#bbf7d0" aria-disabled="true" title="{{ 'common.coming_soon'|trans({}, 'common') }}">{{ ux_icon('ph:check-bold', {class: 'icon'}) }} {{ 'formation.index.check_lheo'|trans({}, 'formation') }}</span>
-                {% if is_admin() %}
-                <button type="button" data-action="modal#open"
-                        class="rounded-lg border px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50" style="border-color:#bbf7d0">
-                    {{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.index.add_button'|trans({}, 'formation') }}
-                </button>
-                {% endif %}
-            </div>
-        </div>
-        <div class="mt-3 text-sm text-gray-400">
-            {{ ux_icon('ph:house', {class: 'icon'}) }} <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.index.breadcrumb_home'|trans({}, 'formation') }}</a> › <span class="fake-link">{{ 'formation.index.breadcrumb_offer'|trans({}, 'formation') }}</span> ›
-            <span class="rounded bg-gray-100 px-2 py-0.5 text-gray-600">{{ 'formation.index.heading'|trans({}, 'formation') }}</span>
-        </div>
+    <div class="inline-flex items-center gap-1.5 rounded-xl border border-secondary-200 bg-secondary-50 px-3 py-2 text-sm text-secondary-600">
+        <strong class="text-secondary-900">{{ rows|length }}</strong> {{ 'formation.index.found_count'|trans({'%count%': rows|length}, 'formation') }}
+        <span class="text-secondary-300">·</span>
+        <strong class="text-secondary-900">{{ rows|reduce((c, r) => c + r.parcours|length, 0) }}</strong> {{ 'formation.index.col_parcours'|trans({}, 'formation')|lower }}
     </div>
 
-    {# ─── table ─── #}
-    <div class="rounded-2xl border bg-white px-7 py-6" style="border-color:var(--c-border)">
-        <h2 class="text-2xl font-extrabold tracking-tight">{{ 'formation.index.heading'|trans({}, 'formation')|upper }}</h2>
-        <p class="text-sm text-gray-500 mb-5">{{ 'formation.index.table_description'|trans({}, 'formation') }}</p>
-
-        {% include 'formation/_tabs.html.twig' with {active: 'all'} %}
-        <div class="rounded-xl border" style="border-color:var(--c-border)">
-            <table class="w-full text-sm">
-                <thead>
-                    <tr class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                        <th class="text-left px-4 py-3">{{ 'formation.index.col_formation'|trans({}, 'formation') }}</th>
-                        <th class="text-left px-4 py-3">{{ 'formation.index.col_composante'|trans({}, 'formation') }}</th>
-                        <th class="text-center px-4 py-3">{{ 'formation.index.col_state'|trans({}, 'formation') }}</th>
-                        <th class="text-left px-4 py-3 w-64">{{ 'formation.index.col_progress'|trans({}, 'formation') }}</th>
-                        <th class="text-right px-4 py-3">{{ 'formation.index.col_actions'|trans({}, 'formation') }}</th>
+    <div class="rounded-2xl border border-secondary-200 bg-white shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm text-secondary-700">
+                <thead class="bg-secondary-50 text-left text-xs font-black uppercase tracking-wider text-secondary-500">
+                    <tr>
+                        <th class="w-1/3 px-4 py-3">{{ 'formation.index.col_formation'|trans({}, 'formation') }}</th>
+                        <th class="w-1/5 px-4 py-3">{{ 'formation.index.col_composante'|trans({}, 'formation') }}</th>
+                        <th class="w-1/6 px-4 py-3 text-center">{{ 'formation.index.col_state'|trans({}, 'formation') }}</th>
+                        <th class="w-1/5 px-4 py-3">{{ 'formation.index.col_progress'|trans({}, 'formation') }}</th>
+                        <th class="w-1/6 px-4 py-3 text-right">{{ 'formation.index.col_actions'|trans({}, 'formation') }}</th>
                     </tr>
                 </thead>
                 {% for row in rows %}
                 {% set f = row.formation %}
-                <tbody {{ row.parcours ? 'data-controller=disclosure' }}>
-                    <tr class="border-t" style="border-color:var(--c-border)">
-                        <td class="px-4 py-4 align-top">
-                            <div class="font-medium">
-                                {{ f.name }}
-                            </div>
-                            <div class="text-xs text-gray-400">
-                                {{ f.diplome ?: '—' }} · {{ f.avecParcours ? 'formation.index.parcours_count'|trans({'%count%': row.parcours|length}, 'formation') : 'formation.index.mono_parcours'|trans({}, 'formation') }}
-                            </div>
-                            {% if row.parcours %}
-                                <button type="button" data-action="disclosure#toggle"
-                                        class="mt-1.5 inline-flex items-center gap-1 whitespace-nowrap rounded-md border px-2 py-1 text-[11px] font-medium hover:bg-gray-50"
-                                        style="border-color:var(--c-border);color:var(--c-primary)">
-                                    {{ ux_icon('ph:caret-right', {class: 'icon'}) }} <span data-disclosure-target="label">{{ 'formation.index.toggle_show'|trans({}, 'formation') }}</span>&nbsp;{{ 'formation.index.toggle_parcours_suffix'|trans({}, 'formation') }}
-                                </button>
-                            {% endif %}
-                        </td>
-                        <td class="px-4 py-4 align-top text-gray-600">{{ f.composante ?: '—' }}</td>
-                        <td class="px-4 py-4 align-top text-center">
-                            {% if f.phase.value == 'consolidation' %}
-                                <span class="pill" style="background:#fef3c7;color:#b45309">{{ ux_icon('ph:hourglass-medium', {class: 'icon'}) }} {{ 'formation.index.phase_consolidation'|trans({}, 'formation') }}{{ f.anneeUniversitaire ? ' · ' ~ f.anneeUniversitaire }}</span>
-                            {% else %}
-                                <span class="pill" style="background:#dcfce7;color:#15803d">{{ ux_icon('ph:check-bold', {class: 'icon'}) }} {{ 'formation.index.phase_construction'|trans({}, 'formation') }}</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-4 py-4 align-top">
-                            <div class="flex justify-between text-[11px] text-gray-400"><span>{{ 'formation.index.global_progress'|trans({}, 'formation') }}</span><span>{{ row.progress }}%</span></div>
-                            <div class="mt-1 h-2 rounded-full bg-gray-100 overflow-hidden">
-                                <div class="h-full rounded-full" style="width:{{ row.progress }}%;background:{{ row.progress < 30 ? 'var(--st-empty)' : (row.progress < 70 ? 'var(--st-incomplete)' : 'var(--st-ok)') }}"></div>
-                            </div>
-                        </td>
-                        <td class="px-4 py-4 align-top">
-                            <div class="flex items-center justify-end gap-2">
-                                <a href="{{ path('formation_view', {id: f.id}) }}"
-                                   class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:eye', {class: 'icon'}) }} {{ 'formation.index.view_button'|trans({}, 'formation') }}</a>
-
-                                <div class="relative" data-controller="menu">
-                                    <button type="button" data-action="menu#toggle"
-                                            class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:dots-three-bold', {class: 'icon'}) }} {{ 'formation.index.actions_button'|trans({}, 'formation') }}</button>
-                                    <div data-menu-target="menu" hidden
-                                         class="absolute right-0 top-full z-30 mt-1.5 w-56 overflow-hidden rounded-xl border bg-white py-1.5 shadow-xl" style="border-color:var(--c-border)">
-                                        <a href="{{ path('formation_check', {id: f.id}) }}"
-                                           class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-700 hover:bg-green-50">{{ ux_icon('ph:check-bold', {class: 'icon'}) }} {{ 'formation.index.check_input_action'|trans({}, 'formation') }}</a>
-                                        <a href="{{ path('formation_editor', {id: f.id}) }}"
-                                           class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-amber-700 hover:bg-amber-50">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'common.edit'|trans({}, 'common') }}</a>
-                                        <form method="post" action="{{ path('formation_delete', {id: f.id}) }}"
-                                              data-controller="confirm" data-confirm-message-value="{{ 'formation.index.delete_confirm'|trans({'%name%': f.name}, 'formation') }}">
-                                            <button class="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">{{ ux_icon('ph:trash', {class: 'icon'}) }} {{ 'common.delete_full'|trans({}, 'common') }}</button>
-                                        </form>
-                                    </div>
+                <tbody class="divide-y divide-secondary-200 border-t border-secondary-200" {{ row.parcours ? 'data-controller=disclosure' }}>
+                    <tr class="align-top hover:bg-secondary-50/70">
+                        <td class="px-4 py-3">
+                            <div class="space-y-1">
+                                <div class="font-semibold text-secondary-900">{{ f.name }}</div>
+                                <div class="text-xs text-secondary-500">
+                                    {% if f.diplome %}<twig:Badge variant="info" :label="f.diplome"/>{% endif %}
+                                    <span class="ml-1">{{ f.avecParcours ? 'formation.index.parcours_count'|trans({'%count%': row.parcours|length}, 'formation') : 'formation.index.mono_parcours'|trans({}, 'formation') }}</span>
                                 </div>
+                                {% if row.parcours %}
+                                    <button type="button" data-action="disclosure#toggle"
+                                            class="inline-flex items-center gap-1 rounded-md border border-primary-200 bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700 shadow-sm transition-colors hover:border-primary-300 hover:bg-primary-100 hover:text-primary-800 focus:outline-none focus:ring-2 focus:ring-primary-300">
+                                        {{ ux_icon('ph:caret-right', {class: 'h-3.5 w-3.5'}) }} <span data-disclosure-target="label">{{ 'formation.index.toggle_show'|trans({}, 'formation') }}</span>&nbsp;{{ 'formation.index.toggle_parcours_suffix'|trans({}, 'formation') }}
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if f.composante %}
+                                <div class="text-sm">{{ f.composante }}</div>
+                            {% else %}
+                                <twig:Badge variant="danger" :label="'formation.index.undefined'|trans({}, 'formation')"/>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            {% if f.phase.value == 'consolidation' %}
+                                <twig:Badge variant="warning" icon="ph:hourglass-medium" :label="'formation.index.phase_consolidation'|trans({}, 'formation') ~ (f.anneeUniversitaire ? ' · ' ~ f.anneeUniversitaire)"/>
+                            {% else %}
+                                <twig:Badge variant="success" icon="ph:check-bold" :label="'formation.index.phase_construction'|trans({}, 'formation')"/>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            <twig:remplissage_progress :label="'formation.index.global_progress'|trans({}, 'formation')" :percent="row.progress"
+                                                       :tone="row.progress >= 100 ? 'success' : (row.progress < 30 ? 'danger' : 'info')"/>
+                        </td>
+                        <td class="px-4 py-3 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <twig:Button variant="info" :soft="false" :outline="true" icon="ph:info" :label="'formation.index.view_button'|trans({}, 'formation')" :href="path('formation_view', {id: f.id})"/>
+                                <twig:DropdownActions :label="'formation.index.actions_button'|trans({}, 'formation')">
+                                    <a href="{{ path('formation_check', {id: f.id}) }}" class="app-menu-item app-menu-item--success">{{ ux_icon('ph:check', {class: 'h-4 w-4'}) }} {{ 'formation.index.check_input_action'|trans({}, 'formation') }}</a>
+                                    <a href="{{ path('formation_editor', {id: f.id}) }}" class="app-menu-item app-menu-item--warning">{{ ux_icon('ph:pencil-simple', {class: 'h-4 w-4'}) }} {{ 'common.edit'|trans({}, 'common') }}</a>
+                                    <form method="post" action="{{ path('formation_delete', {id: f.id}) }}"
+                                          data-controller="confirm" data-confirm-message-value="{{ 'formation.index.delete_confirm'|trans({'%name%': f.name}, 'formation') }}">
+                                        <button class="app-menu-item app-menu-item--danger">{{ ux_icon('ph:trash', {class: 'h-4 w-4'}) }} {{ 'common.delete_full'|trans({}, 'common') }}</button>
+                                    </form>
+                                </twig:DropdownActions>
                             </div>
                         </td>
                     </tr>
                     {% if row.parcours %}
                         <tr data-disclosure-target="panel" hidden>
-                            <td colspan="5" class="px-4 pb-5 pt-0" style="background:#fafafb">
-                                <div class="rounded-xl border bg-white overflow-hidden" style="border-color:var(--c-border)">
-                                    <div class="flex items-center justify-between px-4 py-2.5 border-b" style="border-color:var(--c-border)">
-                                        <span class="text-sm font-semibold">{{ 'formation.index.parcours_of'|trans({}, 'formation') }} <span style="color:var(--c-primary)">{{ f.name }}</span></span>
-                                        <span class="text-xs text-gray-400">{{ 'formation.index.parcours_count'|trans({'%count%': row.parcours|length}, 'formation') }}</span>
+                            <td colspan="5" class="bg-secondary-50/60 px-4 pb-5 pt-2">
+                                <div class="overflow-hidden rounded-xl border border-secondary-200 bg-white shadow-sm">
+                                    <div class="flex items-center justify-between border-b border-secondary-200 px-4 py-2.5">
+                                        <span class="text-sm font-semibold text-secondary-800">{{ 'formation.index.parcours_of'|trans({}, 'formation') }} <span class="text-primary">{{ f.name }}</span></span>
+                                        <twig:Badge variant="secondary" :label="'formation.index.parcours_count'|trans({'%count%': row.parcours|length}, 'formation')"/>
                                     </div>
-                                    <table class="w-full text-sm">
-                                        <thead class="text-[11px] uppercase tracking-wide text-gray-400">
-                                            <tr class="border-b" style="border-color:var(--c-border)">
-                                                <th class="text-left px-4 py-2">{{ 'formation.index.col_parcours'|trans({}, 'formation') }}</th>
-                                                <th class="text-left px-4 py-2">{{ 'formation.index.col_periods'|trans({}, 'formation') }}</th>
-                                                <th class="text-left px-4 py-2">{{ 'formation.index.col_bcc'|trans({}, 'formation') }}</th>
-                                                <th class="text-left px-4 py-2 w-48">{{ 'formation.index.col_progress'|trans({}, 'formation') }}</th>
-                                                <th class="text-right px-4 py-2">{{ 'formation.index.col_actions'|trans({}, 'formation') }}</th>
+                                    <table class="min-w-full text-sm">
+                                        <thead class="bg-secondary-50 text-left text-[11px] font-semibold uppercase tracking-wider text-secondary-600">
+                                            <tr>
+                                                <th class="px-4 py-2">{{ 'formation.index.col_parcours'|trans({}, 'formation') }}</th>
+                                                <th class="px-4 py-2">{{ 'formation.index.col_periods'|trans({}, 'formation') }}</th>
+                                                <th class="px-4 py-2">{{ 'formation.index.col_bcc'|trans({}, 'formation') }}</th>
+                                                <th class="w-48 px-4 py-2">{{ 'formation.index.col_progress'|trans({}, 'formation') }}</th>
+                                                <th class="px-4 py-2 text-right">{{ 'formation.index.col_actions'|trans({}, 'formation') }}</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
+                                        <tbody class="divide-y divide-secondary-200">
                                         {% for p in row.parcours %}
-                                            <tr class="border-b last:border-0" style="border-color:var(--c-border)">
+                                            <tr class="hover:bg-secondary-50/50">
                                                 <td class="px-4 py-2.5">
-                                                    <div class="font-medium">{{ p.label }}</div>
-                                                    {% if p.parent %}<div class="text-[11px] text-gray-400">{{ 'formation.index.parcours_specialization_of'|trans({'%parent%': p.parent}, 'formation') }}</div>{% endif %}
+                                                    <div class="font-medium text-text">{{ p.label }}</div>
+                                                    {% if p.parent %}<div class="text-xs text-secondary">{{ 'formation.index.parcours_specialization_of'|trans({'%parent%': p.parent}, 'formation') }}</div>{% endif %}
                                                 </td>
-                                                <td class="px-4 py-2.5 text-gray-500">{{ 'formation.index.periods_range'|trans({'%unit%': period_unit(f)|lower, '%start%': p.debut, '%end%': p.fin}, 'formation') }}</td>
+                                                <td class="px-4 py-2.5 text-secondary-600">{{ 'formation.index.periods_range'|trans({'%unit%': period_unit(f)|lower, '%start%': p.debut, '%end%': p.fin}, 'formation') }}</td>
                                                 <td class="px-4 py-2.5">
                                                     {% set bs = p.bcc ?? 'empty' %}
-                                                    <span class="pill" style="background:{{ bs == 'ok' ? '#dcfce7' : (bs == 'incomplete' ? '#fef3c7' : '#fee2e2') }};color:{{ bs == 'ok' ? '#15803d' : (bs == 'incomplete' ? '#b45309' : '#b91c1c') }}">
-                                                        {{ bs == 'ok' ? 'formation.index.bcc_complete'|trans({}, 'formation') : (bs == 'incomplete' ? 'formation.index.bcc_incomplete'|trans({}, 'formation') : 'formation.index.bcc_empty'|trans({}, 'formation')) }}
-                                                    </span>
+                                                    <twig:Badge :variant="bs == 'ok' ? 'success' : (bs == 'incomplete' ? 'warning' : 'danger')"
+                                                                :label="bs == 'ok' ? 'formation.index.bcc_complete'|trans({}, 'formation') : (bs == 'incomplete' ? 'formation.index.bcc_incomplete'|trans({}, 'formation') : 'formation.index.bcc_empty'|trans({}, 'formation'))"/>
                                                 </td>
                                                 <td class="px-4 py-2.5">
-                                                    <div class="flex justify-between text-[11px] text-gray-400"><span></span><span>{{ p.progress }}%</span></div>
-                                                    <div class="mt-0.5 h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                                                        <div class="h-full rounded-full" style="width:{{ p.progress }}%;background:{{ p.progress < 30 ? 'var(--st-empty)' : (p.progress < 70 ? 'var(--st-incomplete)' : 'var(--st-ok)') }}"></div>
-                                                    </div>
+                                                    <twig:remplissage_progress label="" :percent="p.progress" :tone="p.progress >= 100 ? 'success' : (p.progress < 30 ? 'danger' : 'info')"/>
                                                 </td>
-                                                <td class="px-4 py-2.5 text-right whitespace-nowrap">
-                                                    <a href="{{ path('formation_view', {id: f.id}) }}" class="text-xs hover:underline">{{ ux_icon('ph:eye', {class: 'icon'}) }} {{ 'formation.index.view_button'|trans({}, 'formation') }}</a>
-                                                    <a href="{{ path('parcours_editor', {fid: f.id, nid: p.nid}) }}" class="ml-2 text-xs font-medium text-amber-700 hover:underline">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'common.edit'|trans({}, 'common') }}</a>
+                                                <td class="whitespace-nowrap px-4 py-2.5 text-right">
+                                                    <div class="flex items-center justify-end gap-2">
+                                                        <twig:Button variant="info" :soft="false" :outline="true" size="xs" icon="ph:info" :label="'formation.index.view_button'|trans({}, 'formation')" :href="path('formation_view', {id: f.id})"/>
+                                                        <twig:Button variant="warning" :soft="false" :outline="true" size="xs" icon="ph:pencil-simple" :label="'common.edit'|trans({}, 'common')" :href="path('parcours_editor', {fid: f.id, nid: p.nid})"/>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         {% endfor %}
@@ -153,7 +141,7 @@
                 </tbody>
                 {% else %}
                 <tbody>
-                    <tr><td colspan="5" class="px-4 py-10 text-center text-gray-400">
+                    <tr><td colspan="5" class="px-4 py-10 text-center text-secondary-400">
                         {{ 'formation.index.empty'|trans({}, 'formation') }}
                     </td></tr>
                 </tbody>
@@ -161,8 +149,8 @@
             </table>
         </div>
     </div>
+</section>
 
-    {# ─── modale : ajouter une formation (admin) ─── #}
-    {% include 'formation/_create_modal.html.twig' %}
-</div>
+{# ─── modale : ajouter une formation (admin) ─── #}
+{% include 'formation/_create_modal.html.twig' %}
 {% endblock %}

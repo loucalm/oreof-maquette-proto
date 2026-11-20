@@ -1,0 +1,517 @@
+/*
+ * Thème ORéOF v2, repris de oreofv2/assets/styles/app.css (Tailwind v4).
+ * Compilé dans le navigateur par @tailwindcss/browser : ce fichier est inséré
+ * tel quel dans un <style type="text/tailwindcss"> par base.html.twig.
+ * Prototype en thème clair uniquement : les variantes `dark:` des composants
+ * copiés de v2 restent inertes (aucun data-theme="dark" n'est posé).
+ */
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Palette sémantique : seules les variables `--semantic-*-base` changent ;
+   les utilitaires `bg-primary-200`, `text-danger-700`… sont générés automatiquement. */
+@theme inline {
+  --color-bg: var(--app-bg);
+  --color-surface: var(--app-surface);
+  --color-text: var(--app-text);
+  --color-text-muted: var(--app-text-muted);
+  --color-border: var(--app-border);
+
+  --color-primary: var(--semantic-primary);
+  --color-primary-50: color-mix(in oklab, var(--semantic-primary) 5%, white);
+  --color-primary-100: color-mix(in oklab, var(--semantic-primary) 10%, white);
+  --color-primary-200: color-mix(in oklab, var(--semantic-primary) 20%, white);
+  --color-primary-300: color-mix(in oklab, var(--semantic-primary) 30%, white);
+  --color-primary-400: color-mix(in oklab, var(--semantic-primary) 45%, white);
+  --color-primary-500: var(--semantic-primary);
+  --color-primary-600: color-mix(in oklab, var(--semantic-primary) 82%, black);
+  --color-primary-700: color-mix(in oklab, var(--semantic-primary) 68%, black);
+  --color-primary-800: color-mix(in oklab, var(--semantic-primary) 52%, black);
+  --color-primary-900: color-mix(in oklab, var(--semantic-primary) 36%, black);
+  --color-primary-950: color-mix(in oklab, var(--semantic-primary) 22%, black);
+
+  --color-secondary: var(--semantic-secondary);
+  --color-secondary-50: color-mix(in oklab, var(--semantic-secondary) 5%, white);
+  --color-secondary-100: color-mix(in oklab, var(--semantic-secondary) 10%, white);
+  --color-secondary-200: color-mix(in oklab, var(--semantic-secondary) 20%, white);
+  --color-secondary-300: color-mix(in oklab, var(--semantic-secondary) 30%, white);
+  --color-secondary-400: color-mix(in oklab, var(--semantic-secondary) 45%, white);
+  --color-secondary-500: var(--semantic-secondary);
+  --color-secondary-600: color-mix(in oklab, var(--semantic-secondary) 82%, black);
+  --color-secondary-700: color-mix(in oklab, var(--semantic-secondary) 68%, black);
+  --color-secondary-800: color-mix(in oklab, var(--semantic-secondary) 52%, black);
+  --color-secondary-900: color-mix(in oklab, var(--semantic-secondary) 36%, black);
+  --color-secondary-950: color-mix(in oklab, var(--semantic-secondary) 22%, black);
+
+  --color-success: var(--semantic-success);
+  --color-success-50: color-mix(in oklab, var(--semantic-success) 5%, white);
+  --color-success-100: color-mix(in oklab, var(--semantic-success) 10%, white);
+  --color-success-200: color-mix(in oklab, var(--semantic-success) 20%, white);
+  --color-success-300: color-mix(in oklab, var(--semantic-success) 30%, white);
+  --color-success-400: color-mix(in oklab, var(--semantic-success) 45%, white);
+  --color-success-500: var(--semantic-success);
+  --color-success-600: color-mix(in oklab, var(--semantic-success) 82%, black);
+  --color-success-700: color-mix(in oklab, var(--semantic-success) 68%, black);
+  --color-success-800: color-mix(in oklab, var(--semantic-success) 52%, black);
+  --color-success-900: color-mix(in oklab, var(--semantic-success) 36%, black);
+  --color-success-950: color-mix(in oklab, var(--semantic-success) 22%, black);
+
+  --color-info: var(--semantic-info);
+  --color-info-50: color-mix(in oklab, var(--semantic-info) 5%, white);
+  --color-info-100: color-mix(in oklab, var(--semantic-info) 10%, white);
+  --color-info-200: color-mix(in oklab, var(--semantic-info) 20%, white);
+  --color-info-300: color-mix(in oklab, var(--semantic-info) 30%, white);
+  --color-info-400: color-mix(in oklab, var(--semantic-info) 45%, white);
+  --color-info-500: var(--semantic-info);
+  --color-info-600: color-mix(in oklab, var(--semantic-info) 82%, black);
+  --color-info-700: color-mix(in oklab, var(--semantic-info) 68%, black);
+  --color-info-800: color-mix(in oklab, var(--semantic-info) 52%, black);
+  --color-info-900: color-mix(in oklab, var(--semantic-info) 36%, black);
+  --color-info-950: color-mix(in oklab, var(--semantic-info) 22%, black);
+
+  --color-warning: var(--semantic-warning);
+  --color-warning-50: color-mix(in oklab, var(--semantic-warning) 5%, white);
+  --color-warning-100: color-mix(in oklab, var(--semantic-warning) 10%, white);
+  --color-warning-200: color-mix(in oklab, var(--semantic-warning) 20%, white);
+  --color-warning-300: color-mix(in oklab, var(--semantic-warning) 30%, white);
+  --color-warning-400: color-mix(in oklab, var(--semantic-warning) 45%, white);
+  --color-warning-500: var(--semantic-warning);
+  --color-warning-600: color-mix(in oklab, var(--semantic-warning) 82%, black);
+  --color-warning-700: color-mix(in oklab, var(--semantic-warning) 68%, black);
+  --color-warning-800: color-mix(in oklab, var(--semantic-warning) 52%, black);
+  --color-warning-900: color-mix(in oklab, var(--semantic-warning) 36%, black);
+  --color-warning-950: color-mix(in oklab, var(--semantic-warning) 22%, black);
+
+  --color-danger: var(--semantic-danger);
+  --color-danger-50: color-mix(in oklab, var(--semantic-danger) 5%, white);
+  --color-danger-100: color-mix(in oklab, var(--semantic-danger) 10%, white);
+  --color-danger-200: color-mix(in oklab, var(--semantic-danger) 20%, white);
+  --color-danger-300: color-mix(in oklab, var(--semantic-danger) 30%, white);
+  --color-danger-400: color-mix(in oklab, var(--semantic-danger) 45%, white);
+  --color-danger-500: var(--semantic-danger);
+  --color-danger-600: color-mix(in oklab, var(--semantic-danger) 82%, black);
+  --color-danger-700: color-mix(in oklab, var(--semantic-danger) 68%, black);
+  --color-danger-800: color-mix(in oklab, var(--semantic-danger) 52%, black);
+  --color-danger-900: color-mix(in oklab, var(--semantic-danger) 36%, black);
+  --color-danger-950: color-mix(in oklab, var(--semantic-danger) 22%, black);
+}
+
+:root {
+  color-scheme: light;
+
+  --semantic-primary-base: #4f46e5;
+  --semantic-secondary-base: #64748b;
+  --semantic-success-base: #10b981;
+  --semantic-info-base: #1f7b89;
+  --semantic-warning-base: #d97706;
+  --semantic-danger-base: #dc2626;
+
+  --semantic-primary: var(--semantic-primary-base);
+  --semantic-secondary: var(--semantic-secondary-base);
+  --semantic-success: var(--semantic-success-base);
+  --semantic-info: var(--semantic-info-base);
+  --semantic-warning: var(--semantic-warning-base);
+  --semantic-danger: var(--semantic-danger-base);
+
+  --app-bg: #f8fafc;
+  --app-surface: #ffffff;
+  --app-text: #0f172a;
+  --app-text-muted: #475569;
+  --app-border: #e2e8f0;
+
+  /* Hauteur de la topbar : offset des éléments sticky (en-tête de page, éditeur) */
+  --topbar-height: 4rem;
+}
+
+/* < 2xl : la topbar passe sur deux lignes (logo + actions / menu) */
+@media (min-width: 48rem) and (max-width: 95.999rem) {
+  :root {
+    --topbar-height: 7rem;
+  }
+}
+
+@layer base {
+  html,
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+  }
+
+  select {
+    background-color: var(--color-surface);
+    color: var(--color-text);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@layer components {
+  .app-surface {
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+  }
+
+  /* Carte de section (fiches formation / parcours v2) */
+  .app-section-card {
+    @apply rounded-sm border p-4 mb-4 shadow-sm scroll-mt-32 bg-white border-secondary-200;
+  }
+
+  .app-section-header {
+    @apply flex items-center justify-between gap-4 mb-8 border-b pb-6 border-secondary-200;
+  }
+
+  .app-section-header-main {
+    @apply flex items-center gap-4;
+  }
+
+  .app-section-header-title {
+    @apply text-2xl font-black tracking-tight italic uppercase text-secondary-800;
+  }
+
+  .app-section-header-icon {
+    @apply w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg;
+  }
+
+  .app-section-header-icon--primary {
+    @apply bg-primary-600 shadow-primary-100;
+  }
+
+  .app-section-header-icon--warning {
+    @apply bg-warning-600 shadow-warning-100;
+  }
+
+  .app-section-header-icon--danger {
+    @apply bg-danger-600 shadow-danger-100;
+  }
+
+  .app-section-header-icon--success {
+    @apply bg-success-600 shadow-success-100;
+  }
+
+  .app-section-header-icon--info {
+    @apply bg-info-600 shadow-info-100;
+  }
+
+  /* Libellés « méta » (petites capitales espacées) des en-têtes formation / parcours */
+  .app-meta-label {
+    @apply mb-1 text-[11px] font-black uppercase tracking-[0.18em] text-secondary-400;
+  }
+
+  .app-meta-value {
+    @apply text-sm font-medium text-secondary-700;
+  }
+
+  /* Alertes (composant `alerte`) */
+  .app-alert {
+    @apply border-l-4 p-4 rounded-md flex items-start gap-3 my-2;
+  }
+
+  .app-alert-icon {
+    @apply text-white rounded-full p-2 flex items-center justify-center shrink-0 h-12 w-12;
+  }
+
+  .app-alert-content {
+    @apply flex-1 text-sm;
+  }
+
+  .app-alert--success {
+    @apply bg-success-50 border-success-200 text-success-800;
+  }
+
+  .app-alert--success .app-alert-icon {
+    @apply bg-success-600;
+  }
+
+  .app-alert--danger {
+    @apply bg-danger-50 border-danger-200 text-danger-800;
+  }
+
+  .app-alert--danger .app-alert-icon {
+    @apply bg-danger-600;
+  }
+
+  .app-alert--info {
+    @apply bg-info-50 border-info-200 text-info-800;
+  }
+
+  .app-alert--info .app-alert-icon {
+    @apply bg-info-600;
+  }
+
+  .app-alert--warning {
+    @apply bg-warning-50 border-warning-200 text-warning-800;
+  }
+
+  .app-alert--warning .app-alert-icon {
+    @apply bg-warning-500;
+  }
+
+  /* Modales (coque v2) */
+  .app-modal-shell {
+    @apply flex w-full flex-col overflow-hidden rounded-2xl border border-secondary-200 bg-white shadow-2xl;
+  }
+
+  .app-modal-header {
+    @apply flex shrink-0 items-start justify-between gap-4 border-b border-secondary-200 bg-secondary-50/90 px-5 py-4 backdrop-blur-sm;
+  }
+
+  .app-modal-title {
+    @apply text-lg font-bold tracking-tight text-secondary-900;
+  }
+
+  .app-modal-subtitle {
+    @apply mt-1 text-sm text-secondary-500;
+  }
+
+  .app-modal-body {
+    @apply min-h-0 flex-1 overflow-auto px-5 py-4;
+  }
+
+  .app-modal-footer {
+    @apply shrink-0 border-t border-secondary-200 bg-secondary-50/80 px-5 py-4;
+  }
+
+  .app-modal-footer-actions {
+    @apply flex justify-end gap-2;
+  }
+
+  .app-modal-footer-btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
+  }
+
+  .app-modal-footer-btn--secondary {
+    @apply border border-secondary-300 bg-secondary-100 text-secondary-700 hover:border-secondary-400 hover:bg-secondary-200 hover:text-secondary-900 focus-visible:ring-secondary-400;
+  }
+
+  .app-modal-footer-btn--primary {
+    @apply border border-emerald-700 bg-emerald-600 text-white hover:bg-emerald-700 hover:border-emerald-800 focus-visible:ring-emerald-500;
+  }
+
+  .app-modal-footer-btn--danger {
+    @apply border border-rose-700 bg-rose-600 text-white hover:bg-rose-700 hover:border-rose-800 focus-visible:ring-rose-500;
+  }
+
+  /* Topbar : lien de premier niveau */
+  .topbar-link {
+    @apply flex items-center gap-1 whitespace-nowrap px-1 py-2 text-[13px] font-medium text-text transition hover:text-primary lg:px-1.5 lg:text-sm 2xl:px-3;
+  }
+
+  .topbar-link[aria-current="page"] {
+    @apply text-primary font-semibold;
+  }
+
+  .topbar-link[aria-disabled="true"] {
+    @apply cursor-not-allowed text-secondary-400 hover:text-secondary-400;
+  }
+
+  /* Menu latéral scroll-spy (formation_v2/voir) */
+  .app-scrollspy-aside {
+    @apply rounded-md shadow-md border border-secondary-200 bg-surface;
+  }
+
+  .app-scrollspy-section-title {
+    @apply text-[10px] font-black uppercase tracking-[0.2em] mb-4 px-4 text-secondary-400;
+  }
+
+  .app-scrollspy-link {
+    @apply flex items-center gap-3 px-5 py-3 text-[11px] font-black uppercase tracking-widest rounded-md border-l-4 border-transparent transition-all duration-300 text-secondary-500 hover:bg-secondary-50;
+  }
+
+  .app-scrollspy-link-active {
+    @apply text-primary-600 bg-primary-50 border-primary-600;
+  }
+
+  /* Liens de la colonne « Configuration » (formation_v2/modifier) */
+  .app-config-link {
+    @apply w-full flex items-center justify-between gap-2 p-3 rounded-2xl text-sm font-bold text-secondary-500 hover:bg-secondary-50 transition;
+  }
+
+  .app-config-link.is-active {
+    @apply bg-primary-50 text-primary-700;
+  }
+
+  /* Boutons sémantiques (outline) */
+  .app-btn {
+    @apply inline-flex items-center gap-1.5 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 px-3 py-1.5 text-sm h-8 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .app-btn-success {
+    @apply border border-emerald-600 text-emerald-700 hover:bg-emerald-600 hover:text-white focus:ring-emerald-500;
+  }
+
+  .app-btn-warning {
+    @apply border border-amber-500 text-amber-700 hover:bg-amber-500 hover:text-secondary-900 focus:ring-amber-400;
+  }
+
+  .app-btn-danger {
+    @apply border border-red-600 text-red-700 hover:bg-red-600 hover:text-white focus:ring-red-500;
+  }
+
+  .app-btn-info {
+    @apply border border-cyan-600 text-cyan-700 hover:bg-cyan-600 hover:text-white focus:ring-cyan-500;
+  }
+
+  .app-btn-primary {
+    @apply border border-blue-600 text-blue-700 hover:bg-blue-600 hover:text-white focus:ring-blue-500;
+  }
+
+  .app-btn-secondary {
+    @apply border border-secondary-400 text-secondary-600 hover:bg-secondary-500 hover:text-white focus:ring-secondary-400;
+  }
+
+  /* Barre de progression de remplissage */
+  .app-progress {
+    @apply min-w-28 space-y-1.5;
+  }
+
+  .app-progress-header {
+    @apply flex items-center justify-between gap-2 text-[11px] font-semibold;
+  }
+
+  .app-progress-label {
+    @apply truncate text-secondary-600;
+  }
+
+  .app-progress-value {
+    @apply shrink-0 tabular-nums text-secondary-500;
+  }
+
+  .app-progress-track {
+    @apply h-2.5 overflow-hidden rounded-full bg-secondary-200;
+  }
+
+  .app-progress-track--danger {
+    @apply bg-danger-100;
+  }
+
+  .app-progress-track--success {
+    @apply bg-success-100;
+  }
+
+  .app-progress-track--info {
+    @apply bg-primary-100;
+  }
+
+  .app-progress-bar {
+    @apply block h-full rounded-full transition-all duration-300 ease-out;
+  }
+
+  .app-progress-bar--danger {
+    @apply bg-danger-500;
+  }
+
+  .app-progress-bar--success {
+    @apply bg-success-500;
+  }
+
+  .app-progress-bar--info {
+    @apply bg-info-500;
+  }
+
+  .app-progress-bar--warning {
+    @apply bg-warning-500;
+  }
+
+  /* Onglets applicatifs */
+  .app-tabs-list {
+    @apply inline-flex max-w-full items-center gap-1 overflow-x-auto rounded-2xl border border-secondary-200 bg-surface p-1.5 shadow-sm;
+  }
+
+  .app-tab {
+    @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold text-secondary transition-colors duration-200;
+  }
+
+  .app-tab:hover {
+    @apply bg-bg text-text;
+  }
+
+  .app-tab:focus-visible {
+    @apply outline-none ring-2 ring-primary-400 ring-offset-2;
+  }
+
+  .app-tab-active,
+  .app-tab-active:hover {
+    @apply bg-primary-600 text-white shadow-sm;
+  }
+
+  .app-tab-panel {
+    @apply mt-4 rounded-2xl border border-secondary-200 bg-surface shadow-sm;
+  }
+
+  /* Tableaux (page type v2 : styleguide/templates/index_type) */
+  .app-table {
+    @apply min-w-full divide-y divide-secondary-200 text-sm;
+  }
+
+  .app-table > thead {
+    @apply bg-secondary-50 text-left text-[11px] font-semibold text-secondary-600 uppercase tracking-wider;
+  }
+
+  .app-table > thead th {
+    @apply px-4 py-3;
+  }
+
+  .app-table > tbody {
+    @apply divide-y divide-secondary-200 bg-white;
+  }
+
+  .app-table > tbody > tr {
+    @apply hover:bg-secondary-50/50;
+  }
+
+  .app-table > tbody td {
+    @apply px-4 py-3;
+  }
+
+  /* Champs de saisie (form_theme_v2) */
+  .app-input {
+    @apply w-full rounded-lg border border-secondary-200 bg-white px-3 py-2 text-sm text-text placeholder:text-secondary-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 focus:outline-none;
+  }
+
+  .app-label {
+    @apply text-[12px] font-black uppercase text-secondary-500 transition-colors group-focus-within:text-indigo-500;
+  }
+
+  /* Menu contextuel « Actions » (composant dropdown_actions de v2) */
+  .app-menu {
+    @apply absolute right-0 z-50 mt-2 w-60 origin-top-right overflow-hidden rounded-xl border border-secondary-200 bg-surface py-1.5 shadow-xl ring-1 ring-secondary-200/60;
+  }
+
+  .app-menu-title {
+    @apply px-4 pb-1 pt-2 text-[10px] font-black uppercase tracking-widest text-secondary-400;
+  }
+
+  .app-menu-item {
+    @apply flex w-full items-center gap-2.5 rounded-md px-4 py-2.5 text-left text-sm font-medium text-secondary-700 transition-colors hover:bg-secondary-50;
+  }
+
+  .app-menu-item--primary { @apply text-primary-700 hover:bg-primary-50; }
+  .app-menu-item--success { @apply text-success-700 hover:bg-success-50; }
+  .app-menu-item--warning { @apply text-warning-700 hover:bg-warning-50; }
+  .app-menu-item--info { @apply text-info-700 hover:bg-info-50; }
+  .app-menu-item--danger { @apply text-danger-700 hover:bg-danger-50; }
+
+  .app-menu-item:disabled,
+  .app-menu-item[aria-disabled="true"] {
+    @apply cursor-not-allowed opacity-50;
+  }
+
+  .app-menu-sep {
+    @apply my-1 border-t border-secondary-100;
+  }
+
+  /* Boutons « Actions rapides » de l'en-tête formation / parcours (FormationHeader v2) */
+  .app-quick-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .app-quick-btn--secondary { @apply border-secondary-300 bg-white text-secondary-700 hover:border-secondary-400 hover:bg-secondary-50 hover:text-secondary-900 focus-visible:ring-secondary-400; }
+  .app-quick-btn--info { @apply border-info-300 bg-info-50 text-info-700 hover:border-info-400 hover:bg-info-100 focus-visible:ring-info-400; }
+  .app-quick-btn--warning { @apply border-warning-300 bg-warning-50 text-warning-700 hover:border-warning-400 hover:bg-warning-100 focus-visible:ring-warning-400; }
+  .app-quick-btn--primary { @apply border-primary-300 bg-primary-50 text-primary-700 hover:border-primary-400 hover:bg-primary-100 focus-visible:ring-primary-400; }
+  .app-quick-btn--success { @apply border-success-300 bg-success-50 text-success-700 hover:border-success-400 hover:bg-success-100 focus-visible:ring-success-400; }
+}

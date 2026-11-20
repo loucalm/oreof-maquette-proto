@@ -68,11 +68,11 @@
         <div class="flex items-center justify-between gap-2">
             <h3 class="font-semibold" data-level-label>{{ o.label }}</h3>
             {% if not o.element %}
-                {% set btn = 'inline-flex h-7 w-7 items-center justify-center rounded hover:bg-gray-100' %}
+                {% set btn = 'inline-flex h-7 w-7 items-center justify-center rounded hover:bg-secondary-100' %}
                 <div class="flex shrink-0 items-center gap-0.5">
                     <button type="button" data-action="structure-tree#up" class="{{ btn }}" title="{{ (t ~ 'up')|trans({}, 'diplome') }}" aria-label="{{ (t ~ 'up')|trans({}, 'diplome') }}">{{ ux_icon('ph:arrow-up', {class: 'icon'}) }}</button>
                     <button type="button" data-action="structure-tree#down" class="{{ btn }}" title="{{ (t ~ 'down')|trans({}, 'diplome') }}" aria-label="{{ (t ~ 'down')|trans({}, 'diplome') }}">{{ ux_icon('ph:arrow-down', {class: 'icon'}) }}</button>
-                    <button type="button" data-action="structure-tree#remove" class="{{ btn }}" style="color:#dc2626" title="{{ (t ~ 'remove_level')|trans({}, 'diplome') }}" aria-label="{{ (t ~ 'remove_level')|trans({}, 'diplome') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
+                    <button type="button" data-action="structure-tree#remove" class="{{ btn }} text-danger-600" title="{{ (t ~ 'remove_level')|trans({}, 'diplome') }}" aria-label="{{ (t ~ 'remove_level')|trans({}, 'diplome') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
                 </div>
             {% endif %}
         </div>
@@ -88,13 +88,13 @@
 
         <div>
             <span class="st-lab">{{ (t ~ 'locked_label')|trans({}, 'diplome') }}</span>
-            {{ form_widget(lv.locked, {attr: {class: sel, style: 'border-color:var(--c-border)', 'data-field': 'locked'}}) }}
+            {{ form_widget(lv.locked, {attr: {class: sel, 'data-field': 'locked'}}) }}
             {{ form_errors(lv.locked) }}
         </div>
 
         <div data-ec-link-field {{ o.ecLinkField|default(false) ? '' : 'hidden' }}>
             <span class="st-lab">{{ (t ~ 'ec_link_label')|trans({'%element%': o.elementLabel}, 'diplome') }}</span>
-            {{ form_widget(lv.ecLink, {attr: {class: sel, style: 'border-color:var(--c-border)', 'data-field': 'ecLink'}}) }}
+            {{ form_widget(lv.ecLink, {attr: {class: sel, 'data-field': 'ecLink'}}) }}
             <p class="mt-0.5 text-[11px] st-muted" data-ec-link-note {{ lv.ecLink.vars.value == 'coefficient' ? '' : 'hidden' }}>{{ (t ~ 'coef_note')|trans({}, 'diplome') }}</p>
             {{ form_errors(lv.ecLink) }}
         </div>
@@ -102,7 +102,7 @@
         <div>
             <span class="st-lab">{{ (t ~ 'ects_label')|trans({}, 'diplome') }}</span>
             <div class="flex flex-wrap items-center gap-2">
-                {{ form_widget(lv.ectsMode, {attr: {class: sel, style: 'border-color:var(--c-border)', 'data-field': 'ectsMode'}}) }}
+                {{ form_widget(lv.ectsMode, {attr: {class: sel, 'data-field': 'ectsMode'}}) }}
                 <div data-ects-bound {{ lv.ectsMode.vars.value == 'free' ? 'hidden' }}>{{ rows.boundWidget(lv.ectsBound) }}</div>
             </div>
             {{ form_errors(lv.ectsMode) }}
@@ -125,7 +125,7 @@
             <div class="mt-2 space-y-2">
                 <label class="block">
                     <span class="st-lab">{{ form_label(lv.startAt) }}</span>
-                    {{ form_widget(lv.startAt, {attr: {class: 'w-20 rounded-md border px-2 py-1 text-sm', style: 'border-color:var(--c-border)'}}) }}
+                    {{ form_widget(lv.startAt, {attr: {class: 'fld fld-sm w-20'}}) }}
                     {{ form_errors(lv.startAt) }}
                 </label>
                 <div data-parcours-slot>{% if o.parcours is not null %}{{ m.parcours(o.parcours) }}{% endif %}</div>

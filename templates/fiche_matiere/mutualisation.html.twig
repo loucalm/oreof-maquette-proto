@@ -2,25 +2,24 @@
 <div class="panel-body" data-panel-active="fiche_matiere:mutualisation">
     <div class="panel-head">
         <h2 class="text-xl font-bold">{{ fiche.libelle ?: 'fiche_matiere.title'|trans({}, 'fiche_matiere') }}</h2>
-        <div class="text-sm text-gray-400">{{ 'fiche_matiere.subtitle'|trans({}, 'fiche_matiere') }}</div>
+        <div class="text-sm text-secondary-400">{{ 'fiche_matiere.subtitle'|trans({}, 'fiche_matiere') }}</div>
     </div>
 
     <div class="panel-scroll">
         {% include 'fiche_matiere/_usage.html.twig' with {fiche: fiche, usages: usages} only %}
 
-        <nav class="flex flex-wrap gap-1 mt-4 border-b" style="border-color:var(--c-border)">
+        <nav class="app-tabs-list mt-4">
             {% for t in tabs %}
                 <a href="{{ path('fiche_matiere_edit', {id: fiche.id, tab: t}) }}"
                    data-fiche-tab="{{ t }}"
-                   class="px-3 py-2 text-sm{{ t == 'mutualisation' ? ' font-semibold' : '' }}"
-                   {% if t == 'mutualisation' %}style="color:var(--c-primary); border-bottom:2px solid var(--c-primary)"{% endif %}>
+                   class="app-tab{{ t == 'mutualisation' ? ' app-tab-active' : '' }}" {{ t == 'mutualisation' ? 'aria-current="page"' }}>
                     {{ ('fiche_matiere.tab.' ~ t)|trans({}, 'fiche_matiere') }}
                 </a>
             {% endfor %}
         </nav>
 
         {% if impacts|default([]) %}
-        <div class="panel-card mt-4 rounded-xl border px-4 py-3 text-sm" style="border-color:var(--c-border)">
+        <div class="panel-card mt-4 rounded-xl border px-4 py-3 text-sm border-secondary-200">
             <div class="font-semibold">{{ 'fiche_matiere.impact.title'|trans({}, 'fiche_matiere') }}</div>
             <ul class="mt-1 space-y-1">
                 {% for impact in impacts %}
@@ -32,17 +31,17 @@
                 {% for name, value in pending.params %}
                     <input type="hidden" name="{{ name }}" value="{{ value }}">
                 {% endfor %}
-                <button type="submit" name="confirmImpact" value="1" class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'fiche_matiere.impact.confirm'|trans({}, 'fiche_matiere') }}</button>
+                <button type="submit" name="confirmImpact" value="1" class="inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent bg-primary-600 font-medium text-white transition-colors hover:bg-primary-700 px-3 py-1.5 text-sm">{{ 'fiche_matiere.impact.confirm'|trans({}, 'fiche_matiere') }}</button>
             </form>
         </div>
         {% endif %}
 
         <section class="panel-card mt-4 space-y-3">
             <h3 class="text-sm font-semibold">{{ 'fiche_matiere.mutualisation.porteur.title'|trans({}, 'fiche_matiere') }}</h3>
-            <p class="text-xs text-gray-400">{{ 'fiche_matiere.mutualisation.porteur.help'|trans({}, 'fiche_matiere') }}</p>
+            <p class="text-xs text-secondary-400">{{ 'fiche_matiere.mutualisation.porteur.help'|trans({}, 'fiche_matiere') }}</p>
             <form method="post" action="{{ path('fiche_matiere_porteur', {id: fiche.id}) }}" class="flex flex-wrap items-end gap-3">
                 <input type="hidden" name="{{ constant('App\\Controller\\FicheMatiereController::CSRF_FIELD') }}" value="{{ csrf_token(constant('App\\Controller\\FicheMatiereController::CSRF_ID')) }}">
-                <label class="text-xs font-medium text-gray-500">
+                <label class="fld-label">
                     {{ 'fiche_matiere.mutualisation.formation'|trans({}, 'fiche_matiere') }}
                     <select name="formation" class="fld mt-1" data-porteur-formation>
                         {% for formation in formations %}
@@ -50,7 +49,7 @@
                         {% endfor %}
                     </select>
                 </label>
-                <label class="text-xs font-medium text-gray-500">
+                <label class="fld-label">
                     {{ 'fiche_matiere.mutualisation.parcours'|trans({}, 'fiche_matiere') }}
                     <select name="parcours" class="fld mt-1" data-porteur-parcours>
                         {% for fid, nodes in parcours %}
@@ -60,7 +59,7 @@
                         {% endfor %}
                     </select>
                 </label>
-                <button type="submit" class="rounded-lg px-3 py-1.5 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'fiche_matiere.mutualisation.porteur.button'|trans({}, 'fiche_matiere') }}</button>
+                <button type="submit" class="inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent bg-primary-600 font-medium text-white transition-colors hover:bg-primary-700 px-3 py-1.5 text-sm">{{ 'fiche_matiere.mutualisation.porteur.button'|trans({}, 'fiche_matiere') }}</button>
             </form>
             <script>
                 (() => {
@@ -82,22 +81,22 @@
             <h3 class="text-sm font-semibold">{{ 'fiche_matiere.mutualisation.list.title'|trans({}, 'fiche_matiere') }}</h3>
             <div class="space-y-2">
             {% for mutualisation in mutualisations %}
-                <div class="flex flex-wrap items-center gap-3 rounded-lg border px-3 py-2 text-sm" style="border-color:var(--c-border)">
+                <div class="flex flex-wrap items-center gap-3 rounded-lg border px-3 py-2 text-sm border-secondary-200">
                     <span>{{ mutualisation.formation.name }}{% if mutualisation.parcoursNid %} › {{ mutualisation.parcoursNid }}{% endif %}</span>
                     <span class="flex-1"></span>
                     <form method="post" action="{{ path('fiche_matiere_mutualisation_remove', {id: fiche.id, mid: mutualisation.id}) }}">
                         <input type="hidden" name="{{ constant('App\\Controller\\FicheMatiereController::CSRF_FIELD') }}" value="{{ csrf_token(constant('App\\Controller\\FicheMatiereController::CSRF_ID')) }}">
-                        <button type="submit" class="rounded-lg border px-2 py-1 text-xs hover:bg-red-50" style="border-color:var(--c-border)">{{ 'fiche_matiere.mutualisation.remove'|trans({}, 'fiche_matiere') }}</button>
+                        <button type="submit" class="rounded-lg border px-2 py-1 text-xs hover:bg-danger-50 border-secondary-200">{{ 'fiche_matiere.mutualisation.remove'|trans({}, 'fiche_matiere') }}</button>
                     </form>
                 </div>
             {% else %}
-                <p class="text-xs text-gray-400">{{ 'fiche_matiere.mutualisation.list.empty'|trans({}, 'fiche_matiere') }}</p>
+                <p class="text-xs text-secondary-400">{{ 'fiche_matiere.mutualisation.list.empty'|trans({}, 'fiche_matiere') }}</p>
             {% endfor %}
             </div>
             {% if mutualisations %}
             <form method="post" action="{{ path('fiche_matiere_mutualisation_clear', {id: fiche.id}) }}">
                 <input type="hidden" name="{{ constant('App\\Controller\\FicheMatiereController::CSRF_FIELD') }}" value="{{ csrf_token(constant('App\\Controller\\FicheMatiereController::CSRF_ID')) }}">
-                <button type="submit" class="rounded-lg border px-2 py-1 text-xs hover:bg-red-50" style="border-color:var(--c-border)">{{ 'fiche_matiere.mutualisation.clear'|trans({}, 'fiche_matiere') }}</button>
+                <button type="submit" class="rounded-lg border px-2 py-1 text-xs hover:bg-danger-50 border-secondary-200">{{ 'fiche_matiere.mutualisation.clear'|trans({}, 'fiche_matiere') }}</button>
             </form>
             {% endif %}
         </section>
@@ -106,7 +105,7 @@
             <h3 class="text-sm font-semibold">{{ 'fiche_matiere.mutualisation.add.title'|trans({}, 'fiche_matiere') }}</h3>
             <form method="post" action="{{ path('fiche_matiere_mutualisation_add', {id: fiche.id}) }}" class="flex flex-wrap items-end gap-3">
                 <input type="hidden" name="{{ constant('App\\Controller\\FicheMatiereController::CSRF_FIELD') }}" value="{{ csrf_token(constant('App\\Controller\\FicheMatiereController::CSRF_ID')) }}">
-                <label class="text-xs font-medium text-gray-500">
+                <label class="fld-label">
                     {{ 'fiche_matiere.mutualisation.formation'|trans({}, 'fiche_matiere') }}
                     <select name="formation" class="fld mt-1" data-add-formation>
                         {% for formation in formations %}
@@ -114,11 +113,11 @@
                         {% endfor %}
                     </select>
                 </label>
-                <label class="text-xs font-medium text-gray-500">
+                <label class="fld-label">
                     {{ 'fiche_matiere.mutualisation.parcours'|trans({}, 'fiche_matiere') }}
                     <select name="parcours" class="fld mt-1" data-add-parcours></select>
                 </label>
-                <button type="submit" class="rounded-lg px-3 py-1.5 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'fiche_matiere.mutualisation.add.button'|trans({}, 'fiche_matiere') }}</button>
+                <button type="submit" class="inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent bg-primary-600 font-medium text-white transition-colors hover:bg-primary-700 px-3 py-1.5 text-sm">{{ 'fiche_matiere.mutualisation.add.button'|trans({}, 'fiche_matiere') }}</button>
             </form>
             <script type="application/json" data-parcours>{{ parcours|json_encode|raw }}</script>
             <script>

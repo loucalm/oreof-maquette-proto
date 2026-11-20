@@ -48,7 +48,13 @@ Autres : `make sh`, `make console ARGS="…"`, `make cc`, `make logs`.
 
 Symfony 8.1 / PHP 8.5 · Doctrine + SQLite · Twig + Stimulus + Turbo · AssetMapper.
 **Tailwind v4 est chargé au runtime via CDN** (`@tailwindcss/browser`, dans `base.html.twig`) —
-aucun build CSS. Styles maison dans `assets/styles/app.css`, servi tel quel par AssetMapper.
+aucun build CSS. **Interface alignée sur ORéOF v2** : le thème v2 (palette sémantique `primary`/`secondary`/
+`success`/`warning`/`danger`/`info`, classes `app-*`) est dans `templates/_layout/_tailwind.css`, inséré dans un
+`<style type="text/tailwindcss">` ; la topbar, l'en-tête de page (`PageHeader`) et les composants Twig (`Button`,
+`Badge`, `Card`, `Alerte`, `IconBox`, `Kpi`, `DropdownActions`, `remplissage_progress`) sont repris de v2
+(`symfony/ux-twig-component`). Une page déclare son en-tête avec `header_title`, `header_description`,
+`header_breadcrumb` et le bloc `bouton_header`. Classes maison du prototype (arbre, panneaux, champs `fld`)
+dans `assets/styles/app.css`, servi tel quel par AssetMapper.
 Le bundle `symfonycasts/tailwind-bundle` a été retiré : il servait à la place de `app.css` une copie
 compilée (`var/tailwind/app.built.css`) qui n'était plus régénérée, donc des styles périmés.
 Conteneur : image `dannebicque/oreof-symfony-app` + `php8.5-sqlite3` (`docker/Dockerfile`).

@@ -4,6 +4,16 @@
 {% extends standalone ? 'base.html.twig' : '_frame.html.twig' %}
 {% block title %}{{ formation.name }} · {{ 'formation.graph.title_suffix'|trans({}, 'formation') }}{% endblock %}
 
+{% if standalone %}
+    {% set header_title = 'formation.graph.heading'|trans({}, 'formation') %}
+    {% set header_breadcrumb = [
+    {label: 'formation.index.breadcrumb_offer'|trans({}, 'formation')},
+    {label: 'formation.index.heading'|trans({}, 'formation'), url: path('formation_index')},
+    {label: formation.name, url: path('formation_view', {id: formation.id})},
+        {label: header_title},
+    ] %}
+{% endif %}
+
 {% block body %}
 {% set g = graph %}
 {# candidats de parenté calculés une fois par parcours, réutilisés par la boîte SVG (data-candidates) et par le <select> du tableau #}
@@ -17,23 +27,15 @@
 <turbo-frame id="node-panel">
 <div class="panel-body" data-panel-active="parcours">
     <div class="panel-head">
-        {% if standalone %}
-            <div class="mb-2 text-xs text-gray-400">
-                {{ ux_icon('ph:house', {class: 'icon'}) }} <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.index.breadcrumb_home'|trans({}, 'formation') }}</a> ›
-                <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.graph.breadcrumb_list'|trans({}, 'formation') }}</a> ›
-                <a href="{{ path('formation_view', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
-                {{ 'formation.graph.heading'|trans({}, 'formation') }}
-            </div>
-        {% endif %}
         <div class="flex items-center justify-between gap-3">
             <div>
                 <h2 class="text-xl font-bold">{{ 'formation.graph.heading'|trans({}, 'formation') }}</h2>
-                <div class="text-sm text-gray-400">{{ formation.name }} · {{ 'formation.index.parcours_count'|trans({'%count%': g.parcours|length}, 'formation') }}</div>
+                <div class="text-sm text-secondary-400">{{ formation.name }} · {{ 'formation.index.parcours_count'|trans({'%count%': g.parcours|length}, 'formation') }}</div>
             </div>
             <a href="{{ path('formation_editor', {id: formation.id, param: 'structure'}) }}" data-turbo-frame="node-panel"
-               class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'formation.editor.structure_config_link'|trans({}, 'formation') }}</a>
+               class="inline-flex items-center justify-center gap-1.5 rounded-md border border-secondary-300 bg-secondary-50 font-medium text-secondary-600 transition-colors hover:bg-secondary-100 hover:text-secondary-800 px-2 py-1 text-xs shrink-0">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'formation.editor.structure_config_link'|trans({}, 'formation') }}</a>
         </div>
-        <p class="text-xs text-gray-400 mt-1">
+        <p class="text-xs text-secondary-400 mt-1">
             {{ 'formation.graph.axis_note'|trans({'%unit%': g.unit|lower}, 'formation')|raw }}
             {% if standalone %}
                 {{ 'formation.graph.standalone_note'|trans({'%unit%': g.unit|lower}, 'formation') }}
@@ -45,12 +47,12 @@
 
     <div class="panel-scroll">
     {% if g.parcours is empty %}
-        <div class="rounded-xl border border-dashed p-8 text-center text-sm text-gray-500" style="border-color:var(--c-border)">
+        <div class="rounded-xl border border-dashed p-8 text-center text-sm text-secondary-500 border-secondary-200">
             {{ 'formation.graph.empty'|trans({}, 'formation') }}
         </div>
     {% else %}
         <div {{ not standalone ? 'data-controller=ramification' }}>
-        <div class="overflow-auto rounded-xl border bg-white" style="border-color:var(--c-border)">
+        <div class="overflow-auto rounded-xl border bg-white border-secondary-200">
             <svg viewBox="0 0 {{ g.width }} {{ g.height }}" width="{{ g.width }}" height="{{ g.height }}" class="block" style="min-width:100%"
                  {{ not standalone ? 'data-ramification-target=svg' }}>
                 <defs>
@@ -129,17 +131,17 @@
                         style="{{ isCurrent ? 'background:var(--c-primary-soft)' : '' }}">
                         <span class="type-badge">{{ ux_icon('ph:compass', {class: 'icon'}) }} {{ 'formation.graph.parcours_fallback'|trans({}, 'formation') }}</span>
                         <a href="{{ path('parcours_editor', {fid: formation.id, nid: r.node.id}) }}" class="font-medium hover:underline">{{ r.node.label ?: '—' }}</a>
-                        <span class="text-xs text-gray-400">{{ 'formation.graph.period_range'|trans({'%unit%': g.unit|lower, '%start%': r.colStart, '%end%': r.colEnd}, 'formation') }}</span>
-                        {% if r.node.parcoursParent %}<span class="text-xs text-gray-400">{{ 'formation.graph.child_of'|trans({'%parent%': r.node.parcoursParent.label ?: '—'}, 'formation') }}</span>{% endif %}
-                        {% if isCurrent %}<span class="pill" style="background:var(--c-primary);color:#fff">{{ ux_icon('ph:map-pin', {class: 'icon'}) }} {{ 'formation.graph.you_are_here_pill'|trans({}, 'formation') }}</span>{% endif %}
+                        <span class="text-xs text-secondary-400">{{ 'formation.graph.period_range'|trans({'%unit%': g.unit|lower, '%start%': r.colStart, '%end%': r.colEnd}, 'formation') }}</span>
+                        {% if r.node.parcoursParent %}<span class="text-xs text-secondary-400">{{ 'formation.graph.child_of'|trans({'%parent%': r.node.parcoursParent.label ?: '—'}, 'formation') }}</span>{% endif %}
+                        {% if isCurrent %}<span class="pill bg-primary-600 hover:bg-primary-700 text-white">{{ ux_icon('ph:map-pin', {class: 'icon'}) }} {{ 'formation.graph.you_are_here_pill'|trans({}, 'formation') }}</span>{% endif %}
                     </li>
                 {% endfor %}
             </ul>
         {% else %}
             <form method="post" action="{{ path('node_ramification_save', {fid: formation.id}) }}" data-turbo-frame="node-panel" class="mt-4">
-                <div class="overflow-auto rounded-xl border" style="border-color:var(--c-border)">
+                <div class="overflow-auto rounded-xl border border-secondary-200">
                     <table class="w-full text-sm">
-                        <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        <thead class="bg-secondary-50 text-left text-[11px] font-semibold uppercase tracking-wider text-secondary-600">
                             <tr>
                                 <th class="text-left px-4 py-2.5">{{ 'formation.graph.parcours_fallback'|trans({}, 'formation') }}</th>
                                 <th class="text-left px-4 py-2.5">{{ 'node.panel.period_start'|trans({'%unit%': g.unit}, 'node') }}</th>
@@ -154,7 +156,7 @@
                                 <td class="px-4 py-2.5">
                                     <span class="type-badge">{{ ux_icon('ph:compass', {class: 'icon'}) }} {{ 'formation.graph.parcours_fallback'|trans({}, 'formation') }}</span>
                                     <a href="{{ path('parcours_editor', {fid: formation.id, nid: r.node.id}) }}" class="font-medium hover:underline ml-1">{{ r.node.label ?: '—' }}</a>
-                                    {% if isCurrent %}<span class="pill ml-1" style="background:var(--c-primary);color:#fff">{{ ux_icon('ph:map-pin', {class: 'icon'}) }} {{ 'formation.graph.you_are_here_pill'|trans({}, 'formation') }}</span>{% endif %}
+                                    {% if isCurrent %}<span class="pill ml-1 bg-primary-600 hover:bg-primary-700 text-white">{{ ux_icon('ph:map-pin', {class: 'icon'}) }} {{ 'formation.graph.you_are_here_pill'|trans({}, 'formation') }}</span>{% endif %}
                                 </td>
                                 <td class="px-4 py-2.5"><input type="number" min="1" name="periodeDebut[{{ r.node.id }}]" value="{{ r.node.periodeDebut }}" class="fld w-24"></td>
                                 <td class="px-4 py-2.5"><input type="number" min="1" name="periodeFin[{{ r.node.id }}]" value="{{ r.node.periodeFin }}" class="fld w-24"></td>
@@ -171,7 +173,7 @@
                         </tbody>
                     </table>
                 </div>
-                <button class="mt-3 rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ ux_icon('ph:floppy-disk', {class: 'icon'}) }} {{ 'formation.graph.save_button'|trans({}, 'formation') }}</button>
+                <button class="inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent bg-primary-600 font-medium text-white transition-colors hover:bg-primary-700 px-3 py-1.5 text-sm mt-3">{{ ux_icon('ph:floppy-disk', {class: 'icon'}) }} {{ 'formation.graph.save_button'|trans({}, 'formation') }}</button>
             </form>
         {% endif %}
         </div>

@@ -100,7 +100,7 @@ export default class extends Controller {
         if (this.panel) {
             this.panel.removeAttribute('src');
             this.panel.innerHTML =
-                '<div class="grid h-full place-items-center p-16 text-sm text-gray-400">'
+                '<div class="grid h-full place-items-center p-16 text-sm text-secondary-400">'
                 + 'Sélectionnez une section ou un ELP pour le modifier</div>';
         }
         this.updateUrl({});

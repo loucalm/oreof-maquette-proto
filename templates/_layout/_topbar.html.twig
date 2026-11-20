@@ -1,0 +1,116 @@
+{# Topbar reprise d'ORéOF v2 (templates/_layout/_topbar.html.twig).
+   < 2xl : deux lignes (logo + actions / menu) ; 2xl+ : une ligne. Hauteur publiée dans --topbar-height.
+   Les entrées sans équivalent dans le prototype sont affichées mais désactivées. #}
+{% set _route = app.request.attributes.get('_route') ?? '' %}
+{% set _adminSections = constant('App\\Controller\\AdminController::SECTIONS') %}
+{% set _soon = 'common.coming_soon'|trans({}, 'common') %}
+
+{% set _menu = [
+    {
+        label: 'layout.nav.offer'|trans({}, 'layout'),
+        active: _route matches '/^(formation_|node_|bcc_|parcours_|offre_|fiche_matiere_)/',
+        children: [
+            {label: 'layout.nav.offer_formations'|trans({}, 'layout'), url: path('formation_index')},
+            {label: 'layout.nav.offer_consolidation'|trans({}, 'layout'), url: path('offre_index')},
+        ],
+    },
+    {label: 'layout.nav.steering'|trans({}, 'layout'), disabled: true, children: []},
+    {label: 'layout.nav.councils'|trans({}, 'layout'), disabled: true, children: []},
+    {label: 'layout.nav.users_rights'|trans({}, 'layout'), disabled: true, children: []},
+] %}
+{% if is_admin() %}
+    {% set _menu = _menu|merge([
+        {label: 'layout.nav.diplomes'|trans({}, 'layout'), url: path('diplome_index'), active: _route matches '/^diplome_/', children: []},
+        {
+            label: 'layout.nav.administration'|trans({}, 'layout'),
+            active: _route matches '/^(admin_|node_type_|field_|template_|mcctype_|referentiel_)/',
+            children: _adminSections|map(s => {label: s.label, url: path(s.route)}),
+        },
+    ]) %}
+{% endif %}
+
+<nav class="topbar-nav sticky top-0 z-50 border-b border-secondary-200 bg-surface shadow-sm">
+    <div class="mx-auto max-w-full px-4 sm:px-6 lg:px-8">
+        <div class="topbar-row flex flex-wrap justify-between 2xl:h-16 2xl:flex-nowrap">
+
+            <div class="topbar-left contents 2xl:flex 2xl:h-full 2xl:min-w-0 2xl:items-center 2xl:gap-6">
+                <a href="{{ path('formation_index') }}" class="order-1 flex h-16 shrink-0 items-center gap-2 text-xl font-bold tracking-tight text-primary 2xl:order-none">
+                    <img src="{{ asset('images/oreof-logo.svg') }}" alt="Logo ORéOF" class="block h-8 w-auto">
+                    {% if is_admin() %}<span class="whitespace-nowrap text-danger">/ Adm.</span>{% endif %}
+                </a>
+
+                <div class="topbar-menu order-3 hidden h-12 w-full min-w-0 items-center gap-0.5 border-t border-secondary-200 md:flex lg:gap-1 2xl:order-none 2xl:h-full 2xl:w-auto 2xl:gap-2 2xl:border-0">
+                    <span class="topbar-link" aria-disabled="true" title="{{ _soon }}">{{ 'layout.nav.dashboard'|trans({}, 'layout') }}</span>
+
+                    {% for item in _menu %}
+                        <div class="relative flex h-full items-center" data-controller="navbar-dropdown"
+                             data-action="pointerenter->navbar-dropdown#open pointerleave->navbar-dropdown#close click@window->navbar-dropdown#close focusin->navbar-dropdown#focusIn focusout->navbar-dropdown#focusOut keydown->navbar-dropdown#keydown">
+                            {% if item.disabled ?? false %}
+                                <span class="topbar-link" aria-disabled="true" title="{{ _soon }}">
+                                    {{ item.label }}
+                                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 9l-7 7-7-7"></path></svg>
+                                </span>
+                            {% elseif item.children is empty %}
+                                <a href="{{ item.url }}" class="topbar-link" {{ (item.active ?? false) ? 'aria-current="page"' }}>{{ item.label }}</a>
+                            {% else %}
+                                <button type="button" class="topbar-link" data-navbar-dropdown-target="trigger" aria-expanded="false"
+                                        data-action="click->navbar-dropdown#toggle" {{ (item.active ?? false) ? 'aria-current="page"' }}>
+                                    {{ item.label }}
+                                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 9l-7 7-7-7"></path></svg>
+                                </button>
+                                <div data-navbar-dropdown-target="content" class="absolute left-0 top-full z-50 hidden w-64 pt-1">
+                                    <div class="rounded-lg border border-secondary-200 bg-surface py-2 shadow-xl">
+                                        {% for child in item.children %}
+                                            <a href="{{ child.url }}" class="block px-4 py-2 text-sm transition hover:bg-primary-50">{{ child.label }}</a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="topbar-right order-2 flex h-16 shrink-0 items-center gap-3 2xl:order-none 2xl:gap-5">
+                {# icônes d'action de v2 (recherche, commentaires, signalement, notifications) : fictives #}
+                <div class="flex items-center gap-1 text-secondary-500">
+                    {% for i in ['ph:magnifying-glass', 'ph:chat-circle', 'ph:bug', 'ph:bell'] %}
+                        <span class="grid h-9 w-9 place-items-center rounded-full opacity-70" aria-disabled="true" title="{{ _soon }}">{{ ux_icon(i, {class: 'h-5 w-5'}) }}</span>
+                    {% endfor %}
+                </div>
+
+                {# Campagne de collecte (fictive) #}
+                <span class="flex items-center rounded-lg border border-primary-100 bg-primary-50 px-3 py-1.5 text-xs font-bold text-primary" title="{{ _soon }}">
+                    <span class="mr-1">2026-2027</span>
+                    <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 9l-7 7-7-7"></path></svg>
+                </span>
+
+                {# Menu utilisateur : bascule de rôle du prototype (pas d'authentification réelle) #}
+                <div class="relative" data-controller="navbar-dropdown"
+                     data-action="click@window->navbar-dropdown#close focusin->navbar-dropdown#focusIn focusout->navbar-dropdown#focusOut keydown->navbar-dropdown#keydown">
+                    <button type="button" data-navbar-dropdown-target="trigger" aria-expanded="false" data-action="click->navbar-dropdown#toggle"
+                            aria-label="{{ 'layout.user_menu'|trans({}, 'layout') }}"
+                            class="flex items-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500">
+                        <span class="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-white ring-2 ring-transparent ring-offset-2 transition-all hover:ring-primary-500">{{ is_admin() ? 'DA' : 'RF' }}</span>
+                    </button>
+                    <div data-navbar-dropdown-target="content"
+                         class="absolute right-0 z-50 mt-2 hidden w-64 overflow-hidden rounded-xl border border-secondary-200 bg-surface py-2 shadow-2xl">
+                        <div class="border-b border-secondary-100 px-4 py-3">
+                            <p class="text-sm font-bold text-text">{{ role_labels()[current_role()] }}</p>
+                            <p class="truncate text-xs text-secondary-500">{{ 'layout.role_switch.help'|trans({}, 'layout') }}</p>
+                        </div>
+                        <p class="px-4 pb-1 pt-2 text-[10px] font-black uppercase tracking-widest text-secondary-400">{{ 'layout.role_switch.title'|trans({}, 'layout') }}</p>
+                        {% for r, label in role_labels() %}
+                            <form method="post" action="{{ path('role_switch', {role: r}) }}">
+                                <button class="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-text hover:bg-secondary-50 {{ current_role() == r ? 'font-bold text-primary' }}">
+                                    {{ current_role() == r ? ux_icon('ph:check-circle-fill', {class: 'h-4 w-4 text-primary'}) : ux_icon('ph:circle', {class: 'h-4 w-4 text-secondary-300'}) }}
+                                    {{ label }}
+                                </button>
+                            </form>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>

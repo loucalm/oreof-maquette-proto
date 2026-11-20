@@ -1,35 +1,34 @@
 {% extends 'base.html.twig' %}
 {% block title %}{{ 'formation.export.title_prefix'|trans({}, 'formation') }} · {{ formation.name }}{% endblock %}
 
+{% set header_title = 'formation.export.heading'|trans({'%name%': formation.name}, 'formation') %}
+{% set header_description = 'formation.export.subtitle'|trans({}, 'formation') %}
+{% set header_breadcrumb = [
+    {label: 'formation.index.breadcrumb_offer'|trans({}, 'formation')},
+    {label: 'formation.index.heading'|trans({}, 'formation'), url: path('formation_index')},
+    {label: formation.name, url: path('formation_editor', {id: formation.id})},
+    {label: 'formation.export.title_prefix'|trans({}, 'formation')},
+] %}
+
+{% block bouton_header %}
+    <twig:Button variant="success" :soft="false" :outline="true" icon="ph:arrow-left" :label="'formation.history.editor_link'|trans({}, 'formation')" :href="path('formation_editor', {id: formation.id})"/>
+{% endblock %}
+
 {% block body %}
 <div data-controller="json">
-    <div class="rounded-2xl border bg-white px-7 py-6 mb-4" style="border-color:var(--c-border)">
-        <div class="flex items-start justify-between gap-4">
-            <div>
-                <div class="text-xs text-gray-400">
-                    {{ ux_icon('ph:house', {class: 'icon'}) }} <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.index.breadcrumb_home'|trans({}, 'formation') }}</a> ›
-                    <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.editor.breadcrumb_list'|trans({}, 'formation') }}</a> ›
-                    <a href="{{ path('formation_editor', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
-                    {{ 'formation.export.title_prefix'|trans({}, 'formation') }}
-                </div>
-                <h1 class="text-2xl font-extrabold tracking-tight mt-1">{{ 'formation.export.heading'|trans({'%name%': formation.name}, 'formation') }}</h1>
-                <p class="text-sm text-gray-500">{{ 'formation.export.subtitle'|trans({}, 'formation') }}</p>
-            </div>
-            <a href="{{ path('formation_editor', {id: formation.id}) }}"
-               class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'formation.history.editor_link'|trans({}, 'formation') }}</a>
-        </div>
-
-        <div class="mt-4 flex flex-wrap items-center gap-2">
-            <div class="inline-flex rounded-lg border overflow-hidden text-sm" style="border-color:var(--c-border)">
+    <div class="mb-4 rounded-xl border border-secondary-200 bg-white p-4 shadow-sm">
+        
+        <div class="flex flex-wrap items-center gap-2">
+            <div class="inline-flex rounded-lg border overflow-hidden text-sm border-secondary-200">
                 <a href="{{ path('formation_export', {id: formation.id, view: 'raw'}) }}"
-                   class="px-3 py-1.5 {{ view == 'raw' ? 'font-semibold text-white' : 'hover:bg-gray-50' }}"
+                   class="px-3 py-1.5 {{ view == 'raw' ? 'font-semibold text-white' : 'hover:bg-secondary-50' }}"
                    style="{{ view == 'raw' ? 'background:var(--c-primary)' }}">{{ 'formation.export.tab_raw'|trans({}, 'formation') }}</a>
                 <a href="{{ path('formation_export', {id: formation.id, view: 'enriched'}) }}"
-                   class="px-3 py-1.5 border-l {{ view == 'enriched' ? 'font-semibold text-white' : 'hover:bg-gray-50' }}"
+                   class="px-3 py-1.5 border-l {{ view == 'enriched' ? 'font-semibold text-white' : 'hover:bg-secondary-50' }}"
                    style="border-color:var(--c-border);{{ view == 'enriched' ? 'background:var(--c-primary)' }}">{{ 'formation.export.tab_enriched'|trans({}, 'formation') }}</a>
             </div>
 
-            <span class="text-xs text-gray-400">
+            <span class="text-xs text-secondary-400">
                 {{ view == 'raw'
                     ? 'formation.export.raw_note'|trans({}, 'formation')
                     : 'formation.export.enriched_note'|trans({}, 'formation') }}
@@ -37,22 +36,22 @@
 
             <div class="ml-auto flex items-center gap-2">
                 <button type="button" data-action="json#copy" data-json-target="btn"
-                        class="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:copy', {class: 'icon'}) }} {{ 'formation.export.copy_button'|trans({}, 'formation') }}</button>
+                        class="inline-flex items-center justify-center gap-1.5 rounded-md border border-secondary-300 bg-secondary-50 font-medium text-secondary-600 transition-colors hover:bg-secondary-100 hover:text-secondary-800 px-3 py-1.5 text-sm">{{ ux_icon('ph:copy', {class: 'icon'}) }} {{ 'formation.export.copy_button'|trans({}, 'formation') }}</button>
                 <a href="{{ path('formation_export_json', {id: formation.id, view: view}) }}"
-                   class="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:download-simple', {class: 'icon'}) }} {{ 'formation.export.download_button'|trans({}, 'formation') }}</a>
+                   class="inline-flex items-center justify-center gap-1.5 rounded-md border border-secondary-300 bg-secondary-50 font-medium text-secondary-600 transition-colors hover:bg-secondary-100 hover:text-secondary-800 px-3 py-1.5 text-sm">{{ ux_icon('ph:download-simple', {class: 'icon'}) }} {{ 'formation.export.download_button'|trans({}, 'formation') }}</a>
             </div>
         </div>
     </div>
 
     <form method="get" action="{{ path('formation_export_mccc', {id: formation.id}) }}" data-turbo="false" data-mccc-export
-          class="rounded-2xl border bg-white px-7 py-5 mb-4 flex flex-wrap items-end gap-4" style="border-color:var(--c-border)">
+          class="mb-4 flex flex-wrap items-end gap-4 rounded-xl border border-secondary-200 bg-white px-6 py-5 shadow-sm">
         <div class="mr-auto">
             <h2 class="font-semibold">{{ ux_icon('ph:table', {class: 'icon'}) }} {{ 'formation.export.mccc.heading'|trans({}, 'formation') }}</h2>
-            <p class="text-sm text-gray-500">{{ 'formation.export.mccc.help'|trans({}, 'formation') }}</p>
+            <p class="text-sm text-secondary-500">{{ 'formation.export.mccc.help'|trans({}, 'formation') }}</p>
         </div>
         {% if mcccSheetLevels|length > 1 %}
             <label class="text-sm">
-                <span class="block text-xs font-medium text-gray-500">{{ 'formation.export.mccc.sheet_level'|trans({}, 'formation') }}</span>
+                <span class="fld-label block">{{ 'formation.export.mccc.sheet_level'|trans({}, 'formation') }}</span>
                 <select name="feuille" class="fld mt-1">
                     {% for key, label in mcccSheetLevels %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
                 </select>
@@ -60,18 +59,18 @@
         {% endif %}
         {% if mcccParcours is not empty %}
             <label class="text-sm">
-                <span class="block text-xs font-medium text-gray-500">{{ 'formation.export.mccc.parcours'|trans({}, 'formation') }}</span>
+                <span class="fld-label block">{{ 'formation.export.mccc.parcours'|trans({}, 'formation') }}</span>
                 <select name="parcours" class="fld mt-1">
                     {% for nid, label in mcccParcours %}<option value="{{ nid }}">{{ label }}</option>{% endfor %}
                 </select>
             </label>
         {% endif %}
-        <button type="submit" class="rounded-lg px-3 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">
+        <button type="submit" class="inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent bg-primary-600 font-medium text-white transition-colors hover:bg-primary-700 px-3 py-1.5 text-sm">
             {{ ux_icon('ph:download-simple', {class: 'icon'}) }} {{ 'formation.export.mccc.download'|trans({}, 'formation') }}
         </button>
     </form>
 
-    <div class="rounded-2xl border bg-white overflow-hidden" style="border-color:var(--c-border)">
+    <div class="rounded-2xl border bg-white overflow-hidden border-secondary-200">
         <pre class="json-view"><code data-json-target="src">{{ json }}</code></pre>
     </div>
 </div>

@@ -5,38 +5,36 @@
 {% set mods = columns.mods %}
 {% set colCount = 2 + places|length * mods|length + 3 %}
 
+{% set header_title = 'formation.quick_grid.title'|trans({}, 'formation') %}
+{% set header_description = 'formation.quick_grid.subtitle'|trans({}, 'formation') %}
+{% set header_breadcrumb = [
+    {label: 'formation.index.breadcrumb_offer'|trans({}, 'formation')},
+    {label: 'formation.index.heading'|trans({}, 'formation'), url: path('formation_index')},
+    {label: formation.name, url: path('formation_editor', {id: formation.id})},
+    {label: header_title},
+] %}
+
+{% block bouton_header %}
+    <twig:Button variant="success" :soft="false" :outline="true" icon="ph:arrow-left" :label="'formation.quick_grid.back'|trans({}, 'formation')" :href="path('formation_editor', {id: formation.id})"/>
+{% endblock %}
+
 {% block body %}
-<div class="editor-header rounded-2xl border bg-white px-6 py-4 mb-4" style="border-color:var(--c-border)">
-    <div class="flex flex-wrap items-start justify-between gap-3">
-        <div>
-            <div class="text-xs text-gray-400">
-                <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.editor.breadcrumb_list'|trans({}, 'formation') }}</a> ›
-                <a href="{{ path('formation_editor', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
-            </div>
-            <h1 class="text-2xl font-extrabold tracking-tight">{{ 'formation.quick_grid.title'|trans({}, 'formation') }}</h1>
-            <p class="text-sm text-gray-500">{{ 'formation.quick_grid.subtitle'|trans({}, 'formation') }}</p>
-        </div>
-        <a href="{{ path('formation_editor', {id: formation.id}) }}"
-           class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-           style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'formation.quick_grid.back'|trans({}, 'formation') }}</a>
-    </div>
-    {% if parcoursList is not empty %}
-        <nav class="mt-3 flex flex-wrap gap-2" aria-label="{{ 'formation.quick_grid.parcours_nav'|trans({}, 'formation') }}">
+{% if parcoursList is not empty %}
+        <nav class="app-tabs-list mb-4" aria-label="{{ 'formation.quick_grid.parcours_nav'|trans({}, 'formation') }}">
             {% for p in parcoursList %}
                 <a href="{{ path('formation_quick_grid', {id: formation.id, parcours: p.id}) }}"
-                   class="tab-pill {{ p.id == parcoursNid ? 'tab-active' }}" {{ p.id == parcoursNid ? 'aria-current="page"' }}>{{ p.displayLabel }}</a>
+                   class="app-tab {{ p.id == parcoursNid ? 'app-tab-active' }}" {{ p.id == parcoursNid ? 'aria-current="page"' }}>{{ p.displayLabel }}</a>
             {% endfor %}
         </nav>
     {% endif %}
-</div>
 
 {% set readonly = formation.phase.value == 'consolidation' %}
 {% if readonly %}
     <p class="issues-box mb-4">{{ ux_icon('ph:hourglass-medium', {class: 'icon'}) }} {{ 'formation.editor.consolidation_readonly'|trans({}, 'formation') }}</p>
 {% endif %}
-<div class="rounded-2xl border bg-white overflow-auto" style="border-color:var(--c-border)">
+<div class="rounded-2xl border bg-white overflow-auto border-secondary-200">
     {% if rows is empty %}
-        <p class="p-10 text-center text-sm text-gray-400">{{ 'formation.quick_grid.empty'|trans({}, 'formation') }}</p>
+        <p class="p-10 text-center text-sm text-secondary-400">{{ 'formation.quick_grid.empty'|trans({}, 'formation') }}</p>
     {% else %}
     <table class="qg-table" data-controller="quick-grid">
         <caption class="sr-only">{{ 'formation.quick_grid.caption'|trans({}, 'formation') }}</caption>
@@ -120,5 +118,5 @@
     </table>
     {% endif %}
 </div>
-<p class="mt-3 text-xs text-gray-400">{{ 'formation.quick_grid.keyboard_help'|trans({}, 'formation') }}</p>
+<p class="mt-3 text-xs text-secondary-400">{{ 'formation.quick_grid.keyboard_help'|trans({}, 'formation') }}</p>
 {% endblock %}

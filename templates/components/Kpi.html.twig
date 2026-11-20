@@ -1,0 +1,37 @@
+{#
+Composant Kpi (repris d'ORéOF v2) — indicateur / compteur :
+  <twig:Kpi title="Validées" value="28" description="Pour publication" variant="success" icon="ph:check-circle" />
+#}
+{% props title = '', value = 0, total = null, unit = null, percent = null, description = null, variant = 'default', icon = null, help = null, href = null %}
+{% set iconColor = {
+    primary: 'text-primary-500', success: 'text-emerald-500', warning: 'text-amber-500', danger: 'text-rose-500',
+    info: 'text-cyan-500', secondary: 'text-secondary-400',
+}[variant] ?? 'text-primary-500' %}
+{% set valueColor = {
+    primary: 'text-primary-600', success: 'text-emerald-600', warning: 'text-amber-600', danger: 'text-rose-600',
+    info: 'text-cyan-600', secondary: 'text-secondary-700',
+}[variant] ?? 'text-secondary-900' %}
+{% set barColor = {
+    primary: 'bg-primary-500', success: 'bg-success-500', warning: 'bg-warning-500', danger: 'bg-danger-500', info: 'bg-info-500',
+}[variant] ?? 'bg-primary-500' %}
+{% set cardClasses = 'block rounded-xl border border-secondary-200 bg-secondary-50/60 p-3.5 shadow-sm transition-all' ~ (href ? ' cursor-pointer hover:border-secondary-300 hover:shadow-md') %}
+{% if href %}<a href="{{ href }}" class="{{ cardClasses }}" {% if help %}title="{{ help }}"{% endif %} {{ attributes }}>{% else %}<div class="{{ cardClasses }}" {% if help %}title="{{ help }}"{% endif %} {{ attributes }}>{% endif %}
+    <div class="flex items-center justify-between gap-2">
+        <span class="truncate text-xs font-semibold uppercase tracking-wider text-secondary-500">{{ title }}</span>
+        {% if icon %}{{ ux_icon(icon, {class: 'h-4 w-4 shrink-0 ' ~ iconColor}) }}{% endif %}
+    </div>
+    <div class="mt-2 flex flex-wrap items-baseline gap-1.5">
+        <span class="text-2xl font-bold leading-tight {{ valueColor }}">{{ value }}</span>
+        {% if total is not null %}<span class="text-xs text-secondary-500">/ {{ total }}</span>{% endif %}
+        {% if unit %}<span class="text-xs font-medium text-secondary-500">{{ unit }}</span>{% endif %}
+    </div>
+    {% if percent is not null %}
+        <div class="mt-2 flex items-center gap-2">
+            <div class="h-1.5 w-full overflow-hidden rounded-full bg-secondary-200"><div class="h-full rounded-full {{ barColor }}" style="width: {{ percent }}%"></div></div>
+            <span class="shrink-0 text-[11px] font-semibold text-secondary-600">{{ percent }}%</span>
+        </div>
+    {% elseif description %}
+        <p class="mt-1 truncate text-xs text-secondary-500">{{ description }}</p>
+    {% endif %}
+    {% block content %}{% endblock %}
+{% if href %}</a>{% else %}</div>{% endif %}

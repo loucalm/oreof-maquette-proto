@@ -40,11 +40,11 @@
                 </div>
             </div>
         </div>
-        <div class="text-sm text-gray-400">
-            {{ T }}{% if view.ref %} <span class="font-bold" style="color:var(--c-primary)">{{ view.ref }}</span>{% endif %}
+        <div class="text-sm text-secondary-400">
+            {{ T }}{% if view.ref %} <span class="font-bold text-primary-600">{{ view.ref }}</span>{% endif %}
             {%- if node.isLocked('delete') %} <span class="locked-badge" title="{{ 'node.panel.locked_title'|trans({}, 'node') }}">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ 'node.panel.locked_badge'|trans({}, 'node') }}</span>{% endif -%}
         </div>
-        <div class="text-sm text-gray-400 mt-1">
+        <div class="text-sm text-secondary-400 mt-1">
             {{ formation.name }}
             {%- for p in node_path(node) %} › {{ p.label ?: p.type.label }}{% endfor -%}
         </div>
@@ -107,38 +107,38 @@
 
     {# tuiles + actions #}
     <div class="flex flex-wrap items-stretch gap-2">
-        <div class="rounded-xl border px-4 py-2.5 text-sm" style="border-color:#fcd34d;background:#fffbeb">
-            <span class="text-gray-500">{{ 'node.panel.total_hours_label'|trans({}, 'node') }}</span> <span class="font-semibold">{{ view.totalHours|round }}</span>
+        <div class="rounded-xl border px-4 py-2.5 text-sm border-warning-300 bg-warning-50">
+            <span class="text-secondary-500">{{ 'node.panel.total_hours_label'|trans({}, 'node') }}</span> <span class="font-semibold">{{ view.totalHours|round }}</span>
         </div>
-        <div class="rounded-xl border px-4 py-2.5 text-sm" style="border-color:#fcd34d;background:#fffbeb">
+        <div class="rounded-xl border px-4 py-2.5 text-sm border-warning-300 bg-warning-50">
             <span class="font-semibold">{{ view.totalEcts|round }}</span>
-            <span class="text-gray-500">{% if view.ectsTarget %}{{ 'node.panel.ects_target'|trans({'%target%': view.ectsTarget}, 'node') }} {% endif %}{{ 'node.panel.ects_unit'|trans({}, 'node') }}</span>
+            <span class="text-secondary-500">{% if view.ectsTarget %}{{ 'node.panel.ects_target'|trans({'%target%': view.ectsTarget}, 'node') }} {% endif %}{{ 'node.panel.ects_unit'|trans({}, 'node') }}</span>
         </div>
         <div class="ml-auto flex flex-wrap gap-2">
             {% if not node.isChoiceBloc() and node.getParent() and node.type.choiceTransformable %}
             <form method="post" action="{{ path('node_convert_choice', {fid: formation.id, nid: node.id}) }}" data-turbo-frame="_top"
                   data-controller="confirm"
                   data-confirm-message-value="{{ 'node.panel.convert_choice_confirm'|trans({'%label%': node.getDisplayLabel()}, 'node') }}">
-                <button class="rounded-lg border px-3 py-2 text-sm" style="border-color:#e9d5ff;background:#faf5ff;color:#9333ea"
+                <button class="rounded-lg border px-3 py-2 text-sm border-purple-200 bg-purple-50 text-purple-600"
                         title="{{ 'node.panel.convert_choice_title'|trans({}, 'node') }}">
                     {{ ux_icon('ph:shuffle', {class: 'icon'}) }} {{ 'node.panel.convert_choice_button'|trans({}, 'node') }}
                 </button>
             </form>
-            <p class="w-full text-right text-xs" style="color:#9333ea">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'node.panel.nature_choice_note'|trans({}, 'node') }}</p>
+            <p class="w-full text-right text-xs text-purple-600">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'node.panel.nature_choice_note'|trans({}, 'node') }}</p>
             {% endif %}
             {% if caps.mutualisable ?? false %}
             <form method="post" action="{{ node_url(node, 'node_mutualize') }}" data-turbo-frame="_top">
-                <button class="rounded-lg border px-3 py-2 text-sm" style="border-color:#fcd34d;color:#b45309">
+                <button class="rounded-lg border px-3 py-2 text-sm border-warning-300 text-warning-700">
                     {{ ux_icon('ph:share-network', {class: 'icon'}) }} {{ node.mutualized ? 'node.panel.unmutualize'|trans({}, 'node') : 'node.panel.mutualize'|trans({}, 'node') }} [{{ T }}]
                 </button>
             </form>
             {% endif %}
             {% if childTypes is not empty %}
             <a href="{{ node_url(node, 'node_attach_index') }}" data-turbo-frame="node-panel"
-               class="rounded-lg border px-3 py-2 text-sm text-green-700" style="border-color:#bbf7d0">{{ ux_icon('ph:arrow-bend-down-right', {class: 'icon'}) }} {{ 'node.panel.reattach_button'|trans({}, 'node') }}</a>
+               class="rounded-lg border px-3 py-2 text-sm text-success-700 border-success-200">{{ ux_icon('ph:arrow-bend-down-right', {class: 'icon'}) }} {{ 'node.panel.reattach_button'|trans({}, 'node') }}</a>
             {% endif %}
             {% if is_admin() %}
-            <button type="button" data-action="modal#open" class="rounded-lg border px-3 py-2 text-sm text-gray-600" style="border-color:var(--c-border)">{{ ux_icon('ph:gear', {class: 'icon'}) }} {{ 'node.panel.node_params_button'|trans({'%type%': T}, 'node') }}</button>
+            <button type="button" data-action="modal#open" class="rounded-lg border px-3 py-2 text-sm text-secondary-600 border-secondary-200">{{ ux_icon('ph:gear', {class: 'icon'}) }} {{ 'node.panel.node_params_button'|trans({'%type%': T}, 'node') }}</button>
             {% endif %}
         </div>
     </div>
@@ -151,8 +151,8 @@
         <div data-tabs-target="panel" data-tab="{{ tk }}" class="space-y-5" {{ not loop.first ? 'hidden' }}>
 
             {# séparateur : nom de l'onglet actif #}
-            <div class="flex items-center gap-3 text-gray-300 text-xs uppercase tracking-widest">
-                <div class="h-px flex-1 bg-gray-200"></div>{{ domains[tk] ?? tk }}<div class="h-px flex-1 bg-gray-200"></div>
+            <div class="flex items-center gap-3 text-secondary-300 text-xs uppercase tracking-widest">
+                <div class="h-px flex-1 bg-secondary-200"></div>{{ domains[tk] ?? tk }}<div class="h-px flex-1 bg-secondary-200"></div>
             </div>
 
             {% if tk == 'props' %}
@@ -185,8 +185,8 @@
                pas une clé de diplôme ou de formulaire — les libellés restent dans les traductions. #}
             {% if not consolidation and tk == 'props' and (caps.enfantsIdentiques ?? false) %}
                 {% set identiques = node.attribute('enfantsIdentiques') ?? {} %}
-                <div class="rounded-lg border p-3 space-y-3" style="border-color:var(--c-border);background:#f8f9fb">
-                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ 'node.panel.identiques_title'|trans({}, 'node') }}</div>
+                <div class="rounded-lg border p-3 space-y-3 border-secondary-200 bg-secondary-50">
+                    <div class="text-xs font-semibold uppercase tracking-wide text-secondary-500">{{ 'node.panel.identiques_title'|trans({}, 'node') }}</div>
                     {% if hasHours %}
                         <label class="flex items-center gap-2 text-sm">
                             <input type="checkbox" name="enfantsIdentiques[hours]" value="1" {{ identiques.hours ?? false ? 'checked' }}>
@@ -220,7 +220,7 @@
                 {% if lockedMove %}
                     <div class="fld-help">{{ ux_icon('ph:lock-simple-fill', {class: 'icon'}) }} {{ 'node.panel.parent_locked_help'|trans({}, 'node') }}</div>
                 {% elseif parents is empty and not can_be_root(node) %}
-                    <div class="fld-help text-amber-600">{{ 'node.panel.no_location_help'|trans({}, 'node') }}</div>
+                    <div class="fld-help text-warning-600">{{ 'node.panel.no_location_help'|trans({}, 'node') }}</div>
                 {% endif %}
                 </div>
                 </details>
@@ -228,36 +228,36 @@
 
             {% if tk == 'props' and node.isParcours %}
                 {% set unit = period_unit(formation) %}
-                <div class="rounded-lg border p-3 space-y-3" style="border-color:var(--c-border);background:#f8f9fb">
-                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ 'node.panel.ramification_title'|trans({}, 'node') }}</div>
+                <div class="rounded-lg border p-3 space-y-3 border-secondary-200 bg-secondary-50">
+                    <div class="text-xs font-semibold uppercase tracking-wide text-secondary-500">{{ 'node.panel.ramification_title'|trans({}, 'node') }}</div>
                     <p class="fld-help">
                         {{ ux_icon('ph:info', {class: 'icon'}) }} {{ 'node.panel.ramification_note'|trans({'%unit%': unit|lower}, 'node') }}
                     </p>
                     <div class="grid grid-cols-2 gap-2 text-sm">
                         <div>
-                            <div class="text-[11px] uppercase tracking-wide text-gray-400">{{ 'node.panel.period_start'|trans({'%unit%': unit}, 'node') }}</div>
+                            <div class="text-[11px] uppercase tracking-wide text-secondary-400">{{ 'node.panel.period_start'|trans({'%unit%': unit}, 'node') }}</div>
                             <div class="font-medium mt-0.5">{{ node.periodeDebut }}</div>
                         </div>
                         <div>
-                            <div class="text-[11px] uppercase tracking-wide text-gray-400">{{ 'node.panel.period_end'|trans({'%unit%': unit}, 'node') }}</div>
+                            <div class="text-[11px] uppercase tracking-wide text-secondary-400">{{ 'node.panel.period_end'|trans({'%unit%': unit}, 'node') }}</div>
                             <div class="font-medium mt-0.5">{{ node.periodeFin }}</div>
                         </div>
                     </div>
                     <div class="text-sm">
-                        <div class="text-[11px] uppercase tracking-wide text-gray-400">{{ 'node.panel.parcours_parent_label'|trans({}, 'node') }}</div>
+                        <div class="text-[11px] uppercase tracking-wide text-secondary-400">{{ 'node.panel.parcours_parent_label'|trans({}, 'node') }}</div>
                         <div class="font-medium mt-0.5">{{ node.parcoursParent ? node.parcoursParent.displayLabel : 'node.panel.parcours_parent_none'|trans({}, 'node') }}</div>
                     </div>
                     <a href="{{ path('formation_parcours_graph', {id: formation.id, current: node.id}) }}" data-turbo-frame="node-panel"
-                       class="inline-block text-xs font-medium hover:underline" style="color:var(--c-primary)">{{ ux_icon('ph:map-trifold', {class: 'icon'}) }} {{ 'node.panel.view_ramification_link'|trans({}, 'node') }}</a>
+                       class="inline-block text-xs font-medium hover:underline text-primary-600">{{ ux_icon('ph:map-trifold', {class: 'icon'}) }} {{ 'node.panel.view_ramification_link'|trans({}, 'node') }}</a>
                 </div>
             {% endif %}
         </div>
         {% endfor %}
 
         <div class="panel-savebar">
-            <button class="rounded-lg px-5 py-2.5 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
-            <span class="text-xs font-medium text-amber-700" data-dirty-form-target="indicator" hidden>{{ ux_icon('ph:circle-fill', {class: 'icon'}) }} {{ 'node.panel.unsaved'|trans({}, 'node') }}</span>
-            <span class="ml-auto text-xs text-gray-400"><span class="text-red-500">*</span> {{ 'common.required_legend'|trans({}, 'common') }}</span>
+            <button class="inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent bg-primary-600 font-medium text-white transition-colors hover:bg-primary-700 px-3 py-1.5 text-sm">{{ 'common.save'|trans({}, 'common') }}</button>
+            <span class="text-xs font-medium text-warning-700" data-dirty-form-target="indicator" hidden>{{ ux_icon('ph:circle-fill', {class: 'icon'}) }} {{ 'node.panel.unsaved'|trans({}, 'node') }}</span>
+            <span class="ml-auto text-xs text-secondary-400"><span class="text-danger-500">*</span> {{ 'common.required_legend'|trans({}, 'common') }}</span>
         </div>
     </form>
 
@@ -276,14 +276,14 @@
     <dialog data-modal-target="dialog" data-action="click->modal#clickOutside"
             class="rounded-2xl border-0 p-0 w-[min(600px,94vw)] backdrop:bg-black/40">
         <turbo-frame id="node-params-frame" src="{{ node_url(node, 'node_params_form') }}" loading="lazy" class="block">
-            <div class="p-10 text-center text-sm text-gray-400">{{ 'common.loading'|trans({}, 'common') }}</div>
+            <div class="p-10 text-center text-sm text-secondary-400">{{ 'common.loading'|trans({}, 'common') }}</div>
         </turbo-frame>
     </dialog>
 
     {# ── ajouter un enfant (ou, sur une feuille, un élément du même type juste après) ── #}
     {% if childTypes is empty and node.getParent() is not null and not node.isLocked('add') %}
     <form method="post" action="{{ path('node_add', {fid: formation.id}) }}" data-turbo-frame="_top"
-          class="rounded-xl border p-3 flex flex-wrap items-end gap-2" style="border-color:var(--c-border)">
+          class="rounded-xl border p-3 flex flex-wrap items-end gap-2 border-secondary-200">
         <input type="hidden" name="parentId" value="{{ node.getParent().id }}">
         <input type="hidden" name="typeKey" value="{{ node.type.key }}">
         <input type="hidden" name="afterId" value="{{ node.id }}">
@@ -291,12 +291,12 @@
             <label class="fld-label" for="add-sibling-label">{{ 'node.panel.add_sibling_label'|trans({'%type%': T}, 'node') }}</label>
             <input id="add-sibling-label" name="label" placeholder="{{ 'node.panel.label_field'|trans({}, 'node') }}" class="fld mt-1">
         </div>
-        <button class="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'common.add'|trans({}, 'common') }}</button>
+        <button class="inline-flex items-center justify-center gap-1.5 rounded-md border border-secondary-300 bg-secondary-50 font-medium text-secondary-600 transition-colors hover:bg-secondary-100 hover:text-secondary-800 px-3 py-1.5 text-sm">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'common.add'|trans({}, 'common') }}</button>
     </form>
     {% endif %}
     {% if childTypes is not empty %}
     <form method="post" action="{{ path('node_add', {fid: formation.id}) }}" data-turbo-frame="_top"
-          class="rounded-xl border p-3 flex flex-wrap items-end gap-2" style="border-color:var(--c-border)">
+          class="rounded-xl border p-3 flex flex-wrap items-end gap-2 border-secondary-200">
         <input type="hidden" name="parentId" value="{{ node.id }}">
         <div class="flex-1 min-w-[180px]">
             <div class="fld-label">{{ 'node.panel.add_child_label'|trans({}, 'node') }}</div>
@@ -305,7 +305,7 @@
             </select>
         </div>
         <input name="label" placeholder="{{ 'node.panel.label_field'|trans({}, 'node') }}" class="fld w-40">
-        <button class="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'common.add'|trans({}, 'common') }}</button>
+        <button class="inline-flex items-center justify-center gap-1.5 rounded-md border border-secondary-300 bg-secondary-50 font-medium text-secondary-600 transition-colors hover:bg-secondary-100 hover:text-secondary-800 px-3 py-1.5 text-sm">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'common.add'|trans({}, 'common') }}</button>
     </form>
     {% endif %}
 
@@ -319,7 +319,7 @@
 {% macro label(text, required, help) %}
     <div>
         <div class="flex items-center justify-between">
-            <span class="fld-label">{{ text }}{% if required %} <span class="text-red-500" aria-hidden="true">*</span><span class="sr-only">{{ 'common.required_badge'|trans({}, 'common') }}</span>{% endif %}</span>
+            <span class="fld-label">{{ text }}{% if required %} <span class="text-danger-500" aria-hidden="true">*</span><span class="sr-only">{{ 'common.required_badge'|trans({}, 'common') }}</span>{% endif %}</span>
         </div>
         {% if help %}<div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ help }}</div>{% endif %}
     </div>
@@ -348,7 +348,7 @@
             {{ field_widget(def, key, node.getAttribute(key), 'attr_' ~ key, node, [], 'node') }}
         {% endif %}
         {% if def.optionsSource == 'fiches_matiere' and ec_fiche(node) %}
-            <div class="mt-1"><a data-fiche-link href="{{ path('fiche_matiere_edit', {id: ec_fiche(node).id}) }}" class="text-sm underline" style="color:var(--c-primary)" data-turbo-frame="_top">Ouvrir la fiche</a></div>
+            <div class="mt-1"><a data-fiche-link href="{{ path('fiche_matiere_edit', {id: ec_fiche(node).id}) }}" class="text-sm underline text-primary-600" data-turbo-frame="_top">Ouvrir la fiche</a></div>
         {% endif %}
     {% endif %}
     {% endif %}

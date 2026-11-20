@@ -6,6 +6,7 @@ diplome:
   index:
     title: Diplômes
     heading: Types de diplôme
+    list_title: Liste des types de diplôme
     description: Les types de diplôme définissent la structure, les bornes et les règles que suivent les formations.
     col_label: Type de diplôme
     col_sigle: Sigle
@@ -33,6 +34,10 @@ diplome:
   wizard:
     title: Nouveau diplôme
     heading: Nouveau type de diplôme
+    header_description: Assistant de création d’un type de diplôme, étape par étape.
+    back_to_list: Retour à la liste des diplômes
+    steps_title: Étapes de création
+    step_counter: 'Étape %index% sur %count%'
     previous: Précédent
     next: Suivant
     restart: Recommencer

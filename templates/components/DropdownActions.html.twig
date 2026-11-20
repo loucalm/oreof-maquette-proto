@@ -1,0 +1,19 @@
+{#
+Menu « Actions » (repris du composant dropdown_actions d'ORéOF v2), piloté par le contrôleur `menu`.
+  <twig:DropdownActions label="Actions">
+      <a href="…" class="app-menu-item app-menu-item--success">{{ ux_icon('ph:check') }} Vérifier</a>
+      <form method="post" …><button class="app-menu-item app-menu-item--danger">…</button></form>
+  </twig:DropdownActions>
+#}
+{% props label = 'Actions', icon = 'ph:dots-three-vertical-bold', labelSrOnly = false, align = 'right', width = 'w-60' %}
+<div class="relative inline-block text-left" data-controller="menu" {{ attributes }}>
+    <twig:Button type="button" variant="secondary" size="sm" :icon="icon" :label="labelSrOnly ? '' : label"
+                 dataAction="menu#toggle" aria-haspopup="true"
+                 extraClass="shadow-sm border-secondary-200 bg-surface hover:border-secondary-300 hover:bg-secondary-50 hover:text-secondary-900">
+        {% if labelSrOnly %}<span class="sr-only">{{ label }}</span>{% endif %}
+    </twig:Button>
+    <div data-menu-target="menu" hidden role="menu"
+         class="app-menu {{ width }} {{ align == 'left' ? 'left-0 right-auto origin-top-left' }}">
+        {% block content %}{% endblock %}
+    </div>
+</div>

@@ -1,0 +1,49 @@
+{#
+Composant Badge (repris d'ORéOF v2, composant anonyme) — exemples :
+  <twig:Badge label="Publié" variant="success" />
+  <twig:Badge label="Brouillon" variant="secondary" icon="ph:pencil-simple" />
+  <twig:Badge :label="value ? 'Oui' : 'Non'" :variant="value ? 'success' : 'danger'" />
+#}
+{% props variant = 'secondary', size = 'sm', soft = true, pill = true, label = '', icon = '', iconEnd = false, extraClass = '', href = '', title = '' %}
+
+{% set sizeClass = {
+    'xs': 'px-1.5 py-0 text-[10px] gap-1',
+    'sm': 'px-2 py-0.5 text-xs gap-1',
+    'md': 'px-2.5 py-1 text-sm gap-1.5',
+}[size] ?? 'px-2 py-0.5 text-xs gap-1' %}
+{% set iconSizeClass = size == 'md' ? 'h-4 w-4' : 'h-3.5 w-3.5' %}
+
+{% set softColors = {
+    'primary':   'border border-primary-300 bg-primary-50 text-primary-700' ~ (href != '' ? ' hover:bg-primary-100 hover:text-primary-800' : ''),
+    'success':   'border border-success-300 bg-success-50 text-success-700' ~ (href != '' ? ' hover:bg-success-100 hover:text-success-800' : ''),
+    'warning':   'border border-warning-300 bg-warning-50 text-warning-700' ~ (href != '' ? ' hover:bg-warning-100 hover:text-warning-800' : ''),
+    'danger':    'border border-danger-300 bg-danger-50 text-danger-700' ~ (href != '' ? ' hover:bg-danger-100 hover:text-danger-800' : ''),
+    'info':      'border border-info-300 bg-info-50 text-info-700' ~ (href != '' ? ' hover:bg-info-100 hover:text-info-800' : ''),
+    'secondary': 'border border-secondary-300 bg-secondary-100 text-secondary-700' ~ (href != '' ? ' hover:bg-secondary-200 hover:text-secondary-800' : ''),
+    'choice':    'border border-purple-200 bg-purple-50 text-purple-700' ~ (href != '' ? ' hover:bg-purple-100' : ''),
+} %}
+{% set solidColors = {
+    'primary':   'border border-transparent bg-primary-600 text-white',
+    'success':   'border border-transparent bg-success-600 text-white',
+    'warning':   'border border-transparent bg-warning-500 text-secondary-900',
+    'danger':    'border border-transparent bg-danger-600 text-white',
+    'info':      'border border-transparent bg-info-600 text-white',
+    'secondary': 'border border-transparent bg-secondary-500 text-white',
+    'choice':    'border border-transparent bg-purple-600 text-white',
+} %}
+
+{% set colorClass = soft ? (softColors[variant] ?? softColors['secondary']) : (solidColors[variant] ?? solidColors['secondary']) %}
+{% set classes = 'inline-flex items-center whitespace-nowrap font-semibold ' ~ (pill ? 'rounded-full' : 'rounded-md') ~ ' ' ~ sizeClass ~ ' ' ~ colorClass ~ (href != '' ? ' transition-colors cursor-pointer' : '') ~ (extraClass ? ' ' ~ extraClass : '') %}
+
+{% set inner %}
+    {% if icon != '' and not iconEnd %}{{ ux_icon(icon, {class: iconSizeClass}) }}{% endif %}
+    {% if label != '' %}<span>{{ label }}</span>{% endif %}
+    {% block content %}{% endblock %}
+    {% if icon != '' and iconEnd %}{{ ux_icon(icon, {class: iconSizeClass}) }}{% endif %}
+{% endset %}
+
+{% if href != '' %}
+    <a href="{{ href }}" class="{{ classes }}" {% if title %}title="{{ title }}"{% endif %} {{ attributes }}>{{ inner|raw }}</a>
+{% else %}
+    <span class="{{ classes }}" {% if title %}title="{{ title }}"{% endif %} {{ attributes }}>{{ inner|raw }}</span>
+{% endif %}

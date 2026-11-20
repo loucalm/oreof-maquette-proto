@@ -4,7 +4,7 @@
     <ul class="tree-list">
         {% for n in nodes %}
             <li data-node-type="{{ n.typeKey }}">
-                <div class="tree-row"><span class="text-sm">{{ n.displayLabel }}</span> <span class="text-xs" style="color:var(--c-muted)">({{ n.typeKey }})</span></div>
+                <div class="tree-row"><span class="text-sm">{{ n.displayLabel }}</span> <span class="text-xs text-secondary-500">({{ n.typeKey }})</span></div>
                 {% if n.children %}<div class="tree-children">{{ _self.tree(n.children) }}</div>{% endif %}
             </li>
         {% endfor %}
@@ -93,7 +93,7 @@
                 <div data-structure-tree-target="durationBound">{{ rows.boundWidget(form.duration.bound) }}</div>
                 {% set f = form.duration.levelKey %}
                 <select id="{{ f.vars.id }}" name="{{ f.vars.full_name }}" data-structure-tree-target="durationLevel" aria-label="{{ f.vars.label|trans({}, 'diplome') }}"
-                        class="rounded-md border px-1.5 py-1 text-sm" style="border-color:var(--c-border)">
+                        class="fld fld-sm">
                     {% set temporalKeys = keys|filter(k => nodeTypes[k].temporal ?? false) %}
                     {% set durationLost = durationKey not in temporalKeys and form.duration.bound.mode.vars.value != 'none' %}
                     {% if durationLost %}<option value="" selected>—</option>{% endif %}
@@ -102,7 +102,7 @@
                     {% endif %}{% endfor %}
                 </select>
                 {% do f.setRendered %}
-                <p class="w-full text-xs" style="color:#b45309" data-structure-tree-target="durationNotice" {{ durationLost ? '' : 'hidden' }}>{{ (t ~ 'duration_cleared')|trans({}, 'diplome') }}</p>
+                <p class="w-full text-xs text-warning-700" data-structure-tree-target="durationNotice" {{ durationLost ? '' : 'hidden' }}>{{ (t ~ 'duration_cleared')|trans({}, 'diplome') }}</p>
             </div>
             {{ form_errors(form.duration) }}{{ form_errors(form.duration.levelKey) }}
 
@@ -151,7 +151,7 @@
         <div class="st-rest min-w-0 space-y-4">
             {# Règles d'obligation, sous l'arbre #}
             {% set proto = rows.rule(form.rules.vars.prototype) %}
-            <section class="border-t pt-3" style="border-color:var(--c-border)" data-controller="collection" data-collection-prototype-value="{{ proto|e('html_attr') }}" data-collection-index-value="{{ form.rules|keys|reduce((max, k) => k >= max ? k + 1 : max, 0) }}" data-section="rule">
+            <section class="border-t pt-3 border-secondary-200" data-controller="collection" data-collection-prototype-value="{{ proto|e('html_attr') }}" data-collection-index-value="{{ form.rules|keys|reduce((max, k) => k >= max ? k + 1 : max, 0) }}" data-section="rule">
                 <h3 class="text-sm font-semibold">{{ form_label(form.rules) }}</h3>
                 <p class="text-xs st-muted">{{ 'diplome.wizard.structure.rule_section_help'|trans({}, 'diplome') }}</p>
                 {{ form_errors(form.rules) }}
@@ -162,7 +162,7 @@
             </section>
 
             {# Aperçu de la maquette minimale, replié #}
-            <details class="rounded-lg border p-3" style="border-color:var(--c-border);background:#f8f9fb">
+            <details class="rounded-lg border p-3 border-secondary-200 bg-secondary-50">
                 <summary class="cursor-pointer text-sm font-semibold">{{ 'diplome.wizard.structure.preview'|trans({}, 'diplome') }}</summary>
                 <section data-preview class="mt-2">
                     <p class="text-xs mb-3 st-muted">{{ 'diplome.wizard.structure.preview_help'|trans({}, 'diplome') }}</p>
@@ -216,5 +216,5 @@
 </div>
 {% endblock %}
 {% block step_next %}
-    <button form="wizard-form" class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'diplome.wizard.next'|trans({}, 'diplome') }}</button>
+    <button form="wizard-form" class="inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent bg-primary-600 font-medium text-white transition-colors hover:bg-primary-700 px-3 py-1.5 text-sm">{{ 'diplome.wizard.next'|trans({}, 'diplome') }}</button>
 {% endblock %}

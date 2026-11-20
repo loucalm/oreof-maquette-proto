@@ -1,0 +1,48 @@
+{#
+Composant Card (repris d'ORéOF v2, composant anonyme) — exemples :
+  <twig:Card title="Titre" description="Sous-titre"><p>Contenu</p></twig:Card>
+  <twig:Card title="Titre" icon="ph:table">
+      <twig:block name="actions"><twig:Button label="Ajouter" icon="ph:plus" /></twig:block>
+      …
+  </twig:Card>
+  compact=true : en-tête et corps en p-4 (page type v2 « gestion des éléments »).
+#}
+{% props title = '', description = '', icon = '', variant = 'default', compact = false, bodyClass = null, extraClass = '' %}
+
+{% set wrapperClasses = {
+    'default': 'rounded-xl border border-secondary-200 bg-surface shadow-sm',
+    'elevated': 'rounded-xl border border-secondary-200 bg-surface shadow-md',
+    'flat': 'rounded-xl border border-secondary-200 bg-surface',
+}[variant] ?? 'rounded-xl border border-secondary-200 bg-surface shadow-sm' %}
+
+{% set slotActions %}{% block actions %}{% endblock %}{% endset %}
+{% set slotContent %}{% block content %}{% endblock %}{% endset %}
+
+<div class="{{ wrapperClasses }}{{ extraClass ? ' ' ~ extraClass }}" {{ attributes }}>
+    {% if title != '' or description != '' or slotActions|trim != '' %}
+        <div class="{{ compact ? 'p-4' : 'px-8 py-6' }} border-b border-secondary-200">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+                <div class="min-w-0 flex-1">
+                    {% if title != '' %}
+                        {% if compact %}
+                            <h2 class="flex items-center gap-2 text-lg font-semibold text-text">{% if icon %}{{ ux_icon(icon, {class: 'h-5 w-5 text-primary'}) }}{% endif %}{{ title }}</h2>
+                        {% else %}
+                            <h2 class="flex items-center gap-2 text-2xl font-bold text-text">{% if icon %}{{ ux_icon(icon, {class: 'h-6 w-6 text-primary'}) }}{% endif %}{{ title }}</h2>
+                        {% endif %}
+                    {% endif %}
+                    {% if description != '' %}
+                        <p class="mt-1 text-sm text-secondary">{{ description }}</p>
+                    {% endif %}
+                </div>
+                {% if slotActions|trim != '' %}
+                    <div class="flex shrink-0 flex-wrap items-center gap-2">{{ slotActions|raw }}</div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+    {% if slotContent|trim != '' %}
+        <div class="{{ bodyClass ?? (compact ? 'p-4' : 'p-8') }} rounded-xl bg-surface text-text">
+            {{ slotContent|raw }}
+        </div>
+    {% endif %}
+</div>

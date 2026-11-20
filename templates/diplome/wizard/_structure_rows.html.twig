@@ -2,8 +2,8 @@
 
 {% macro field(f, class = '') %}
     <div class="block {{ class }}">
-        {{ form_label(f, null, {label_attr: {class: 'text-[11px] font-medium uppercase tracking-wide', style: 'color:var(--c-muted)'}}) }}
-        {{ form_widget(f, {attr: {class: 'mt-0.5 w-full rounded-md border px-2 py-1 text-sm', style: 'border-color:var(--c-border)'}}) }}
+        {{ form_label(f, null, {label_attr: {class: 'fld-label'}}) }}
+        {{ form_widget(f, {attr: {class: 'fld fld-sm mt-0.5 w-full'}}) }}
         {{ form_help(f, {help_attr: {class: 'mt-0.5 text-[11px]', style: 'color:var(--c-muted)'}}) }}
         {{ form_errors(f) }}
     </div>
@@ -12,26 +12,26 @@
 {# Borne compacte : mode, puis un nombre (deux pour « entre », aucun pour « aucune »), cf. bound_controller.js #}
 {% macro boundWidget(f) %}
     <div class="flex items-center gap-1" data-controller="bound">
-        {{ form_widget(f.mode, {attr: {class: 'rounded-md border px-1.5 py-1 text-sm', style: 'border-color:var(--c-border)', 'data-bound-target': 'mode', 'data-action': 'bound#update'}}) }}
-        {{ form_widget(f.value, {attr: {class: 'w-14 rounded-md border px-1.5 py-1 text-sm', style: 'border-color:var(--c-border)', 'data-bound-target': 'value'}}) }}
-        <span class="text-xs" style="color:var(--c-muted)" data-bound-target="upper">–</span>
-        {{ form_widget(f.upper, {attr: {class: 'w-14 rounded-md border px-1.5 py-1 text-sm', style: 'border-color:var(--c-border)', 'data-bound-target': 'upper'}}) }}
+        {{ form_widget(f.mode, {attr: {class: 'fld fld-sm', 'data-bound-target': 'mode', 'data-action': 'bound#update'}}) }}
+        {{ form_widget(f.value, {attr: {class: 'fld fld-sm w-14', 'data-bound-target': 'value'}}) }}
+        <span class="text-xs text-secondary-500" data-bound-target="upper">–</span>
+        {{ form_widget(f.upper, {attr: {class: 'fld fld-sm w-14', 'data-bound-target': 'upper'}}) }}
     </div>
     {{ form_errors(f) }}
 {% endmacro %}
 
 {% macro controls() %}
-    {% set btn = 'inline-flex h-7 w-7 items-center justify-center rounded hover:bg-gray-100' %}
+    {% set btn = 'inline-flex h-7 w-7 items-center justify-center rounded hover:bg-secondary-100' %}
     <div class="flex shrink-0 items-center gap-0.5">
         <button type="button" data-action="collection#up" class="{{ btn }}" title="{{ 'diplome.wizard.structure.up'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.wizard.structure.up'|trans({}, 'diplome') }}">{{ ux_icon('ph:arrow-up', {class: 'icon'}) }}</button>
         <button type="button" data-action="collection#down" class="{{ btn }}" title="{{ 'diplome.wizard.structure.down'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.wizard.structure.down'|trans({}, 'diplome') }}">{{ ux_icon('ph:arrow-down', {class: 'icon'}) }}</button>
-        <button type="button" data-action="collection#remove" class="{{ btn }}" style="color:#dc2626" title="{{ 'diplome.wizard.structure.remove'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.wizard.structure.remove'|trans({}, 'diplome') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
+        <button type="button" data-action="collection#remove" class="{{ btn }} text-danger-600" title="{{ 'diplome.wizard.structure.remove'|trans({}, 'diplome') }}" aria-label="{{ 'diplome.wizard.structure.remove'|trans({}, 'diplome') }}">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
     </div>
 {% endmacro %}
 
 {% macro rule(f) %}
     {% import _self as m %}
-    <div data-collection-row data-rule-row data-controller="rule-params" class="rounded-md border px-3 py-2" style="border-color:var(--c-border)">
+    <div data-collection-row data-rule-row data-controller="rule-params" class="rounded-md border px-3 py-2 border-secondary-200">
         {{ form_widget(f.uid) }}
         <div class="flex items-start gap-3">
             <div class="flex-1 space-y-2">

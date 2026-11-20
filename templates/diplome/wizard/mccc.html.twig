@@ -1,30 +1,30 @@
 {% extends wizard_layout|default('diplome/wizard/_layout.html.twig') %}
 {% block step_content %}
-<p class="text-sm mb-4" style="color:var(--c-muted)">{{ 'diplome.wizard.mccc.help'|trans({}, 'diplome') }}</p>
+<p class="text-sm mb-4 text-secondary-500">{{ 'diplome.wizard.mccc.help'|trans({}, 'diplome') }}</p>
 {{ form_start(form, {attr: {id: 'wizard-form', class: 'space-y-5'}}) }}
     {{ form_errors(form) }}
-    <fieldset class="rounded-lg border p-4" style="border-color:var(--c-border)">
+    <fieldset class="rounded-lg border p-4 border-secondary-200">
         <legend class="px-2 text-sm font-semibold">{{ 'diplome.wizard.mccc.types'|trans({}, 'diplome') }}</legend>
         {% if form.types|length == 0 %}
-            <p class="text-sm" style="color:var(--c-muted)" data-no-types>{{ 'diplome.wizard.mccc.no_types'|trans({}, 'diplome') }}</p>
+            <p class="text-sm text-secondary-500" data-no-types>{{ 'diplome.wizard.mccc.no_types'|trans({}, 'diplome') }}</p>
         {% endif %}
-        <div class="divide-y" style="border-color:var(--c-border)">
+        <div class="divide-y border-secondary-200">
             {% for entry in form.types %}
                 <div class="flex flex-wrap items-center gap-3 py-2 text-sm" data-mcc-type="{{ entry.vars.value.type }}">
                     {{ form_widget(entry.type) }}
                     <label class="flex flex-1 items-center gap-2 min-w-[14rem]">{{ form_widget(entry.enabled) }} {{ entry.vars.value.label }}</label>
                     {% if entry.profile.vars.choices|length > 0 %}
-                        {{ form_widget(entry.profile, {attr: {class: 'w-56 rounded-md border px-3 py-1.5 text-sm', style: 'border-color:var(--c-border)', 'aria-label': 'diplome.wizard.mccc.profile'|trans({}, 'diplome') ~ ' — ' ~ entry.vars.value.type}}) }}
+                        {{ form_widget(entry.profile, {attr: {class: 'fld w-56', 'aria-label': 'diplome.wizard.mccc.profile'|trans({}, 'diplome') ~ ' — ' ~ entry.vars.value.type}}) }}
                     {% else %}
                         {% do entry.profile.setRendered %}
-                        <span class="w-56 text-xs" style="color:var(--c-muted)">{{ 'diplome.wizard.mccc.no_profile_available'|trans({}, 'diplome') }}</span>
+                        <span class="w-56 text-xs text-secondary-500">{{ 'diplome.wizard.mccc.no_profile_available'|trans({}, 'diplome') }}</span>
                     {% endif %}
                     {{ form_errors(entry.profile) }}
                 </div>
             {% endfor %}
         </div>
     </fieldset>
-    <fieldset class="rounded-lg border p-4 space-y-2" style="border-color:var(--c-border)">
+    <fieldset class="rounded-lg border p-4 space-y-2 border-secondary-200">
         <legend class="px-2 text-sm font-semibold">{{ 'diplome.wizard.mccc.options.title'|trans({}, 'diplome') }}</legend>
         {% for option in [form.quitus, form.assiduite, form.sansNote] %}
             <label class="flex items-center gap-2 text-sm">{{ form_widget(option) }} {{ form_label(option) }}</label>
@@ -33,5 +33,5 @@
 {{ form_end(form) }}
 {% endblock %}
 {% block step_next %}
-    <button form="wizard-form" class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'diplome.wizard.next'|trans({}, 'diplome') }}</button>
+    <button form="wizard-form" class="inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent bg-primary-600 font-medium text-white transition-colors hover:bg-primary-700 px-3 py-1.5 text-sm">{{ 'diplome.wizard.next'|trans({}, 'diplome') }}</button>
 {% endblock %}

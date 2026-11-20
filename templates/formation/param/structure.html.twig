@@ -3,8 +3,8 @@
 <div class="panel-body" data-panel-active="param:{{ key }}" data-controller="modal">
     <div class="panel-head">
         <h2 class="text-xl font-bold">{{ 'formation.param.panel_title'|trans({}, 'formation') }}</h2>
-        <div class="text-sm text-gray-400">{{ label }}</div>
-        <div class="text-sm text-gray-400 mt-1">{{ formation.name }} › {{ label }}</div>
+        <div class="text-sm text-secondary-400">{{ label }}</div>
+        <div class="text-sm text-secondary-400 mt-1">{{ formation.name }} › {{ label }}</div>
     </div>
 
     <div class="panel-scroll">
@@ -13,7 +13,7 @@
         {# ── Nombre de parcours ── #}
         {{ fld.divider('formation.param.structure.divider_parcours_count'|trans({}, 'formation')) }}
         {% if not is_admin() and lockedByType %}
-            <p class="text-xs text-gray-500 -mt-2">
+            <p class="text-xs text-secondary-500 -mt-2">
                 {{ 'formation.param.structure.locked_by_type_note'|trans({}, 'formation') }}
             </p>
             <p class="text-sm font-medium">{{ formation.avecParcours ? 'formation.param.structure.yes_options'|trans({}, 'formation') : 'formation.param.structure.no_mono'|trans({}, 'formation') }}</p>
@@ -48,12 +48,12 @@
         {{ fld.divider('formation.param.structure.divider_temporal'|trans({}, 'formation')) }}
         {% set unit = period_unit(formation) %}
         {% if not is_admin() and lockedByType %}
-            <p class="text-xs text-gray-500 -mt-2">
+            <p class="text-xs text-secondary-500 -mt-2">
                 {{ 'formation.param.structure.locked_by_type_note'|trans({}, 'formation') }}
             </p>
             <p class="text-sm font-medium">{{ formation.calendarSpan ?: '—' }} {{ (formation.calendarUnit ?: unit)|lower }}(s)</p>
         {% else %}
-        <p class="text-xs text-gray-500 -mt-2">
+        <p class="text-xs text-secondary-500 -mt-2">
             {{ 'formation.param.structure.temporal_note'|trans({'%unit%': unit}, 'formation')|raw }}
         </p>
         <form method="post" action="{{ path('formation_settings', {id: formation.id}) }}" data-turbo-frame="_top" class="grid gap-4 sm:grid-cols-2">
@@ -71,7 +71,7 @@
                 {{ fld.label('formation.param.structure.calendar_span_label'|trans({'%unit%': unit|lower}, 'formation'), false, 'formation.param.structure.calendar_span_help'|trans({}, 'formation')) }}
                 <div class="flex items-end gap-2">
                     <input type="number" min="1" name="calendarSpan" value="{{ formation.calendarSpan }}" class="fld mt-1">
-                    <button class="rounded-lg px-3 py-2 text-sm font-semibold text-white shrink-0" style="background:var(--c-primary)">OK</button>
+                    <button class="inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent bg-primary-600 font-medium text-white transition-colors hover:bg-primary-700 px-3 py-1.5 text-sm shrink-0">OK</button>
                 </div>
             </div>
         </form>
@@ -82,18 +82,18 @@
 
         {% if not is_admin() %}
             {# vue responsable : la hiérarchie des niveaux est fixée par le diplôme, lecture seule #}
-            <p class="text-xs text-gray-500 -mt-2">
+            <p class="text-xs text-secondary-500 -mt-2">
                 {{ 'formation.param.structure.readonly_note'|trans({}, 'formation') }}
             </p>
             <div class="flex flex-wrap items-center gap-1.5">
                 {% for row in structure_rows(formation) %}
-                    {% if not loop.first %}<span class="text-gray-300">›</span>{% endif %}
+                    {% if not loop.first %}<span class="text-secondary-300">›</span>{% endif %}
                     <span class="type-badge">{{ row.type ? ux_icon(row.type.icon, {class: 'icon'}) }} [{{ row.type ? row.type.label : row.key }}]</span>
-                    {%- if row.mono %}<span class="text-[11px] text-gray-400">{{ 'formation.param.structure.mono_carried_badge'|trans({}, 'formation') }}</span>{% endif -%}
+                    {%- if row.mono %}<span class="text-[11px] text-secondary-400">{{ 'formation.param.structure.mono_carried_badge'|trans({}, 'formation') }}</span>{% endif -%}
                 {% endfor %}
             </div>
         {% else %}
-        <p class="text-xs text-gray-500 -mt-2">
+        <p class="text-xs text-secondary-500 -mt-2">
             {{ 'formation.param.structure.admin_note'|trans({}, 'formation') }}
         </p>
 
@@ -101,9 +101,9 @@
         {% set body_keys = rows|filter(r => not r.fixed)|map(r => r.key) %}
         {% set addable = structure_addable(formation) %}
 
-        <div class="overflow-hidden rounded-lg border" style="border-color:var(--c-border)">
+        <div class="overflow-hidden rounded-lg border border-secondary-200">
             <table class="w-full text-sm">
-                <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <thead class="bg-secondary-50 text-left text-[11px] font-semibold uppercase tracking-wider text-secondary-600">
                     <tr>
                         <th class="w-8"></th>
                         <th class="text-left px-3 py-2.5">{{ 'formation.param.structure.col_order'|trans({}, 'formation') }}</th>
@@ -113,31 +113,31 @@
                 </thead>
                 <tbody data-controller="chain" data-chain-save-url-value="{{ path('formation_structure_save', {id: formation.id}) }}">
                 {% for row in rows %}
-                    <tr class="border-t" style="border-color:var(--c-border)"
+                    <tr class="border-t border-secondary-200"
                         {{ not row.fixed ? 'data-chain-key=' ~ row.key }}>
-                        <td class="px-2 text-center text-gray-300">
+                        <td class="px-2 text-center text-secondary-300">
                             {% if not row.fixed %}<span class="drag-handle" title="{{ 'formation.tree.drag_title'|trans({}, 'formation') }}">{{ ux_icon('ph:dots-six-vertical', {class: 'icon'}) }}</span>{% endif %}
                         </td>
-                        <td class="px-3 py-2.5 text-gray-400">{{ loop.index0 }}</td>
+                        <td class="px-3 py-2.5 text-secondary-400">{{ loop.index0 }}</td>
                         <td class="px-3 py-2.5">
                             <span class="type-badge">{{ row.type ? ux_icon(row.type.icon, {class: 'icon'}) : ux_icon('ph:question', {class: 'icon'}) }} [{{ row.type ? row.type.label : row.key }}]</span>
                             {% if row.mono %}<span class="pill ml-1">{{ 'formation.param.structure.invisible_mono_pill'|trans({}, 'formation') }}</span>
                             {% elseif row.fixed %}<span class="pill ml-1">{{ 'formation.param.structure.root_fixed_pill'|trans({}, 'formation') }}</span>{% endif %}
                             {% if loop.index0 > 0 %}
-                                <span class="text-[11px] text-gray-400 ml-1">
+                                <span class="text-[11px] text-secondary-400 ml-1">
                                     {{- rows[loop.index0 - 1].mono ? 'formation.param.structure.visible_root_note'|trans({}, 'formation') : 'formation.param.structure.child_of_note'|trans({'%parent%': rows[loop.index0 - 1].type ? rows[loop.index0 - 1].type.label : rows[loop.index0 - 1].key}, 'formation') -}}
                                 </span>
                             {% endif %}
                         </td>
                         <td class="px-4 py-2.5 text-right whitespace-nowrap">
                             {% if row.type and not row.mono %}
-                                <a href="{{ path('node_type_edit', {id: row.type.id}) }}" target="_blank" class="text-xs hover:underline">{{ 'common.edit'|trans({}, 'common') }}</a>
+                                <a href="{{ path('node_type_edit', {id: row.type.id}) }}" target="_blank" class="inline-flex items-center gap-1 rounded-md border border-warning-500 px-2 py-1 text-xs font-medium text-warning-700 transition-colors hover:bg-warning-500 hover:text-secondary-900">{{ ux_icon('ph:pencil-simple', {class: 'h-3.5 w-3.5'}) }} {{ 'common.edit'|trans({}, 'common') }}</a>
                             {% endif %}
                             {% if not row.fixed %}
                                 <form method="post" action="{{ path('formation_structure_save', {id: formation.id}) }}" data-turbo-frame="_top" class="inline ml-3"
                                       data-controller="confirm" data-confirm-message-value="{{ 'formation.param.structure.remove_confirm'|trans({'%label%': row.type ? row.type.label : row.key}, 'formation') }}">
                                     {% for k in body_keys|filter(k => k != row.key) %}<input type="hidden" name="chain[]" value="{{ k }}">{% endfor %}
-                                    <button class="text-xs text-red-600 hover:underline">{{ 'formation.param.structure.remove_button'|trans({}, 'formation') }}</button>
+                                    <button class="text-xs text-danger-600 hover:underline">{{ 'formation.param.structure.remove_button'|trans({}, 'formation') }}</button>
                                 </form>
                             {% endif %}
                         </td>
@@ -145,9 +145,9 @@
                 {% endfor %}
                 </tbody>
                 <tfoot>
-                    <tr class="border-t" style="border-color:var(--c-border)">
+                    <tr class="border-t border-secondary-200">
                         <td colspan="4" class="px-4 py-3 text-center" style="background:#f0fdf4">
-                            <button type="button" data-action="modal#open" class="text-sm font-medium text-green-700 hover:underline">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.param.structure.add_elp_button'|trans({}, 'formation') }}</button>
+                            <button type="button" data-action="modal#open" class="text-sm font-medium text-success-700 hover:underline">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.param.structure.add_elp_button'|trans({}, 'formation') }}</button>
                         </td>
                     </tr>
                 </tfoot>
@@ -171,44 +171,44 @@
                     {% endif %}
                 </div>
                 <div class="flex items-center justify-end gap-2 pt-1">
-                    <button type="button" data-action="modal#close" class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</button>
-                    <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--st-ok)">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'common.add'|trans({}, 'common') }}</button>
+                    <button type="button" data-action="modal#close" class="inline-flex items-center justify-center gap-1.5 rounded-md border border-secondary-300 bg-secondary-50 font-medium text-secondary-600 transition-colors hover:bg-secondary-100 hover:text-secondary-800 px-3 py-1.5 text-sm">{{ 'common.cancel'|trans({}, 'common') }}</button>
+                    <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white bg-success-600 hover:bg-success-700">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'common.add'|trans({}, 'common') }}</button>
                 </div>
             </form>
         </dialog>
-        <p class="text-xs text-gray-400">
+        <p class="text-xs text-secondary-400">
             {{ 'formation.param.structure.node_count_note'|trans({'%count%': nodeCount, '%link_open%': '<a href="' ~ path('node_type_index') ~ '" target="_blank" class="underline">', '%link_close%': '</a>'}, 'formation')|raw }}
         </p>
 
         {# ── vider ── #}
-        <div class="flex flex-wrap items-center gap-3 pt-2 border-t" style="border-color:var(--c-border)">
+        <div class="flex flex-wrap items-center gap-3 pt-2 border-t border-secondary-200">
             <form method="post" action="{{ path('formation_reset', {id: formation.id}) }}" data-turbo-frame="_top" class="ml-auto"
                   data-controller="confirm" data-confirm-message-value="{{ 'formation.param.structure.reset_confirm'|trans({}, 'formation') }}">
-                <button class="rounded-lg border px-3 py-2.5 text-sm text-red-600 hover:bg-red-50" style="border-color:var(--c-border)">{{ ux_icon('ph:trash', {class: 'icon'}) }} {{ 'formation.param.structure.reset_button'|trans({}, 'formation') }}</button>
+                <button class="rounded-lg border px-3 py-2.5 text-sm text-danger-600 hover:bg-danger-50 border-secondary-200">{{ ux_icon('ph:trash', {class: 'icon'}) }} {{ 'formation.param.structure.reset_button'|trans({}, 'formation') }}</button>
             </form>
         </div>
         {% endif %}
 
         {# ── Demandes de dérogation ── #}
         <div id="derogations"></div>{{ fld.divider('derogation.index.heading'|trans({}, 'derogation')) }}
-        <p class="text-xs text-gray-500 -mt-2">
+        <p class="text-xs text-secondary-500 -mt-2">
             {{ 'formation.param.structure.derogation_note'|trans({'%flag_icon%': ux_icon('ph:flag', {class: 'icon'})}, 'formation')|raw }}
         </p>
         {% if derogations is empty %}
-            <p class="text-sm" style="color:var(--c-muted)">{{ 'formation.param.structure.no_derogation'|trans({}, 'formation') }}</p>
+            <p class="text-sm text-secondary-500">{{ 'formation.param.structure.no_derogation'|trans({}, 'formation') }}</p>
         {% else %}
             <div class="space-y-2">
                 {% for d in derogations %}
-                    <div class="rounded-lg border p-3 text-sm" style="border-color:var(--c-border)">
+                    <div class="rounded-lg border p-3 text-sm border-secondary-200">
                         <div class="flex flex-wrap items-center gap-2">
                             {% if d.nodeLabel %}<span class="type-badge">{{ d.nodeLabel }}</span>{% endif %}
                             <span class="pill" style="{{ d.status.value == 'pending' ? 'background:#fef3c7;color:#b45309' : (d.status.value == 'approved' ? 'background:#dcfce7;color:#15803d' : 'background:#fee2e2;color:#b91c1c') }}">{{ d.status.label }}</span>
-                            <span class="text-xs" style="color:var(--c-muted)">{{ d.createdAt|date('d/m/Y') }}</span>
+                            <span class="text-xs text-secondary-500">{{ d.createdAt|date('d/m/Y') }}</span>
                         </div>
                         <p class="mt-1.5 whitespace-pre-line">{{ d.message }}</p>
                         {% include 'derogation/_deviation.html.twig' %}
                         {% if not d.isPending and d.adminNote %}
-                            <p class="mt-1.5 rounded-md p-2 text-xs" style="background:#f8f9fb">{{ d.adminNote }}</p>
+                            <p class="mt-1.5 rounded-md p-2 text-xs bg-secondary-50">{{ d.adminNote }}</p>
                         {% endif %}
                     </div>
                 {% endfor %}

@@ -1,0 +1,13 @@
+{#
+En-tête de section des fiches v2 (formation_v2/voir : icône carrée + titre italique en capitales).
+  <twig:SectionHeader title="Identité de la formation" icon="ph:identification-card" variant="primary" />
+#}
+{% props title = '', icon = 'ph:info', variant = 'primary', id = null %}
+{% set slotActions %}{% block actions %}{% endblock %}{% endset %}
+<div class="app-section-header" {% if id %}id="{{ id }}"{% endif %}>
+    <div class="app-section-header-main">
+        <div class="app-section-header-icon app-section-header-icon--{{ variant }}">{{ ux_icon(icon, {class: 'h-6 w-6'}) }}</div>
+        <h2 class="app-section-header-title">{{ title }}</h2>
+    </div>
+    {% if slotActions|trim != '' %}<div class="flex items-center gap-2">{{ slotActions|raw }}</div>{% endif %}
+</div>

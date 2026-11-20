@@ -10,45 +10,28 @@
 {% set typeMeta = type_meta() %}
 {% set bodyRoot = typeMeta[formation.getChildTypeKey('parcours')] ?? null %}
 
+{% set header_title = parcours.displayLabel %}
+{% set header_description = 'formation.parcours_editor.header_description'|trans({'%formation%': formation.name}, 'formation') %}
+{% set header_breadcrumb = [
+    {label: 'formation.index.breadcrumb_offer'|trans({}, 'formation')},
+    {label: 'formation.index.heading'|trans({}, 'formation'), url: path('formation_index')},
+    {label: formation.name, url: path('formation_editor', {id: formation.id})},
+    {label: parcours.displayLabel},
+] %}
+{% set header_sticky = false %}
+
+{% block bouton_header %}
+    <twig:Button variant="info" :soft="false" :outline="true" icon="ph:eye" :label="'formation.editor.view_sheet'|trans({}, 'formation')" :href="path('formation_view', {id: formation.id})"/>
+    <twig:Button variant="success" :soft="false" :outline="true" icon="ph:arrow-left" :label="'formation.parcours_editor.back_to_formation'|trans({}, 'formation')" :href="path('formation_editor', {id: formation.id})"/>
+{% endblock %}
+
 {% block body %}
 {% include 'formation/_preview_banner.html.twig' %}
 
-{# ─── en-tête compact ─── #}
-<div class="editor-header rounded-2xl border bg-white px-6 py-4 mb-4" style="border-color:var(--c-border)">
-    <div class="flex flex-wrap items-start justify-between gap-3">
-        <div class="min-w-0">
-            <div class="text-xs text-gray-400">
-                <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.editor.breadcrumb_list'|trans({}, 'formation') }}</a> ›
-                <a href="{{ path('formation_editor', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
-            </div>
-            <h1 class="text-2xl font-extrabold tracking-tight">{{ parcours.displayLabel }}</h1>
-            <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
-                <span>{{ formation.diplome ?: '—' }}</span>
-                {% if formation.composante %}<span>· {{ formation.composante }}</span>{% endif %}
-                <span>· {{ period_unit(formation)|lower }}s {{ parcours.periodeDebut }}–{{ parcours.periodeFin }}</span>
-                {% if parcours.parcoursParent %}<span>· {{ 'formation.parcours_editor.meta_parent'|trans({}, 'formation') }} : {{ parcours.parcoursParent.displayLabel }}</span>{% endif %}
-            </div>
-        </div>
-        <div class="flex flex-wrap items-center gap-2">
-            <form method="post" action="{{ path('formation_undo', {id: formation.id}) }}" data-turbo-frame="_top">
-                <button type="submit" {{ canUndo ? '' : 'disabled' }} title="{{ 'formation.editor.undo_title'|trans({}, 'formation') }}" class="quickbar-icon-btn">{{ ux_icon('ph:arrow-counter-clockwise', {class: 'icon'}) }}</button>
-            </form>
-            <form method="post" action="{{ path('formation_redo', {id: formation.id}) }}" data-turbo-frame="_top">
-                <button type="submit" {{ canRedo ? '' : 'disabled' }} title="{{ 'formation.editor.redo_title'|trans({}, 'formation') }}" class="quickbar-icon-btn">{{ ux_icon('ph:arrow-clockwise', {class: 'icon'}) }}</button>
-            </form>
-            <a href="{{ path('formation_check', {id: formation.id}) }}" class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:check-square-offset', {class: 'icon'}) }} {{ 'formation.editor.check_link'|trans({}, 'formation') }}</a>
-            <a href="{{ path('formation_quick_grid', {id: formation.id}|merge({parcours: parcours.id})) }}"
-               class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-               style="border-color:var(--c-border)">{{ ux_icon('ph:table', {class: 'icon'}) }} {{ 'formation.editor.quick_grid_link'|trans({}, 'formation') }}</a>
-            <a href="{{ path('formation_view', {id: formation.id}) }}" class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:eye', {class: 'icon'}) }} {{ 'formation.editor.view_sheet'|trans({}, 'formation') }}</a>
-        </div>
-    </div>
-</div>
+{% include 'formation/_formation_header.html.twig' with {mode: 'edit', parcours: parcours} %}
 
 {# ═══ éditeur ═══ #}
-<div class="rounded-2xl border bg-white p-3" style="border-color:var(--c-border)">
-
-    <div class="editor-shell grid lg:h-[calc(100vh-11rem)] min-h-[560px]" data-controller="resizable">
+<div class="editor-shell grid lg:h-[calc(100vh-var(--topbar-height)-2rem)] min-h-[560px]" data-controller="resizable">
         {{ include('formation/_aside_resizer.html.twig') }}
 
 
@@ -64,29 +47,16 @@
              data-tree-root-key-value="{{ formation.getChildTypeKey('parcours') }}"
              data-tree-base-parent-value="{{ parcours.id }}">
 
-            <div class="px-4 pt-4 pb-3 border-b shrink-0" style="border-color:var(--c-border)">
-                <div class="flex items-center gap-2">
-                    <span class="text-xs font-bold uppercase tracking-wide" style="color:var(--c-primary)">{{ 'formation.parcours_editor.structure_label'|trans({}, 'formation') }}</span>
-                    <span class="pill" style="background:#fef3c7;color:#b45309">{{ progress == 100 ? 'formation.index.bcc_complete'|trans({}, 'formation') : 'formation.index.bcc_incomplete'|trans({}, 'formation') }}</span>
-                </div>
-                <div class="mt-2 font-bold">{{ parcours.displayLabel }}</div>
-                <div class="text-xs text-gray-400">{{ formation.name }}</div>
-                <div class="mt-2">
-                    <div class="flex justify-between text-[11px] text-gray-400"><span>{{ 'formation.index.global_progress'|trans({}, 'formation') }}</span><span>{{ progress }}%</span></div>
-                    <div class="mt-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                        <div class="h-full rounded-full" style="width:{{ progress }}%;background:{{ progress < 30 ? 'var(--st-empty)' : (progress < 70 ? 'var(--st-incomplete)' : 'var(--st-ok)') }}"></div>
-                    </div>
-                </div>
-            </div>
+            {% include 'formation/_aside_head.html.twig' with {title: 'formation.parcours_editor.structure_label'|trans({}, 'formation'), name: parcours.displayLabel, sub: formation.name} %}
 
             <div class="flex-1 overflow-y-auto">
-                <div class="px-4 py-3 border-b" style="border-color:var(--c-border)">
-                    <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">{{ 'formation.parcours_editor.param_section_label'|trans({}, 'formation') }}</div>
+                <div class="border-b border-secondary-200 px-3 py-3">
+                    <p class="mb-2 px-3 text-[10px] font-black uppercase tracking-widest text-secondary-400">{{ 'formation.parcours_editor.param_section_label'|trans({}, 'formation') }}</p>
                     {% include 'formation/_fiche_nav.html.twig' with {items: fiche_nav(formation, parcours, app.request.query.all)} %}
                 </div>
 
                 <a href="{{ path('formation_editor', {id: formation.id}) }}"
-                   class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white" style="background:var(--c-primary)">
+                   class="mx-3 mt-3 flex items-center gap-2 rounded-2xl border border-primary-200 bg-primary-50 px-3 py-2.5 text-sm font-bold text-primary-700 transition hover:bg-primary-100">
                     {{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'formation.parcours_editor.back_to_formation'|trans({}, 'formation') }}
                 </a>
 
@@ -96,15 +66,15 @@
                     <div class="mt-1.5 flex items-center gap-1.5 text-xs">
                         <button type="button" data-treefilter-target="mode" data-mode="all" class="tf-mode">{{ 'formation.tree.filter_all'|trans({}, 'formation') }}</button>
                         <button type="button" data-treefilter-target="mode" data-mode="todo" class="tf-mode">{{ 'formation.tree.filter_todo'|trans({}, 'formation') }}</button>
-                        <span class="ml-auto text-gray-400" data-treefilter-target="count" aria-live="polite"></span>
+                        <span class="ml-auto text-secondary-400" data-treefilter-target="count" aria-live="polite"></span>
                     </div>
-                    <p data-treefilter-target="empty" hidden class="mt-2 text-xs text-gray-400">{{ 'formation.tree.search_empty'|trans({}, 'formation') }}</p>
+                    <p data-treefilter-target="empty" hidden class="mt-2 text-xs text-secondary-400">{{ 'formation.tree.search_empty'|trans({}, 'formation') }}</p>
                 </div>
                 <div class="p-2" data-treefilter-target="tree">
                     {% if roots is not empty %}
                         {{ include('formation/_tree.html.twig', {views: roots, parentId: parcours.id, focus: focus, parentIsChoice: false, parentChoiceLabel: null}) }}
                     {% else %}
-                        <p class="text-sm px-2 py-8 text-center text-gray-400">
+                        <p class="text-sm px-2 py-8 text-center text-secondary-400">
                             {{ 'formation.parcours_editor.no_root_note'|trans({'%type%': bodyRoot ? bodyRoot.label|lower : 'formation.parcours_editor.generic_level'|trans({}, 'formation')}, 'formation') }}
                         </p>
                     {% endif %}
@@ -112,7 +82,7 @@
             </div>
 
             {# ─── barre d'actions ─── #}
-            <div class="px-3 py-3 border-t shrink-0 flex items-center gap-2" style="border-color:var(--c-border)">
+            <div class="flex shrink-0 items-center gap-2 border-t border-secondary-200 bg-secondary-50/60 px-3 py-3">
                 <form method="post" action="{{ path('node_add', {fid: formation.id}) }}" data-turbo-frame="_top"
                       class="flex-1" data-tree-target="addForm">
                     <input type="hidden" name="parentId" value="{{ parcours.id }}" data-tree-target="addParent">
@@ -135,32 +105,12 @@
                             class="tree-act-btn tree-act-btn-danger">{{ ux_icon('ph:trash', {class: 'icon'}) }}</button>
                 </form>
                 <button type="button" data-action="modal#open"
-                        class="tree-act-btn" title="{{ 'formation.editor.request_derogation_title'|trans({}, 'formation') }}" style="border-color:#fde68a;background:#fffbeb;color:#b45309">
+                        class="tree-act-btn border-warning-200 bg-warning-50 text-warning-700" title="{{ 'formation.editor.request_derogation_title'|trans({}, 'formation') }}">
                     {{ ux_icon('ph:flag', {class: 'icon'}) }}
                 </button>
             </div>
 
-            {# ─── modale : demander une dérogation ─── #}
-            <dialog data-modal-target="dialog" data-action="click->modal#clickOutside"
-                    class="rounded-2xl border-0 p-0 w-[min(480px,92vw)] backdrop:bg-black/40">
-                <form method="post" action="{{ path('formation_derogation_create', {fid: formation.id}) }}" data-turbo-frame="_top" class="p-6 space-y-4">
-                    <h3 class="text-lg font-bold">{{ ux_icon('ph:flag', {class: 'icon'}) }} {{ 'formation.editor.derogation_modal_title'|trans({}, 'formation') }}</h3>
-                    <p class="text-sm text-gray-500" data-tree-target="derogContext">{{ 'formation.editor.derogation_modal_default_context'|trans({}, 'formation') }}</p>
-                    <input type="hidden" name="nodeId" data-tree-target="derogNodeId" value="">
-                    {# écart structuré (rempli par le blocage de modification) : vide pour une demande libre #}
-                    <input type="hidden" name="ruleKey" value="{{ app.request.query.get('derogation') }}">
-                    <input type="hidden" name="scopeNid" value="{{ app.request.query.get('scope') }}">
-                    <input type="hidden" name="allowedValue" value="{{ app.request.query.get('value') }}">
-                    <div>
-                        <label class="text-xs font-medium">{{ 'formation.editor.derogation_message_label'|trans({}, 'formation') }}</label>
-                        <textarea name="message" rows="4" required class="fld mt-1" placeholder="{{ 'formation.editor.derogation_message_placeholder'|trans({}, 'formation') }}"></textarea>
-                    </div>
-                    <div class="flex items-center justify-end gap-2 pt-1">
-                        <button type="button" data-action="modal#close" class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</button>
-                        <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'formation.editor.derogation_submit_button'|trans({}, 'formation') }}</button>
-                    </div>
-                </form>
-            </dialog>
+            {% include 'formation/_derogation_modal.html.twig' %}
         </div>
 
         {# ─── panneau d'édition ─── #}
@@ -170,6 +120,5 @@
                 <div class="panel-empty">{{ 'formation.editor.select_prompt'|trans({}, 'formation') }}</div>
             {% endif %}
         </turbo-frame>
-    </div>
 </div>
 {% endblock %}

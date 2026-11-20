@@ -2,6 +2,16 @@
 {% extends standalone ? 'base.html.twig' : '_frame.html.twig' %}
 {% block title %}{{ formation.name }} · {{ 'fiche_matiere.index.title'|trans({}, 'fiche_matiere') }}{% endblock %}
 
+{% if standalone %}
+    {% set header_title = 'fiche_matiere.index.title'|trans({}, 'fiche_matiere') %}
+    {% set header_breadcrumb = [
+    {label: 'formation.index.breadcrumb_offer'|trans({}, 'formation')},
+    {label: 'formation.index.heading'|trans({}, 'formation'), url: path('formation_index')},
+    {label: formation.name, url: path('formation_view', {id: formation.id})},
+        {label: header_title},
+    ] %}
+{% endif %}
+
 {% block body %}
 {% set token = csrf_token(constant('App\\Controller\\FicheMatiereController::CSRF_ID')) %}
 {% set indexParams = {fid: formation.id} %}
@@ -11,15 +21,8 @@
 <div class="panel-body" data-panel-active="fiches_matieres">
 
     <div class="panel-head">
-        {% if standalone %}
-        <div class="mb-2 text-xs text-gray-400">
-            <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.index.breadcrumb_home'|trans({}, 'formation') }}</a> ›
-            <a href="{{ path('formation_view', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
-            {% if parcours %}{{ parcours.displayLabel }} › {% endif %}{{ 'fiche_matiere.index.title'|trans({}, 'fiche_matiere') }}
-        </div>
-        {% endif %}
         <h2 class="text-xl font-bold">{{ 'fiche_matiere.index.title'|trans({}, 'fiche_matiere') }}</h2>
-        <div class="text-sm text-gray-400">
+        <div class="text-sm text-secondary-400">
             {% if parcours %}{{ parcours.displayLabel }}{% else %}{{ formation.name }}{% endif %}
         </div>
     </div>
@@ -29,21 +32,21 @@
 
         <form method="get" action="{{ path('fiche_matiere_index', {fid: formation.id}) }}" class="flex flex-wrap items-end gap-3">
             {% if parcoursNid %}<input type="hidden" name="parcours" value="{{ parcoursNid }}">{% endif %}
-            <label class="flex-1 min-w-48 text-xs font-medium text-gray-500">
+            <label class="fld-label min-w-48 flex-1">
                 {{ 'fiche_matiere.index.search'|trans({}, 'fiche_matiere') }}
                 <input type="search" name="q" value="{{ q }}" placeholder="{{ 'fiche_matiere.index.search_placeholder'|trans({}, 'fiche_matiere') }}" class="fld mt-1">
             </label>
-            <button type="submit" class="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'fiche_matiere.index.search_button'|trans({}, 'fiche_matiere') }}</button>
+            <button type="submit" class="inline-flex items-center justify-center gap-1.5 rounded-md border border-secondary-300 bg-secondary-50 font-medium text-secondary-600 transition-colors hover:bg-secondary-100 hover:text-secondary-800 px-3 py-1.5 text-sm">{{ 'fiche_matiere.index.search_button'|trans({}, 'fiche_matiere') }}</button>
         </form>
 
         <form method="post" action="{{ path('fiche_matiere_create', {fid: formation.id}) }}" class="flex flex-wrap items-end gap-3">
             <input type="hidden" name="_csrf_token" value="{{ token }}">
             {% if parcoursNid %}<input type="hidden" name="parcours" value="{{ parcoursNid }}">{% endif %}
-            <label class="flex-1 min-w-48 text-xs font-medium text-gray-500">
+            <label class="fld-label min-w-48 flex-1">
                 {{ 'fiche_matiere.index.libelle_field'|trans({}, 'fiche_matiere') }}
                 <input type="text" name="libelle" required maxlength="250" class="fld mt-1">
             </label>
-            <button type="submit" class="rounded-lg px-3 py-1.5 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'fiche_matiere.index.create'|trans({}, 'fiche_matiere') }}</button>
+            <button type="submit" class="inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent bg-primary-600 font-medium text-white transition-colors hover:bg-primary-700 px-3 py-1.5 text-sm">{{ 'fiche_matiere.index.create'|trans({}, 'fiche_matiere') }}</button>
         </form>
 
         {% for key in ['portees', 'orphelines', 'mutualisees'] %}
@@ -51,24 +54,24 @@
             <h3 class="text-sm font-semibold">{{ ('fiche_matiere.index.group.' ~ key)|trans({}, 'fiche_matiere') }}</h3>
             <div class="mt-2 space-y-2">
             {% for fiche in groups[key] %}
-                <div data-fiche-row data-fiche-id="{{ fiche.id }}" class="flex flex-wrap items-center gap-3 rounded-lg border px-3 py-2 text-sm" style="border-color:var(--c-border)">
-                    <a href="{{ path('fiche_matiere_edit', {id: fiche.id}) }}" class="font-medium hover:underline" style="color:var(--c-primary)">{{ fiche.libelle }}</a>
-                    <span class="text-xs text-gray-400">{{ 'fiche_matiere.index.ec_count'|trans({'%count%': counts[fiche.id]}, 'fiche_matiere') }}</span>
+                <div data-fiche-row data-fiche-id="{{ fiche.id }}" class="flex flex-wrap items-center gap-3 rounded-lg border px-3 py-2 text-sm border-secondary-200">
+                    <a href="{{ path('fiche_matiere_edit', {id: fiche.id}) }}" class="font-medium hover:underline text-primary-600">{{ fiche.libelle }}</a>
+                    <span class="text-xs text-secondary-400">{{ 'fiche_matiere.index.ec_count'|trans({'%count%': counts[fiche.id]}, 'fiche_matiere') }}</span>
                     <span class="flex-1"></span>
                     {% if key == 'orphelines' %}
-                        <a href="{{ path('fiche_matiere_edit', {id: fiche.id, tab: 'mutualisation'}) }}" class="rounded-lg border px-2 py-1 text-xs hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'fiche_matiere.index.choose_porteur'|trans({}, 'fiche_matiere') }}</a>
+                        <a href="{{ path('fiche_matiere_edit', {id: fiche.id, tab: 'mutualisation'}) }}" class="inline-flex items-center justify-center gap-1.5 rounded-md border border-secondary-300 bg-secondary-50 font-medium text-secondary-600 transition-colors hover:bg-secondary-100 hover:text-secondary-800 px-2 py-1 text-xs">{{ 'fiche_matiere.index.choose_porteur'|trans({}, 'fiche_matiere') }}</a>
                     {% endif %}
                     <form method="post" action="{{ path('fiche_matiere_duplicate', {id: fiche.id}) }}{{ backQuery }}">
                         <input type="hidden" name="_csrf_token" value="{{ token }}">
-                        <button type="submit" class="rounded-lg border px-2 py-1 text-xs hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'fiche_matiere.index.duplicate'|trans({}, 'fiche_matiere') }}</button>
+                        <button type="submit" class="inline-flex items-center justify-center gap-1.5 rounded-md border border-secondary-300 bg-secondary-50 font-medium text-secondary-600 transition-colors hover:bg-secondary-100 hover:text-secondary-800 px-2 py-1 text-xs">{{ 'fiche_matiere.index.duplicate'|trans({}, 'fiche_matiere') }}</button>
                     </form>
                     <form method="post" action="{{ path('fiche_matiere_delete', {id: fiche.id}) }}{{ backQuery }}" data-confirm="{{ 'fiche_matiere.index.delete_confirm'|trans({}, 'fiche_matiere') }}">
                         <input type="hidden" name="_csrf_token" value="{{ token }}">
-                        <button type="submit" class="rounded-lg border px-2 py-1 text-xs hover:bg-red-50" style="border-color:var(--c-border)">{{ 'fiche_matiere.index.delete'|trans({}, 'fiche_matiere') }}</button>
+                        <button type="submit" class="rounded-lg border px-2 py-1 text-xs hover:bg-danger-50 border-secondary-200">{{ 'fiche_matiere.index.delete'|trans({}, 'fiche_matiere') }}</button>
                     </form>
                 </div>
             {% else %}
-                <p class="text-xs text-gray-400">{{ 'fiche_matiere.index.empty'|trans({}, 'fiche_matiere') }}</p>
+                <p class="text-xs text-secondary-400">{{ 'fiche_matiere.index.empty'|trans({}, 'fiche_matiere') }}</p>
             {% endfor %}
             </div>
         </section>

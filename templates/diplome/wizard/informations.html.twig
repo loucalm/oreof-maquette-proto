@@ -20,7 +20,7 @@
 {% block step_nav %}
     {# le bouton Suivant doit appartenir au formulaire #}
     <div class="flex justify-between pt-5">
-        <a href="{{ path('diplome_index') }}" class="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" style="border-color:var(--c-border)">{{ 'common.cancel'|trans({}, 'common') }}</a>
-        <button form="wizard-form" class="rounded-md px-4 py-2 text-sm font-medium text-white" style="background:var(--c-primary)">{{ 'diplome.wizard.next'|trans({}, 'diplome') }}</button>
+        <a href="{{ path('diplome_index') }}" class="inline-flex items-center justify-center gap-1.5 rounded-md border border-secondary-300 bg-secondary-50 font-medium text-secondary-600 transition-colors hover:bg-secondary-100 hover:text-secondary-800 px-3 py-1.5 text-sm">{{ 'common.cancel'|trans({}, 'common') }}</a>
+        <button form="wizard-form" class="inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent bg-primary-600 font-medium text-white transition-colors hover:bg-primary-700 px-3 py-1.5 text-sm">{{ 'diplome.wizard.next'|trans({}, 'diplome') }}</button>
     </div>
 {% endblock %}

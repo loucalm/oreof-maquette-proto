@@ -1,42 +1,42 @@
 {% extends 'base.html.twig' %}
 {% block title %}{{ 'formation.history.title_prefix'|trans({}, 'formation') }} · {{ formation.name }}{% endblock %}
 
+{% set header_title = 'formation.history.heading'|trans({'%name%': formation.name}, 'formation') %}
+{% set header_breadcrumb = [
+    {label: 'formation.index.breadcrumb_offer'|trans({}, 'formation')},
+    {label: 'formation.index.heading'|trans({}, 'formation'), url: path('formation_index')},
+    {label: formation.name, url: path('formation_editor', {id: formation.id})},
+    {label: 'formation.history.title_prefix'|trans({}, 'formation')},
+] %}
+
+{% block bouton_header %}
+    <twig:Button variant="success" :soft="false" :outline="true" icon="ph:arrow-left" :label="'formation.history.editor_link'|trans({}, 'formation')" :href="path('formation_editor', {id: formation.id})"/>
+{% endblock %}
+
 {% block body %}
-<div class="rounded-2xl border bg-white px-7 py-6 mb-4" style="border-color:var(--c-border)">
-    <div class="flex items-start justify-between gap-4">
-        <div>
-            <div class="text-xs text-gray-400">
-                {{ ux_icon('ph:house', {class: 'icon'}) }} <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.index.breadcrumb_home'|trans({}, 'formation') }}</a> ›
-                <a href="{{ path('formation_index') }}" class="hover:underline">{{ 'formation.editor.breadcrumb_list'|trans({}, 'formation') }}</a> ›
-                <a href="{{ path('formation_editor', {id: formation.id}) }}" class="hover:underline">{{ formation.name }}</a> ›
-                {{ 'formation.history.title_prefix'|trans({}, 'formation') }}
-            </div>
-            <h1 class="text-2xl font-extrabold tracking-tight mt-1">{{ 'formation.history.heading'|trans({'%name%': formation.name}, 'formation') }}</h1>
-            <p class="text-sm text-gray-500 max-w-2xl">
+<twig:Alerte type="info" class="mb-4">
+    <p class="max-w-3xl">
                 {{ 'formation.history.intro'|trans({}, 'formation')|raw }}
             </p>
-            <div class="mt-3 flex flex-wrap items-center gap-4 text-xs text-gray-500">
+    <div class="mt-3 flex flex-wrap items-center gap-4 text-xs text-info-800">
                 <span class="inline-flex items-center gap-1.5">
-                    <span class="h-2.5 w-2.5 rounded-full" style="background:var(--st-ok)"></span> {{ 'formation.history.legend_current'|trans({}, 'formation') }}
+                    <span class="h-2.5 w-2.5 rounded-full bg-success-600 hover:bg-success-700"></span> {{ 'formation.history.legend_current'|trans({}, 'formation') }}
                 </span>
                 <span class="inline-flex items-center gap-1.5">
-                    <span class="h-2.5 w-2.5 rounded-full bg-gray-300"></span> {{ 'formation.history.legend_superseded'|trans({}, 'formation') }}
+                    <span class="h-2.5 w-2.5 rounded-full bg-secondary-300"></span> {{ 'formation.history.legend_superseded'|trans({}, 'formation') }}
                 </span>
             </div>
-        </div>
-        <a href="{{ path('formation_editor', {id: formation.id}) }}"
-           class="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 shrink-0" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-left', {class: 'icon'}) }} {{ 'formation.history.editor_link'|trans({}, 'formation') }}</a>
-    </div>
-</div>
+</twig:Alerte>
 
-<div class="rounded-2xl border bg-white overflow-hidden" style="border-color:var(--c-border)">
+
+<div class="overflow-hidden rounded-xl border border-secondary-200 bg-white shadow-sm">
     {% if rows is empty %}
-        <div class="p-10 text-center text-sm text-gray-400">
+        <div class="p-10 text-center text-sm text-secondary-400">
             {{ 'formation.history.empty'|trans({}, 'formation') }}
         </div>
     {% else %}
         <table class="w-full text-sm history-table">
-            <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <thead class="bg-secondary-50 text-left text-[11px] font-semibold uppercase tracking-wider text-secondary-600">
                 <tr>
                     <th class="text-left px-4 py-3 w-52">{{ 'formation.history.col_date'|trans({}, 'formation') }}</th>
                     <th class="text-left px-4 py-3">{{ 'formation.history.col_change'|trans({}, 'formation') }}</th>
@@ -51,10 +51,10 @@
                 {% set dateShort = r.createdAt|date('d/m/Y à H:i') %}
                 <tr class="border-t"
                     style="border-color:var(--c-border);{{ status == 'current' ? 'background:#f0fdf4' }}{{ status == 'superseded' ? 'background:#fafafb' }}">
-                    <td class="px-4 py-3 whitespace-nowrap align-top {{ status == 'superseded' ? 'text-gray-400' : 'text-gray-500' }}">{{ r.createdAt|date('d/m/Y à H:i:s') }}</td>
+                    <td class="px-4 py-3 whitespace-nowrap align-top {{ status == 'superseded' ? 'text-secondary-400' : 'text-secondary-500' }}">{{ r.createdAt|date('d/m/Y à H:i:s') }}</td>
                     <td class="px-4 py-3 align-top">
                         <div class="flex flex-wrap items-center gap-2">
-                            <span class="{{ status == 'superseded' ? 'text-gray-400' }}">{{ r.label }}</span>
+                            <span class="{{ status == 'superseded' ? 'text-secondary-400' }}">{{ r.label }}</span>
                             {% if status == 'current' %}
                                 <span class="pill" style="background:#dcfce7;color:#15803d">{{ ux_icon('ph:check-circle-fill', {class: 'icon'}) }} {{ 'formation.history.current_state_pill'|trans({}, 'formation') }}</span>
                             {% elseif status == 'superseded' %}
@@ -62,19 +62,19 @@
                             {% endif %}
                         </div>
                         {% if status == 'current' %}
-                            <div class="mt-1 text-xs" style="color:#15803d">{{ 'formation.history.current_state_note'|trans({}, 'formation') }}</div>
+                            <div class="mt-1 text-xs text-success-700">{{ 'formation.history.current_state_note'|trans({}, 'formation') }}</div>
                         {% elseif extra > 0 %}
-                            <div class="mt-1 flex items-center gap-1 text-xs" style="color:#b45309">
+                            <div class="mt-1 flex items-center gap-1 text-xs text-warning-700">
                                 {{ ux_icon('ph:warning', {class: 'icon'}) }} {{ 'formation.history.cascade_note'|trans({'%count%': extra}, 'formation') }}
                             </div>
                         {% else %}
-                            <div class="mt-1 text-xs text-gray-400">{{ 'formation.history.most_recent_note'|trans({}, 'formation') }}</div>
+                            <div class="mt-1 text-xs text-secondary-400">{{ 'formation.history.most_recent_note'|trans({}, 'formation') }}</div>
                         {% endif %}
                     </td>
                     <td class="px-4 py-3 text-right align-top">
                         {% if status == 'current' %}
                             <button disabled title="{{ 'formation.history.already_here_title'|trans({}, 'formation') }}"
-                                    class="rounded-lg border px-3 py-1.5 text-xs font-medium opacity-50 cursor-not-allowed" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-u-up-left', {class: 'icon'}) }} {{ 'formation.history.restore_button'|trans({}, 'formation') }}</button>
+                                    class="rounded-lg border px-3 py-1.5 text-xs font-medium opacity-50 cursor-not-allowed border-secondary-200">{{ ux_icon('ph:arrow-u-up-left', {class: 'icon'}) }} {{ 'formation.history.restore_button'|trans({}, 'formation') }}</button>
                         {% else %}
                             <form method="post" action="{{ path('formation_history_restore', {id: formation.id, revisionId: r.id}) }}"
                                   data-turbo-frame="_top" data-controller="confirm"
@@ -83,7 +83,7 @@
                                       : 'formation.history.restore_confirm_single'|trans({'%date%': dateShort, '%label%': r.label|lower}, 'formation')
                                   }}">
                                 <button title="{{ 'formation.history.restore_title'|trans({'%count%': extra + 1}, 'formation') }}"
-                                        class="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50" style="border-color:var(--c-border)">{{ ux_icon('ph:arrow-u-up-left', {class: 'icon'}) }} {{ 'formation.history.restore_button'|trans({}, 'formation') }}</button>
+                                        class="inline-flex items-center justify-center gap-1.5 rounded-md border border-secondary-300 bg-secondary-50 font-medium text-secondary-600 transition-colors hover:bg-secondary-100 hover:text-secondary-800 px-2 py-1 text-xs">{{ ux_icon('ph:arrow-u-up-left', {class: 'icon'}) }} {{ 'formation.history.restore_button'|trans({}, 'formation') }}</button>
                             </form>
                         {% endif %}
                     </td>
@@ -91,7 +91,7 @@
             {% endfor %}
             </tbody>
         </table>
-        <p class="px-4 py-3 text-xs text-gray-400 border-t" style="border-color:var(--c-border)">
+        <p class="px-4 py-3 text-xs text-secondary-400 border-t border-secondary-200">
             {{ 'formation.history.footer_count'|trans({'%count%': rows|length}, 'formation') }}
         </p>
     {% endif %}

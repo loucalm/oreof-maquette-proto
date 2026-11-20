@@ -1,0 +1,14 @@
+{# Composant IconBox (repris d'ORéOF v2) : <twig:IconBox icon="ph:check-circle" variant="success" /> #}
+{% props icon = 'ph:info', variant = 'info', size = 'md' %}
+{% set colors = {
+    'primary': 'border-primary-200 bg-primary-50 text-primary-600',
+    'success': 'border-success-200 bg-success-50 text-success-600',
+    'warning': 'border-warning-200 bg-warning-50 text-warning-600',
+    'danger': 'border-danger-200 bg-danger-50 text-danger-600',
+    'info': 'border-info-200 bg-info-50 text-info-600',
+    'secondary': 'border-secondary-200 bg-secondary-50 text-secondary-600',
+} %}
+{% set box = size == 'sm' ? 'w-8 h-8' : 'w-10 h-10' %}
+<div class="flex shrink-0 items-center justify-center {{ box }} rounded-lg border-2 {{ colors[variant] ?? colors['info'] }}">
+    {{ ux_icon(icon, {class: size == 'sm' ? 'h-4 w-4' : 'h-5 w-5'}) }}
+</div>

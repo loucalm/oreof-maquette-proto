@@ -6,7 +6,7 @@
         {% endfor %}
     </select>
     {% if def.allowExtra %}
-        <div class="text-right mt-1"><span class="text-xs text-gray-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.param.generic_add_hint'|trans({}, 'formation') }}</span></div>
+        <div class="text-right mt-1"><span class="text-xs text-secondary-400 cursor-default">{{ ux_icon('ph:plus', {class: 'icon'}) }} {{ 'formation.param.generic_add_hint'|trans({}, 'formation') }}</span></div>
     {% endif %}
 {% else %}
     <select name="{{ name }}" class="fld">
@@ -15,7 +15,7 @@
     </select>
     {% if def.allowExtra %}
         <div class="mt-1.5 flex items-center gap-2">
-            <span class="text-xs shrink-0" style="color:var(--c-muted)">{{ 'node.panel.or_free_value'|trans({}, 'node') }}</span>
+            <span class="text-xs shrink-0 text-secondary-500">{{ 'node.panel.or_free_value'|trans({}, 'node') }}</span>
             <input type="text" name="{{ name }}_autre" value="{{ (value and value not in options|keys) ? value : '' }}" class="fld flex-1" placeholder="{{ 'node.panel.other_placeholder'|trans({}, 'node') }}">
         </div>
     {% endif %}

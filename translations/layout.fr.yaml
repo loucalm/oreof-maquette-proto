@@ -6,6 +6,11 @@ layout:
   help_body_label: Texte de l’aide
   undo: Annuler
   default_title: Prototype maquette
+  skip_to_content: Aller au contenu
+  breadcrumb: Fil d’Ariane
+  breadcrumb_home: Accueil
+  user_menu: Afficher ou masquer le menu du compte
+  role_banner: 'Vous visualisez l’application en tant que « %role% » : la configuration (métamodèle, structure) n’est pas accessible.'
   close: Fermer
   help_fake: Aide (fictif)
   nav:
@@ -16,6 +21,8 @@ layout:
     users_rights: Utilisateurs et droits
     administration: Administration
     diplomes: Diplômes
+    offer_formations: Détail des formations
+    offer_consolidation: Consolidation de l’offre
   role_switch:
     title: Voir en tant que
     help: Le responsable ne voit pas le métamodèle ni la configuration de structure.

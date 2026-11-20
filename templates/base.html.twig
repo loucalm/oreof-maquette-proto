@@ -1,163 +1,196 @@
+{#- Gabarit repris d'ORéOF v2 (templates/base.html.twig) : topbar, en-tête de page (PageHeader), contenu, pied de page.
+    En-tête : la page définit, hors de tout bloc,
+      header_title (obligatoire pour afficher l'en-tête), header_description, header_breadcrumb (liste de {label, url?}
+      après « Accueil », le dernier = page courante), header_sticky (true par défaut),
+    et remplit le bloc bouton_header pour les actions. -#}
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="light">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         {# Après une action qui redirige vers la même page : rafraîchissement par morphing, défilement conservé. #}
         <meta name="turbo-refresh-method" content="morph">
         <meta name="turbo-refresh-scroll" content="preserve">
-        <title>{% block title %}{{ 'layout.default_title'|trans({}, 'layout') }}{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.1em%22 font-size=%22104%22>🧩</text></svg>">
-        {# Tailwind au runtime (prototype). Le build standalone ne scannait pas les templates dans ce conteneur. #}
+        <title>{% block title %}{{ header_title is defined ? header_title|striptags : 'layout.default_title'|trans({}, 'layout') }}{% endblock %} - ORéOF</title>
+        <link rel="icon" type="image/svg+xml" href="{{ asset('images/oreof-logo.svg') }}">
+        {# Tailwind v4 compilé dans le navigateur (prototype : pas de build CSS). Le thème v2 est inséré tel quel. #}
         <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+        <style type="text/tailwindcss">{{ source('_layout/_tailwind.css') }}</style>
         {% block stylesheets %}{% endblock %}
         {% block javascripts %}
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
     </head>
-    <body class="min-h-screen flex flex-col">
+    <body class="min-h-screen">
+        <a href="#main-content" data-turbo="false"
+           class="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-[10000] focus:rounded-lg focus:bg-surface focus:px-4 focus:py-3 focus:text-text focus:shadow-lg focus:outline-2 focus:outline-primary-500">{{ 'layout.skip_to_content'|trans({}, 'layout') }}</a>
 
-        {# ─────────── header ORéOF (fictif, non fonctionnel) ─────────── #}
-        <header class="bg-white border-b" style="border-color:var(--c-border)">
-            <div class="mx-auto max-w-[1600px] px-6 h-16 flex items-center gap-7">
-                <a href="{{ path('formation_index') }}" class="font-extrabold tracking-tight">
-                    <span style="color:var(--c-primary)">ORéOF</span><span class="text-gray-400">/ Adm.</span>
-                </a>
-                {% set _route = app.request.attributes.get('_route') ?? '' %}
-                <nav class="hidden lg:flex items-center gap-6 text-sm text-gray-600">
-                    <span class="fake-link cursor-default" aria-disabled="true" title="{{ 'common.coming_soon'|trans({}, 'common') }}">{{ 'layout.nav.dashboard'|trans({}, 'layout') }}</span>
-                    <a href="{{ path('formation_index') }}"
-                       class="hover:text-gray-900 {{ _route matches '/^(formation_|node_|bcc_|parcours_|offre_)/' ? 'font-semibold text-gray-900' }}">{{ 'layout.nav.offer'|trans({}, 'layout') }}</a>
-                    <span class="fake-link cursor-default" aria-disabled="true" title="{{ 'common.coming_soon'|trans({}, 'common') }}">{{ 'layout.nav.steering'|trans({}, 'layout') }} {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>
-                    <span class="fake-link cursor-default" aria-disabled="true" title="{{ 'common.coming_soon'|trans({}, 'common') }}">{{ 'layout.nav.councils'|trans({}, 'layout') }} {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>
-                    <span class="fake-link cursor-default" aria-disabled="true" title="{{ 'common.coming_soon'|trans({}, 'common') }}">{{ 'layout.nav.users_rights'|trans({}, 'layout') }} {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}</span>
-                    {% if is_admin() %}
-                        <a href="{{ path('diplome_index') }}"
-                           class="hover:text-gray-900 {{ _route matches '/^diplome_/' ? 'font-semibold text-gray-900' }}">{{ 'layout.nav.diplomes'|trans({}, 'layout') }}</a>
-                        <a href="{{ path('admin_index') }}"
-                           class="hover:text-gray-900 {{ _route matches '/^(admin_|node_type_|field_|template_)/' ? 'font-semibold text-gray-900' }}">{{ 'layout.nav.administration'|trans({}, 'layout') }}</a>
-                    {% endif %}
-                </nav>
-                <div class="ml-auto flex items-center gap-3 text-gray-400">
-                    {# bascule de rôle (proto — pas d'auth réelle) #}
-                    <div class="relative" data-controller="menu">
-                        <button type="button" data-action="menu#toggle"
-                                class="rounded-lg border px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50" style="border-color:var(--c-border)">
-                            {{ ux_icon('ph:eye', {class: 'icon'}) }} {{ role_labels()[current_role()] }} {{ ux_icon('ph:caret-down', {class: 'icon text-gray-300'}) }}
-                        </button>
-                        <div data-menu-target="menu" hidden class="absolute right-0 z-40 mt-1 w-60 rounded-xl border bg-white py-1 text-sm shadow-lg" style="border-color:var(--c-border)">
-                            <div class="px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">{{ 'layout.role_switch.title'|trans({}, 'layout') }}</div>
-                            {% for r, label in role_labels() %}
-                                <form method="post" action="{{ path('role_switch', {role: r}) }}">
-                                    <button class="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 {{ current_role() == r ? 'font-semibold' }}">
-                                        {{ current_role() == r ? ux_icon('ph:check-circle-fill', {class: 'icon', style: 'color:var(--c-primary)'}) : ux_icon('ph:circle', {class: 'icon text-gray-300'}) }} {{ label }}
-                                    </button>
-                                </form>
-                            {% endfor %}
-                            <div class="border-t px-3 py-1.5 text-[11px] text-gray-400" style="border-color:var(--c-border)">{{ 'layout.role_switch.help'|trans({}, 'layout') }}</div>
-                        </div>
-                    </div>
-                    <span>{{ ux_icon('ph:magnifying-glass', {class: 'icon'}) }}</span><span>{{ ux_icon('ph:chat-circle', {class: 'icon'}) }}</span><span>{{ ux_icon('ph:globe', {class: 'icon'}) }}</span><span>{{ ux_icon('ph:bell', {class: 'icon'}) }}</span>
-                    <span class="rounded-lg px-3 py-1 text-xs font-medium" style="background:var(--c-primary-soft);color:var(--c-primary)">2026-2027 {{ ux_icon('ph:caret-down', {class: 'icon'}) }}</span>
-                    <span class="grid h-8 w-8 place-items-center rounded-full text-xs font-bold text-white" style="background:var(--c-primary)">{{ is_admin() ? 'DA' : 'RF' }}</span>
-                </div>
-            </div>
-        </header>
-
-        {# messages flash — toasts détachés, fixés en haut de l'écran (hors du flux,
-           retirés du cache Turbo pour ne pas réapparaître lors d'une navigation) #}
+        {# ─── messages flash : toasts v2, fixés en haut à droite (hors du flux, retirés du cache Turbo) ─── #}
         {% set _flashes = app.flashes %}
         {# « undo » : id de la formation dont la dernière modification peut être annulée depuis le toast #}
         {% set _undo = _flashes.undo ?? [] %}
         {# « derogation_link » : lien de demande de dérogation attaché au toast d'un refus hors bornes #}
         {% set _derog = _flashes.derogation_link ?? [] %}
-        {% if _flashes|filter((m, l) => l not in ['undo', 'derogation_link']) is not empty %}
-            <div class="flash-stack" role="status" aria-live="polite" data-turbo-temporary>
-                {% for label, messages in _flashes|filter((m, l) => l not in ['undo', 'derogation_link']) %}
+        {% set _toasts = _flashes|filter((m, l) => l not in ['undo', 'derogation_link']) %}
+        {% if _toasts is not empty %}
+            <div id="flash_toasts" class="flash-stack fixed right-4 top-20 z-[9999] flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-3" role="status" aria-live="polite" data-turbo-temporary>
+                {% for label, messages in _toasts %}
+                    {% set _type = {error: 'danger', notice: 'warning'}[label] ?? (label in ['success', 'danger', 'warning', 'info'] ? label : 'info') %}
+                    {% set _tone = {
+                        success: {box: 'bg-success-50 border-success-100 border-l-success-500', icon: 'text-success-600', text: 'text-success-900', svg: 'ph:check-circle'},
+                        danger: {box: 'bg-danger-50 border-danger-100 border-l-danger-500', icon: 'text-danger-600', text: 'text-danger-900', svg: 'ph:x-circle'},
+                        warning: {box: 'bg-warning-50 border-warning-100 border-l-warning-500', icon: 'text-warning-600', text: 'text-warning-900', svg: 'ph:warning'},
+                        info: {box: 'bg-info-50 border-info-100 border-l-info-500', icon: 'text-info-600', text: 'text-info-900', svg: 'ph:info'},
+                    }[_type] %}
                     {% for message in messages %}
-                        <div class="flash flash--{{ label ?: 'info' }}" data-controller="flash">
-                            <span class="flash-msg">{{ message }}</span>
-                            {% if _derog is not empty and label == 'warning' and loop.first %}
-                                <a href="{{ _derog|first }}" class="flash-undo" data-turbo-frame="_top">{{ ux_icon('ph:flag', {class: 'icon'}) }} {{ 'diplome.guard.request_derogation'|trans({}, 'diplome') }}</a>
-                            {% endif %}
-                            {% if _undo is not empty and label in ['success', 'info'] and loop.first %}
-                                <form method="post" action="{{ path('formation_undo', {id: _undo|first}) }}" data-turbo-frame="_top">
-                                    <button class="flash-undo">{{ ux_icon('ph:arrow-counter-clockwise', {class: 'icon'}) }} {{ 'layout.undo'|trans({}, 'layout') }}</button>
-                                </form>
-                            {% endif %}
-                            <button type="button" class="flash-x" data-action="flash#dismiss" aria-label="{{ 'layout.close'|trans({}, 'layout') }}">{{ ux_icon('ph:x', {class: 'icon'}) }}</button>
+                        <div class="flash flash--{{ label }} flash--{{ _type }} flex w-full items-start gap-3.5 rounded-xl border-y border-r border-l-4 p-4 shadow-lg backdrop-blur-md {{ _tone.box }}" data-controller="flash">
+                            <div class="mt-0.5 shrink-0 {{ _tone.icon }}">{{ ux_icon(_tone.svg, {class: 'h-5 w-5'}) }}</div>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-start justify-between gap-4">
+                                    <div class="flash-msg break-words text-sm font-semibold {{ _tone.text }}">{{ message }}</div>
+                                    <button type="button" class="flash-x rounded-full p-1 text-secondary-400 transition hover:text-secondary-700" data-action="flash#dismiss" aria-label="{{ 'layout.close'|trans({}, 'layout') }}">{{ ux_icon('ph:x', {class: 'h-4 w-4'}) }}</button>
+                                </div>
+                                {% if (_derog is not empty and label == 'warning' and loop.first) or (_undo is not empty and label in ['success', 'info'] and loop.first) %}
+                                    <div class="mt-2 flex flex-wrap gap-2">
+                                        {% if _derog is not empty and label == 'warning' and loop.first %}
+                                            <a href="{{ _derog|first }}" class="flash-undo inline-flex items-center gap-1.5 rounded-md bg-primary-50 px-2 py-1 text-sm font-medium text-primary-600 transition hover:bg-primary-100" data-turbo-frame="_top">{{ ux_icon('ph:flag', {class: 'h-4 w-4'}) }} {{ 'diplome.guard.request_derogation'|trans({}, 'diplome') }}</a>
+                                        {% endif %}
+                                        {% if _undo is not empty and label in ['success', 'info'] and loop.first %}
+                                            <form method="post" action="{{ path('formation_undo', {id: _undo|first}) }}" data-turbo-frame="_top">
+                                                <button class="flash-undo inline-flex items-center gap-1.5 rounded-md bg-primary-50 px-2 py-1 text-sm font-medium text-primary-600 transition hover:bg-primary-100">{{ ux_icon('ph:arrow-counter-clockwise', {class: 'h-4 w-4'}) }} {{ 'layout.undo'|trans({}, 'layout') }}</button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
                         </div>
                     {% endfor %}
                 {% endfor %}
             </div>
         {% endif %}
 
-        <main class="flex-1 mx-auto w-full max-w-[1600px] px-6 py-6">
-            {% block body %}{% endblock %}
-        </main>
+        {# root_attrs : permet à une page de poser un contrôleur Stimulus couvrant aussi l'en-tête (ex. bouton d'action qui ouvre une modale du contenu). #}
+        <div id="root" class="flex min-h-screen flex-col" {% block root_attrs %}{% endblock %}>
+            {% include '_layout/_topbar.html.twig' %}
 
-        {# ─────────── footer ORéOF (fictif) ─────────── #}
-        <footer class="border-t bg-white text-xs text-gray-500" style="border-color:var(--c-border)">
-            <div class="mx-auto max-w-[1600px] px-6 py-5 flex flex-wrap items-center gap-x-6 gap-y-2">
-                <div>
-                    <span class="font-semibold text-gray-700">ORéOF</span> ·
-                    {{ 'layout.footer.tagline'|trans({}, 'layout') }}
-                    {% if is_admin() %} · <a href="{{ path('admin_index') }}" class="hover:underline">{{ 'layout.nav.administration'|trans({}, 'layout') }}</a>{% endif %}
+            {% if not is_admin() %}
+                {# Équivalent du bandeau d'impersonation v2 : rappelle que l'on voit l'application avec un autre rôle #}
+                <div class="border-b border-warning-200 bg-warning-50 px-4 py-2 text-sm text-warning-800 sm:px-6 lg:px-8">
+                    {{ ux_icon('ph:eye', {class: 'mr-1 inline h-4 w-4 align-[-0.15em]'}) }}
+                    {{ 'layout.role_banner'|trans({'%role%': role_labels()[current_role()]}, 'layout') }}
                 </div>
-                <div class="ml-auto flex items-center gap-3 text-gray-400">
-                    {% for item in ['layout.footer.documents', 'layout.footer.help', 'layout.footer.faq', 'layout.footer.contact', 'layout.footer.github'] %}<span class="fake-link cursor-default" aria-disabled="true" title="{{ 'common.coming_soon'|trans({}, 'common') }}">{{ item|trans({}, 'layout') }}</span>{% endfor %}
-                </div>
-            </div>
-        </footer>
+            {% endif %}
 
-        {# aide contextuelle de l'écran (textes : translations/help.fr.yaml, éditables par l'admin) #}
+            {% block page_header %}
+                {% if header_title is defined %}
+                    {% set _page_header_actions %}{% block bouton_header %}{% endblock %}{% endset %}
+                    {% set _crumbs = [{label: 'layout.breadcrumb_home'|trans({}, 'layout'), url: path('formation_index'), icon: 'ph:house'}]|merge(header_breadcrumb ?? []) %}
+                    <twig:PageHeader
+                            class="px-4 sm:px-6 lg:px-8"
+                            :title="header_title"
+                            :description="header_description ?? ''"
+                            :actions="_page_header_actions"
+                            :breadcrumb="_crumbs"
+                            :sticky="header_sticky ?? true"
+                    />
+                {% endif %}
+            {% endblock %}
+
+            <main id="main-content" tabindex="-1" class="flex-1 {{ header_title is defined ? '' : 'pt-6' }}">
+                <div class="mx-auto w-full px-4 sm:px-6 lg:px-8">
+                    {% block body %}{% endblock %}
+                </div>
+            </main>
+
+            {# ─── pied de page v2 (liens fictifs) ─── #}
+            <footer class="mt-6">
+                <div class="border-t border-secondary-200/80 bg-white/90 backdrop-blur-sm">
+                    <div class="mx-auto w-full px-4 py-4 sm:px-6 lg:px-8">
+                        <div class="grid gap-4 lg:grid-cols-3 lg:items-center">
+                            <div class="space-y-1 lg:justify-self-start">
+                                <p class="text-sm font-semibold text-secondary-700">ORéOF</p>
+                                <p class="text-xs text-secondary-500">{{ 'layout.footer.tagline'|trans({}, 'layout') }}</p>
+                            </div>
+                            <div class="flex flex-wrap items-center justify-center gap-2 lg:justify-self-center">
+                                {% for item in [
+                                    {label: 'layout.footer.documents', icon: 'ph:question'},
+                                    {label: 'layout.footer.help', icon: 'ph:question'},
+                                    {label: 'layout.footer.faq', icon: 'ph:chat-dots'},
+                                    {label: 'layout.footer.contact', icon: 'ph:envelope'},
+                                    {label: 'layout.footer.github', icon: 'ph:github-logo'},
+                                ] %}
+                                    <twig:Button variant="secondary" size="sm" :icon="item.icon" :label="item.label|trans({}, 'layout')" :disabled="true" :tooltip="'common.coming_soon'|trans({}, 'common')"/>
+                                {% endfor %}
+                                {% if is_admin() %}
+                                    <twig:Button variant="secondary" size="sm" icon="ph:gear" :label="'layout.nav.administration'|trans({}, 'layout')" :href="path('admin_index')"/>
+                                {% endif %}
+                            </div>
+                            <div class="hidden lg:block"></div>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+
+        {# ─── aide contextuelle de l'écran (textes : translations/help.fr.yaml, éditables par l'admin) — tiroir v2 ─── #}
         {% set _help = page_help() %}
         {% if _help.route and (_help.body or is_admin()) %}
-        <div data-controller="modal">
-            <button type="button" data-action="modal#open" aria-haspopup="dialog"
-                    class="help-fab" style="background:var(--c-primary)" title="{{ 'layout.help_button'|trans({}, 'layout') }}" aria-label="{{ 'layout.help_button'|trans({}, 'layout') }}">?</button>
-            <dialog data-modal-target="dialog" data-action="click->modal#clickOutside" class="help-drawer" aria-labelledby="help-title">
-                <div class="p-6 space-y-4">
-                    <div class="flex items-start justify-between gap-3">
-                        <h2 id="help-title" class="text-lg font-bold">{{ ux_icon('ph:question', {class: 'icon'}) }} {{ _help.title ?? 'layout.help_button'|trans({}, 'layout') }}</h2>
-                        <button type="button" data-action="modal#close" class="icon-btn" aria-label="{{ 'layout.close'|trans({}, 'layout') }}">{{ ux_icon('ph:x', {class: 'icon'}) }}</button>
+            {% set _helpColor = _help.body ? 'var(--semantic-primary)' : 'var(--semantic-warning)' %}
+            <div data-controller="modal">
+                <button type="button" data-action="modal#open" aria-haspopup="dialog"
+                        class="help-fab fixed bottom-6 right-6 z-[65] flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg transition hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-offset-2 sm:bottom-8 sm:right-8"
+                        style="background-color:{{ _helpColor }}"
+                        title="{{ 'layout.help_button'|trans({}, 'layout') }}" aria-label="{{ 'layout.help_button'|trans({}, 'layout') }}">{{ ux_icon('ph:question', {class: 'h-7 w-7'}) }}</button>
+                <dialog data-modal-target="dialog" data-action="click->modal#clickOutside" class="help-drawer" aria-labelledby="help-title">
+                    <div class="flex h-full flex-col">
+                        <div class="flex shrink-0 items-center justify-between p-4 text-white" style="background-color:{{ _helpColor }}">
+                            <h2 id="help-title" class="flex items-center gap-2 text-sm font-semibold">{{ ux_icon('ph:question', {class: 'h-4 w-4'}) }} {{ _help.title ?? 'layout.help_button'|trans({}, 'layout') }}</h2>
+                            <button type="button" data-action="modal#close" class="text-2xl leading-none" aria-label="{{ 'layout.close'|trans({}, 'layout') }}">&times;</button>
+                        </div>
+                        <div class="flex-1 space-y-4 overflow-y-auto p-4 text-secondary-700">
+                            {% if _help.body %}
+                                <div class="help-body text-[0.95rem] leading-7">{{ _help.body|nl2br }}</div>
+                            {% else %}
+                                <p class="text-sm text-secondary-400">{{ 'layout.help_empty'|trans({}, 'layout') }}</p>
+                            {% endif %}
+                            {% if is_admin() %}
+                                <details class="rounded-xl border border-secondary-200 bg-secondary-50 px-4 py-3">
+                                    <summary class="cursor-pointer text-sm font-semibold text-secondary-800">{{ ux_icon('ph:pencil-simple', {class: 'mr-1 inline h-4 w-4'}) }} {{ 'layout.help_edit'|trans({}, 'layout') }}</summary>
+                                    <form method="post" action="{{ path('admin_help_save', {route: _help.route}) }}" data-turbo-frame="_top" class="mt-3 space-y-2">
+                                        <input type="hidden" name="back" value="{{ app.request.requestUri }}">
+                                        <input name="title" value="{{ _help.title }}" class="fld" aria-label="{{ 'layout.help_title_label'|trans({}, 'layout') }}" placeholder="{{ 'layout.help_title_label'|trans({}, 'layout') }}">
+                                        <textarea name="body" rows="8" class="fld" aria-label="{{ 'layout.help_body_label'|trans({}, 'layout') }}">{{ _help.body }}</textarea>
+                                        <twig:Button type="submit" variant="success" :soft="false" icon="ph:floppy-disk" :label="'common.save'|trans({}, 'common')"/>
+                                    </form>
+                                </details>
+                            {% endif %}
+                        </div>
                     </div>
-                    {% if _help.body %}
-                        <div class="help-body text-sm text-gray-700">{{ _help.body|nl2br }}</div>
-                    {% else %}
-                        <p class="text-sm text-gray-400">{{ 'layout.help_empty'|trans({}, 'layout') }}</p>
-                    {% endif %}
-                    {% if is_admin() %}
-                        <details class="move-box">
-                            <summary class="fld-label cursor-pointer">{{ ux_icon('ph:pencil-simple', {class: 'icon'}) }} {{ 'layout.help_edit'|trans({}, 'layout') }}</summary>
-                            <form method="post" action="{{ path('admin_help_save', {route: _help.route}) }}" data-turbo-frame="_top" class="mt-2 space-y-2">
-                                <input type="hidden" name="back" value="{{ app.request.requestUri }}">
-                                <input name="title" value="{{ _help.title }}" class="fld" aria-label="{{ 'layout.help_title_label'|trans({}, 'layout') }}" placeholder="{{ 'layout.help_title_label'|trans({}, 'layout') }}">
-                                <textarea name="body" rows="8" class="fld" aria-label="{{ 'layout.help_body_label'|trans({}, 'layout') }}">{{ _help.body }}</textarea>
-                                <button class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:var(--c-primary)">{{ 'common.save'|trans({}, 'common') }}</button>
-                            </form>
-                        </details>
-                    {% endif %}
-                </div>
-            </dialog>
-        </div>
+                </dialog>
+            </div>
         {% endif %}
 
-        {# ─────────── modale de confirmation globale (remplace window.confirm) ─────────── #}
+        {# ─── modale de confirmation globale (remplace window.confirm) — coque de modale v2 ─── #}
         <dialog data-controller="confirm-dialog" data-confirm-dialog-target="dialog"
                 data-action="click->confirm-dialog#clickOutside"
-                class="w-[min(480px,92vw)] rounded-3xl border-0 p-0 shadow-2xl backdrop:bg-black/50">
-            <div class="p-8 sm:p-10">
-                <h2 class="text-3xl font-extrabold tracking-tight text-red-600">{{ 'layout.confirm_dialog.title'|trans({}, 'layout') }}</h2>
-                <p data-confirm-dialog-target="message" class="mt-4 text-base leading-relaxed" style="color:var(--c-muted)"></p>
-                <div class="mt-7 h-px" style="background:var(--c-border)"></div>
-                <div class="mt-6 flex gap-3">
-                    <button type="button" data-action="confirm-dialog#confirm"
-                            class="flex-1 rounded-2xl border px-5 py-3.5 text-base font-medium hover:bg-red-100"
-                            style="background:#fef2f2;color:#b91c1c;border-color:#fecaca">{{ 'layout.confirm_dialog.continue'|trans({}, 'layout') }}</button>
-                    <button type="button" data-action="confirm-dialog#cancel" data-confirm-dialog-target="cancelBtn"
-                            class="flex-1 rounded-2xl border px-5 py-3.5 text-base font-medium hover:bg-indigo-100"
-                            style="background:var(--c-primary-soft);color:var(--c-primary);border-color:#c7d2fe">{{ 'common.cancel'|trans({}, 'common') }}</button>
+                class="w-[min(520px,92vw)] border-0 bg-transparent p-0 backdrop:bg-black/50">
+            <div class="app-modal-shell">
+                <div class="app-modal-header">
+                    <div class="flex items-center gap-3">
+                        <twig:IconBox icon="ph:warning" variant="danger"/>
+                        <h2 class="app-modal-title">{{ 'layout.confirm_dialog.title'|trans({}, 'layout') }}</h2>
+                    </div>
+                </div>
+                <div class="app-modal-body">
+                    <p data-confirm-dialog-target="message" class="text-sm leading-relaxed text-secondary-700"></p>
+                </div>
+                <div class="app-modal-footer">
+                    <div class="app-modal-footer-actions">
+                        <button type="button" data-action="confirm-dialog#cancel" data-confirm-dialog-target="cancelBtn"
+                                class="app-modal-footer-btn app-modal-footer-btn--secondary">{{ 'common.cancel'|trans({}, 'common') }}</button>
+                        <button type="button" data-action="confirm-dialog#confirm"
+                                class="app-modal-footer-btn app-modal-footer-btn--danger">{{ 'layout.confirm_dialog.continue'|trans({}, 'layout') }}</button>
+                    </div>
                 </div>
             </div>
         </dialog>

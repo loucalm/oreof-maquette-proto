@@ -1,17 +1,17 @@
 {# Macros de champ « façon ORéOF » pour les sections Paramètre de la formation. #}
 
 {% macro divider(title) %}
-    <div class="flex items-center gap-3 text-gray-400 my-6 first:mt-0">
-        <div class="h-px flex-1 bg-gray-200"></div>
+    <div class="flex items-center gap-3 text-secondary-400 my-6 first:mt-0">
+        <div class="h-px flex-1 bg-secondary-200"></div>
         <span class="text-sm">{{ title }}</span>
-        <div class="h-px flex-1 bg-gray-200"></div>
+        <div class="h-px flex-1 bg-secondary-200"></div>
     </div>
 {% endmacro %}
 
 {% macro label(text, required, help) %}
     <div class="flex items-start justify-between gap-3">
         <span class="fld-label">{{ text }}</span>
-        {% if required %}<span class="text-[11px] font-semibold text-red-500 uppercase tracking-wide shrink-0">{{ 'common.required_badge'|trans({}, 'common') }}</span>{% endif %}
+        {% if required %}<span class="shrink-0 text-[10px] font-bold uppercase text-danger-300">{{ 'common.required_badge'|trans({}, 'common') }}</span>{% endif %}
     </div>
     {% if help %}<div class="fld-help">{{ ux_icon('ph:info', {class: 'icon'}) }} {{ help }}</div>{% endif %}
 {% endmacro %}
@@ -47,7 +47,7 @@
 {% macro field(key, def, data, errors, hint) %}
     {% import _self as fld %}
     {{ fld.label(def.label, def.required, def.help) }}
-    {% if hint %}<div class="fld-help" style="color:#b45309">{{ ux_icon('ph:git-branch', {class: 'icon'}) }} {{ hint }}</div>{% endif %}
+    {% if hint %}<div class="fld-help text-warning-700">{{ ux_icon('ph:git-branch', {class: 'icon'}) }} {{ hint }}</div>{% endif %}
     {{ field_widget(def, key, data[key] ?? '', 'p[' ~ key ~ ']', null, [], 'param') }}
     {# erreurs du champ (règles de l'onglet, bornes) ; mises à jour en direct par autosave_controller #}
     <div class="fld-error" data-field-errors="{{ key }}">{% for m in errors|default([]) %}<div>⚠ {{ m }}</div>{% endfor %}</div>
