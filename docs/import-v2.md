@@ -106,8 +106,9 @@ téléphones des textes libres masqués. Relisez tout de même le fichier avant 
 Pas encore repris : mutualisations entre formations, compétences / BCC, workflows et validations, historique,
 commentaires, utilisateurs et droits.
 
-MCCC : dans le prototype, seul le type CCI affiche sa liste d'épreuves. Pour voir (et modifier) les épreuves importées
-des types CC, CT et CC + CT, activer « Collection d'épreuves » sur ces types dans Administration › Types de MCCC.
+MCCC : les quatre types (CC, CT, CC + CT, CCI) ont leur liste d'épreuves (fixtures). Sur une base créée avant cette
+évolution, `make db-reset` ou cocher « Collection d'épreuves » sur ces types dans Administration › Types de MCCC.
+La seconde session (`rattrapage`) est importée mais pas encore affichée : enregistrer l'onglet MCCC d'un EC l'efface.
 Les données v2 sont nettoyées à l'import : lignes BUT réservées aux BUT, lignes répétées d'une campagne à l'autre
 retirées, et de deux générations d'une même épreuve (plus de 100 % à elles deux) seule la plus récente est gardée.
 

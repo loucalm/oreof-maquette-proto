@@ -116,6 +116,11 @@ final class PrototypeReviewTest extends WebTestCase
         self::assertGreaterThan(1, $rows->count());
         // un parcours enfant est en retrait sous son parent
         self::assertGreaterThan(0, $crawler->filter('[data-parcours-row] [title^="enfant de"]')->count());
+        // chaque barre enfant désigne la barre de son parent, pour le tracé des branches
+        $parents = $crawler->filter('[data-parcours-timeline-target="bar"][data-parent]')->each(static fn ($b) => $b->attr('data-parent'));
+        $nids = $crawler->filter('[data-parcours-timeline-target="bar"]')->each(static fn ($b) => $b->attr('data-nid'));
+        self::assertNotEmpty($parents);
+        self::assertSame([], array_diff($parents, $nids));
     }
 
     private function startWizard(): void

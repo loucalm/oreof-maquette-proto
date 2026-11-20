@@ -213,7 +213,11 @@
                 {{ 'formation.graph.standalone_note'|trans({'%unit%': g.unit|lower}, 'formation') }}
             </p>
             <div class="overflow-x-auto">
-                <div class="grid min-w-[720px]" style="grid-template-columns: minmax(220px, 30%) repeat({{ g.cols }}, minmax(0, 1fr));" data-parcours-timeline>
+                <div class="relative grid min-w-[720px]" style="grid-template-columns: minmax(220px, 30%) repeat({{ g.cols }}, minmax(0, 1fr));" data-parcours-timeline data-controller="parcours-timeline">
+                    {# branches parent → enfant, tracées par parcours_timeline_controller.js #}
+                    <svg data-parcours-timeline-target="svg" class="pointer-events-none absolute inset-0 z-20 h-full w-full" aria-hidden="true">
+                        <defs><marker id="pt-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6366f1"/></marker></defs>
+                    </svg>
                     {# en-tête : périodes #}
                     <div class="border-b border-secondary-200 bg-secondary-50 px-5 py-2.5 text-[11px] font-black uppercase tracking-wider text-secondary-500">{{ 'formation.graph.parcours_fallback'|trans({}, 'formation') }}</div>
                     {% for a in 1..g.cols %}
@@ -248,9 +252,10 @@
                         {% for a in 1..g.cols %}
                             <div class="{{ rowBorder }} border-l border-secondary-100 {{ isCurrent ? 'bg-primary-50' }}" style="grid-row: {{ loop.parent.loop.index + 1 }}; grid-column: {{ a + 1 }}"></div>
                         {% endfor %}
-                        <a href="{{ url }}" class="group relative z-10 mx-2 my-2.5 flex min-w-0 flex-col justify-center overflow-hidden rounded-lg border px-3 py-1.5 transition-shadow hover:shadow-md
+                        <a href="{{ url }}" class="group relative z-10 mx-5 my-2.5 flex min-w-0 flex-col justify-center overflow-hidden rounded-lg border px-3 py-1.5 transition-shadow hover:shadow-md
                                   {{ isCurrent ? 'border-primary-500 ring-2 ring-primary-200' : 'border-' ~ tone ~ '-200' }} bg-{{ tone }}-50"
                            style="grid-row: {{ loop.index + 1 }}; grid-column: {{ r.colStart + 1 }} / {{ r.colEnd + 2 }}"
+                           data-parcours-timeline-target="bar" data-nid="{{ node.id }}" {% if node.parcoursParent %}data-parent="{{ node.parcoursParent.id }}"{% endif %}
                            aria-label="{{ label }} — {{ 'formation.graph.period_range'|trans({'%unit%': g.unit|lower, '%start%': r.colStart, '%end%': r.colEnd}, 'formation') }}">
                             <span class="absolute inset-y-0 left-0 bg-{{ tone }}-100 transition-[width]" style="width: {{ min(100, pct) }}%" aria-hidden="true"></span>
                             <span class="relative flex items-center justify-between gap-2 text-xs">

@@ -628,3 +628,6 @@ dialog.help-drawer:modal {
     .topbar-nav.is-open .topbar-menu [data-navbar-dropdown-target="content"] { position: static; width: auto; padding: 0 0 0 1rem; }
     .topbar-nav.is-open .topbar-menu [data-navbar-dropdown-target="content"] > div { border: 0; box-shadow: none; padding: 0; }
 }
+
+/* frise des parcours : branche parent → enfant */
+.timeline-branch { fill: none; stroke: #6366f1; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
