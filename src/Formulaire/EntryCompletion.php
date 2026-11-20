@@ -51,6 +51,75 @@ final class EntryCompletion
         return null === $form ? [] : $this->targetFields($fiche, $form);
     }
 
+    /**
+     * Champs d'une page qui remplit deux fiches à la fois (formation sans parcours : fiche formation, puis parcours
+     * par défaut, même clé d'entrée), sans séparation ni doublon. Un champ des deux fiches n'apparaît qu'une fois, à sa
+     * place dans la première ; les champs propres à la seconde rejoignent la rubrique (séparateur) de même clé de la
+     * première, sinon leur rubrique s'insère avant celle qui la suit dans la seconde fiche (ou à la fin).
+     *
+     * @return list<array{field: ResolvedField, fiche: FicheTarget}> chaque champ avec la fiche qui le porte (champs liés à l'entité)
+     */
+    public function mergedFields(FicheTarget $first, FicheTarget $then, string $entryKey): array
+    {
+        $isSeparator = fn (ResolvedField $f): bool => !$this->fieldTypes->get($f->getType())->isInput();
+        $sections = static function (array $fields, FicheTarget $fiche) use ($isSeparator): array {
+            $out = ['' => ['separator' => null, 'items' => []]];
+            $current = '';
+            foreach ($fields as $f) {
+                if ($isSeparator($f)) {
+                    $current = $f->getKey();
+                    $out[$current] ??= ['separator' => ['field' => $f, 'fiche' => $fiche], 'items' => []];
+                    continue;
+                }
+                $out[$current]['items'][] = ['field' => $f, 'fiche' => $fiche];
+            }
+
+            return $out;
+        };
+
+        $merged = $sections($this->fields($first, $entryKey), $first);
+        $seen = [];
+        foreach ($merged as $section) {
+            foreach ($section['items'] as $item) {
+                $seen[$item['field']->getKey()] = true;
+            }
+        }
+        $second = $sections($this->fields($then, $entryKey), $then);
+        $order = array_keys($second);
+        foreach ($second as $key => $section) {
+            $new = array_values(array_filter($section['items'], static fn (array $item) => !isset($seen[$item['field']->getKey()])));
+            if ([] === $new) {
+                continue;
+            }
+            if (!isset($merged[$key])) {
+                // rubrique propre à la seconde fiche : avant la rubrique qui la suit chez elle et existe déjà, sinon à la fin
+                $next = null;
+                foreach (\array_slice($order, (int) array_search($key, $order, true) + 1) as $candidate) {
+                    if (isset($merged[$candidate])) {
+                        $next = $candidate;
+                        break;
+                    }
+                }
+                $at = null === $next ? \count($merged) : (int) array_search($next, array_keys($merged), true);
+                $merged = \array_slice($merged, 0, $at, true) + [$key => ['separator' => $section['separator'], 'items' => []]] + \array_slice($merged, $at, null, true);
+            }
+            array_push($merged[$key]['items'], ...$new);
+        }
+
+        $out = [];
+        foreach ($merged as $section) {
+            if ([] === $section['items']) {
+                continue;
+            }
+            if (null !== $section['separator']) {
+                $out[] = $section['separator'];
+            }
+            array_push($out, ...$section['items']);
+        }
+
+        return $out;
+    }
+
     /** @return list<ResolvedField> champs qui portent une valeur (séparateurs exclus) */
     public function inputFields(FicheTarget $fiche, string $entryKey): array
     {

@@ -50,20 +50,45 @@ final class MonoParcoursFicheTest extends WebTestCase
         self::assertStringNotContainsString('Parcours', $crawler->filter('.nav-section')->first()->ancestors()->first()->text());
     }
 
-    public function testEntryPageShowsFormationThenParcoursFields(): void
+    public function testEntryPageMergesFormationAndDefaultParcoursWithoutSeparationNorDuplicates(): void
     {
         $formation = $this->formation();
 
-        $panel = $this->client->request('GET', sprintf('/formations/%d/parametre/organisation', $formation->getId()));
-        self::assertSame('param:organisation', $panel->filter('[data-panel-active]')->attr('data-panel-active'));
-        self::assertSame(['formation', 'parcours'], $panel->filter('form[data-fiche]')->each(static fn ($f) => $f->attr('data-fiche')));
-        self::assertSame(sprintf('/formations/%d/parcours-unique/parametre/organisation', $formation->getId()), $panel->filter('form[data-fiche=parcours]')->attr('action'));
-        // les deux formulaires mettent à jour la même pastille
-        self::assertSame(['organisation', 'organisation'], $panel->filter('form[data-fiche]')->each(static fn ($f) => $f->attr('data-autosave-key-value')));
+        foreach (['organisation', 'presentation'] as $key) {
+            $panel = $this->client->request('GET', sprintf('/formations/%d/parametre/%s', $formation->getId(), $key));
+            self::assertSame('param:'.$key, $panel->filter('[data-panel-active]')->attr('data-panel-active'));
+            // un seul formulaire, enregistré par la fiche formation
+            self::assertCount(1, $panel->filter('form[data-fiche]'));
+            self::assertSame(sprintf('/formations/%d/parametre/%s', $formation->getId(), $key), $panel->filter('form[data-fiche]')->attr('action'));
+            // chaque champ une seule fois (un groupe de cases à cocher compte pour un)
+            $names = array_unique($panel->filter('form [name^="p["], form [name^="b["]')->each(static fn ($i) => preg_replace('/\[\]$/', '', (string) $i->attr('name'))));
+            $labels = $panel->filter('form .fld-label')->each(static fn ($l) => trim($l->text()));
+            self::assertSame(array_unique($labels), $labels, $key.' : un champ apparaît deux fois.');
+            self::assertNotEmpty($names);
+        }
+
+        $organisation = $this->client->request('GET', sprintf('/formations/%d/parametre/organisation', $formation->getId()));
+        // champs propres au parcours par défaut présents, dans le même formulaire ; leur rubrique garde son rang
+        $text = $organisation->filter('form[data-fiche]')->text();
+        self::assertLessThan(strpos($text, 'Responsable(s)'), strpos($text, 'Descriptif'));
+        self::assertCount(1, $organisation->filter('form [name="b[ectsTotal]"]'));
+        self::assertCount(1, $organisation->filter('form [name="p[respParcours]"]'));
 
         $editor = $this->client->request('GET', sprintf('/formations/%d', $formation->getId()));
         self::assertCount(1, $editor->filter('a.nav-section[data-nav-key="organisation"]'));
         self::assertCount(0, $editor->filter('a.nav-section[data-nav-key="parcours.organisation"]'));
+    }
+
+    public function testSharedFieldIsSavedInBothFiches(): void
+    {
+        $formation = $this->formation();
+
+        $this->client->request('POST', sprintf('/formations/%d/parametre/presentation', $formation->getId()), ['p' => ['objectif' => 'Former des développeurs', 'langue' => 'Français']]);
+
+        $fresh = $this->reload($formation);
+        self::assertSame('Former des développeurs', $fresh->getParametre('presentation')['objectif'] ?? null);
+        self::assertSame('Former des développeurs', $fresh->getParametre('parcours.presentation')['objectif'] ?? null, 'Le parcours par défaut garde la valeur (passage en multi-parcours).');
+        self::assertSame('Français', $fresh->getParametre('parcours.presentation')['langue'] ?? null);
     }
 
     public function testSavingTheParcoursPartReturnsToTheSharedEntry(): void

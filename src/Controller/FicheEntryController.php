@@ -28,8 +28,10 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * clé de l'entrée. Une entrée inconnue ou masquée n'existe pas (404) ; la clé d'un écran
  * intégré renvoie vers son écran.
  *
- * Formation sans parcours : l'entrée du parcours unique qui a la même clé qu'une entrée de la
- * fiche formation se remplit sur la page de celle-ci, à la suite (cf. CanvasResolver::monoMerged).
+ * Formation sans parcours : l'entrée du parcours par défaut qui a la même clé qu'une entrée de la
+ * fiche formation se remplit sur la page de celle-ci, dans le même formulaire, sans séparation ni
+ * doublon (cf. CanvasResolver::monoMerged, EntryCompletion::mergedFields) ; un champ des deux
+ * fiches est enregistré dans les deux.
  */
 final class FicheEntryController extends AbstractController
 {
@@ -52,9 +54,7 @@ final class FicheEntryController extends AbstractController
             return $this->redirect($builtin);
         }
 
-        $mono = $this->canvas->monoMerged($formation, $key)
-            ? [$this->fiches->mono($formation), $this->generateUrl('parcours_unique_param_save', ['id' => $formation->getId(), 'key' => $key])]
-            : null;
+        $mono = $this->canvas->monoMerged($formation, $key) ? $this->fiches->mono($formation) : null;
 
         return $this->show($this->fiches->formation($formation), $key, $this->generateUrl('formation_param_save', ['id' => $formation->getId(), 'key' => $key]), null, $mono);
     }
@@ -62,7 +62,9 @@ final class FicheEntryController extends AbstractController
     #[Route('/formations/{id}/parametre/{key}', name: 'formation_param_save', methods: ['POST'])]
     public function formationSave(Formation $formation, string $key, Request $request): Response
     {
-        return $this->save($this->fiches->formation($formation), $key, $request, $this->generateUrl('formation_editor', ['id' => $formation->getId(), 'param' => $key]));
+        $mono = $this->canvas->monoMerged($formation, $key) ? $this->fiches->mono($formation) : null;
+
+        return $this->save($this->fiches->formation($formation), $key, $request, $this->generateUrl('formation_editor', ['id' => $formation->getId(), 'param' => $key]), $mono);
     }
 
     #[Route('/formations/{fid}/parcours/{nid}/parametre/{key}', name: 'parcours_param', methods: ['GET'])]
@@ -102,19 +104,26 @@ final class FicheEntryController extends AbstractController
     }
 
     /**
-     * @param string|null                           $statusKey clé de la pastille de la barre latérale, si elle diffère de la clé d'entrée
-     * @param array{0: FicheTarget, 1: string}|null $mono      entrée de même clé du parcours unique, remplie à la suite [fiche, URL d'enregistrement]
+     * @param string|null      $statusKey clé de la pastille de la barre latérale, si elle diffère de la clé d'entrée
+     * @param FicheTarget|null $mono      parcours par défaut dont l'entrée de même clé se remplit dans le même formulaire
      */
-    private function show(FicheTarget $fiche, string $key, string $saveUrl, ?string $statusKey = null, ?array $mono = null): Response
+    private function show(FicheTarget $fiche, string $key, string $saveUrl, ?string $statusKey = null, ?FicheTarget $mono = null): Response
     {
         $form = $this->entries->form($fiche->formation(), $fiche->fiche(), $key) ?? throw $this->createNotFoundException();
         $entry = $this->canvas->formEntry($fiche->formation(), $fiche->fiche(), $key);
         $label = $this->canvas->label($fiche->fiche(), $entry);
         $title = CanvasSpec::PARCOURS === $fiche->fiche() ? 'formation.param.parcours_panel_title' : 'formation.param.panel_title';
 
-        $sections = [$this->section($fiche, $key, $saveUrl)];
-        if (null !== $mono) {
-            $sections[] = $this->section($mono[0], $key, $mono[1]);
+        $fiches = null === $mono ? [$fiche] : [$fiche, $mono];
+        $items = null === $mono
+            ? array_map(static fn (ResolvedField $f) => ['field' => $f, 'fiche' => $fiche], $this->entries->fields($fiche, $key))
+            : $this->entries->mergedFields($fiche, $mono, $key);
+        // valeurs : celles de la première fiche l'emportent ; la seconde complète (champ commun saisi avant la fusion)
+        $data = [];
+        $hints = [];
+        foreach (array_reverse($fiches) as $f) {
+            $data = array_filter($f->data($key), static fn ($v) => '' !== $v && null !== $v && [] !== $v) + $data;
+            $hints = $this->validator->hints($this->entries->form($f->formation(), $f->fiche(), $key) ?? $form) + $hints;
         }
 
         return $this->render('formation/param/entry.html.twig', [
@@ -123,38 +132,70 @@ final class FicheEntryController extends AbstractController
             'label' => $label,
             'title' => $this->translator->trans($title, [], 'formation'),
             'breadcrumb' => array_values(array_filter([$fiche->formation()->getName(), $fiche->parcours()?->getDisplayLabel(), $label])),
-            'sections' => $sections,
+            'fiche' => $fiche,
+            'items' => $items,
+            'data' => $data,
+            'issues' => $this->issues($fiches, $key),
+            'hints' => $hints,
+            'saveUrl' => $saveUrl,
             'statusKey' => $statusKey ?? $key,
         ]);
     }
 
-    /** @return array<string, mixed> un formulaire de la page : fiche, champs, données, erreurs, URL d'enregistrement */
-    private function section(FicheTarget $fiche, string $key, string $saveUrl): array
+    /**
+     * Anomalies par champ de une ou deux fiches (page fusionnée), sans doublon.
+     *
+     * @param list<FicheTarget> $fiches
+     *
+     * @return array<string, list<string>>
+     */
+    private function issues(array $fiches, string $key): array
     {
-        $form = $this->entries->form($fiche->formation(), $fiche->fiche(), $key) ?? throw $this->createNotFoundException();
-
-        return [
-            'fiche' => $fiche,
-            'fields' => $this->entries->fields($fiche, $key),
-            'data' => $fiche->data($key),
-            'issues' => $this->entries->issues($fiche, $key),
-            'hints' => $this->validator->hints($form),
-            'saveUrl' => $saveUrl,
-        ];
-    }
-
-    private function save(FicheTarget $fiche, string $key, Request $request, string $redirect): Response
-    {
-        $fields = $this->entries->inputFields($fiche, $key);
-        if ([] === $fields && null === $this->entries->form($fiche->formation(), $fiche->fiche(), $key)) {
-            throw $this->createNotFoundException();
+        $out = [];
+        foreach ($fiches as $fiche) {
+            foreach ($this->entries->issues($fiche, $key) as $field => $messages) {
+                $out[$field] = array_values(array_unique([...$out[$field] ?? [], ...$messages]));
+            }
         }
 
-        // seuls les champs du formulaire de l'entrée sont réécrits : un champ masqué ou absent garde sa valeur
+        return $out;
+    }
+
+    /** @param FicheTarget|null $mono parcours par défaut rempli dans le même formulaire : ses champs (communs compris) sont enregistrés aussi */
+    private function save(FicheTarget $fiche, string $key, Request $request, string $redirect, ?FicheTarget $mono = null): Response
+    {
+        if ([] === $this->entries->inputFields($fiche, $key) && null === $this->entries->form($fiche->formation(), $fiche->fiche(), $key)) {
+            throw $this->createNotFoundException();
+        }
+        $fiches = null === $mono ? [$fiche] : [$fiche, $mono];
+        foreach ($fiches as $target) {
+            $this->write($target, $key, $request);
+        }
+        $this->maquette->save($fiche->formation(), $fiche->doc());
+
+        // enregistrement en direct (Stimulus) : pas de flash ; statut et erreurs par champ recalculés
+        if ('json' === $request->getPreferredFormat()) {
+            // page partagée avec le parcours par défaut : la pastille porte le statut des deux fiches
+            $status = null === $fiche->parcours() && $this->canvas->monoMerged($fiche->formation(), $key)
+                ? $this->navigation->entryStatus($fiche->formation(), $key)
+                : $this->entries->status($fiche, $key);
+
+            return $this->json(['status' => $status, 'issues' => $this->issues($fiches, $key)]);
+        }
+
+        $entry = $this->canvas->formEntry($fiche->formation(), $fiche->fiche(), $key);
+        $this->addFlash('success', sprintf('« %s » enregistré.', null !== $entry ? $this->canvas->label($fiche->fiche(), $entry) : $key));
+
+        return $this->redirect($redirect);
+    }
+
+    /** Réécrit les champs du formulaire de l'entrée : un champ masqué ou absent garde sa valeur. */
+    private function write(FicheTarget $fiche, string $key, Request $request): void
+    {
         $posted = $request->request->all('p');
         $bound = $fiche->bound();
         $data = $fiche->data($key);
-        foreach ($fields as $field) {
+        foreach ($this->entries->inputFields($fiche, $key) as $field) {
             $k = $field->getKey();
             if (\array_key_exists($k, $bound)) {
                 continue;
@@ -164,22 +205,6 @@ final class FicheEntryController extends AbstractController
         }
         $fiche->setData($key, array_filter($data, static fn ($v) => '' !== $v && null !== $v && [] !== $v));
         $fiche->writeBound($request->request->all('b'));
-        $this->maquette->save($fiche->formation(), $fiche->doc());
-
-        // enregistrement en direct (Stimulus) : pas de flash ; statut et erreurs par champ recalculés
-        if ('json' === $request->getPreferredFormat()) {
-            // page partagée avec le parcours unique : la pastille porte le statut des deux formulaires
-            $status = null === $fiche->parcours() && $this->canvas->monoMerged($fiche->formation(), $key)
-                ? $this->navigation->entryStatus($fiche->formation(), $key)
-                : $this->entries->status($fiche, $key);
-
-            return $this->json(['status' => $status, 'issues' => $this->entries->issues($fiche, $key)]);
-        }
-
-        $entry = $this->canvas->formEntry($fiche->formation(), $fiche->fiche(), $key);
-        $this->addFlash('success', sprintf('« %s » enregistré.', null !== $entry ? $this->canvas->label($fiche->fiche(), $entry) : $key));
-
-        return $this->redirect($redirect);
     }
 
     private function parcoursFiche(Formation $formation, string $nid): FicheTarget

@@ -1,7 +1,7 @@
-{# Gabarit générique d'une entrée de fiche : les sections Formation et Parcours
-   partagent la même structure ; les champs adossés à l'entité sont inclus depuis
-   templates/formation/param/bound/. `sections` : un formulaire, ou deux pour une formation
-   sans parcours dont le parcours unique a une entrée de même clé (remplie à la suite). #}
+{# Gabarit générique d'une entrée de fiche (formation, parcours ou parcours par défaut) : un seul formulaire.
+   `items` : chaque champ avec la fiche qui le porte ; une formation sans parcours y réunit, sans séparation
+   ni doublon, les champs de même entrée de sa fiche et de son parcours par défaut (EntryCompletion::mergedFields).
+   Les champs adossés à l'entité sont inclus depuis templates/formation/param/bound/<fiche>/. #}
 {% import 'formation/param/_fields.html.twig' as fld %}
 <turbo-frame id="node-panel">
 <div class="panel-body" data-panel-active="param:{{ statusKey|default(entryKey) }}">
@@ -12,19 +12,19 @@
     </div>
 
     <div class="panel-scroll">
-    {% for section in sections %}
-    <form method="post" action="{{ section.saveUrl }}" data-fiche="{{ section.fiche.fiche }}" data-turbo-frame="_top"
+    <form method="post" action="{{ saveUrl }}" data-fiche="{{ fiche.fiche }}" data-turbo-frame="_top"
           data-controller="autosave" data-autosave-key-value="{{ statusKey|default(entryKey) }}"
-          class="panel-card space-y-5{{ not loop.first ? ' mt-4' }}">
+          class="panel-card space-y-5">
 
         <fieldset {{ preview_active(formation) ? 'disabled' }} class="space-y-5">
-        {% for f in section.fields %}
+        {% for item in items %}
+            {% set f = item.field %}
             {% if f.type == 'separator' %}
                 {{ fld.divider(f.label) }}
-            {% elseif f.key in section.fiche.bound|keys %}
-                <div>{% include 'formation/param/bound/' ~ section.fiche.fiche ~ '/' ~ f.key ~ '.html.twig' with {f: f, value: section.fiche.bound[f.key]} only %}</div>
+            {% elseif f.key in item.fiche.bound|keys %}
+                <div>{% include 'formation/param/bound/' ~ item.fiche.fiche ~ '/' ~ f.key ~ '.html.twig' with {f: f, value: item.fiche.bound[f.key]} only %}</div>
             {% else %}
-                <div>{{ fld.field(f.key, f, section.data, section.issues[f.key] ?? [], section.hints[f.key] ?? null) }}</div>
+                <div>{{ fld.field(f.key, f, data, issues[f.key] ?? [], hints[f.key] ?? null) }}</div>
             {% endif %}
         {% endfor %}
         </fieldset>
@@ -34,7 +34,6 @@
             <span data-autosave-target="status" class="text-xs text-secondary-500" aria-live="polite"></span>
         </div>
     </form>
-    {% endfor %}
     </div>
 </div>
 </turbo-frame>
